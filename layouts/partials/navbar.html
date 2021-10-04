@@ -1,0 +1,57 @@
+{{ $cover := .HasShortcode "blocks/cover" }}
+<nav class="js-navbar-scroll navbar navbar-expand navbar-dark {{ if $cover}} td-navbar-cover {{ end }}flex-column flex-md-row td-navbar">
+	<a class="navbar-brand" href="{{ .Site.Home.RelPermalink }}">
+		<span class="navbar-logo">{{ if .Site.Params.ui.navbar_logo }}{{ with resources.Get "icons/logo.svg" }}{{ ( . | minify).Content | safeHTML }}{{ end }}{{ end }}</span><span class="font-weight-bold">{{ .Site.Title }}</span>
+	</a>
+	
+	<div class="collapse navbar-collapse" id="navbarSupportedContent">
+		<ul class="navbar-nav mr-auto">
+			{{ $p := . }}
+			{{ range .Site.Menus.main }}
+			{{ $active := or ($p.IsMenuCurrent "main" .) ($p.HasMenuCurrent "main" .) }}
+			{{ with .Page }}
+			{{ $active = or $active ( $.IsDescendant .) }}
+			{{ end }}
+			{{ $pre := .Pre }}
+			{{ $post := .Post }}
+			{{ $url := urls.Parse .URL }}
+			{{ $baseurl := urls.Parse $.Site.Params.Baseurl }}
+			{{ if .HasChildren }}
+			<li class="nav-item dropdown" style="max-width:90px;min-width:10px;">
+				<a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+					{{ .Name }}
+					<span>+</span>
+				</a>
+				<div class="dropdown-menu" aria-labelledby="navbarDropdown">
+					{{ range .Children }}
+					{{ $childrenurl := urls.Parse .URL }}
+					<a class="dropdown-item" href="{{ with .Page }}{{ .RelPermalink }}{{ else }}{{ .URL | relLangURL }}{{ end }}" {{ if ne $childrenurl.Host $baseurl.Host }}target="_blank" {{ end }}>{{ .Name }}</a>
+					{{ end }}
+				</div>
+			</li>
+			{{ else }}
+			<li class="nav-item {{if $active }} active{{end}}" style="max-width:90px;min-width:10px;">
+				<a class="nav-link" href="{{ with .Page }}{{ .RelPermalink }}{{ else }}{{ .URL | relLangURL }}{{ end }}" {{ if ne $url.Host $baseurl.Host }}target="_blank" {{ end }}>
+					{{ with .Pre}}{{ $pre }}{{ end }}<span {{if $active }} class="active" {{end}}>{{ .Name }}</span>{{ with .Post}}{{ $post }}{{ end }}
+				</a>
+			</li>
+			{{ end }}
+			{{ end }}
+			
+			{{ if .Site.Params.versions }}
+			<li class="nav-item dropdown d-none d-lg-block">
+				{{ partial "navbar-version-selector.html" . }}
+			</li>
+			{{ end }}
+			
+			{{ if (gt (len .Site.Home.Translations) 0) }}
+			<li class="nav-item dropdown d-lg-block">
+				{{ partial "navbar-lang-selector.html" . }}
+			</li>
+			{{ end }}
+		</ul>
+		<div class="form-inline my-2 my-lg-0">
+			<div class="nav-item nav-search-item my-2 my-md-0">{{ partial "search-input.html" . }}</div>
+		</div>
+	</div>
+</nav>
