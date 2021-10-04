@@ -1,0 +1,365 @@
+<!doctype html><html lang=zh class=no-js>
+<head>
+<meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no">
+<meta name=generator content="Hugo 0.88.1">
+<meta name=ROBOTS content="INDEX, FOLLOW">
+<link rel="shortcut icon" href=/favicons/favicon.ico>
+<link rel=apple-touch-icon href=/favicons/apple-touch-icon-180x180.png sizes=180x180>
+<link rel=icon type=image/png href=/favicons/favicon-16x16.png sizes=16x16>
+<link rel=icon type=image/png href=/favicons/favicon-32x32.png sizes=32x32>
+<link rel=icon type=image/png href=/favicons/android-36x36.png sizes=36x36>
+<link rel=icon type=image/png href=/favicons/android-48x48.png sizes=48x48>
+<link rel=icon type=image/png href=/favicons/android-72x72.png sizes=72x72>
+<link rel=icon type=image/png href=/favicons/android-96x96.png sizes=96x96>
+<link rel=icon type=image/png href=/favicons/android-144x144.png sizes=144x144>
+<link rel=icon type=image/png href=/favicons/android-192x192.png sizes=192x192>
+<title>ZAB | infilos.com</title><meta property="og:title" content="ZAB">
+<meta property="og:description" content="背景 Zookeeper 使用了一种称为 Zab（Zookeeper Atomic Broadcast）的协议作为其一致性复制的核心，据其作者说这是一种新发算法，其特点是充分考虑了 Yahoo 的具体情况：高吞吐量、低延迟、健壮、简单，但不过分要求其扩展性。
+Zookeeper 的实现是有 Client、Server 构成，Server 端提供了一个一致性复制、存储服务，Client 端会提供一些具体的语义，比如分布式锁、选举算法、分布式互斥等。从存储内容来说，Server 端更多的是存储一些数据的状态，而非数据内容本身，因此 Zookeeper 可以作为一个小文件系统使用。数据状态的存储量相对不大，完全可以全部加载到内存中，从而极大地消除了通信延迟。
+Server 可以 Crash 后重启，考虑到容错性，Server 必须“记住”之前的数据状态，因此数据需要持久化，但吞吐量很高时，磁盘的 IO 便成为系统瓶颈，其解决办法是使用缓存，把随机写变为连续写。
+考虑到 Zookeeper 主要操作数据的状态，为了保证状态的一致性， Zookeeper 提出了两个安全属性（Safety Property）：
+ 全序(total-order)，如果消息 A 在消息 B 之前发送，则所有 Server 应该看到相同顺序的结果。 因果关系(causal-order)，如果消息 A 在消息 B 之前发生(A 导致了 B)，并被一起发送，则 A 始终在 B 之前执行。  为了保证上述两个安全属性，Zookeeper 使用了 TCP 协议和 Leader 机制。通过使用 TCP 协议保证了消息的全序特性（先发先到），通过 Leader 机制解决了因果顺序问题：先到 Leader 的先执行。因为有了 Leader，Zookeeper 的架构就变为：Master-Slave 模式，但在该模式中Master（Leader）会 Crash，因此，Zookeeper 引入了 Leader 选举算法，以保证系统的健壮性。归纳起来 Zookeeper 整个工作分两个阶段：">
+<meta property="og:type" content="article">
+<meta property="og:url" content="/%E5%88%86%E5%B8%83%E5%BC%8F/base/zab/"><meta property="article:section" content="分布式">
+<meta property="og:site_name" content="infilos.com">
+<meta itemprop=name content="ZAB">
+<meta itemprop=description content="背景 Zookeeper 使用了一种称为 Zab（Zookeeper Atomic Broadcast）的协议作为其一致性复制的核心，据其作者说这是一种新发算法，其特点是充分考虑了 Yahoo 的具体情况：高吞吐量、低延迟、健壮、简单，但不过分要求其扩展性。
+Zookeeper 的实现是有 Client、Server 构成，Server 端提供了一个一致性复制、存储服务，Client 端会提供一些具体的语义，比如分布式锁、选举算法、分布式互斥等。从存储内容来说，Server 端更多的是存储一些数据的状态，而非数据内容本身，因此 Zookeeper 可以作为一个小文件系统使用。数据状态的存储量相对不大，完全可以全部加载到内存中，从而极大地消除了通信延迟。
+Server 可以 Crash 后重启，考虑到容错性，Server 必须“记住”之前的数据状态，因此数据需要持久化，但吞吐量很高时，磁盘的 IO 便成为系统瓶颈，其解决办法是使用缓存，把随机写变为连续写。
+考虑到 Zookeeper 主要操作数据的状态，为了保证状态的一致性， Zookeeper 提出了两个安全属性（Safety Property）：
+ 全序(total-order)，如果消息 A 在消息 B 之前发送，则所有 Server 应该看到相同顺序的结果。 因果关系(causal-order)，如果消息 A 在消息 B 之前发生(A 导致了 B)，并被一起发送，则 A 始终在 B 之前执行。  为了保证上述两个安全属性，Zookeeper 使用了 TCP 协议和 Leader 机制。通过使用 TCP 协议保证了消息的全序特性（先发先到），通过 Leader 机制解决了因果顺序问题：先到 Leader 的先执行。因为有了 Leader，Zookeeper 的架构就变为：Master-Slave 模式，但在该模式中Master（Leader）会 Crash，因此，Zookeeper 引入了 Leader 选举算法，以保证系统的健壮性。归纳起来 Zookeeper 整个工作分两个阶段：">
+<meta itemprop=wordCount content="314">
+<meta itemprop=keywords content><meta name=twitter:card content="summary">
+<meta name=twitter:title content="ZAB">
+<meta name=twitter:description content="背景 Zookeeper 使用了一种称为 Zab（Zookeeper Atomic Broadcast）的协议作为其一致性复制的核心，据其作者说这是一种新发算法，其特点是充分考虑了 Yahoo 的具体情况：高吞吐量、低延迟、健壮、简单，但不过分要求其扩展性。
+Zookeeper 的实现是有 Client、Server 构成，Server 端提供了一个一致性复制、存储服务，Client 端会提供一些具体的语义，比如分布式锁、选举算法、分布式互斥等。从存储内容来说，Server 端更多的是存储一些数据的状态，而非数据内容本身，因此 Zookeeper 可以作为一个小文件系统使用。数据状态的存储量相对不大，完全可以全部加载到内存中，从而极大地消除了通信延迟。
+Server 可以 Crash 后重启，考虑到容错性，Server 必须“记住”之前的数据状态，因此数据需要持久化，但吞吐量很高时，磁盘的 IO 便成为系统瓶颈，其解决办法是使用缓存，把随机写变为连续写。
+考虑到 Zookeeper 主要操作数据的状态，为了保证状态的一致性， Zookeeper 提出了两个安全属性（Safety Property）：
+ 全序(total-order)，如果消息 A 在消息 B 之前发送，则所有 Server 应该看到相同顺序的结果。 因果关系(causal-order)，如果消息 A 在消息 B 之前发生(A 导致了 B)，并被一起发送，则 A 始终在 B 之前执行。  为了保证上述两个安全属性，Zookeeper 使用了 TCP 协议和 Leader 机制。通过使用 TCP 协议保证了消息的全序特性（先发先到），通过 Leader 机制解决了因果顺序问题：先到 Leader 的先执行。因为有了 Leader，Zookeeper 的架构就变为：Master-Slave 模式，但在该模式中Master（Leader）会 Crash，因此，Zookeeper 引入了 Leader 选举算法，以保证系统的健壮性。归纳起来 Zookeeper 整个工作分两个阶段：">
+<script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga('create','UA-123062585-1','auto'),ga('send','pageview'))</script>
+<script async src=https://www.google-analytics.com/analytics.js></script>
+<link rel=preload href=/scss/main.min.847464b684a6e89d7276700a5c500c17ab494dd1755b2654a7b27d8b59e3347e.css as=style>
+<link href=/scss/main.min.847464b684a6e89d7276700a5c500c17ab494dd1755b2654a7b27d8b59e3347e.css rel=stylesheet integrity>
+<script src=/js/jquery-3.5.1.min.js integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin=anonymous></script>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/docsearch.js@2/dist/cdn/docsearch.min.css>
+</head>
+<body class=td-page>
+<header>
+<nav class="js-navbar-scroll navbar navbar-expand navbar-dark flex-column flex-md-row td-navbar">
+<a class=navbar-brand href=/>
+<span class=navbar-logo><svg id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512" style="enable-background:new 0 0 512 512"><path style="fill:#ffc107" d="M432.384 143.616c-4.165-4.164-10.917-4.164-15.083.0l-60.352 60.352c-4.164 4.165-4.164 10.917.0 15.083 21.187 20.463 54.951 19.876 75.413-1.311 19.962-20.668 19.962-53.435.0-74.102L432.384 143.616z"/><path style="fill:#607d8b" d="M42.667 277.334c-5.891.003-10.669-4.771-10.672-10.662-.002-4.338 2.623-8.245 6.64-9.882l234.667-96c5.455-2.233 11.687.38 13.92 5.835s-.38 11.687-5.835 13.92l-234.667 96C45.433 277.069 44.056 277.337 42.667 277.334z"/><path style="fill:#546e7a" d="M391.552 56.448l-32-32C343.938 8.745 322.689-.059 300.544.0h-3.755c-46.082.024-83.432 37.374-83.456 83.456v3.755c-.053 22.138 8.75 43.377 24.448 58.987l32 32c4.165 4.164 10.917 4.164 15.083.0L391.531 71.531C395.701 67.372 395.71 60.62 391.552 56.448z"/><path style="fill:#607d8b" d="M160 469.334c-3.279.006-6.379-1.497-8.405-4.075L34.261 315.926c-3.635-4.636-2.823-11.341 1.813-14.976s11.341-2.823 14.976 1.813l117.333 149.333c3.629 4.641 2.809 11.344-1.832 14.973C164.681 468.533 162.375 469.329 160 469.334z"/><path style="fill:#455a64" d="M487.467 86.848l-3.669-3.648c-37.687-36.557-97.71-36.197-134.955.811l-51.413 51.413c-36.996 37.25-37.357 97.263-.811 134.955l3.584 3.669c1.7 2.457 4.671 3.706 7.616 3.2 2.831.005 5.548-1.115 7.552-3.115l172.181-172.181c4.189-4.143 4.226-10.896.083-15.085-.028-.028-.055-.056-.083-.083L487.467 86.848z"/><g><path style="fill:#ffc107" d="M501.333 192H480c-5.891.0-10.667-4.776-10.667-10.667s4.776-10.667 10.667-10.667h21.333c5.891.0 10.667 4.776 10.667 10.667S507.225 192 501.333 192z"/><path style="fill:#ffc107" d="M394.667 298.667c-5.891.0-10.667-4.776-10.667-10.667v-21.333c0-5.891 4.776-10.667 10.667-10.667 5.891.0 10.667 4.776 10.667 10.667V288C405.333 293.891 400.558 298.667 394.667 298.667z"/><path style="fill:#ffc107" d="M480 277.334c-2.831.005-5.548-1.115-7.552-3.115l-21.333-21.333c-4.093-4.237-3.975-10.99.262-15.083 4.134-3.993 10.687-3.993 14.821.0l21.333 21.333c4.159 4.172 4.148 10.926-.024 15.085C485.514 276.209 482.815 277.327 480 277.334z"/></g><g><path style="fill:#455a64" d="M266.667 448H96c-29.455.0-53.333 23.878-53.333 53.333.0 5.891 4.776 10.667 10.667 10.667h256c5.891.0 10.667-4.776 10.667-10.667C320 471.878 296.122 448 266.667 448z"/><circle style="fill:#455a64" cx="32" cy="288" r="32"/></g><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/></svg></span><span class=font-weight-bold>infilos.com</span>
+</a>
+<div class="collapse navbar-collapse" id=navbarSupportedContent>
+<ul class="navbar-nav mr-auto">
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+基础
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/%e6%93%8d%e4%bd%9c%e7%b3%bb%e7%bb%9f>操作系统</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/%e6%80%a7%e8%83%bd%e4%b9%8b%e6%ae%87>性能之殇</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/io%e6%a8%a1%e5%9e%8b>IO 模型</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/%e7%bd%91%e7%bb%9c%e5%9f%ba%e7%a1%80>网络基础</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/tcp-ip>TCP-IP</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/http>HTTP</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+语言
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/java>Java 编程</a>
+<a class=dropdown-item href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/jvm-core>JVM 核心</a>
+<a class=dropdown-item href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/jvm-concurrent>JVM 并发</a>
+<a class=dropdown-item href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/scala>Scala 编程</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+框架库
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93/spring>Spring</a>
+<a class=dropdown-item href=/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93/hikari>Hikari</a>
+<a class=dropdown-item href=/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93/parboiled>Parboiled</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+分布式
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%88%86%e5%b8%83%e5%bc%8f/base>基本构成</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+大数据
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%ad%98%e5%82%a8%e7%b3%bb%e7%bb%9f>存储系统</a>
+<a class=dropdown-item href=/%e6%9f%a5%e8%af%a2%e7%b3%bb%e7%bb%9f>查询系统</a>
+<a class=dropdown-item href=/%e6%b6%88%e6%81%af%e7%b3%bb%e7%bb%9f>消息系统</a>
+<a class=dropdown-item href=/%e5%a4%84%e7%90%86%e7%b3%bb%e7%bb%9f>处理系统</a>
+<a class=dropdown-item href=/%e7%ae%a1%e7%90%86%e7%b3%bb%e7%bb%9f>管理系统</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+中后台
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e8%ae%be%e6%96%bd>基础设施</a>
+<a class=dropdown-item href=/%e4%ba%a4%e4%ba%92%e7%95%8c%e9%9d%a2>交互界面</a>
+<a class=dropdown-item href=/%e4%b8%9a%e5%8a%a1%e7%b3%bb%e7%bb%9f>业务系统</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+模式架构
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e6%a8%a1%e5%bc%8f%e6%9e%b6%e6%9e%84/design-pattern>设计模式</a>
+<a class=dropdown-item href=/%e6%a8%a1%e5%bc%8f%e6%9e%b6%e6%9e%84/micro-service>微服务架构</a>
+</div>
+</li>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e9%9d%a2%e8%af%95%e9%97%ae%e7%ad%94>
+<span>面试</span>
+</a>
+</li>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e7%ae%a1%e7%90%86%e8%b7%af%e5%be%84>
+<span>管理</span>
+</a>
+</li>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e5%bc%80%e6%ba%90%e9%a1%b9%e7%9b%ae>
+<span>开源</span>
+</a>
+</li>
+</ul>
+<div class="form-inline my-2 my-lg-0">
+<div class="nav-item nav-search-item my-2 my-md-0">
+<input type=search class="form-control td-search-input" placeholder="&#xf002; 站内搜索…" aria-label=站内搜索… autocomplete=off>
+</div>
+</div>
+</div>
+</nav>
+</header>
+<div class="container-fluid td-outer">
+<div class=td-main>
+<div class="row flex-xl-nowrap">
+<aside class="col-12 col-md-3 col-xl-2 td-sidebar d-print-none">
+<div id=td-sidebar-menu class=td-sidebar__inner>
+<div id=content-mobile>
+<form class="td-sidebar__search d-flex align-items-center">
+<input type=search class="form-control td-search-input" placeholder="&#xf002; 站内搜索…" aria-label=站内搜索… autocomplete=off>
+<button class="btn btn-link td-sidebar__toggle d-md-none p-0 ml-3 fas fa-bars" type=button data-toggle=collapse data-target=#td-section-nav aria-controls=td-docs-nav aria-expanded=false aria-label="Toggle section navigation">
+</button>
+</form>
+</div>
+<div id=content-desktop></div>
+<nav class="collapse td-sidebar-nav" id=td-section-nav>
+<ul class="td-sidebar-nav__section pr-md-3 ul-0">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e58886e5b883e5bc8f-li>
+<a href=/%E5%88%86%E5%B8%83%E5%BC%8F/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section tree-root" id=m-e58886e5b883e5bc8f><span>分布式</span></a>
+<ul class=ul-1>
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e58886e5b883e5bc8fbase-li>
+<a href=/%E5%88%86%E5%B8%83%E5%BC%8F/base/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e58886e5b883e5bc8fbase><span>基本构成</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e58886e5b883e5bc8fbaseconsistence-li>
+<a href=/%E5%88%86%E5%B8%83%E5%BC%8F/base/consistence/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e58886e5b883e5bc8fbaseconsistence><span>一致性模型</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e58886e5b883e5bc8fbaseacid-li>
+<a href=/%E5%88%86%E5%B8%83%E5%BC%8F/base/acid/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e58886e5b883e5bc8fbaseacid><span>ACID 隔离级别</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e58886e5b883e5bc8fbasecap-li>
+<a href=/%E5%88%86%E5%B8%83%E5%BC%8F/base/cap/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e58886e5b883e5bc8fbasecap><span>CAP</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e58886e5b883e5bc8fbasebase-li>
+<a href=/%E5%88%86%E5%B8%83%E5%BC%8F/base/base/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e58886e5b883e5bc8fbasebase><span>BASE</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e58886e5b883e5bc8fbasecalm-li>
+<a href=/%E5%88%86%E5%B8%83%E5%BC%8F/base/calm/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e58886e5b883e5bc8fbasecalm><span>CALM</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e58886e5b883e5bc8fbasegossip-li>
+<a href=/%E5%88%86%E5%B8%83%E5%BC%8F/base/gossip/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e58886e5b883e5bc8fbasegossip><span>Gossip</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e58886e5b883e5bc8fbasecrdt-li>
+<a href=/%E5%88%86%E5%B8%83%E5%BC%8F/base/crdt/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e58886e5b883e5bc8fbasecrdt><span>CRDT</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e58886e5b883e5bc8fbase2pc-li>
+<a href=/%E5%88%86%E5%B8%83%E5%BC%8F/base/2pc/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e58886e5b883e5bc8fbase2pc><span>2PC</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e58886e5b883e5bc8fbase3pc-li>
+<a href=/%E5%88%86%E5%B8%83%E5%BC%8F/base/3pc/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e58886e5b883e5bc8fbase3pc><span>3PC</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e58886e5b883e5bc8fbasepaxos-li>
+<a href=/%E5%88%86%E5%B8%83%E5%BC%8F/base/paxos/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e58886e5b883e5bc8fbasepaxos><span>Paxos</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child active-path" id=m-e58886e5b883e5bc8fbasezab-li>
+<a href=/%E5%88%86%E5%B8%83%E5%BC%8F/base/zab/ class="align-left pl-0 active td-sidebar-link td-sidebar-link__page" id=m-e58886e5b883e5bc8fbasezab><span class=td-sidebar-nav-active-item>ZAB</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e58886e5b883e5bc8fbaseraft-li>
+<a href=/%E5%88%86%E5%B8%83%E5%BC%8F/base/raft/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e58886e5b883e5bc8fbaseraft><span>Raft</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e58886e5b883e5bc8fbasee58886e5b883e5bc8fe4b880e887b4-li>
+<a href=/%E5%88%86%E5%B8%83%E5%BC%8F/base/%E5%88%86%E5%B8%83%E5%BC%8F%E4%B8%80%E8%87%B4/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e58886e5b883e5bc8fbasee58886e5b883e5bc8fe4b880e887b4><span>分布式一致性</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e58886e5b883e5bc8fbasee58886e5b883e5bc8fe4ba8be58aa1-li>
+<a href=/%E5%88%86%E5%B8%83%E5%BC%8F/base/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e58886e5b883e5bc8fbasee58886e5b883e5bc8fe4ba8be58aa1><span>分布式事务</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e58886e5b883e5bc8fbasee58886e5b883e5bc8fe99481-li>
+<a href=/%E5%88%86%E5%B8%83%E5%BC%8F/base/%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e58886e5b883e5bc8fbasee58886e5b883e5bc8fe99481><span>分布式锁</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e58886e5b883e5bc8fbasee4b880e887b4e680a7e585b1e8af86-li>
+<a href=/%E5%88%86%E5%B8%83%E5%BC%8F/base/%E4%B8%80%E8%87%B4%E6%80%A7%E5%85%B1%E8%AF%86/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e58886e5b883e5bc8fbasee4b880e887b4e680a7e585b1e8af86><span>一致性与共识算法</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e58886e5b883e5bc8fbasee4b880e887b4e680a7e59388e5b88c-li>
+<a href=/%E5%88%86%E5%B8%83%E5%BC%8F/base/%E4%B8%80%E8%87%B4%E6%80%A7%E5%93%88%E5%B8%8C/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e58886e5b883e5bc8fbasee4b880e887b4e680a7e59388e5b88c><span>一致性哈希算法</span></a>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</div>
+</aside>
+<aside class="d-none d-xl-block col-xl-2 td-sidebar-toc d-print-none">
+<div class="td-page-meta ml-2 pb-1 pt-2 mb-0">
+<a href=https://github.com/infilos/infilos.com/edit/master/content/zh/%e5%88%86%e5%b8%83%e5%bc%8f/base/zab.md target=_blank><i class="fa fa-edit fa-fw"></i> 编辑此页</a>
+<a href="https://github.com/infilos/infilos.com/new/master/content/zh/%e5%88%86%e5%b8%83%e5%bc%8f/base/zab.md?filename=change-me.md&value=---%0Atitle%3A+%22Long+Page+Title%22%0AlinkTitle%3A+%22Short+Nav+Title%22%0Aweight%3A+100%0Adescription%3A+%3E-%0A+++++Page+description+for+heading+and+indexes.%0A---%0A%0A%23%23+Heading%0A%0AEdit+this+template+to+create+your+new+page.%0A%0A%2A+Give+it+a+good+name%2C+ending+in+%60.md%60+-+e.g.+%60getting-started.md%60%0A%2A+Edit+the+%22front+matter%22+section+at+the+top+of+the+page+%28weight+controls+how+its+ordered+amongst+other+pages+in+the+same+directory%3B+lowest+number+first%29.%0A%2A+Add+a+good+commit+message+at+the+bottom+of+the+page+%28%3C80+characters%3B+use+the+extended+description+field+for+more+detail%29.%0A%2A+Create+a+new+branch+so+you+can+preview+your+new+file+and+request+a+review+via+Pull+Request.%0A" target=_blank><i class="fa fa-edit fa-fw"></i> 添加子页面</a>
+<a href="https://github.com/infilos/infilos.com/issues/new?title=ZAB" target=_blank><i class="fab fa-github fa-fw"></i> 提交文档问题</a>
+<a id=print href=/%E5%88%86%E5%B8%83%E5%BC%8F/base/_print/><i class="fa fa-print fa-fw"></i> 整节打印</a>
+</div>
+<div class=td-toc><nav id=TableOfContents>
+<ul>
+<li><a href=#背景>背景</a></li>
+<li><a href=#atomic-broadcast>Atomic Broadcast</a></li>
+<li><a href=#leader-election>Leader Election</a></li>
+<li><a href=#zab-与-paxos>ZAB 与 Paxos</a></li>
+</ul>
+</nav></div>
+</aside>
+<main class="col-12 col-md-9 col-xl-8 pl-md-5" role=main>
+<nav aria-label=breadcrumb class="d-none d-md-block d-print-none">
+<ol class="breadcrumb spb-1">
+<li class=breadcrumb-item>
+<a href=/%E5%88%86%E5%B8%83%E5%BC%8F/>分布式</a>
+</li>
+<li class=breadcrumb-item>
+<a href=/%E5%88%86%E5%B8%83%E5%BC%8F/base/>基本构成</a>
+</li>
+<li class="breadcrumb-item active" aria-current=page>
+<a href=/%E5%88%86%E5%B8%83%E5%BC%8F/base/zab/>ZAB</a>
+</li>
+</ol>
+</nav>
+<div class=td-content>
+<h1>ZAB</h1>
+<header class=article-meta>
+</header>
+<h2 id=背景>背景</h2>
+<p>Zookeeper 使用了一种称为 Zab（Zookeeper Atomic Broadcast）的协议作为其一致性复制的核心，据其作者说这是一种新发算法，其特点是充分考虑了 Yahoo 的具体情况：高吞吐量、低延迟、健壮、简单，但不过分要求其扩展性。</p>
+<p>Zookeeper 的实现是有 Client、Server 构成，Server 端提供了一个一致性复制、存储服务，Client 端会提供一些具体的语义，比如分布式锁、选举算法、分布式互斥等。从存储内容来说，Server 端更多的是存储一些数据的状态，而非数据内容本身，因此 Zookeeper 可以作为一个小文件系统使用。数据状态的存储量相对不大，完全可以全部加载到内存中，从而极大地消除了通信延迟。</p>
+<p>Server 可以 Crash 后重启，考虑到容错性，Server 必须“记住”之前的数据状态，因此数据需要持久化，但吞吐量很高时，磁盘的 IO 便成为系统瓶颈，其解决办法是使用缓存，把随机写变为连续写。</p>
+<p>考虑到 Zookeeper 主要操作数据的状态，为了保证状态的一致性， Zookeeper 提出了两个安全属性（Safety Property）：</p>
+<ul>
+<li>全序(total-order)，如果消息 A 在消息 B 之前发送，则所有 Server 应该看到相同顺序的结果。</li>
+<li>因果关系(causal-order)，如果消息 A 在消息 B 之前发生(A 导致了 B)，并被一起发送，则 A 始终在 B 之前执行。</li>
+</ul>
+<p>为了保证上述两个安全属性，Zookeeper 使用了 TCP 协议和 Leader 机制。通过使用 TCP 协议保证了消息的全序特性（先发先到），通过 Leader 机制解决了因果顺序问题：先到 Leader 的先执行。因为有了 Leader，Zookeeper 的架构就变为：Master-Slave 模式，但在该模式中Master（Leader）会 Crash，因此，Zookeeper 引入了 Leader 选举算法，以保证系统的健壮性。归纳起来 Zookeeper 整个工作分两个阶段：</p>
+<ol>
+<li>Atomic Broadcast</li>
+<li>Leader 选举</li>
+</ol>
+<h2 id=atomic-broadcast>Atomic Broadcast</h2>
+<p>同一时刻存在一个 Leader 节点，其他节点称为 Follower。如果是更新请求，如果客户端连接到 Leader 节点，则由 Leader 节点执行其请求；如果连接到 Follower 节点，则需转发到 Leader 节点执行。但对于读请求，Client 可以直接从 Follower 节点读取数据，如果需要读取到最新数据，则需要从 Leader 节点读取，Zookeeper 设计的读写比例是 2：1。</p>
+<p>Leader 通过一个简化版的 2PC 模式向其他 Follower 发送请求，但与 2PC 有两个不同之处：</p>
+<ul>
+<li>因为只有一个 Leader，Leader 提交到 Follower 的请求一定会被接受(没有其他 Leader 干扰)。</li>
+<li>不需要所有 Follower 都响应成功，只要多数响应即可。</li>
+</ul>
+<p>通俗的说，如果有 2f+1 个节点，允许 f 个节点失败。因为任何两个过半数集必要一个交集，当 Leader 切换时，通过这些交集节点可以获得当前系统的最新状态。如果没有一个过半数集存在(存活节点少于 f+1)则算法过程结束。</p>
+<p>但又一个特例：如果 ABC 三个节点，A 是 Leader，如果 B 宕机，则 AC 能够正常工作，因为 A 是 Leader，AC 还能构成过半数集；如果 A 宕机则无法继续工作，因为用于 Leader 选举的过半数集无法构成。</p>
+<h2 id=leader-election>Leader Election</h2>
+<p>Leader 选举主要是依赖 Paxos 算法，具体算法过程请参考其他博文，这里仅考虑 Leader 选举带来的一些问题。</p>
+<p>Leader 选举遇到的最大问题是，”新老交互“的问题，新 Leader 是否要继续老 Leader 的状态。这里要按老 Leader Crash 的时机点分几种情况：</p>
+<ol>
+<li>老 Leader 在 COMMIT 前 Crash（已经提交到本地）。</li>
+<li>老 Leader 在 COMMIT 后 Crash，但有部分 Follower 接收到了Commit请求。</li>
+</ol>
+<p>第一种情况，这些数据只有老 Leader 自己知道，当老 Leader 重启后，需要与新 Leader 同步并把这些数据从本地删除，以维持状态一致。</p>
+<p>第二种情况，新 Leader 应该能通过一个多数派获得老 Leader 提交的最新数据。老 Leader 重启后，可能还会认为自己是 Leader，可能会继续发送未完成的请求，从而因为两个 Leader 同时存在导致算法过程失败，解决办法是把 Leader 信息加入每条消息的 id 中，Zookeeper 中称为 zxid，zxid 为一 64 位数字，高 32 位为 leader 信息又称为 epoch，每次 leader 转换时递增；低 32 位为消息编号，Leader 转换时应该从 0 重新开始编号。通过 zxid，Follower 能很容易发现请求是否来自老 Leader，从而拒绝老 Leader 的请求。</p>
+<p>因为在老 Leader 中存在着数据删除（情况1），因此 Zookeeper 的数据存储要支持补偿操作，这也就需要像数据库一样记录 log。</p>
+<h2 id=zab-与-paxos>ZAB 与 Paxos</h2>
+<p>Zab 的作者认为 Zab 与 Paxos 并不相同，只所以没有采用 Paxos 是因为 Paxos 保证不了全序顺序：</p>
+<blockquote>
+<p>Because multiple leaders can propose a value for a given instance two problems arise.
+First, proposals can conflict. Paxos uses ballots to detect and resolve conflicting proposals.
+Second, it is not enough to know that a given instance number has been committed, processes must also be able to figure out which value has been committed.</p>
+</blockquote>
+<p>Paxos 算法的确是不关心请求之间的逻辑顺序，而只考虑数据之间的全序，但很少有人直接使用 Paxos 算法，都会经过一定的简化、优化。</p>
+<p>一般 Paxos 都会有几种简化形式，其中之一便是，在存在 Leader 的情况下，可以简化为 1 个阶段（Leader Election）。仅有一个阶段的场景需要有一个健壮的 Leader，因此工作重点就变为 Leader 选举，在考虑到 Learner 的过程，还需要一个”学习“的阶段，通过这种方式，Paxos 可简化为两个阶段：</p>
+<ol>
+<li>Leader Election</li>
+<li>Learner Learn</li>
+</ol>
+<p>如果再考虑多数派要 Learn 成功，这其实就是 Zab 协议。Paxos 算法着重是强调了选举过程的控制，对决议学习考虑的不多，Zab 恰好对此进行了补充。</p>
+<style>.feedback--answer{display:inline-block}.feedback--answer-no{margin-left:1em}.feedback--response{display:none;margin-top:1em}.feedback--response__visible{display:block}</style>
+<div class=d-print-none>
+<h2 class=feedback--title>Feedback</h2>
+<p class=feedback--question>Was this page helpful?</p>
+<button class="btn btn-primary mb-4 feedback--answer feedback--answer-yes">Yes</button>
+<button class="btn btn-primary mb-4 feedback--answer feedback--answer-no">No</button>
+<p class="feedback--response feedback--response-yes">
+Glad to hear it! Please <a href=https://github.com/infilos/infilos.com/issues/new>tell us how we can improve</a>.
+</p>
+<p class="feedback--response feedback--response-no">
+Sorry to hear that. Please <a href=https://github.com/infilos/infilos.com/issues/new>tell us how we can improve</a>.
+</p>
+</div>
+<script>const yesButton=document.querySelector('.feedback--answer-yes'),noButton=document.querySelector('.feedback--answer-no'),yesResponse=document.querySelector('.feedback--response-yes'),noResponse=document.querySelector('.feedback--response-no'),disableButtons=()=>{yesButton.disabled=!0,noButton.disabled=!0},sendFeedback=b=>{if(typeof ga!='function')return;const a={command:'send',hitType:'event',category:'Helpful',action:'click',label:window.location.pathname,value:b};ga(a.command,a.hitType,a.category,a.action,a.label,a.value)};yesButton.addEventListener('click',()=>{yesResponse.classList.add('feedback--response__visible'),disableButtons(),sendFeedback(1)}),noButton.addEventListener('click',()=>{noResponse.classList.add('feedback--response__visible'),disableButtons(),sendFeedback(0)})</script>
+<br>
+</div>
+</main>
+</div>
+</div>
+<footer class="bg-dark py-5 row d-print-none">
+<div class="container-fluid mx-sm-5">
+<div class=row>
+<div class="col-6 col-sm-4 text-xs-center order-sm-2">
+</div>
+<div class="col-6 col-sm-4 text-right text-xs-center order-sm-3">
+<ul class="list-inline mb-0">
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Weibo aria-label=Weibo>
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://weibo.com/u/3848950217>
+<i class="fab fa-weibo"></i>
+</a>
+</li>
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Twitter aria-label=Twitter>
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://twitter.com/zhange_zzg>
+<i class="fab fa-twitter"></i>
+</a>
+</li>
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title="Stack Overflow" aria-label="Stack Overflow">
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://stackoverflow.com>
+<i class="fab fa-stack-overflow"></i>
+</a>
+</li>
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=GitHub aria-label=GitHub>
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://github.com/infilos/infilos.com>
+<i class="fab fa-github"></i>
+</a>
+</li>
+</ul>
+</div>
+<div class="col-12 col-sm-4 text-center py-2 order-sm-2">
+<small class=text-white>&copy; 2021 infilos.com All Rights Reserved</small>
+</div>
+</div>
+</div>
+</footer>
+</div>
+<script src=/js/popper.min.js integrity=sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49 crossorigin=anonymous></script>
+<script src=/js/bootstrap.min.js integrity=sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy crossorigin=anonymous></script>
+<script src=/js/main.min.5c74b870c6953931a705f390a49c7e4c0a842ec5c83b24354758dd674343ed0d.js integrity="sha256-XHS4cMaVOTGnBfOQpJx+TAqELsXIOyQ1R1jdZ0ND7Q0=" crossorigin=anonymous></script>
+<script src=https://cdn.jsdelivr.net/npm/docsearch.js@2.6.3/dist/cdn/docsearch.min.js></script>
+<script>docsearch({apiKey:'123',indexName:'infilos_com',inputSelector:'.td-search-input',debug:!1})</script>
+</body>
+</html>

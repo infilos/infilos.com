@@ -1,0 +1,658 @@
+<!doctype html><html lang=zh class=no-js>
+<head>
+<meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no">
+<meta name=generator content="Hugo 0.88.1">
+<meta name=ROBOTS content="INDEX, FOLLOW">
+<link rel="shortcut icon" href=/favicons/favicon.ico>
+<link rel=apple-touch-icon href=/favicons/apple-touch-icon-180x180.png sizes=180x180>
+<link rel=icon type=image/png href=/favicons/favicon-16x16.png sizes=16x16>
+<link rel=icon type=image/png href=/favicons/favicon-32x32.png sizes=32x32>
+<link rel=icon type=image/png href=/favicons/android-36x36.png sizes=36x36>
+<link rel=icon type=image/png href=/favicons/android-48x48.png sizes=48x48>
+<link rel=icon type=image/png href=/favicons/android-72x72.png sizes=72x72>
+<link rel=icon type=image/png href=/favicons/android-96x96.png sizes=96x96>
+<link rel=icon type=image/png href=/favicons/android-144x144.png sizes=144x144>
+<link rel=icon type=image/png href=/favicons/android-192x192.png sizes=192x192>
+<title>CH03-Stream | infilos.com</title><meta property="og:title" content="CH03-Stream">
+<meta property="og:description" content="概览 Redis5.0 中还增加了一个数据结构Stream，从字面上看是流类型，但其实从功能上看，应该是Redis对消息队列（MQ，Message Queue）的完善实现。
+用过Redis做消息队列的都了解，基于Reids的消息队列实现有很多种，例如：
+ PUB/SUB，订阅/发布模式：  但是发布订阅模式是无法持久化的，如果出现网络断开、Redis 宕机等，消息就会被丢弃；   基于 List LPUSH+BRPOP 或者基于Sorted-Set 的实现：  支持了持久化，但是不支持多播，分组消费等    为什么上面的结构无法满足广泛的MQ场景？ 这里便引出一个核心的问题：如果我们期望设计一种数据结构来实现消息队列，最重要的就是要理解设计一个消息队列需要考虑什么？初步的我们很容易想到
+ 消息的生产 消息的消费  单播和多播（多对多） 阻塞和非阻塞读取   消息有序性 消息的持久化   基本结构 每个 Stream 都有唯一的名称，它就是 Redis 的 key，在我们首次使用 xadd 指令追加消息时自动创建。
+ 上图解析：
+ Consumer Group ：消费组，使用 XGROUP CREATE 命令创建，一个消费组有多个消费者(Consumer), 这些消费者之间是竞争关系。 last_delivered_id ：游标，每个消费组会有个游标 last_delivered_id，任意一个消费者读取了消息都会使游标 last_delivered_id 往前移动。 pending_ids ：消费者(Consumer)的状态变量，作用是维护消费者的未确认的 id。 pending_ids 记录了当前已经被客户端读取的消息，但是还没有 ack (Acknowledge character：确认字符）。如果客户端没有ack，这个变量里面的消息ID会越来越多，一旦某个消息被ack，它就开始减少。这个pending_ids变量在Redis官方被称之为PEL，也就是Pending Entries List，这是一个很核心的数据结构，它用来确保客户端至少消费了消息一次，而不会在网络传输的中途丢失了没处理。  此外我们还需要理解两点：">
+<meta property="og:type" content="article">
+<meta property="og:url" content="/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/redis/ch03-stream/"><meta property="article:section" content="存储系统">
+<meta property="og:site_name" content="infilos.com">
+<meta itemprop=name content="CH03-Stream">
+<meta itemprop=description content="概览 Redis5.0 中还增加了一个数据结构Stream，从字面上看是流类型，但其实从功能上看，应该是Redis对消息队列（MQ，Message Queue）的完善实现。
+用过Redis做消息队列的都了解，基于Reids的消息队列实现有很多种，例如：
+ PUB/SUB，订阅/发布模式：  但是发布订阅模式是无法持久化的，如果出现网络断开、Redis 宕机等，消息就会被丢弃；   基于 List LPUSH+BRPOP 或者基于Sorted-Set 的实现：  支持了持久化，但是不支持多播，分组消费等    为什么上面的结构无法满足广泛的MQ场景？ 这里便引出一个核心的问题：如果我们期望设计一种数据结构来实现消息队列，最重要的就是要理解设计一个消息队列需要考虑什么？初步的我们很容易想到
+ 消息的生产 消息的消费  单播和多播（多对多） 阻塞和非阻塞读取   消息有序性 消息的持久化   基本结构 每个 Stream 都有唯一的名称，它就是 Redis 的 key，在我们首次使用 xadd 指令追加消息时自动创建。
+ 上图解析：
+ Consumer Group ：消费组，使用 XGROUP CREATE 命令创建，一个消费组有多个消费者(Consumer), 这些消费者之间是竞争关系。 last_delivered_id ：游标，每个消费组会有个游标 last_delivered_id，任意一个消费者读取了消息都会使游标 last_delivered_id 往前移动。 pending_ids ：消费者(Consumer)的状态变量，作用是维护消费者的未确认的 id。 pending_ids 记录了当前已经被客户端读取的消息，但是还没有 ack (Acknowledge character：确认字符）。如果客户端没有ack，这个变量里面的消息ID会越来越多，一旦某个消息被ack，它就开始减少。这个pending_ids变量在Redis官方被称之为PEL，也就是Pending Entries List，这是一个很核心的数据结构，它用来确保客户端至少消费了消息一次，而不会在网络传输的中途丢失了没处理。  此外我们还需要理解两点：">
+<meta itemprop=wordCount content="798">
+<meta itemprop=keywords content><meta name=twitter:card content="summary">
+<meta name=twitter:title content="CH03-Stream">
+<meta name=twitter:description content="概览 Redis5.0 中还增加了一个数据结构Stream，从字面上看是流类型，但其实从功能上看，应该是Redis对消息队列（MQ，Message Queue）的完善实现。
+用过Redis做消息队列的都了解，基于Reids的消息队列实现有很多种，例如：
+ PUB/SUB，订阅/发布模式：  但是发布订阅模式是无法持久化的，如果出现网络断开、Redis 宕机等，消息就会被丢弃；   基于 List LPUSH+BRPOP 或者基于Sorted-Set 的实现：  支持了持久化，但是不支持多播，分组消费等    为什么上面的结构无法满足广泛的MQ场景？ 这里便引出一个核心的问题：如果我们期望设计一种数据结构来实现消息队列，最重要的就是要理解设计一个消息队列需要考虑什么？初步的我们很容易想到
+ 消息的生产 消息的消费  单播和多播（多对多） 阻塞和非阻塞读取   消息有序性 消息的持久化   基本结构 每个 Stream 都有唯一的名称，它就是 Redis 的 key，在我们首次使用 xadd 指令追加消息时自动创建。
+ 上图解析：
+ Consumer Group ：消费组，使用 XGROUP CREATE 命令创建，一个消费组有多个消费者(Consumer), 这些消费者之间是竞争关系。 last_delivered_id ：游标，每个消费组会有个游标 last_delivered_id，任意一个消费者读取了消息都会使游标 last_delivered_id 往前移动。 pending_ids ：消费者(Consumer)的状态变量，作用是维护消费者的未确认的 id。 pending_ids 记录了当前已经被客户端读取的消息，但是还没有 ack (Acknowledge character：确认字符）。如果客户端没有ack，这个变量里面的消息ID会越来越多，一旦某个消息被ack，它就开始减少。这个pending_ids变量在Redis官方被称之为PEL，也就是Pending Entries List，这是一个很核心的数据结构，它用来确保客户端至少消费了消息一次，而不会在网络传输的中途丢失了没处理。  此外我们还需要理解两点：">
+<script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga('create','UA-123062585-1','auto'),ga('send','pageview'))</script>
+<script async src=https://www.google-analytics.com/analytics.js></script>
+<link rel=preload href=/scss/main.min.847464b684a6e89d7276700a5c500c17ab494dd1755b2654a7b27d8b59e3347e.css as=style>
+<link href=/scss/main.min.847464b684a6e89d7276700a5c500c17ab494dd1755b2654a7b27d8b59e3347e.css rel=stylesheet integrity>
+<script src=/js/jquery-3.5.1.min.js integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin=anonymous></script>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/docsearch.js@2/dist/cdn/docsearch.min.css>
+</head>
+<body class=td-page>
+<header>
+<nav class="js-navbar-scroll navbar navbar-expand navbar-dark flex-column flex-md-row td-navbar">
+<a class=navbar-brand href=/>
+<span class=navbar-logo><svg id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512" style="enable-background:new 0 0 512 512"><path style="fill:#ffc107" d="M432.384 143.616c-4.165-4.164-10.917-4.164-15.083.0l-60.352 60.352c-4.164 4.165-4.164 10.917.0 15.083 21.187 20.463 54.951 19.876 75.413-1.311 19.962-20.668 19.962-53.435.0-74.102L432.384 143.616z"/><path style="fill:#607d8b" d="M42.667 277.334c-5.891.003-10.669-4.771-10.672-10.662-.002-4.338 2.623-8.245 6.64-9.882l234.667-96c5.455-2.233 11.687.38 13.92 5.835s-.38 11.687-5.835 13.92l-234.667 96C45.433 277.069 44.056 277.337 42.667 277.334z"/><path style="fill:#546e7a" d="M391.552 56.448l-32-32C343.938 8.745 322.689-.059 300.544.0h-3.755c-46.082.024-83.432 37.374-83.456 83.456v3.755c-.053 22.138 8.75 43.377 24.448 58.987l32 32c4.165 4.164 10.917 4.164 15.083.0L391.531 71.531C395.701 67.372 395.71 60.62 391.552 56.448z"/><path style="fill:#607d8b" d="M160 469.334c-3.279.006-6.379-1.497-8.405-4.075L34.261 315.926c-3.635-4.636-2.823-11.341 1.813-14.976s11.341-2.823 14.976 1.813l117.333 149.333c3.629 4.641 2.809 11.344-1.832 14.973C164.681 468.533 162.375 469.329 160 469.334z"/><path style="fill:#455a64" d="M487.467 86.848l-3.669-3.648c-37.687-36.557-97.71-36.197-134.955.811l-51.413 51.413c-36.996 37.25-37.357 97.263-.811 134.955l3.584 3.669c1.7 2.457 4.671 3.706 7.616 3.2 2.831.005 5.548-1.115 7.552-3.115l172.181-172.181c4.189-4.143 4.226-10.896.083-15.085-.028-.028-.055-.056-.083-.083L487.467 86.848z"/><g><path style="fill:#ffc107" d="M501.333 192H480c-5.891.0-10.667-4.776-10.667-10.667s4.776-10.667 10.667-10.667h21.333c5.891.0 10.667 4.776 10.667 10.667S507.225 192 501.333 192z"/><path style="fill:#ffc107" d="M394.667 298.667c-5.891.0-10.667-4.776-10.667-10.667v-21.333c0-5.891 4.776-10.667 10.667-10.667 5.891.0 10.667 4.776 10.667 10.667V288C405.333 293.891 400.558 298.667 394.667 298.667z"/><path style="fill:#ffc107" d="M480 277.334c-2.831.005-5.548-1.115-7.552-3.115l-21.333-21.333c-4.093-4.237-3.975-10.99.262-15.083 4.134-3.993 10.687-3.993 14.821.0l21.333 21.333c4.159 4.172 4.148 10.926-.024 15.085C485.514 276.209 482.815 277.327 480 277.334z"/></g><g><path style="fill:#455a64" d="M266.667 448H96c-29.455.0-53.333 23.878-53.333 53.333.0 5.891 4.776 10.667 10.667 10.667h256c5.891.0 10.667-4.776 10.667-10.667C320 471.878 296.122 448 266.667 448z"/><circle style="fill:#455a64" cx="32" cy="288" r="32"/></g><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/></svg></span><span class=font-weight-bold>infilos.com</span>
+</a>
+<div class="collapse navbar-collapse" id=navbarSupportedContent>
+<ul class="navbar-nav mr-auto">
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+基础
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/%e6%93%8d%e4%bd%9c%e7%b3%bb%e7%bb%9f>操作系统</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/%e6%80%a7%e8%83%bd%e4%b9%8b%e6%ae%87>性能之殇</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/io%e6%a8%a1%e5%9e%8b>IO 模型</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/%e7%bd%91%e7%bb%9c%e5%9f%ba%e7%a1%80>网络基础</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/tcp-ip>TCP-IP</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/http>HTTP</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+语言
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/java>Java 编程</a>
+<a class=dropdown-item href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/jvm-core>JVM 核心</a>
+<a class=dropdown-item href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/jvm-concurrent>JVM 并发</a>
+<a class=dropdown-item href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/scala>Scala 编程</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+框架库
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93/spring>Spring</a>
+<a class=dropdown-item href=/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93/hikari>Hikari</a>
+<a class=dropdown-item href=/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93/parboiled>Parboiled</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+分布式
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%88%86%e5%b8%83%e5%bc%8f/base>基本构成</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+大数据
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%ad%98%e5%82%a8%e7%b3%bb%e7%bb%9f>存储系统</a>
+<a class=dropdown-item href=/%e6%9f%a5%e8%af%a2%e7%b3%bb%e7%bb%9f>查询系统</a>
+<a class=dropdown-item href=/%e6%b6%88%e6%81%af%e7%b3%bb%e7%bb%9f>消息系统</a>
+<a class=dropdown-item href=/%e5%a4%84%e7%90%86%e7%b3%bb%e7%bb%9f>处理系统</a>
+<a class=dropdown-item href=/%e7%ae%a1%e7%90%86%e7%b3%bb%e7%bb%9f>管理系统</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+中后台
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e8%ae%be%e6%96%bd>基础设施</a>
+<a class=dropdown-item href=/%e4%ba%a4%e4%ba%92%e7%95%8c%e9%9d%a2>交互界面</a>
+<a class=dropdown-item href=/%e4%b8%9a%e5%8a%a1%e7%b3%bb%e7%bb%9f>业务系统</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+模式架构
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e6%a8%a1%e5%bc%8f%e6%9e%b6%e6%9e%84/design-pattern>设计模式</a>
+<a class=dropdown-item href=/%e6%a8%a1%e5%bc%8f%e6%9e%b6%e6%9e%84/micro-service>微服务架构</a>
+</div>
+</li>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e9%9d%a2%e8%af%95%e9%97%ae%e7%ad%94>
+<span>面试</span>
+</a>
+</li>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e7%ae%a1%e7%90%86%e8%b7%af%e5%be%84>
+<span>管理</span>
+</a>
+</li>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e5%bc%80%e6%ba%90%e9%a1%b9%e7%9b%ae>
+<span>开源</span>
+</a>
+</li>
+</ul>
+<div class="form-inline my-2 my-lg-0">
+<div class="nav-item nav-search-item my-2 my-md-0">
+<input type=search class="form-control td-search-input" placeholder="&#xf002; 站内搜索…" aria-label=站内搜索… autocomplete=off>
+</div>
+</div>
+</div>
+</nav>
+</header>
+<div class="container-fluid td-outer">
+<div class=td-main>
+<div class="row flex-xl-nowrap">
+<aside class="col-12 col-md-3 col-xl-2 td-sidebar d-print-none">
+<div id=td-sidebar-menu class=td-sidebar__inner>
+<div id=content-mobile>
+<form class="td-sidebar__search d-flex align-items-center">
+<input type=search class="form-control td-search-input" placeholder="&#xf002; 站内搜索…" aria-label=站内搜索… autocomplete=off>
+<button class="btn btn-link td-sidebar__toggle d-md-none p-0 ml-3 fas fa-bars" type=button data-toggle=collapse data-target=#td-section-nav aria-controls=td-docs-nav aria-expanded=false aria-label="Toggle section navigation">
+</button>
+</form>
+</div>
+<div id=content-desktop></div>
+<nav class="collapse td-sidebar-nav" id=td-section-nav>
+<ul class="td-sidebar-nav__section pr-md-3 ul-0">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e5ad98e582a8e7b3bbe7bb9f-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section tree-root" id=m-e5ad98e582a8e7b3bbe7bb9f><span>存储系统</span></a>
+<ul class=ul-1>
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e5ad98e582a8e7b3bbe7bb9frdbms-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/rdbms/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e5ad98e582a8e7b3bbe7bb9frdbms><span>RDBMS</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9frdbmsch01-e5b7a5e4bd9ce696b9e5bc8f-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/rdbms/ch01-%E5%B7%A5%E4%BD%9C%E6%96%B9%E5%BC%8F/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9frdbmsch01-e5b7a5e4bd9ce696b9e5bc8f><span>CH01-工作方式</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9frdbmsch02-e8aebee8aea1e79086e8aeba-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/rdbms/ch02-%E8%AE%BE%E8%AE%A1%E7%90%86%E8%AE%BA/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9frdbmsch02-e8aebee8aea1e79086e8aeba><span>CH02-设计理论</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9frdbmsch03-e8aebee8aea1e6b581e7a88b-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/rdbms/ch03-%E8%AE%BE%E8%AE%A1%E6%B5%81%E7%A8%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9frdbmsch03-e8aebee8aea1e6b581e7a88b><span>CH03-设计流程</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9frdbmsch04-e6a0b8e5bf83e79fa5e8af86-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/rdbms/ch04-%E6%A0%B8%E5%BF%83%E7%9F%A5%E8%AF%86/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9frdbmsch04-e6a0b8e5bf83e79fa5e8af86><span>CH04-核心知识</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e5ad98e582a8e7b3bbe7bb9fsql-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/sql/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e5ad98e582a8e7b3bbe7bb9fsql><span>SQL</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fsqlch01-e8afade6b395e59fbae7a180-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/sql/ch01-%E8%AF%AD%E6%B3%95%E5%9F%BA%E7%A1%80/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fsqlch01-e8afade6b395e59fbae7a180><span>CH01-语法基础</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fsqlch02-e69fa5e8afa2e7bb83e4b9a0-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/sql/ch02-%E6%9F%A5%E8%AF%A2%E7%BB%83%E4%B9%A0/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fsqlch02-e69fa5e8afa2e7bb83e4b9a0><span>CH02-查询练习</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fsqlch03-e69fa5e8afa2e8bf9be998b6-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/sql/ch03-%E6%9F%A5%E8%AF%A2%E8%BF%9B%E9%98%B6/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fsqlch03-e69fa5e8afa2e8bf9be998b6><span>CH03-查询进阶</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fsqlch04-e69fa5e8afa2e4bc98e58c96-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/sql/ch04-%E6%9F%A5%E8%AF%A2%E4%BC%98%E5%8C%96/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fsqlch04-e69fa5e8afa2e4bc98e58c96><span>CH04-查询优化</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e5ad98e582a8e7b3bbe7bb9fmysql><span>MySQL</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch01-e695b0e68daee7b1bbe59e8b-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql/ch01-%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch01-e695b0e68daee7b1bbe59e8b><span>CH01-数据类型</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch02-e5ad98e582a8e5bc95e6938e-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql/ch02-%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch02-e5ad98e582a8e5bc95e6938e><span>CH02-存储引擎</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch03-e7b4a2e5bc95be6a091-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql/ch03-%E7%B4%A2%E5%BC%95b+%E6%A0%91/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch03-e7b4a2e5bc95be6a091><span>CH03-索引B+树</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch04-e680a7e883bde4bc98e58c96-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql/ch04-%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch04-e680a7e883bde4bc98e58c96><span>CH04-性能优化</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch05-e58886e5ba93e58886e8a1a8-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql/ch05-%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch05-e58886e5ba93e58886e8a1a8><span>CH05-分库分表</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch06-e5a48de588b6e58886e7a6bb-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql/ch06-%E5%A4%8D%E5%88%B6%E5%88%86%E7%A6%BB/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch06-e5a48de588b6e58886e7a6bb><span>CH06-复制分离</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch07-e689a7e8a18ce8bf87e7a88b-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql/ch07-%E6%89%A7%E8%A1%8C%E8%BF%87%E7%A8%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch07-e689a7e8a18ce8bf87e7a88b><span>CH07-执行过程</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e5ad98e582a8e7b3bbe7bb9fredis-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/redis/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e5ad98e582a8e7b3bbe7bb9fredis><span>Redis</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fredisch01-e59fbae69cace7b1bbe59e8b-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/redis/ch01-%E5%9F%BA%E6%9C%AC%E7%B1%BB%E5%9E%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fredisch01-e59fbae69cace7b1bbe59e8b><span>CH01-基本类型</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fredisch02-e9ab98e7baa7e7b1bbe59e8b-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/redis/ch02-%E9%AB%98%E7%BA%A7%E7%B1%BB%E5%9E%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fredisch02-e9ab98e7baa7e7b1bbe59e8b><span>CH02-高级类型</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child active-path" id=m-e5ad98e582a8e7b3bbe7bb9fredisch03-stream-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/redis/ch03-stream/ class="align-left pl-0 active td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fredisch03-stream><span class=td-sidebar-nav-active-item>CH03-Stream</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fredisch04-e5afb9e8b1a1e69cbae588b6-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/redis/ch04-%E5%AF%B9%E8%B1%A1%E6%9C%BA%E5%88%B6/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fredisch04-e5afb9e8b1a1e69cbae588b6><span>CH04-对象机制</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fredisch05-e5ba95e5b182e7bb93e69e84-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/redis/ch05-%E5%BA%95%E5%B1%82%E7%BB%93%E6%9E%84/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fredisch05-e5ba95e5b182e7bb93e69e84><span>CH05-底层结构</span></a>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</div>
+</aside>
+<aside class="d-none d-xl-block col-xl-2 td-sidebar-toc d-print-none">
+<div class="td-page-meta ml-2 pb-1 pt-2 mb-0">
+<a href=https://github.com/infilos/infilos.com/edit/master/content/zh/%e5%ad%98%e5%82%a8%e7%b3%bb%e7%bb%9f/redis/CH03-Stream.md target=_blank><i class="fa fa-edit fa-fw"></i> 编辑此页</a>
+<a href="https://github.com/infilos/infilos.com/new/master/content/zh/%e5%ad%98%e5%82%a8%e7%b3%bb%e7%bb%9f/redis/CH03-Stream.md?filename=change-me.md&value=---%0Atitle%3A+%22Long+Page+Title%22%0AlinkTitle%3A+%22Short+Nav+Title%22%0Aweight%3A+100%0Adescription%3A+%3E-%0A+++++Page+description+for+heading+and+indexes.%0A---%0A%0A%23%23+Heading%0A%0AEdit+this+template+to+create+your+new+page.%0A%0A%2A+Give+it+a+good+name%2C+ending+in+%60.md%60+-+e.g.+%60getting-started.md%60%0A%2A+Edit+the+%22front+matter%22+section+at+the+top+of+the+page+%28weight+controls+how+its+ordered+amongst+other+pages+in+the+same+directory%3B+lowest+number+first%29.%0A%2A+Add+a+good+commit+message+at+the+bottom+of+the+page+%28%3C80+characters%3B+use+the+extended+description+field+for+more+detail%29.%0A%2A+Create+a+new+branch+so+you+can+preview+your+new+file+and+request+a+review+via+Pull+Request.%0A" target=_blank><i class="fa fa-edit fa-fw"></i> 添加子页面</a>
+<a href="https://github.com/infilos/infilos.com/issues/new?title=CH03-Stream" target=_blank><i class="fab fa-github fa-fw"></i> 提交文档问题</a>
+<a id=print href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/redis/_print/><i class="fa fa-print fa-fw"></i> 整节打印</a>
+</div>
+<div class=td-toc><nav id=TableOfContents>
+<ul>
+<li><a href=#概览>概览</a></li>
+<li><a href=#基本结构>基本结构</a></li>
+<li><a href=#基本操作>基本操作</a></li>
+<li><a href=#独立消费>独立消费</a></li>
+<li><a href=#按组消费>按组消费</a>
+<ul>
+<li><a href=#相关命令>相关命令</a></li>
+<li><a href=#信息监控>信息监控</a></li>
+<li><a href=#应用场景>应用场景</a></li>
+<li><a href=#消息id的设计是否考虑了时间回拨的问题>消息ID的设计是否考虑了时间回拨的问题</a></li>
+<li><a href=#消费者崩溃带来的会不会消息丢失问题>消费者崩溃带来的会不会消息丢失问题</a></li>
+<li><a href=#消费者彻底宕机后如何转移给其它消费者处理>消费者彻底宕机后如何转移给其它消费者处理</a></li>
+<li><a href=#坏消息问题dead-letter死信问题>坏消息问题，Dead Letter，死信问题</a></li>
+</ul>
+</li>
+</ul>
+</nav></div>
+</aside>
+<main class="col-12 col-md-9 col-xl-8 pl-md-5" role=main>
+<nav aria-label=breadcrumb class="d-none d-md-block d-print-none">
+<ol class="breadcrumb spb-1">
+<li class=breadcrumb-item>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/>存储系统</a>
+</li>
+<li class=breadcrumb-item>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/redis/>Redis</a>
+</li>
+<li class="breadcrumb-item active" aria-current=page>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/redis/ch03-stream/>CH03-Stream</a>
+</li>
+</ol>
+</nav>
+<div class=td-content>
+<h1>CH03-Stream</h1>
+<header class=article-meta>
+</header>
+<h2 id=概览>概览</h2>
+<p>Redis5.0 中还增加了一个数据结构Stream，从字面上看是流类型，但其实从功能上看，应该是Redis对消息队列（MQ，Message Queue）的完善实现。</p>
+<p>用过Redis做消息队列的都了解，基于Reids的消息队列实现有很多种，例如：</p>
+<ul>
+<li>PUB/SUB，订阅/发布模式：
+<ul>
+<li>但是发布订阅模式是无法持久化的，如果出现网络断开、Redis 宕机等，消息就会被丢弃；</li>
+</ul>
+</li>
+<li>基于 List LPUSH+BRPOP 或者基于Sorted-Set 的实现：
+<ul>
+<li>支持了持久化，但是不支持多播，分组消费等</li>
+</ul>
+</li>
+</ul>
+<p>为什么上面的结构无法满足广泛的MQ场景？ 这里便引出一个核心的问题：如果我们期望设计一种数据结构来实现消息队列，最重要的就是要理解<strong>设计一个消息队列需要考虑什么</strong>？初步的我们很容易想到</p>
+<ul>
+<li>消息的生产</li>
+<li>消息的消费
+<ul>
+<li>单播和多播（多对多）</li>
+<li>阻塞和非阻塞读取</li>
+</ul>
+</li>
+<li>消息有序性</li>
+<li>消息的持久化</li>
+</ul>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20210504132556.png style=display:block;width:50% alt=NAME align=center> </div>
+<h2 id=基本结构>基本结构</h2>
+<p>每个 Stream 都有唯一的名称，它就是 Redis 的 key，在我们首次使用 xadd 指令追加消息时自动创建。</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20210504132658.png style=display:block;width:50% alt=NAME align=center> </div>
+<p>上图解析：</p>
+<ul>
+<li><code>Consumer Group</code> ：消费组，使用 XGROUP CREATE 命令创建，一个消费组有多个消费者(Consumer), 这些消费者之间是竞争关系。</li>
+<li><code>last_delivered_id</code> ：游标，每个消费组会有个游标 last_delivered_id，任意一个消费者读取了消息都会使游标 last_delivered_id 往前移动。</li>
+<li><code>pending_ids</code> ：消费者(Consumer)的状态变量，作用是维护消费者的未确认的 id。 pending_ids 记录了当前已经被客户端读取的消息，但是还没有 <code>ack</code> (Acknowledge character：确认字符）。如果客户端没有ack，这个变量里面的消息ID会越来越多，一旦某个消息被ack，它就开始减少。这个pending_ids变量在Redis官方被称之为PEL，也就是Pending Entries List，这是一个很核心的数据结构，它用来确保客户端至少消费了消息一次，而不会在网络传输的中途丢失了没处理。</li>
+</ul>
+<p>此外我们还需要理解两点：</p>
+<ul>
+<li><code>消息ID</code>: 消息ID的形式是timestampInMillis-sequence，例如1527846880572-5，它表示当前的消息在毫米时间戳1527846880572时产生，并且是该毫秒内产生的第5条消息。消息ID可以由服务器自动生成，也可以由客户端自己指定，但是形式必须是整数-整数，而且必须是后面加入的消息的ID要大于前面的消息ID。</li>
+<li><code>消息内容</code>: 消息内容就是键值对，形如hash结构的键值对，这没什么特别之处。</li>
+</ul>
+<h2 id=基本操作>基本操作</h2>
+<p>消息队列相关命令：</p>
+<ul>
+<li>XADD - 添加消息到末尾</li>
+<li>XTRIM - 对流进行修剪，限制长度</li>
+<li>XDEL - 删除消息</li>
+<li>XLEN - 获取流包含的元素数量，即消息长度</li>
+<li>XRANGE - 获取消息列表，会自动过滤已经删除的消息</li>
+<li>XREVRANGE - 反向获取消息列表，ID 从大到小</li>
+<li>XREAD - 以阻塞或非阻塞方式获取消息列表</li>
+</ul>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh><span style=color:#8f5902;font-style:italic># *号表示服务器自动生成ID，后面顺序跟着一堆key/value</span>
+127.0.0.1:6379&gt; xadd codehole * name laoqian age <span style=color:#0000cf;font-weight:700>30</span>  <span style=color:#8f5902;font-style:italic>#  名字叫laoqian，年龄30岁</span>
+1527849609889-0  <span style=color:#8f5902;font-style:italic># 生成的消息ID</span>
+127.0.0.1:6379&gt; xadd codehole * name xiaoyu age <span style=color:#0000cf;font-weight:700>29</span>
+1527849629172-0
+127.0.0.1:6379&gt; xadd codehole * name xiaoqian age <span style=color:#0000cf;font-weight:700>1</span>
+1527849637634-0
+127.0.0.1:6379&gt; xlen codehole
+<span style=color:#ce5c00;font-weight:700>(</span>integer<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#0000cf;font-weight:700>3</span>
+127.0.0.1:6379&gt; xrange codehole - +  <span style=color:#8f5902;font-style:italic># -表示最小值, +表示最大值</span>
+127.0.0.1:6379&gt; xrange codehole - +
+1<span style=color:#ce5c00;font-weight:700>)</span> 1<span style=color:#ce5c00;font-weight:700>)</span> 1527849609889-0
+   1<span style=color:#ce5c00;font-weight:700>)</span> 1<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;name&#34;</span>
+      1<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;laoqian&#34;</span>
+      2<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;age&#34;</span>
+      3<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;30&#34;</span>
+2<span style=color:#ce5c00;font-weight:700>)</span> 1<span style=color:#ce5c00;font-weight:700>)</span> 1527849629172-0
+   1<span style=color:#ce5c00;font-weight:700>)</span> 1<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;name&#34;</span>
+      1<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;xiaoyu&#34;</span>
+      2<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;age&#34;</span>
+      3<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;29&#34;</span>
+3<span style=color:#ce5c00;font-weight:700>)</span> 1<span style=color:#ce5c00;font-weight:700>)</span> 1527849637634-0
+   1<span style=color:#ce5c00;font-weight:700>)</span> 1<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;name&#34;</span>
+      1<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;xiaoqian&#34;</span>
+      2<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;age&#34;</span>
+      3<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;1&#34;</span>
+127.0.0.1:6379&gt; xrange codehole 1527849629172-0 +  <span style=color:#8f5902;font-style:italic># 指定最小消息ID的列表</span>
+1<span style=color:#ce5c00;font-weight:700>)</span> 1<span style=color:#ce5c00;font-weight:700>)</span> 1527849629172-0
+   2<span style=color:#ce5c00;font-weight:700>)</span> 1<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;name&#34;</span>
+      2<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;xiaoyu&#34;</span>
+      3<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;age&#34;</span>
+      4<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;29&#34;</span>
+2<span style=color:#ce5c00;font-weight:700>)</span> 1<span style=color:#ce5c00;font-weight:700>)</span> 1527849637634-0
+   2<span style=color:#ce5c00;font-weight:700>)</span> 1<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;name&#34;</span>
+      2<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;xiaoqian&#34;</span>
+      3<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;age&#34;</span>
+      4<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;1&#34;</span>
+127.0.0.1:6379&gt; xrange codehole - 1527849629172-0  <span style=color:#8f5902;font-style:italic># 指定最大消息ID的列表</span>
+1<span style=color:#ce5c00;font-weight:700>)</span> 1<span style=color:#ce5c00;font-weight:700>)</span> 1527849609889-0
+   2<span style=color:#ce5c00;font-weight:700>)</span> 1<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;name&#34;</span>
+      2<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;laoqian&#34;</span>
+      3<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;age&#34;</span>
+      4<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;30&#34;</span>
+2<span style=color:#ce5c00;font-weight:700>)</span> 1<span style=color:#ce5c00;font-weight:700>)</span> 1527849629172-0
+   2<span style=color:#ce5c00;font-weight:700>)</span> 1<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;name&#34;</span>
+      2<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;xiaoyu&#34;</span>
+      3<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;age&#34;</span>
+      4<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;29&#34;</span>
+127.0.0.1:6379&gt; xdel codehole 1527849609889-0
+<span style=color:#ce5c00;font-weight:700>(</span>integer<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#0000cf;font-weight:700>1</span>
+127.0.0.1:6379&gt; xlen codehole  <span style=color:#8f5902;font-style:italic># 长度不受影响</span>
+<span style=color:#ce5c00;font-weight:700>(</span>integer<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#0000cf;font-weight:700>3</span>
+127.0.0.1:6379&gt; xrange codehole - +  <span style=color:#8f5902;font-style:italic># 被删除的消息没了</span>
+1<span style=color:#ce5c00;font-weight:700>)</span> 1<span style=color:#ce5c00;font-weight:700>)</span> 1527849629172-0
+   2<span style=color:#ce5c00;font-weight:700>)</span> 1<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;name&#34;</span>
+      2<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;xiaoyu&#34;</span>
+      3<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;age&#34;</span>
+      4<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;29&#34;</span>
+2<span style=color:#ce5c00;font-weight:700>)</span> 1<span style=color:#ce5c00;font-weight:700>)</span> 1527849637634-0
+   2<span style=color:#ce5c00;font-weight:700>)</span> 1<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;name&#34;</span>
+      2<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;xiaoqian&#34;</span>
+      3<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;age&#34;</span>
+      4<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;1&#34;</span>
+127.0.0.1:6379&gt; del codehole  <span style=color:#8f5902;font-style:italic># 删除整个Stream</span>
+<span style=color:#ce5c00;font-weight:700>(</span>integer<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#0000cf;font-weight:700>1</span>
+</code></pre></div><h2 id=独立消费>独立消费</h2>
+<p>我们可以在不定义消费组的情况下进行Stream消息的独立消费，当Stream没有新消息时，甚至可以阻塞等待。Redis设计了一个单独的消费指令xread，可以将Stream当成普通的消息队列(list)来使用。使用xread时，我们可以完全忽略消费组(Consumer Group)的存在，就好比Stream就是一个普通的列表(list)。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=color:#8f5902;font-style:italic># 从Stream头部读取两条消息</span>
+127.0.0.1:6379&gt; xread count <span style=color:#0000cf;font-weight:700>2</span> streams codehole 0-0
+1<span style=color:#ce5c00;font-weight:700>)</span> 1<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;codehole&#34;</span>
+   2<span style=color:#ce5c00;font-weight:700>)</span> 1<span style=color:#ce5c00;font-weight:700>)</span> 1<span style=color:#ce5c00;font-weight:700>)</span> 1527851486781-0
+         2<span style=color:#ce5c00;font-weight:700>)</span> 1<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;name&#34;</span>
+            2<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;laoqian&#34;</span>
+            3<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;age&#34;</span>
+            4<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;30&#34;</span>
+      2<span style=color:#ce5c00;font-weight:700>)</span> 1<span style=color:#ce5c00;font-weight:700>)</span> 1527851493405-0
+         2<span style=color:#ce5c00;font-weight:700>)</span> 1<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;name&#34;</span>
+            2<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;yurui&#34;</span>
+            3<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;age&#34;</span>
+            4<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;29&#34;</span>
+<span style=color:#8f5902;font-style:italic># 从Stream尾部读取一条消息，毫无疑问，这里不会返回任何消息</span>
+127.0.0.1:6379&gt; xread count <span style=color:#0000cf;font-weight:700>1</span> streams codehole $
+<span style=color:#ce5c00;font-weight:700>(</span>nil<span style=color:#ce5c00;font-weight:700>)</span>
+<span style=color:#8f5902;font-style:italic># 从尾部阻塞等待新消息到来，下面的指令会堵住，直到新消息到来</span>
+127.0.0.1:6379&gt; xread block <span style=color:#0000cf;font-weight:700>0</span> count <span style=color:#0000cf;font-weight:700>1</span> streams codehole $
+<span style=color:#8f5902;font-style:italic># 我们从新打开一个窗口，在这个窗口往Stream里塞消息</span>
+127.0.0.1:6379&gt; xadd codehole * name youming age <span style=color:#0000cf;font-weight:700>60</span>
+1527852774092-0
+<span style=color:#8f5902;font-style:italic># 再切换到前面的窗口，我们可以看到阻塞解除了，返回了新的消息内容</span>
+<span style=color:#8f5902;font-style:italic># 而且还显示了一个等待时间，这里我们等待了93s</span>
+127.0.0.1:6379&gt; xread block <span style=color:#0000cf;font-weight:700>0</span> count <span style=color:#0000cf;font-weight:700>1</span> streams codehole $
+1<span style=color:#ce5c00;font-weight:700>)</span> 1<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;codehole&#34;</span>
+   2<span style=color:#ce5c00;font-weight:700>)</span> 1<span style=color:#ce5c00;font-weight:700>)</span> 1<span style=color:#ce5c00;font-weight:700>)</span> 1527852774092-0
+         2<span style=color:#ce5c00;font-weight:700>)</span> 1<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;name&#34;</span>
+            2<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;youming&#34;</span>
+            3<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;age&#34;</span>
+            4<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;60&#34;</span>
+<span style=color:#ce5c00;font-weight:700>(</span>93.11s<span style=color:#ce5c00;font-weight:700>)</span>
+</code></pre></div><p>客户端如果想要使用xread进行顺序消费，一定要记住当前消费到哪里了，也就是返回的消息ID。下次继续调用xread时，将上次返回的最后一个消息ID作为参数传递进去，就可以继续消费后续的消息。</p>
+<p>block 0表示永远阻塞，直到消息到来，block 1000表示阻塞1s，如果1s内没有任何消息到来，就返回nil</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>127.0.0.1:6379&gt; xread block <span style=color:#0000cf;font-weight:700>1000</span> count <span style=color:#0000cf;font-weight:700>1</span> streams codehole $
+<span style=color:#ce5c00;font-weight:700>(</span>nil<span style=color:#ce5c00;font-weight:700>)</span>
+<span style=color:#ce5c00;font-weight:700>(</span>1.07s<span style=color:#ce5c00;font-weight:700>)</span>
+</code></pre></div><h2 id=按组消费>按组消费</h2>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20210504133052.png style=display:block;width:50% alt=NAME align=center> </div>
+<h3 id=相关命令>相关命令</h3>
+<ul>
+<li>XGROUP CREATE - 创建消费者组</li>
+<li>XREADGROUP GROUP - 读取消费者组中的消息</li>
+<li>XACK - 将消息标记为"已处理"</li>
+<li>XGROUP SETID - 为消费者组设置新的最后递送消息ID</li>
+<li>XGROUP DELCONSUMER - 删除消费者</li>
+<li>XGROUP DESTROY - 删除消费者组</li>
+<li>XPENDING - 显示待处理消息的相关信息</li>
+<li>XCLAIM - 转移消息的归属权</li>
+<li>XINFO - 查看流和消费者组的相关信息；</li>
+<li>XINFO GROUPS - 打印消费者组的信息；</li>
+<li>XINFO STREAM - 打印流信息</li>
+</ul>
+<p>Stream通过xgroup create指令创建消费组(Consumer Group)，需要传递起始消息ID参数用来初始化last_delivered_id变量。</p>
+<p>Stream提供了xreadgroup指令可以进行消费组的组内消费，需要提供消费组名称、消费者名称和起始消息ID。它同xread一样，也可以阻塞等待新消息。读到新消息后，对应的消息ID就会进入消费者的PEL(正在处理的消息)结构里，客户端处理完毕后使用xack指令通知服务器，本条消息已经处理完毕，该消息ID就会从PEL中移除。</p>
+<h3 id=信息监控>信息监控</h3>
+<p>Stream提供了XINFO来实现对服务器信息的监控，可以查询：</p>
+<ul>
+<li>查看队列信息</li>
+<li>消费组信息</li>
+<li>消费者组成员信息</li>
+</ul>
+<h3 id=应用场景>应用场景</h3>
+<p>可用作时通信等，大数据分析，异地数据备份等</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20210504135014.png style=display:block;width:50% alt=NAME align=center> </div>
+<p>客户端可以平滑扩展，提高处理能力</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20210504135029.png style=display:block;width:50% alt=NAME align=center> </div>
+<h3 id=消息id的设计是否考虑了时间回拨的问题>消息ID的设计是否考虑了时间回拨的问题</h3>
+<p>XADD生成的1553439850328-0，就是Redis生成的消息ID，由两部分组成:<strong>时间戳-序号</strong>。时间戳是毫秒级单位，是生成消息的Redis服务器时间，它是个64位整型（int64）。序号是在这个毫秒时间点内的消息序号，它也是个64位整型。</p>
+<p>可以通过multi批处理，来验证序号的递增：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>127.0.0.1:6379&gt; MULTI
+OK
+127.0.0.1:6379&gt; XADD memberMessage * msg one
+QUEUED
+127.0.0.1:6379&gt; XADD memberMessage * msg two
+QUEUED
+127.0.0.1:6379&gt; XADD memberMessage * msg three
+QUEUED
+127.0.0.1:6379&gt; XADD memberMessage * msg four
+QUEUED
+127.0.0.1:6379&gt; XADD memberMessage * msg five
+QUEUED
+127.0.0.1:6379&gt; EXEC
+1<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;1553441006884-0&#34;</span>
+2<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;1553441006884-1&#34;</span>
+3<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;1553441006884-2&#34;</span>
+4<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;1553441006884-3&#34;</span>
+5<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;1553441006884-4&#34;</span>
+</code></pre></div><p>由于一个redis命令的执行很快，所以可以看到在同一时间戳内，是通过序号递增来表示消息的。</p>
+<p>为了保证消息是有序的，因此Redis生成的ID是单调递增有序的。由于ID中包含时间戳部分，为了避免服务器时间错误而带来的问题（例如服务器时间延后了），Redis的每个Stream类型数据都维护一个latest_generated_id属性，用于记录最后一个消息的ID。<strong>若发现当前时间戳退后（小于latest_generated_id所记录的），则采用时间戳不变而序号递增的方案来作为新消息ID</strong>（这也是序号为什么使用int64的原因，保证有足够多的的序号），从而保证ID的单调递增性质。</p>
+<p>强烈建议使用Redis的方案生成消息ID，因为这种时间戳+序号的单调递增的ID方案，几乎可以满足你全部的需求。但同时，记住ID是支持自定义的，别忘了！</p>
+<h3 id=消费者崩溃带来的会不会消息丢失问题>消费者崩溃带来的会不会消息丢失问题</h3>
+<p>为了解决组内消息读取但处理期间消费者崩溃带来的消息丢失问题，STREAM 设计了 Pending 列表，用于记录读取但并未处理完毕的消息。命令XPENDIING 用来获消费组或消费内消费者的未处理完毕的消息。演示如下：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh>127.0.0.1:6379&gt; XPENDING mq mqGroup <span style=color:#8f5902;font-style:italic># mpGroup的Pending情况</span>
+1<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>(</span>integer<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#0000cf;font-weight:700>5</span> <span style=color:#8f5902;font-style:italic># 5个已读取但未处理的消息</span>
+2<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;1553585533795-0&#34;</span> <span style=color:#8f5902;font-style:italic># 起始ID</span>
+3<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;1553585533795-4&#34;</span> <span style=color:#8f5902;font-style:italic># 结束ID</span>
+4<span style=color:#ce5c00;font-weight:700>)</span> 1<span style=color:#ce5c00;font-weight:700>)</span> 1<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;consumerA&#34;</span> <span style=color:#8f5902;font-style:italic># 消费者A有3个</span>
+      2<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;3&#34;</span>
+   2<span style=color:#ce5c00;font-weight:700>)</span> 1<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;consumerB&#34;</span> <span style=color:#8f5902;font-style:italic># 消费者B有1个</span>
+      2<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;1&#34;</span>
+   3<span style=color:#ce5c00;font-weight:700>)</span> 1<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;consumerC&#34;</span> <span style=color:#8f5902;font-style:italic># 消费者C有1个</span>
+      2<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;1&#34;</span>
+
+127.0.0.1:6379&gt; XPENDING mq mqGroup - + <span style=color:#0000cf;font-weight:700>10</span> <span style=color:#8f5902;font-style:italic># 使用 start end count 选项可以获取详细信息</span>
+1<span style=color:#ce5c00;font-weight:700>)</span> 1<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;1553585533795-0&#34;</span> <span style=color:#8f5902;font-style:italic># 消息ID</span>
+   2<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;consumerA&#34;</span> <span style=color:#8f5902;font-style:italic># 消费者</span>
+   3<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>(</span>integer<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#0000cf;font-weight:700>1654355</span> <span style=color:#8f5902;font-style:italic># 从读取到现在经历了1654355ms，IDLE</span>
+   4<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>(</span>integer<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#0000cf;font-weight:700>5</span> <span style=color:#8f5902;font-style:italic># 消息被读取了5次，delivery counter</span>
+2<span style=color:#ce5c00;font-weight:700>)</span> 1<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;1553585533795-1&#34;</span>
+   2<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;consumerA&#34;</span>
+   3<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>(</span>integer<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#0000cf;font-weight:700>1654355</span>
+   4<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>(</span>integer<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#0000cf;font-weight:700>4</span>
+<span style=color:#8f5902;font-style:italic># 共5个，余下3个省略 ...</span>
+
+127.0.0.1:6379&gt; XPENDING mq mqGroup - + <span style=color:#0000cf;font-weight:700>10</span> consumerA <span style=color:#8f5902;font-style:italic># 在加上消费者参数，获取具体某个消费者的Pending列表</span>
+1<span style=color:#ce5c00;font-weight:700>)</span> 1<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;1553585533795-0&#34;</span>
+   2<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;consumerA&#34;</span>
+   3<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>(</span>integer<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#0000cf;font-weight:700>1641083</span>
+   4<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>(</span>integer<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#0000cf;font-weight:700>5</span>
+<span style=color:#8f5902;font-style:italic># 共3个，余下2个省略 ...</span>
+</code></pre></div><p>每个Pending的消息有4个属性：</p>
+<ul>
+<li>消息ID</li>
+<li>所属消费者</li>
+<li>IDLE，已读取时长</li>
+<li>delivery counter，消息被读取次数</li>
+</ul>
+<p>上面的结果我们可以看到，我们之前读取的消息，都被记录在Pending列表中，说明全部读到的消息都没有处理，仅仅是读取了。那如何表示消费者处理完毕了消息呢？使用命令 XACK 完成告知消息处理完成，演示如下：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh>127.0.0.1:6379&gt; XACK mq mqGroup 1553585533795-0 <span style=color:#8f5902;font-style:italic># 通知消息处理结束，用消息ID标识</span>
+<span style=color:#ce5c00;font-weight:700>(</span>integer<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#0000cf;font-weight:700>1</span>
+
+127.0.0.1:6379&gt; XPENDING mq mqGroup <span style=color:#8f5902;font-style:italic># 再次查看Pending列表</span>
+1<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>(</span>integer<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#0000cf;font-weight:700>4</span> <span style=color:#8f5902;font-style:italic># 已读取但未处理的消息已经变为4个</span>
+2<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;1553585533795-1&#34;</span>
+3<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;1553585533795-4&#34;</span>
+4<span style=color:#ce5c00;font-weight:700>)</span> 1<span style=color:#ce5c00;font-weight:700>)</span> 1<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;consumerA&#34;</span> <span style=color:#8f5902;font-style:italic># 消费者A，还有2个消息处理</span>
+      2<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;2&#34;</span>
+   2<span style=color:#ce5c00;font-weight:700>)</span> 1<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;consumerB&#34;</span>
+      2<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;1&#34;</span>
+   3<span style=color:#ce5c00;font-weight:700>)</span> 1<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;consumerC&#34;</span>
+      2<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;1&#34;</span>
+127.0.0.1:6379&gt;
+</code></pre></div><p>有了这样一个Pending机制，就意味着在某个消费者读取消息但未处理后，消息是不会丢失的。等待消费者再次上线后，可以读取该Pending列表，就可以继续处理该消息了，保证消息的有序和不丢失。</p>
+<h3 id=消费者彻底宕机后如何转移给其它消费者处理>消费者彻底宕机后如何转移给其它消费者处理</h3>
+<blockquote>
+<p>还有一个问题，就是若某个消费者宕机之后，没有办法再上线了，那么就需要将该消费者Pending的消息，转移给其他的消费者处理，就是消息转移。</p>
+</blockquote>
+<p>消息转移的操作时将某个消息转移到自己的Pending列表中。使用语法XCLAIM来实现，需要设置组、转移的目标消费者和消息ID，同时需要提供IDLE（已被读取时长），只有超过这个时长，才能被转移。演示如下：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=color:#8f5902;font-style:italic># 当前属于消费者A的消息1553585533795-1，已经15907,787ms未处理了</span>
+127.0.0.1:6379&gt; XPENDING mq mqGroup - + <span style=color:#0000cf;font-weight:700>10</span>
+1<span style=color:#ce5c00;font-weight:700>)</span> 1<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;1553585533795-1&#34;</span>
+   2<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;consumerA&#34;</span>
+   3<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>(</span>integer<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#0000cf;font-weight:700>15907787</span>
+   4<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>(</span>integer<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#0000cf;font-weight:700>4</span>
+
+<span style=color:#8f5902;font-style:italic># 转移超过3600s的消息1553585533795-1到消费者B的Pending列表</span>
+127.0.0.1:6379&gt; XCLAIM mq mqGroup consumerB <span style=color:#0000cf;font-weight:700>3600000</span> 1553585533795-1
+1<span style=color:#ce5c00;font-weight:700>)</span> 1<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;1553585533795-1&#34;</span>
+   2<span style=color:#ce5c00;font-weight:700>)</span> 1<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;msg&#34;</span>
+      2<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;2&#34;</span>
+
+<span style=color:#8f5902;font-style:italic># 消息1553585533795-1已经转移到消费者B的Pending中。</span>
+127.0.0.1:6379&gt; XPENDING mq mqGroup - + <span style=color:#0000cf;font-weight:700>10</span>
+1<span style=color:#ce5c00;font-weight:700>)</span> 1<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;1553585533795-1&#34;</span>
+   2<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;consumerB&#34;</span>
+   3<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>(</span>integer<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#0000cf;font-weight:700>84404</span> <span style=color:#8f5902;font-style:italic># 注意IDLE，被重置了</span>
+   4<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>(</span>integer<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#0000cf;font-weight:700>5</span> <span style=color:#8f5902;font-style:italic># 注意，读取次数也累加了1次</span>
+</code></pre></div><p>以上代码，完成了一次消息转移。转移除了要指定ID外，还需要指定IDLE，保证是长时间未处理的才被转移。被转移的消息的IDLE会被重置，用以保证不会被重复转移，以为可能会出现将过期的消息同时转移给多个消费者的并发操作，设置了IDLE，则可以避免后面的转移不会成功，因为IDLE不满足条件。例如下面的连续两条转移，第二条不会成功。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>127.0.0.1:6379&gt; XCLAIM mq mqGroup consumerB <span style=color:#0000cf;font-weight:700>3600000</span> 1553585533795-1
+127.0.0.1:6379&gt; XCLAIM mq mqGroup consumerC <span style=color:#0000cf;font-weight:700>3600000</span> 1553585533795-1
+</code></pre></div><p>这就是消息转移。至此我们使用了一个Pending消息的ID，所属消费者和IDLE的属性，还有一个属性就是消息被读取次数，delivery counter，该属性的作用由于统计消息被读取的次数，包括被转移也算。这个属性主要用在判定是否为错误数据上。</p>
+<h3 id=坏消息问题dead-letter死信问题>坏消息问题，Dead Letter，死信问题</h3>
+<p>正如上面所说，如果某个消息，不能被消费者处理，也就是不能被XACK，这是要长时间处于Pending列表中，即使被反复的转移给各个消费者也是如此。此时该消息的delivery counter就会累加（上一节的例子可以看到），当累加到某个我们预设的临界值时，我们就认为是坏消息（也叫死信，DeadLetter，无法投递的消息），由于有了判定条件，我们将坏消息处理掉即可，删除即可。删除一个消息，使用XDEL语法，演示如下：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=color:#8f5902;font-style:italic># 删除队列中的消息</span>
+127.0.0.1:6379&gt; XDEL mq 1553585533795-1
+<span style=color:#ce5c00;font-weight:700>(</span>integer<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#0000cf;font-weight:700>1</span>
+<span style=color:#8f5902;font-style:italic># 查看队列中再无此消息</span>
+127.0.0.1:6379&gt; XRANGE mq - +
+1<span style=color:#ce5c00;font-weight:700>)</span> 1<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;1553585533795-0&#34;</span>
+   2<span style=color:#ce5c00;font-weight:700>)</span> 1<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;msg&#34;</span>
+      2<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;1&#34;</span>
+2<span style=color:#ce5c00;font-weight:700>)</span> 1<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;1553585533795-2&#34;</span>
+   2<span style=color:#ce5c00;font-weight:700>)</span> 1<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;msg&#34;</span>
+      2<span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#34;3&#34;</span>
+</code></pre></div><p>注意本例中，并没有删除Pending中的消息因此你查看Pending，消息还会在。可以执行XACK标识其处理完毕！</p>
+<style>.feedback--answer{display:inline-block}.feedback--answer-no{margin-left:1em}.feedback--response{display:none;margin-top:1em}.feedback--response__visible{display:block}</style>
+<div class=d-print-none>
+<h2 class=feedback--title>Feedback</h2>
+<p class=feedback--question>Was this page helpful?</p>
+<button class="btn btn-primary mb-4 feedback--answer feedback--answer-yes">Yes</button>
+<button class="btn btn-primary mb-4 feedback--answer feedback--answer-no">No</button>
+<p class="feedback--response feedback--response-yes">
+Glad to hear it! Please <a href=https://github.com/infilos/infilos.com/issues/new>tell us how we can improve</a>.
+</p>
+<p class="feedback--response feedback--response-no">
+Sorry to hear that. Please <a href=https://github.com/infilos/infilos.com/issues/new>tell us how we can improve</a>.
+</p>
+</div>
+<script>const yesButton=document.querySelector('.feedback--answer-yes'),noButton=document.querySelector('.feedback--answer-no'),yesResponse=document.querySelector('.feedback--response-yes'),noResponse=document.querySelector('.feedback--response-no'),disableButtons=()=>{yesButton.disabled=!0,noButton.disabled=!0},sendFeedback=b=>{if(typeof ga!='function')return;const a={command:'send',hitType:'event',category:'Helpful',action:'click',label:window.location.pathname,value:b};ga(a.command,a.hitType,a.category,a.action,a.label,a.value)};yesButton.addEventListener('click',()=>{yesResponse.classList.add('feedback--response__visible'),disableButtons(),sendFeedback(1)}),noButton.addEventListener('click',()=>{noResponse.classList.add('feedback--response__visible'),disableButtons(),sendFeedback(0)})</script>
+<br>
+</div>
+</main>
+</div>
+</div>
+<footer class="bg-dark py-5 row d-print-none">
+<div class="container-fluid mx-sm-5">
+<div class=row>
+<div class="col-6 col-sm-4 text-xs-center order-sm-2">
+</div>
+<div class="col-6 col-sm-4 text-right text-xs-center order-sm-3">
+<ul class="list-inline mb-0">
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Weibo aria-label=Weibo>
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://weibo.com/u/3848950217>
+<i class="fab fa-weibo"></i>
+</a>
+</li>
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Twitter aria-label=Twitter>
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://twitter.com/zhange_zzg>
+<i class="fab fa-twitter"></i>
+</a>
+</li>
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title="Stack Overflow" aria-label="Stack Overflow">
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://stackoverflow.com>
+<i class="fab fa-stack-overflow"></i>
+</a>
+</li>
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=GitHub aria-label=GitHub>
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://github.com/infilos/infilos.com>
+<i class="fab fa-github"></i>
+</a>
+</li>
+</ul>
+</div>
+<div class="col-12 col-sm-4 text-center py-2 order-sm-2">
+<small class=text-white>&copy; 2021 infilos.com All Rights Reserved</small>
+</div>
+</div>
+</div>
+</footer>
+</div>
+<script src=/js/popper.min.js integrity=sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49 crossorigin=anonymous></script>
+<script src=/js/bootstrap.min.js integrity=sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy crossorigin=anonymous></script>
+<script src=/js/main.min.5c74b870c6953931a705f390a49c7e4c0a842ec5c83b24354758dd674343ed0d.js integrity="sha256-XHS4cMaVOTGnBfOQpJx+TAqELsXIOyQ1R1jdZ0ND7Q0=" crossorigin=anonymous></script>
+<script src=https://cdn.jsdelivr.net/npm/docsearch.js@2.6.3/dist/cdn/docsearch.min.js></script>
+<script>docsearch({apiKey:'123',indexName:'infilos_com',inputSelector:'.td-search-input',debug:!1})</script>
+</body>
+</html>

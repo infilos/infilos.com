@@ -1,0 +1,1217 @@
+<!doctype html><html lang=zh class=no-js>
+<head>
+<meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no">
+<meta name=generator content="Hugo 0.88.1">
+<meta name=ROBOTS content="INDEX, FOLLOW">
+<link rel="shortcut icon" href=/favicons/favicon.ico>
+<link rel=apple-touch-icon href=/favicons/apple-touch-icon-180x180.png sizes=180x180>
+<link rel=icon type=image/png href=/favicons/favicon-16x16.png sizes=16x16>
+<link rel=icon type=image/png href=/favicons/favicon-32x32.png sizes=32x32>
+<link rel=icon type=image/png href=/favicons/android-36x36.png sizes=36x36>
+<link rel=icon type=image/png href=/favicons/android-48x48.png sizes=48x48>
+<link rel=icon type=image/png href=/favicons/android-72x72.png sizes=72x72>
+<link rel=icon type=image/png href=/favicons/android-96x96.png sizes=96x96>
+<link rel=icon type=image/png href=/favicons/android-144x144.png sizes=144x144>
+<link rel=icon type=image/png href=/favicons/android-192x192.png sizes=192x192>
+<title>CH01-工作方式 | infilos.com</title><meta property="og:title" content="CH01-工作方式">
+<meta property="og:description" content="相关算法 时间复杂度  对于数据库而言，重要的不是数据量，而是解决数据量增加时引起的运算量问题。
+ 时间复杂度用来检验某个算法处理一定量的数据要花多长时间，时间复杂度不会给出确切的运算次数，但是给出的是一种理念。
+   绿：O(1)或者叫常数阶复杂度，保持为常数（要不人家就不会叫常数阶复杂度了）。
+  红：O(log(n))对数阶复杂度，即使在十亿级数据量时也很低。
+  粉：最糟糕的复杂度是 O(n^2)，平方阶复杂度，运算数快速膨胀。
+  黑和蓝：另外两种复杂度（的运算数也是）快速增长。
+  假设要处理2000条元素：
+ O(1) 算法会消耗 1 次运算 O(log(n)) 算法会消耗 7 次运算 O(n) 算法会消耗 2000 次运算 O(n*log(n)) 算法会消耗 14,000 次运算 O(n^2) 算法会消耗 4,000,000 次运算  归并排序 归并排序是把问题拆分为小问题，通过解决小问题来解决最初的问题，即分治法。
+什么是归并排序：
+ 你可以更改算法，以便于节省内存空间，方法是不创建新的序列而是直接修改输入序列。注：这种算法叫『原地算法』(in-place algorithm) 你可以更改算法，以便于同时使用磁盘空间和少量内存而避免巨量磁盘 I/O。方法是只向内存中加载当前处理的部分。在仅仅100MB的内存缓冲区内排序一个几个GB的表时，这是个很重要的技巧。注：这种算法叫『外部排序』(external sorting)。 你可以更改算法，以便于在 多处理器/多线程/多服务器 上运行。比如，分布式合并排序是 Hadoop 的关键组件之一。  二叉树搜索  数据库中查询的时间复杂度，使我们无法使用矩阵，转而使用二叉搜索树(BST)。
+  二叉搜索树只需 log(N) 次运算，而如果直接使用阵列则需要 N 次运算。  B+树索引    为什么引入 B+ 树？">
+<meta property="og:type" content="article">
+<meta property="og:url" content="/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/rdbms/ch01-%E5%B7%A5%E4%BD%9C%E6%96%B9%E5%BC%8F/"><meta property="article:section" content="存储系统">
+<meta property="og:site_name" content="infilos.com">
+<meta itemprop=name content="CH01-工作方式">
+<meta itemprop=description content="相关算法 时间复杂度  对于数据库而言，重要的不是数据量，而是解决数据量增加时引起的运算量问题。
+ 时间复杂度用来检验某个算法处理一定量的数据要花多长时间，时间复杂度不会给出确切的运算次数，但是给出的是一种理念。
+   绿：O(1)或者叫常数阶复杂度，保持为常数（要不人家就不会叫常数阶复杂度了）。
+  红：O(log(n))对数阶复杂度，即使在十亿级数据量时也很低。
+  粉：最糟糕的复杂度是 O(n^2)，平方阶复杂度，运算数快速膨胀。
+  黑和蓝：另外两种复杂度（的运算数也是）快速增长。
+  假设要处理2000条元素：
+ O(1) 算法会消耗 1 次运算 O(log(n)) 算法会消耗 7 次运算 O(n) 算法会消耗 2000 次运算 O(n*log(n)) 算法会消耗 14,000 次运算 O(n^2) 算法会消耗 4,000,000 次运算  归并排序 归并排序是把问题拆分为小问题，通过解决小问题来解决最初的问题，即分治法。
+什么是归并排序：
+ 你可以更改算法，以便于节省内存空间，方法是不创建新的序列而是直接修改输入序列。注：这种算法叫『原地算法』(in-place algorithm) 你可以更改算法，以便于同时使用磁盘空间和少量内存而避免巨量磁盘 I/O。方法是只向内存中加载当前处理的部分。在仅仅100MB的内存缓冲区内排序一个几个GB的表时，这是个很重要的技巧。注：这种算法叫『外部排序』(external sorting)。 你可以更改算法，以便于在 多处理器/多线程/多服务器 上运行。比如，分布式合并排序是 Hadoop 的关键组件之一。  二叉树搜索  数据库中查询的时间复杂度，使我们无法使用矩阵，转而使用二叉搜索树(BST)。
+  二叉搜索树只需 log(N) 次运算，而如果直接使用阵列则需要 N 次运算。  B+树索引    为什么引入 B+ 树？">
+<meta itemprop=wordCount content="1304">
+<meta itemprop=keywords content><meta name=twitter:card content="summary">
+<meta name=twitter:title content="CH01-工作方式">
+<meta name=twitter:description content="相关算法 时间复杂度  对于数据库而言，重要的不是数据量，而是解决数据量增加时引起的运算量问题。
+ 时间复杂度用来检验某个算法处理一定量的数据要花多长时间，时间复杂度不会给出确切的运算次数，但是给出的是一种理念。
+   绿：O(1)或者叫常数阶复杂度，保持为常数（要不人家就不会叫常数阶复杂度了）。
+  红：O(log(n))对数阶复杂度，即使在十亿级数据量时也很低。
+  粉：最糟糕的复杂度是 O(n^2)，平方阶复杂度，运算数快速膨胀。
+  黑和蓝：另外两种复杂度（的运算数也是）快速增长。
+  假设要处理2000条元素：
+ O(1) 算法会消耗 1 次运算 O(log(n)) 算法会消耗 7 次运算 O(n) 算法会消耗 2000 次运算 O(n*log(n)) 算法会消耗 14,000 次运算 O(n^2) 算法会消耗 4,000,000 次运算  归并排序 归并排序是把问题拆分为小问题，通过解决小问题来解决最初的问题，即分治法。
+什么是归并排序：
+ 你可以更改算法，以便于节省内存空间，方法是不创建新的序列而是直接修改输入序列。注：这种算法叫『原地算法』(in-place algorithm) 你可以更改算法，以便于同时使用磁盘空间和少量内存而避免巨量磁盘 I/O。方法是只向内存中加载当前处理的部分。在仅仅100MB的内存缓冲区内排序一个几个GB的表时，这是个很重要的技巧。注：这种算法叫『外部排序』(external sorting)。 你可以更改算法，以便于在 多处理器/多线程/多服务器 上运行。比如，分布式合并排序是 Hadoop 的关键组件之一。  二叉树搜索  数据库中查询的时间复杂度，使我们无法使用矩阵，转而使用二叉搜索树(BST)。
+  二叉搜索树只需 log(N) 次运算，而如果直接使用阵列则需要 N 次运算。  B+树索引    为什么引入 B+ 树？">
+<script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga('create','UA-123062585-1','auto'),ga('send','pageview'))</script>
+<script async src=https://www.google-analytics.com/analytics.js></script>
+<link rel=preload href=/scss/main.min.847464b684a6e89d7276700a5c500c17ab494dd1755b2654a7b27d8b59e3347e.css as=style>
+<link href=/scss/main.min.847464b684a6e89d7276700a5c500c17ab494dd1755b2654a7b27d8b59e3347e.css rel=stylesheet integrity>
+<script src=/js/jquery-3.5.1.min.js integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin=anonymous></script>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/docsearch.js@2/dist/cdn/docsearch.min.css>
+</head>
+<body class=td-page>
+<header>
+<nav class="js-navbar-scroll navbar navbar-expand navbar-dark flex-column flex-md-row td-navbar">
+<a class=navbar-brand href=/>
+<span class=navbar-logo><svg id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512" style="enable-background:new 0 0 512 512"><path style="fill:#ffc107" d="M432.384 143.616c-4.165-4.164-10.917-4.164-15.083.0l-60.352 60.352c-4.164 4.165-4.164 10.917.0 15.083 21.187 20.463 54.951 19.876 75.413-1.311 19.962-20.668 19.962-53.435.0-74.102L432.384 143.616z"/><path style="fill:#607d8b" d="M42.667 277.334c-5.891.003-10.669-4.771-10.672-10.662-.002-4.338 2.623-8.245 6.64-9.882l234.667-96c5.455-2.233 11.687.38 13.92 5.835s-.38 11.687-5.835 13.92l-234.667 96C45.433 277.069 44.056 277.337 42.667 277.334z"/><path style="fill:#546e7a" d="M391.552 56.448l-32-32C343.938 8.745 322.689-.059 300.544.0h-3.755c-46.082.024-83.432 37.374-83.456 83.456v3.755c-.053 22.138 8.75 43.377 24.448 58.987l32 32c4.165 4.164 10.917 4.164 15.083.0L391.531 71.531C395.701 67.372 395.71 60.62 391.552 56.448z"/><path style="fill:#607d8b" d="M160 469.334c-3.279.006-6.379-1.497-8.405-4.075L34.261 315.926c-3.635-4.636-2.823-11.341 1.813-14.976s11.341-2.823 14.976 1.813l117.333 149.333c3.629 4.641 2.809 11.344-1.832 14.973C164.681 468.533 162.375 469.329 160 469.334z"/><path style="fill:#455a64" d="M487.467 86.848l-3.669-3.648c-37.687-36.557-97.71-36.197-134.955.811l-51.413 51.413c-36.996 37.25-37.357 97.263-.811 134.955l3.584 3.669c1.7 2.457 4.671 3.706 7.616 3.2 2.831.005 5.548-1.115 7.552-3.115l172.181-172.181c4.189-4.143 4.226-10.896.083-15.085-.028-.028-.055-.056-.083-.083L487.467 86.848z"/><g><path style="fill:#ffc107" d="M501.333 192H480c-5.891.0-10.667-4.776-10.667-10.667s4.776-10.667 10.667-10.667h21.333c5.891.0 10.667 4.776 10.667 10.667S507.225 192 501.333 192z"/><path style="fill:#ffc107" d="M394.667 298.667c-5.891.0-10.667-4.776-10.667-10.667v-21.333c0-5.891 4.776-10.667 10.667-10.667 5.891.0 10.667 4.776 10.667 10.667V288C405.333 293.891 400.558 298.667 394.667 298.667z"/><path style="fill:#ffc107" d="M480 277.334c-2.831.005-5.548-1.115-7.552-3.115l-21.333-21.333c-4.093-4.237-3.975-10.99.262-15.083 4.134-3.993 10.687-3.993 14.821.0l21.333 21.333c4.159 4.172 4.148 10.926-.024 15.085C485.514 276.209 482.815 277.327 480 277.334z"/></g><g><path style="fill:#455a64" d="M266.667 448H96c-29.455.0-53.333 23.878-53.333 53.333.0 5.891 4.776 10.667 10.667 10.667h256c5.891.0 10.667-4.776 10.667-10.667C320 471.878 296.122 448 266.667 448z"/><circle style="fill:#455a64" cx="32" cy="288" r="32"/></g><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/></svg></span><span class=font-weight-bold>infilos.com</span>
+</a>
+<div class="collapse navbar-collapse" id=navbarSupportedContent>
+<ul class="navbar-nav mr-auto">
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+基础
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/%e6%93%8d%e4%bd%9c%e7%b3%bb%e7%bb%9f>操作系统</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/%e6%80%a7%e8%83%bd%e4%b9%8b%e6%ae%87>性能之殇</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/io%e6%a8%a1%e5%9e%8b>IO 模型</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/%e7%bd%91%e7%bb%9c%e5%9f%ba%e7%a1%80>网络基础</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/tcp-ip>TCP-IP</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/http>HTTP</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+语言
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/java>Java 编程</a>
+<a class=dropdown-item href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/jvm-core>JVM 核心</a>
+<a class=dropdown-item href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/jvm-concurrent>JVM 并发</a>
+<a class=dropdown-item href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/scala>Scala 编程</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+框架库
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93/spring>Spring</a>
+<a class=dropdown-item href=/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93/hikari>Hikari</a>
+<a class=dropdown-item href=/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93/parboiled>Parboiled</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+分布式
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%88%86%e5%b8%83%e5%bc%8f/base>基本构成</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+大数据
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%ad%98%e5%82%a8%e7%b3%bb%e7%bb%9f>存储系统</a>
+<a class=dropdown-item href=/%e6%9f%a5%e8%af%a2%e7%b3%bb%e7%bb%9f>查询系统</a>
+<a class=dropdown-item href=/%e6%b6%88%e6%81%af%e7%b3%bb%e7%bb%9f>消息系统</a>
+<a class=dropdown-item href=/%e5%a4%84%e7%90%86%e7%b3%bb%e7%bb%9f>处理系统</a>
+<a class=dropdown-item href=/%e7%ae%a1%e7%90%86%e7%b3%bb%e7%bb%9f>管理系统</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+中后台
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e8%ae%be%e6%96%bd>基础设施</a>
+<a class=dropdown-item href=/%e4%ba%a4%e4%ba%92%e7%95%8c%e9%9d%a2>交互界面</a>
+<a class=dropdown-item href=/%e4%b8%9a%e5%8a%a1%e7%b3%bb%e7%bb%9f>业务系统</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+模式架构
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e6%a8%a1%e5%bc%8f%e6%9e%b6%e6%9e%84/design-pattern>设计模式</a>
+<a class=dropdown-item href=/%e6%a8%a1%e5%bc%8f%e6%9e%b6%e6%9e%84/micro-service>微服务架构</a>
+</div>
+</li>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e9%9d%a2%e8%af%95%e9%97%ae%e7%ad%94>
+<span>面试</span>
+</a>
+</li>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e7%ae%a1%e7%90%86%e8%b7%af%e5%be%84>
+<span>管理</span>
+</a>
+</li>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e5%bc%80%e6%ba%90%e9%a1%b9%e7%9b%ae>
+<span>开源</span>
+</a>
+</li>
+</ul>
+<div class="form-inline my-2 my-lg-0">
+<div class="nav-item nav-search-item my-2 my-md-0">
+<input type=search class="form-control td-search-input" placeholder="&#xf002; 站内搜索…" aria-label=站内搜索… autocomplete=off>
+</div>
+</div>
+</div>
+</nav>
+</header>
+<div class="container-fluid td-outer">
+<div class=td-main>
+<div class="row flex-xl-nowrap">
+<aside class="col-12 col-md-3 col-xl-2 td-sidebar d-print-none">
+<div id=td-sidebar-menu class=td-sidebar__inner>
+<div id=content-mobile>
+<form class="td-sidebar__search d-flex align-items-center">
+<input type=search class="form-control td-search-input" placeholder="&#xf002; 站内搜索…" aria-label=站内搜索… autocomplete=off>
+<button class="btn btn-link td-sidebar__toggle d-md-none p-0 ml-3 fas fa-bars" type=button data-toggle=collapse data-target=#td-section-nav aria-controls=td-docs-nav aria-expanded=false aria-label="Toggle section navigation">
+</button>
+</form>
+</div>
+<div id=content-desktop></div>
+<nav class="collapse td-sidebar-nav" id=td-section-nav>
+<ul class="td-sidebar-nav__section pr-md-3 ul-0">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e5ad98e582a8e7b3bbe7bb9f-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section tree-root" id=m-e5ad98e582a8e7b3bbe7bb9f><span>存储系统</span></a>
+<ul class=ul-1>
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e5ad98e582a8e7b3bbe7bb9frdbms-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/rdbms/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e5ad98e582a8e7b3bbe7bb9frdbms><span>RDBMS</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child active-path" id=m-e5ad98e582a8e7b3bbe7bb9frdbmsch01-e5b7a5e4bd9ce696b9e5bc8f-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/rdbms/ch01-%E5%B7%A5%E4%BD%9C%E6%96%B9%E5%BC%8F/ class="align-left pl-0 active td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9frdbmsch01-e5b7a5e4bd9ce696b9e5bc8f><span class=td-sidebar-nav-active-item>CH01-工作方式</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9frdbmsch02-e8aebee8aea1e79086e8aeba-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/rdbms/ch02-%E8%AE%BE%E8%AE%A1%E7%90%86%E8%AE%BA/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9frdbmsch02-e8aebee8aea1e79086e8aeba><span>CH02-设计理论</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9frdbmsch03-e8aebee8aea1e6b581e7a88b-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/rdbms/ch03-%E8%AE%BE%E8%AE%A1%E6%B5%81%E7%A8%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9frdbmsch03-e8aebee8aea1e6b581e7a88b><span>CH03-设计流程</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9frdbmsch04-e6a0b8e5bf83e79fa5e8af86-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/rdbms/ch04-%E6%A0%B8%E5%BF%83%E7%9F%A5%E8%AF%86/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9frdbmsch04-e6a0b8e5bf83e79fa5e8af86><span>CH04-核心知识</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e5ad98e582a8e7b3bbe7bb9fsql-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/sql/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e5ad98e582a8e7b3bbe7bb9fsql><span>SQL</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fsqlch01-e8afade6b395e59fbae7a180-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/sql/ch01-%E8%AF%AD%E6%B3%95%E5%9F%BA%E7%A1%80/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fsqlch01-e8afade6b395e59fbae7a180><span>CH01-语法基础</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fsqlch02-e69fa5e8afa2e7bb83e4b9a0-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/sql/ch02-%E6%9F%A5%E8%AF%A2%E7%BB%83%E4%B9%A0/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fsqlch02-e69fa5e8afa2e7bb83e4b9a0><span>CH02-查询练习</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fsqlch03-e69fa5e8afa2e8bf9be998b6-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/sql/ch03-%E6%9F%A5%E8%AF%A2%E8%BF%9B%E9%98%B6/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fsqlch03-e69fa5e8afa2e8bf9be998b6><span>CH03-查询进阶</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fsqlch04-e69fa5e8afa2e4bc98e58c96-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/sql/ch04-%E6%9F%A5%E8%AF%A2%E4%BC%98%E5%8C%96/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fsqlch04-e69fa5e8afa2e4bc98e58c96><span>CH04-查询优化</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e5ad98e582a8e7b3bbe7bb9fmysql><span>MySQL</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch01-e695b0e68daee7b1bbe59e8b-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql/ch01-%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch01-e695b0e68daee7b1bbe59e8b><span>CH01-数据类型</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch02-e5ad98e582a8e5bc95e6938e-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql/ch02-%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch02-e5ad98e582a8e5bc95e6938e><span>CH02-存储引擎</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch03-e7b4a2e5bc95be6a091-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql/ch03-%E7%B4%A2%E5%BC%95b+%E6%A0%91/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch03-e7b4a2e5bc95be6a091><span>CH03-索引B+树</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch04-e680a7e883bde4bc98e58c96-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql/ch04-%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch04-e680a7e883bde4bc98e58c96><span>CH04-性能优化</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch05-e58886e5ba93e58886e8a1a8-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql/ch05-%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch05-e58886e5ba93e58886e8a1a8><span>CH05-分库分表</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch06-e5a48de588b6e58886e7a6bb-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql/ch06-%E5%A4%8D%E5%88%B6%E5%88%86%E7%A6%BB/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch06-e5a48de588b6e58886e7a6bb><span>CH06-复制分离</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch07-e689a7e8a18ce8bf87e7a88b-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql/ch07-%E6%89%A7%E8%A1%8C%E8%BF%87%E7%A8%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch07-e689a7e8a18ce8bf87e7a88b><span>CH07-执行过程</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e5ad98e582a8e7b3bbe7bb9fredis-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/redis/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e5ad98e582a8e7b3bbe7bb9fredis><span>Redis</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fredisch01-e59fbae69cace7b1bbe59e8b-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/redis/ch01-%E5%9F%BA%E6%9C%AC%E7%B1%BB%E5%9E%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fredisch01-e59fbae69cace7b1bbe59e8b><span>CH01-基本类型</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fredisch02-e9ab98e7baa7e7b1bbe59e8b-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/redis/ch02-%E9%AB%98%E7%BA%A7%E7%B1%BB%E5%9E%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fredisch02-e9ab98e7baa7e7b1bbe59e8b><span>CH02-高级类型</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fredisch03-stream-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/redis/ch03-stream/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fredisch03-stream><span>CH03-Stream</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fredisch04-e5afb9e8b1a1e69cbae588b6-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/redis/ch04-%E5%AF%B9%E8%B1%A1%E6%9C%BA%E5%88%B6/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fredisch04-e5afb9e8b1a1e69cbae588b6><span>CH04-对象机制</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fredisch05-e5ba95e5b182e7bb93e69e84-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/redis/ch05-%E5%BA%95%E5%B1%82%E7%BB%93%E6%9E%84/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fredisch05-e5ba95e5b182e7bb93e69e84><span>CH05-底层结构</span></a>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</div>
+</aside>
+<aside class="d-none d-xl-block col-xl-2 td-sidebar-toc d-print-none">
+<div class="td-page-meta ml-2 pb-1 pt-2 mb-0">
+<a href=https://github.com/infilos/infilos.com/edit/master/content/zh/%e5%ad%98%e5%82%a8%e7%b3%bb%e7%bb%9f/rdbms/CH01-%e5%b7%a5%e4%bd%9c%e6%96%b9%e5%bc%8f.md target=_blank><i class="fa fa-edit fa-fw"></i> 编辑此页</a>
+<a href="https://github.com/infilos/infilos.com/new/master/content/zh/%e5%ad%98%e5%82%a8%e7%b3%bb%e7%bb%9f/rdbms/CH01-%e5%b7%a5%e4%bd%9c%e6%96%b9%e5%bc%8f.md?filename=change-me.md&value=---%0Atitle%3A+%22Long+Page+Title%22%0AlinkTitle%3A+%22Short+Nav+Title%22%0Aweight%3A+100%0Adescription%3A+%3E-%0A+++++Page+description+for+heading+and+indexes.%0A---%0A%0A%23%23+Heading%0A%0AEdit+this+template+to+create+your+new+page.%0A%0A%2A+Give+it+a+good+name%2C+ending+in+%60.md%60+-+e.g.+%60getting-started.md%60%0A%2A+Edit+the+%22front+matter%22+section+at+the+top+of+the+page+%28weight+controls+how+its+ordered+amongst+other+pages+in+the+same+directory%3B+lowest+number+first%29.%0A%2A+Add+a+good+commit+message+at+the+bottom+of+the+page+%28%3C80+characters%3B+use+the+extended+description+field+for+more+detail%29.%0A%2A+Create+a+new+branch+so+you+can+preview+your+new+file+and+request+a+review+via+Pull+Request.%0A" target=_blank><i class="fa fa-edit fa-fw"></i> 添加子页面</a>
+<a href="https://github.com/infilos/infilos.com/issues/new?title=CH01-%e5%b7%a5%e4%bd%9c%e6%96%b9%e5%bc%8f" target=_blank><i class="fab fa-github fa-fw"></i> 提交文档问题</a>
+<a id=print href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/rdbms/_print/><i class="fa fa-print fa-fw"></i> 整节打印</a>
+</div>
+<div class=td-toc><nav id=TableOfContents>
+<ul>
+<li><a href=#相关算法>相关算法</a>
+<ul>
+<li><a href=#时间复杂度>时间复杂度</a></li>
+<li><a href=#归并排序>归并排序</a></li>
+<li><a href=#二叉树搜索>二叉树搜索</a></li>
+<li><a href=#b树索引>B+树索引</a></li>
+<li><a href=#哈希表>哈希表</a></li>
+</ul>
+</li>
+<li><a href=#全局概览>全局概览</a>
+<ul>
+<li><a href=#核心组件>核心组件</a></li>
+<li><a href=#工具>工具</a></li>
+<li><a href=#查询管理器>查询管理器</a></li>
+<li><a href=#数据管理器>数据管理器：</a></li>
+</ul>
+</li>
+<li><a href=#查询流程>查询流程</a></li>
+<li><a href=#客户端管理器>客户端管理器</a></li>
+<li><a href=#查询管理器-1>查询管理器</a>
+<ul>
+<li><a href=#查询解析器>查询解析器</a></li>
+<li><a href=#查询重写器>查询重写器</a></li>
+<li><a href=#统计信息>统计信息</a></li>
+<li><a href=#查询优化器>查询优化器</a></li>
+<li><a href=#查询执行器>查询执行器</a></li>
+</ul>
+</li>
+<li><a href=#数据管理器-1>数据管理器</a>
+<ul>
+<li><a href=#缓存管理器>缓存管理器</a></li>
+<li><a href=#事务管理器>事务管理器</a></li>
+<li><a href=#并发控制>并发控制</a></li>
+<li><a href=#锁管理器>锁管理器</a></li>
+<li><a href=#日志管理器>日志管理器</a></li>
+</ul>
+</li>
+<li><a href=#最后>最后</a></li>
+</ul>
+</nav></div>
+</aside>
+<main class="col-12 col-md-9 col-xl-8 pl-md-5" role=main>
+<nav aria-label=breadcrumb class="d-none d-md-block d-print-none">
+<ol class="breadcrumb spb-1">
+<li class=breadcrumb-item>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/>存储系统</a>
+</li>
+<li class=breadcrumb-item>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/rdbms/>RDBMS</a>
+</li>
+<li class="breadcrumb-item active" aria-current=page>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/rdbms/ch01-%E5%B7%A5%E4%BD%9C%E6%96%B9%E5%BC%8F/>CH01-工作方式</a>
+</li>
+</ol>
+</nav>
+<div class=td-content>
+<h1>CH01-工作方式</h1>
+<header class=article-meta>
+</header>
+<h2 id=相关算法>相关算法</h2>
+<h3 id=时间复杂度>时间复杂度</h3>
+<blockquote>
+<p>对于数据库而言，重要的不是数据量，而是解决数据量增加时引起的运算量问题。</p>
+</blockquote>
+<p>时间复杂度用来检验某个算法处理一定量的数据要花多长时间，时间复杂度不会给出确切的运算次数，但是给出的是一种理念。</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20210503150549.png style=display:block;width:50% alt=NAME align=center> </div>
+<ul>
+<li>
+<p>绿：O(1)或者叫常数阶复杂度，保持为常数（要不人家就不会叫常数阶复杂度了）。</p>
+</li>
+<li>
+<p>红：O(log(n))对数阶复杂度，即使在十亿级数据量时也很低。</p>
+</li>
+<li>
+<p>粉：最糟糕的复杂度是 O(n^2)，平方阶复杂度，运算数快速膨胀。</p>
+</li>
+<li>
+<p>黑和蓝：另外两种复杂度（的运算数也是）快速增长。</p>
+</li>
+</ul>
+<p>假设要处理2000条元素：</p>
+<ul>
+<li>O(1) 算法会消耗 1 次运算</li>
+<li>O(log(n)) 算法会消耗 7 次运算</li>
+<li>O(n) 算法会消耗 2000 次运算</li>
+<li>O(n*log(n)) 算法会消耗 14,000 次运算</li>
+<li>O(n^2) 算法会消耗 4,000,000 次运算</li>
+</ul>
+<h3 id=归并排序>归并排序</h3>
+<p>归并排序是把问题拆分为小问题，通过解决小问题来解决最初的问题，即分治法。</p>
+<p>什么是归并排序：</p>
+<ul>
+<li>你可以更改算法，以便于节省内存空间，方法是不创建新的序列而是直接修改输入序列。注：这种算法叫『<strong>原地算法</strong>』(in-place algorithm)</li>
+<li>你可以更改算法，以便于同时使用磁盘空间和少量内存而避免巨量磁盘 I/O。方法是只向内存中加载当前处理的部分。在仅仅100MB的内存缓冲区内排序一个几个GB的表时，这是个很重要的技巧。注：这种算法叫『<strong>外部排序</strong>』(external sorting)。</li>
+<li>你可以更改算法，以便于在 多处理器/多线程/多服务器 上运行。比如，分布式合并排序是 <strong>Hadoop</strong> 的关键组件之一。</li>
+</ul>
+<h3 id=二叉树搜索>二叉树搜索</h3>
+<blockquote>
+<p>数据库中查询的时间复杂度，使我们无法使用矩阵，转而使用二叉搜索树(BST)。</p>
+</blockquote>
+<ul>
+<li>二叉搜索树只需 log(N) 次运算，而如果直接使用阵列则需要 N 次运算。</li>
+</ul>
+<h3 id=b树索引>B+树索引</h3>
+<blockquote>
+<ul>
+<li>
+<p>为什么引入 B+ 树？</p>
+<p>查找一个特定值这个树挺好用，但是当你需要<strong>查找两个值之间的多个元素</strong>时，就会有大麻烦了。你的成本将是 O(N)，因为你必须查找树的每一个节点，以判断它是否处于那 2 个值之间（例如，对树使用中序遍历）。而且这个操作不是磁盘I/O有利的，因为你必须读取整个树。我们需要找到高效的范围查询方法。</p>
+</li>
+</ul>
+</blockquote>
+<p>如果在数据库中增加或删除一行，对 B+ 树来说：</p>
+<ul>
+<li>你必须在B+树中的节点之间保持顺序，否则节点会变得一团糟，你无法从中找到想要的节点。</li>
+<li>你必须尽可能降低B+树的层数，否则 O(log(N)) 复杂度会变成 O(N)。</li>
+</ul>
+<p>B+树需要自我整理和自我平衡。但是这样也带来了成本：在B+树中，插入和删除操作是 O(log(N)) 复杂度。所以有些人听到过使用太多索引不是个好主意这类说法。没错，你减慢了快速插入/更新/删除表中的一个行的操作，因为数据库需要以代价高昂的每索引 O(log(N)) 运算来更新表的索引。再者，增加索引意味着给事务管理器带来更多的工作负荷（在本文结尾我们会探讨这个管理器）。</p>
+<h3 id=哈希表>哈希表</h3>
+<blockquote>
+<p>当你想快速查找值时，哈希表是非常有用的。而且，理解哈希表会帮助我们接下来理解一个数据库常见的联接操作，叫做『哈希联接』。这个<strong>数据结构也被数据库用来保存一些内部的东西</strong>（比如<strong>锁表</strong>或者<strong>缓冲池</strong>，我们在下文会研究这两个概念）</p>
+</blockquote>
+<p>为什么不用阵列？</p>
+<ul>
+<li>如果有了好的哈希函数，在哈希表里搜索的时间复杂度是 O(1)。</li>
+<li><strong>一个哈希表可以只装载一半到内存，剩下的哈希桶可以留在硬盘上</strong>。</li>
+<li>用阵列的话，你需要一个连续内存空间。如果你加载一个大表，很难分配足够的连续内存空间。</li>
+</ul>
+<h2 id=全局概览>全局概览</h2>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20210503151253.png style=display:block;width:50% alt=NAME align=center> </div>
+<h3 id=核心组件>核心组件</h3>
+<ul>
+<li>
+<p><strong>进程管理器（process manager）</strong>：很多数据库具备一个需要妥善管理的进程/线程池。再者，为了实现纳秒级操作，一些现代数据库使用自己的线程而不是操作系统线程。</p>
+</li>
+<li>
+<p><strong>网络管理器（network manager）</strong>：网路I/O是个大问题，尤其是对于分布式数据库。所以一些数据库具备自己的网络管理器。</p>
+</li>
+<li>
+<p><strong>文件系统管理器（File system manager）</strong>：磁盘I/O是数据库的首要瓶颈。具备一个文件系统管理器来完美地处理OS文件系统甚至取代OS文件系统，是非常重要的。</p>
+</li>
+<li>
+<p><strong>内存管理器（memory manager）</strong>：为了避免磁盘I/O带来的性能损失，需要大量的内存。但是如果你要处理大容量内存你需要高效的内存管理器，尤其是你有很多查询同时使用内存的时候。</p>
+</li>
+<li>
+<p><strong>安全管理器（Security Manager）</strong>：用于对用户的验证和授权。</p>
+</li>
+<li>
+<p><strong>客户端管理器（Client manager）</strong>：用于管理客户端连接。</p>
+</li>
+</ul>
+<h3 id=工具>工具</h3>
+<ul>
+<li><strong>备份管理器（Backup manager）</strong>：用于保存和恢复数据。</li>
+<li><strong>恢复管理器（Recovery manager</strong>）：用于崩溃后重启数据库到一个一致状态。</li>
+<li><strong>监控管理器（Monitor manager）</strong>：用于记录数据库活动信息和提供监控数据库的工具。</li>
+<li><strong>管理员管理器（Administration manager）</strong>：用于保存元数据（比如表的名称和结构），提供管理数据库、模式、表空间的工具。</li>
+</ul>
+<h3 id=查询管理器>查询管理器</h3>
+<ul>
+<li><strong>查询解析器（Query parser）</strong>：用于检查查询是否合法</li>
+<li><strong>查询重写器（Query rewriter）</strong>：用于预优化查询</li>
+<li><strong>查询优化器（Query optimizer）</strong>：用于优化查询</li>
+<li><strong>查询执行器（Query executor）</strong>：用于编译和执行查询</li>
+</ul>
+<h3 id=数据管理器>数据管理器：</h3>
+<ul>
+<li><strong>事务管理器（Transaction manager）</strong>：用于处理事务</li>
+<li><strong>缓存管理器（Cache manager）</strong>：数据被使用之前置于内存，或者数据写入磁盘之前置于内存</li>
+<li><strong>数据访问管理器（Data access manager）</strong>：访问磁盘中的数据</li>
+</ul>
+<h2 id=查询流程>查询流程</h2>
+<p>主要介绍数据库如何通过如下进程来管理 SQL 查询：</p>
+<ul>
+<li>客户端管理器</li>
+<li>查询管理器</li>
+<li>数据管理器（含恢复管理器）</li>
+<li>客户端管理器</li>
+</ul>
+<h2 id=客户端管理器>客户端管理器</h2>
+<blockquote>
+<p>客户端管理器是处理客户端通信的。客户端可以是一个（网站）服务器或者一个最终用户或最终应用。客户端管理器通过一系列知名的API（JDBC, ODBC, OLE-DB …）提供不同的方式来访问数据库。客户端管理器也提供专有的数据库访问API。</p>
+</blockquote>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20210503151620.png style=display:block;width:50% alt=NAME align=center> </div>
+<p><strong>当你连接到数据库时</strong>：</p>
+<ul>
+<li>管理器首先检查你的验证信息（用户名和密码），然后检查你是否有访问数据库的授权。这些权限由DBA分配。</li>
+<li>然后，管理器检查是否有空闲进程（或线程）来处理你对查询。</li>
+<li>管理器还会检查数据库是否负载很重。</li>
+<li>管理器可能会等待一会儿来获取需要的资源。如果等待时间达到超时时间，它会关闭连接并给出一个可读的错误信息。</li>
+<li>然后管理器会把你的查询送给查询管理器来处理。</li>
+<li>因为查询处理进程不是『不全则无』的，一旦它从查询管理器得到数据，它会把部分结果保存到一个缓冲区并且开始给你发送。</li>
+<li>如果遇到问题，管理器关闭连接，向你发送可读的解释信息，然后释放资源。</li>
+</ul>
+<h2 id=查询管理器-1>查询管理器</h2>
+<blockquote>
+<p>数据库的关键，在这部分里，一个写得糟糕的查询可以转换成一个快速执行的代码，代码执行的结果被送到客户端管理器。</p>
+</blockquote>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20210503151752.png style=display:block;width:50% alt=NAME align=center> </div>
+<p>这个多步骤操作过程如下：</p>
+<ul>
+<li>查询首先被<strong>解析</strong>并判断是否合法</li>
+<li>然后被<strong>重写</strong>，去除了无用的操作并且加入<strong>预优化</strong>部分</li>
+<li>接着被<strong>优化</strong>以便提升性能，并被<strong>转换为可执行代码</strong>和<strong>数据访问计划</strong>。</li>
+<li>然后计划被<strong>编译</strong></li>
+<li>最后，被<strong>执行</strong></li>
+</ul>
+<h3 id=查询解析器>查询解析器</h3>
+<blockquote>
+<p>每一条SQL语句都要送到解析器来检查语法，如果你的查询有错，解析器将拒绝该查询。比如，如果你写成”SLECT …” 而不是 “SELECT …”，那就没有下文了。</p>
+</blockquote>
+<ul>
+<li>
+<p>解析器还会检查关键字是否使用正确的顺序，比如 WHERE 写在 SELECT 之前会被拒绝。</p>
+</li>
+<li>
+<p>然后，解析器要分析查询中的表和字段，使用数据库元数据来检查：</p>
+<ul>
+<li>表是否存在</li>
+<li>表的字段是否存在</li>
+<li>对某类型字段的 运算 是否 可能（比如，你不能将整数和字符串进行比较，你不能对一个整数使用 substring() 函数）</li>
+</ul>
+</li>
+<li>
+<p>接着，解析器检查在查询中你是否有权限来读取（或写入）表。再强调一次：这些权限由DBA分配。</p>
+</li>
+<li>
+<p>在解析过程中，SQL 查询被转换为内部表示（通常是一个树）。</p>
+</li>
+<li>
+<p>如果一切正常，内部表示被送到查询重写器。</p>
+</li>
+</ul>
+<h3 id=查询重写器>查询重写器</h3>
+<p>在这一步，我们已经有了查询的内部表示，重写器的目标是：</p>
+<ul>
+<li>预优化查询</li>
+<li>避免不必要的运算</li>
+<li>帮助优化器找到合理的最佳解决方案</li>
+</ul>
+<p>重写器按照一系列已知的规则对查询执行检测。如果查询匹配一种模式的规则，查询就会按照这条规则来重写。下面是（可选）规则的非详尽的列表：</p>
+<ul>
+<li><strong>视图合并</strong>：如果你在查询中使用视图，视图就会转换为它的 SQL 代码。</li>
+<li><strong>子查询扁平化</strong>：子查询是很难优化的，因此重写器会尝试移除子查询</li>
+<li><strong>去除不必要的运算符</strong>：比如，如果你用了 DISTINCT，而其实你有 UNIQUE 约束（这本身就防止了数据出现重复），那么 DISTINCT 关键字就被去掉了。</li>
+<li><strong>排除冗余的联接</strong>：如果相同的 JOIN 条件出现两次，比如隐藏在视图中的 JOIN 条件，或者由于传递性产生的无用 JOIN，都会被消除。</li>
+<li><strong>常数计算赋值</strong>：如果你的查询需要计算，那么在重写过程中计算会执行一次。比如 WHERE AGE > 10+2 会转换为 WHERE AGE > 12 ， TODATE(“日期字符串”) 会转换为 datetime 格式的日期值。</li>
+<li><strong>（高级）分区裁剪（Partition Pruning）</strong>：如果你用了分区表，重写器能够找到需要使用的分区。</li>
+<li><strong>（高级）物化视图重写（Materialized view rewrite）</strong>：如果你有个物化视图匹配查询谓词的一个子集，重写器将检查视图是否最新并修改查询，令查询使用物化视图而不是原始表。</li>
+<li><strong>（高级）自定义规则</strong>：如果你有自定义规则来修改查询（就像 Oracle policy），重写器就会执行这些规则。</li>
+<li><strong>（高级）OLAP转换</strong>：分析/加窗 函数，星形联接，ROLLUP 函数……都会发生转换（但我不确定这是由重写器还是优化器来完成，因为两个进程联系很紧，必须看是什么数据库）。</li>
+</ul>
+<h3 id=统计信息>统计信息</h3>
+<p>数据库和操作系统是如何保存数据的？两者使用的最小单位叫做页或块（默认 4 或 8 KB）。这就是说如果你仅需要 1KB，也会占用一个页。要是页的大小为 8KB，你就浪费了 7KB。</p>
+<p>当你要求数据库收集统计信息，数据库会计算下列值：</p>
+<ul>
+<li>表中行和页的数量</li>
+<li>表中每个列中的：
+<ul>
+<li>唯一值</li>
+<li>数据长度（最小，最大，平均）</li>
+<li>数据范围（最小，最大，平均）</li>
+</ul>
+</li>
+<li>表的索引信息</li>
+</ul>
+<p><strong>这些统计信息会帮助优化器估计查询所需的磁盘 I/O、CPU、和内存使用</strong>。</p>
+<p>对每个列的统计非常重要。比如，如果一个表 PERSON 需要联接 2 个列： LAST_NAME, FIRST_NAME。根据统计信息，数据库知道FIRST_NAME只有 1,000 个不同的值，LAST_NAME 有 1,000,000 个不同的值。因此，数据库就会按照 LAST_NAME, FIRST_NAME 联接。因为 LAST_NAME 不大可能重复，多数情况下比较 LAST_NAME 的头 2 、 3 个字符就够了，这将大大减少比较的次数。</p>
+<p>不过，这些只是基本的统计。你可以让数据库做一种高级统计，叫直方图。直方图是列值分布情况的统计信息。例如：</p>
+<ul>
+<li>出现最频繁的值</li>
+<li>分位数(quantiles)</li>
+<li>…</li>
+</ul>
+<p>这些额外的统计会帮助数据库找到更佳的查询计划，尤其是对于等式谓词（例如： WHERE AGE = 18 ）或范围谓词（例如： WHERE AGE > 10 and AGE &lt; 40），因为数据库可以更好的了解这些谓词相关的数字类型数据行（注：这个概念的技术名称叫选择率）。</p>
+<p>统计信息保存在数据库元数据内，例如（非分区）表的统计信息位置：</p>
+<ul>
+<li>Oracle： USER / ALL / DBA_TABLES 和 USER / ALL / DBA_TAB_COLUMNS</li>
+<li>DB2： SYSCAT.TABLES 和 SYSCAT.COLUMNS</li>
+</ul>
+<p><strong>统计信息必须及时更新</strong>。如果一个表有 1,000,000 行而数据库认为它只有 500 行，没有比这更糟糕的了。统计唯一的不利之处是需要时间来计算，这就是为什么数据库大多默认情况下不会自动计算统计信息。数据达到百万级时统计会变得困难，这时候，你可以选择仅做基本统计或者在一个数据库样本上执行统计。</p>
+<p>举个例子，我参与的一个项目需要处理每表上亿条数据的库，我选择只统计10%，结果造成了巨大的时间消耗。本例证明这是个糟糕的决定，因为有时候 Oracle 10G 从特定表的特定列中选出的 10% 跟全部 100% 有很大不同（对于拥有一亿行数据的表，这种情况极少发生）。这次错误的统计导致了一个本应 30 秒完成的查询最后执行了 8 个小时，查找这个现象根源的过程简直是个噩梦。这个例子显示了统计的重要性。</p>
+<h3 id=查询优化器>查询优化器</h3>
+<blockquote>
+<p>所有的现代数据库都在用<strong>基于成本的优化</strong>（即CBO）来优化查询。道理是针对每个运算设置一个成本，通过应用成本最低廉的一系列运算，来找到最佳的降低查询成本的方法。</p>
+</blockquote>
+<p>为了理解成本优化器的原理，我觉得最好用个例子来『感受』一下这个任务背后的复杂性。这里我将给出联接 2 个表的 3 个方法，我们很快就能看到即便一个简单的联接查询对于优化器来说都是个噩梦。之后，我们会了解真正的优化器是怎么做的。</p>
+<p><strong>对于这些联接操作，我会专注于它们的时间复杂度，但是，数据库优化器计算的是它们的 CPU 成本、磁盘 I/O 成本、和内存需求</strong>。时间复杂度和 CPU 成本的区别是，时间成本是个近似值（给我这样的懒家伙准备的）。而 CPU 成本，我这里包括了所有的运算，比如：加法、条件判断、乘法、迭代……还有呢：</p>
+<ul>
+<li>
+<p>每一个高级代码运算都要特定数量的低级 CPU 运算。</p>
+</li>
+<li>
+<p>对于 Intel Core i7、Intel Pentium 4、AMD Opteron…等，（就 CPU 周期而言）CPU 的运算成本是不同的，也就是说它取决于 CPU 的架构。</p>
+</li>
+</ul>
+<p>使用时间复杂度就容易多了（至少对我来说），用它我也能了解到 CBO 的概念。由于磁盘 I/O 是个重要的概念，我偶尔也会提到它。请牢记，<strong>大多数时候瓶颈在于磁盘 I/O 而不是 CPU 使用</strong>。</p>
+<h4 id=索引>索引</h4>
+<blockquote>
+<p>在研究 B+树的时候我们谈到了索引，要记住一点，索引都是已经排了序的。</p>
+</blockquote>
+<p>仅供参考：还有其他类型的索引，比如位图索引，在 CPU、磁盘I/O、和内存方面与B+树索引的成本并不相同。</p>
+<p>另外，很多现代数据库为了改善执行计划的成本，可以仅为当前查询动态地生成临时索引。</p>
+<h4 id=存取路径>存取路径</h4>
+<p>在应用联接运算符（join operators）之前，你首先需要获得数据。以下就是获得数据的方法。</p>
+<p>注：由于所有存取路径的真正问题是磁盘 I/O，我不会过多探讨时间复杂度。</p>
+<ul>
+<li>
+<p>全扫描</p>
+<p>如果你读过执行计划，一定看到过『全扫描』（或只是『扫描』）一词。简单的说全扫描就是数据库完整的读一个表或索引。就磁盘 I/O 而言，很明显全表扫描的成本比索引全扫描要高昂。</p>
+</li>
+<li>
+<p>范围扫描</p>
+<p>其他类型的扫描有索引范围扫描，比如当你使用谓词 ” WHERE AGE > 20 AND AGE &lt; 40 ” 的时候它就会发生。</p>
+<p>当然，你需要在 AGE 字段上有索引才能用到索引范围扫描。</p>
+<p>在第一部分我们已经知道，范围查询的时间成本大约是 log(N)+M，这里 N 是索引的数据量，M 是范围内估测的行数。多亏有了统计我们才能知道 N 和 M 的值（注： M 是谓词 “ AGE > 20 AND AGE &lt; 40 ” 的选择率）。另外范围扫描时，你不需要读取整个索引，因此在磁盘 I/O 方面没有全扫描那么昂贵。</p>
+</li>
+<li>
+<p>唯一扫描</p>
+<p>如果你只需要从索引中取一个值你可以用唯一扫描。</p>
+</li>
+<li>
+<p>根据 ROW ID 存取</p>
+<p>多数情况下，如果数据库使用索引，它就必须查找与索引相关的行，这样就会用到根据 ROW ID 存取的方式。</p>
+</li>
+<li>
+<p>其它路径</p>
+<p>我没有列举所有的存取路径，如果你感兴趣可以读一读 Oracle文档。其它数据库里也许叫法不同但背后的概念是一样的。</p>
+</li>
+</ul>
+<h4 id=联结运算符>联结运算符</h4>
+<p>我要展现的是3个个常用联接运算符：合并联接（Merge join），哈希联接（Hash Join）和嵌套循环联接（Nested Loop Join）。但是在此之前，我需要引入新词汇了：内关系和外关系（ inner relation and outer relation）这里的关系可以是：</p>
+<ul>
+<li>一个表</li>
+<li>一个索引</li>
+<li>上一个运算的中间结果（比如上一个联接运算的结果）</li>
+</ul>
+<p>当你联接两个关系时，联接算法对两个关系的处理是不同的。在本文剩余部分，我将假定：</p>
+<ul>
+<li>外关系是左侧数据集</li>
+<li>内关系是右侧数据集</li>
+</ul>
+<p>比如， A JOIN B 是 A 和 B 的联接，这里 A 是外关系，B 是内关系。</p>
+<p>多数情况下， <strong>A JOIN B 的成本跟 B JOIN A 的成本是不同的</strong>。</p>
+<p>在这一部分，我还将假定外关系有 N 个元素，内关系有 M 个元素。要记住，真实的优化器通过统计知道 N 和 M 的值。</p>
+<p>注：N 和 M 是关系的基数。</p>
+<h5 id=嵌套循环查询>嵌套循环查询</h5>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20210503152955.png style=display:block;width:50% alt=NAME align=center> </div>
+<ul>
+<li>针对外关系的每一行，查看内关系里的所有行来寻找匹配的行。</li>
+</ul>
+<p>伪代码的形式：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#000>nested_loop_join</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>array</span> <span style=color:#000>outer</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>array</span> <span style=color:#000>inner</span><span style=color:#ce5c00;font-weight:700>)</span>
+  <span style=color:#204a87;font-weight:700>for</span> <span style=color:#000>each</span> <span style=color:#000>row</span> <span style=color:#000>a</span> <span style=color:#000>in</span> <span style=color:#000>outer</span>
+    <span style=color:#204a87;font-weight:700>for</span> <span style=color:#000>each</span> <span style=color:#000>row</span> <span style=color:#000>b</span> <span style=color:#000>in</span> <span style=color:#000>inner</span>
+      <span style=color:#000>if</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>match_join_condition</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>a</span><span style=color:#ce5c00;font-weight:700>,</span><span style=color:#000>b</span><span style=color:#ce5c00;font-weight:700>))</span>
+        <span style=color:#000>write_result_in_output</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>a</span><span style=color:#ce5c00;font-weight:700>,</span><span style=color:#000>b</span><span style=color:#ce5c00;font-weight:700>)</span>
+      <span style=color:#000>end</span> <span style=color:#204a87;font-weight:700>if</span>
+    <span style=color:#000>end</span> <span style=color:#204a87;font-weight:700>for</span>
+   <span style=color:#000>end</span> <span style=color:#204a87;font-weight:700>for</span>
+</code></pre></div><p>由于这是个双迭代，<strong>时间复杂度是 O(N*M)</strong>。</p>
+<p>在磁盘 I/O 方面， 针对 N 行外关系的每一行，内部循环需要从内关系读取 M 行。这个算法需要从磁盘读取 N+ N*M 行。但是，如果内关系足够小，你可以把它读入内存，那么就只剩下 M + N 次读取。这样修改之后，内关系必须是最小的，因为它有更大机会装入内存。</p>
+<p>在CPU成本方面没有什么区别，但是在磁盘 I/O 方面，最好最好的，是每个关系只读取一次。</p>
+<p>当然，内关系可以由索引代替，对磁盘 I/O 更有利。</p>
+<p>由于这个算法非常简单，下面这个版本在内关系太大无法装入内存时，对磁盘 I/O 更加有利。原因如下：</p>
+<ul>
+<li>为了避免逐行读取两个关系，</li>
+<li>你可以成簇读取，把（两个关系里读到的）两簇数据行保存在内存里，</li>
+<li>比较两簇数据，保留匹配的，</li>
+<li>然后从磁盘加载新的数据簇来继续比较</li>
+<li>直到加载了所有数据。</li>
+</ul>
+<p>可能的算法如下：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#8f5902;font-style:italic>// improved version to reduce the disk I/O.
+</span><span style=color:#8f5902;font-style:italic></span><span style=color:#000>nested_loop_join_v2</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>file</span> <span style=color:#000>outer</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>file</span> <span style=color:#000>inner</span><span style=color:#ce5c00;font-weight:700>)</span>
+  <span style=color:#204a87;font-weight:700>for</span> <span style=color:#000>each</span> <span style=color:#000>bunch</span> <span style=color:#000>ba</span> <span style=color:#000>in</span> <span style=color:#000>outer</span>
+  <span style=color:#8f5902;font-style:italic>// ba is now in memory
+</span><span style=color:#8f5902;font-style:italic></span>    <span style=color:#204a87;font-weight:700>for</span> <span style=color:#000>each</span> <span style=color:#000>bunch</span> <span style=color:#000>bb</span> <span style=color:#000>in</span> <span style=color:#000>inner</span>
+        <span style=color:#8f5902;font-style:italic>// bb is now in memory
+</span><span style=color:#8f5902;font-style:italic></span>        <span style=color:#204a87;font-weight:700>for</span> <span style=color:#000>each</span> <span style=color:#000>row</span> <span style=color:#000>a</span> <span style=color:#000>in</span> <span style=color:#000>ba</span>
+          <span style=color:#204a87;font-weight:700>for</span> <span style=color:#000>each</span> <span style=color:#000>row</span> <span style=color:#000>b</span> <span style=color:#000>in</span> <span style=color:#000>bb</span>
+            <span style=color:#000>if</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>match_join_condition</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>a</span><span style=color:#ce5c00;font-weight:700>,</span><span style=color:#000>b</span><span style=color:#ce5c00;font-weight:700>))</span>
+              <span style=color:#000>write_result_in_output</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>a</span><span style=color:#ce5c00;font-weight:700>,</span><span style=color:#000>b</span><span style=color:#ce5c00;font-weight:700>)</span>
+            <span style=color:#000>end</span> <span style=color:#204a87;font-weight:700>if</span>
+          <span style=color:#000>end</span> <span style=color:#204a87;font-weight:700>for</span>
+       <span style=color:#000>end</span> <span style=color:#204a87;font-weight:700>for</span>
+    <span style=color:#000>end</span> <span style=color:#204a87;font-weight:700>for</span>
+   <span style=color:#000>end</span> <span style=color:#204a87;font-weight:700>for</span>
+</code></pre></div><p><strong>使用这个版本，时间复杂度没有变化，但是磁盘访问降低了</strong>：</p>
+<ul>
+<li>用前一个版本，算法需要 N + N*M 次访问（每次访问读取一行）。</li>
+<li>用新版本，磁盘访问变为 外关系的数据簇数量 + 外关系的数据簇数量 * 内关系的数据簇数量。</li>
+<li>增加数据簇的尺寸，可以降低磁盘访问。</li>
+</ul>
+<h5 id=哈希连接>哈希连接</h5>
+<p>哈希联接更复杂，不过在很多场合比嵌套循环联接成本低。</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20210503153546.png style=display:block;width:50% alt=NAME align=center> </div>
+<p>哈希联接的原理是：</p>
+<ul>
+<li>读取内关系的所有元素</li>
+<li>在内存里建一个哈希表</li>
+<li>逐条读取外关系的所有元素 +（用哈希表的哈希函数）计算每个元素的哈希值，来查找内关系里相关的哈希桶内</li>
+<li>是否与外关系的元素匹配。</li>
+</ul>
+<p>在时间复杂度方面我需要做些假设来简化问题：</p>
+<ul>
+<li>内关系被划分成 X 个哈希桶</li>
+<li>哈希函数几乎均匀地分布每个关系内数据的哈希值，就是说哈希桶大小一致。</li>
+<li>外关系的元素与哈希桶内的所有元素的匹配，成本是哈希桶内元素的数量。</li>
+</ul>
+<p>时间复杂度是 (M/X) * N + 创建哈希表的成本(M) + 哈希函数的成本 * N 。如果哈希函数创建了足够小规模的哈希桶，那么复杂度就是 O(M+N)。</p>
+<p>还有个哈希联接的版本，对内存有利但是对磁盘 I/O 不够有利。 这回是这样的：</p>
+<ul>
+<li>计算内关系和外关系双方的哈希表</li>
+<li>保存哈希表到磁盘</li>
+<li>然后逐个哈希桶比较（其中一个读入内存，另一个逐行读取）。</li>
+</ul>
+<h5 id=合并连接>合并连接</h5>
+<blockquote>
+<p>合并联接是唯一产生排序的联接算法。</p>
+</blockquote>
+<p>注：这个简化的合并联接不区分内表或外表；两个表扮演同样的角色。但是真实的实现方式是不同的，比如当处理重复值时。</p>
+<ul>
+<li>1.（可选）排序联接运算：两个输入源都按照联接关键字排序。</li>
+<li>2.合并联接运算：排序后的输入源合并到一起。</li>
+<li><strong>排序</strong></li>
+</ul>
+<p>我们已经谈到过合并排序，在这里合并排序是个很好的算法（但是并非最好的，如果内存足够用的话，还是哈希联接更好）。</p>
+<p>然而有时数据集已经排序了，比如：</p>
+<ul>
+<li>如果表内部就是有序的，比如联接条件里一个索引组织表(index-organized table)</li>
+<li>如果关系是联接条件里的一个索引</li>
+<li>如果联接应用在一个查询中已经排序的中间结果</li>
+<li><strong>合并联接</strong></li>
+</ul>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20210503153852.png style=display:block;width:50% alt=NAME align=center> </div>
+<p>这部分与我们研究过的合并排序中的合并运算非常相似。不过这一次呢，我们不是从两个关系里挑选所有元素，而是只挑选相同的元素。道理如下：</p>
+<ul>
+<li>在两个关系中，比较当前元素（当前=头一次出现的第一个）</li>
+<li>如果相同，就把两个元素都放入结果，再比较两个关系里的下一个元素</li>
+<li>如果不同，就去带有最小元素的关系里找下一个元素（因为下一个元素可能会匹配）</li>
+<li>重复 1、2、3步骤直到其中一个关系的最后一个元素。</li>
+</ul>
+<p>因为两个关系都是已排序的，你不需要『回头去找』，所以这个方法是有效的。</p>
+<p>该算法是个简化版，因为它没有处理两个序列中相同数据出现多次的情况（即多重匹配）。真实版本『仅仅』针对本例就更加复杂，所以我才选择简化版。</p>
+<ul>
+<li>
+<p>如果两个关系都已经排序，时间复杂度是 O(N+M)</p>
+</li>
+<li>
+<p>如果两个关系需要排序，时间复杂度是对两个关系排序的成本：O(N<em>Log(N) + M</em>Log(M))</p>
+</li>
+</ul>
+<h5 id=最优算法>最优算法</h5>
+<p>如果有最好的，就没必要弄那么多种类型了。这个问题很难，因为很多因素都要考虑，比如：</p>
+<ul>
+<li><strong>空闲内存</strong>：没有足够的内存的话就跟强大的哈希联接拜拜吧（至少是完全内存中哈希联接）。</li>
+<li><strong>两个数据集的大小</strong>。比如，如果一个大表联接一个很小的表，那么嵌套循环联接就比哈希联接快，因为后者有创建哈希的高昂成本；如果两个表都非常大，那么嵌套循环联接CPU成本就很高昂。</li>
+<li><strong>是否有索引</strong>：有两个 B+树索引的话，聪明的选择似乎是合并联接。</li>
+<li><strong>结果是否需要排序</strong>：即使你用到的是未排序的数据集，你也可能想用成本较高的合并联接（带排序的），因为最终得到排序的结果后，你可以把它和另一个合并联接串起来（或者也许因为查询用 ORDER BY/GROUP BY/DISTINCT 等操作符隐式或显式地要求一个排序结果）。</li>
+<li><strong>关系是否已经排序</strong>：这时候合并联接是最好的候选项。</li>
+<li><strong>联接的类型</strong>：是等值联接（比如 tableA.col1 = tableB.col2 ）？ 还是内联接？外联接？笛卡尔乘积？或者自联接？有些联接在特定环境下是无法工作的。</li>
+<li><strong>数据的分布</strong>：如果联接条件的数据是倾斜的（比如根据姓氏来联接人，但是很多人同姓），用哈希联接将是个灾难，原因是哈希函数将产生分布极不均匀的哈希桶。</li>
+<li>如果你希望联接操作使用<strong>多线程或多进程</strong>。</li>
+</ul>
+<p>想要更详细的信息，可以阅读DB2, ORACLE 或 SQL Server)的文档。</p>
+<h5 id=应用实例>应用实例</h5>
+<p>我们已经研究了 3 种类型的联接操作。现在，比如说我们要联接 5 个表，来获得一个人的全部信息。一个人可以有：</p>
+<ul>
+<li>多个手机号（MOBILES）</li>
+<li>多个邮箱（MAILS）</li>
+<li>多个地址（ADRESSES）</li>
+<li>多个银行账号（BANK_ACCOUNTS）</li>
+</ul>
+<p>换句话说，我们需要用下面的查询快速得到答案：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sql data-lang=sql><span style=color:#204a87;font-weight:700>SELECT</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#ce5c00;font-weight:700>*</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>from</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#000>PERSON</span><span style=color:#000;font-weight:700>,</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#000>MOBILES</span><span style=color:#000;font-weight:700>,</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#000>MAILS</span><span style=color:#000;font-weight:700>,</span><span style=color:#000>ADRESSES</span><span style=color:#000;font-weight:700>,</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#000>BANK_ACCOUNTS</span><span style=color:#f8f8f8;text-decoration:underline>
+</span><span style=color:#f8f8f8;text-decoration:underline></span><span style=color:#204a87;font-weight:700>WHERE</span><span style=color:#f8f8f8;text-decoration:underline>
+</span><span style=color:#f8f8f8;text-decoration:underline></span><span style=color:#000>PERSON</span><span style=color:#000;font-weight:700>.</span><span style=color:#000>PERSON_ID</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#000>MOBILES</span><span style=color:#000;font-weight:700>.</span><span style=color:#000>PERSON_ID</span><span style=color:#f8f8f8;text-decoration:underline>
+</span><span style=color:#f8f8f8;text-decoration:underline></span><span style=color:#204a87;font-weight:700>AND</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#000>PERSON</span><span style=color:#000;font-weight:700>.</span><span style=color:#000>PERSON_ID</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#000>MAILS</span><span style=color:#000;font-weight:700>.</span><span style=color:#000>PERSON_ID</span><span style=color:#f8f8f8;text-decoration:underline>
+</span><span style=color:#f8f8f8;text-decoration:underline></span><span style=color:#204a87;font-weight:700>AND</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#000>PERSON</span><span style=color:#000;font-weight:700>.</span><span style=color:#000>PERSON_ID</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#000>ADRESSES</span><span style=color:#000;font-weight:700>.</span><span style=color:#000>PERSON_ID</span><span style=color:#f8f8f8;text-decoration:underline>
+</span><span style=color:#f8f8f8;text-decoration:underline></span><span style=color:#204a87;font-weight:700>AND</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#000>PERSON</span><span style=color:#000;font-weight:700>.</span><span style=color:#000>PERSON_ID</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#000>BANK_ACCOUNTS</span><span style=color:#000;font-weight:700>.</span><span style=color:#000>PERSON_ID</span><span style=color:#f8f8f8;text-decoration:underline>
+</span></code></pre></div><p>作为一个查询优化器，我必须找到处理数据最好的方法。但有 2 个问题：</p>
+<ul>
+<li>每个联接使用那种类型？
+<ul>
+<li>我有 3 种可选（哈希、合并、嵌套），同时可能用到 0, 1 或 2 个索引（不必说还有多种类型的索引）。</li>
+</ul>
+</li>
+<li>按什么顺序执行联接？</li>
+</ul>
+<p>比如，下图显示了针对 4 个表仅仅 3 次联接，可能采用的执行计划：</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20210503154121.png style=display:block;width:50% alt=NAME align=center> </div>
+<p>现实世界的查询还会有其他关系运算符，像 OUTER JOIN, CROSS JOIN, GROUP BY, ORDER BY, PROJECTION, UNION, INTERSECT, DISTINCT … 这意味着更多的可能性。</p>
+<p><strong>那么，数据库是如何处理的呢</strong>？</p>
+<ul>
+<li>动态规划</li>
+<li>贪心算法</li>
+<li>启发算法</li>
+</ul>
+<p>关系型数据库会尝试我刚刚提到的多种方法，<strong>优化器真正的工作是在有限时间里找到一个好的解决方案</strong>。但多数时候，优化器找到的不是最佳的方案，而是一个『不错』的。</p>
+<h5 id=动态规划>动态规划</h5>
+<blockquote>
+<p>对于小规模的查询，采取粗暴的方式是有可能的。但是为了让中等规模的查询也能采取粗暴的方式，我们有办法避免不必要的计算，这就是动态规划。</p>
+</blockquote>
+<p>这几个字背后的理念是，很多执行计划是非常相似的。看看下图这几种计划：</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20210503154314.png style=display:block;width:50% alt=NAME align=center> </div>
+<p>它们都有相同的子树（A JOIN B），所以，不必在每个计划中计算这个子树的成本，计算一次，保存结果，当再遇到这个子树时重用。用更正规的说法，我们面对的是个重叠问题。为了避免对部分结果的重复计算，我们使用记忆法。</p>
+<p>应用这一技术，我们不再有 (2*N)!/(N+1)! 的复杂度，而是“只有” 3^N。在之前 4 个JOIN 的例子里，这意味着将 336 次排序降为 81 次。如果是大一些的查询，比如 8 个 JOIN （其实也不是很大啦），就是将 57,657,600 次降为 6551 次。</p>
+<p>针对大规模查询，你也可以用动态规划方法，但是要附加额外的规则（或者称为启发式算法）来减少可能性。</p>
+<ul>
+<li>
+<p>如果我们仅分析一个特定类型的计划（例如左深树 left-deep tree，参考)，我们得到 n*2^n 而不是 3^n。</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20210503154348.png style=display:block;width:50% alt=NAME align=center> </div>
+</li>
+<li>
+<p>如果我们加上逻辑规则来避免一些模式的计划（像『如果一个表有针对指定谓词的索引，就不要对表尝试合并联接，要对索引』），就会在不给最佳方案造成过多伤害的前提下，减少可能性的数量。【译者注：原文应该是有两处笔误： as=has, to=too】</p>
+</li>
+<li>
+<p>如果我们在流程里增加规则（像『联接运算先于其他所有的关系运算』），也能减少大量的可能性。</p>
+</li>
+</ul>
+<h5 id=贪心算法>贪心算法</h5>
+<blockquote>
+<p>但是，优化器面对一个非常大的查询，或者为了尽快找到答案（然而查询速度就快不起来了），会应用另一种算法，叫贪婪算法。</p>
+</blockquote>
+<p>原理是按照一个规则（或启发）以渐进的方式制定查询计划。在这个规则下，贪婪算法逐步寻找最佳算法，先处理一条JOIN，接着每一步按照同样规则加一条新的JOIN。</p>
+<p>我们来看个简单的例子。比如一个针对5张表（A,B,C,D,E）4次JOIN 的查询，为了简化我们把嵌套JOIN作为可能的联接方式，按照『使用最低成本的联接』规则。</p>
+<ul>
+<li>直接从 5 个表里选一个开始（比如 A）</li>
+<li>计算每一个与 A 的联接（A 作为内关系或外关系）</li>
+<li>发现 “A JOIN B” 成本最低</li>
+<li>计算每一个与 “A JOIN B” 的结果联接的成本（“A JOIN B” 作为内关系或外关系）</li>
+<li>发现 “(A JOIN B) JOIN C” 成本最低</li>
+<li>计算每一个与 “(A JOIN B) JOIN C” 的结果联接的成本</li>
+<li>……</li>
+<li>最后确定执行计划 “( ( (A JOIN B) JOIN C) JOIN D ) JOIN E )”</li>
+</ul>
+<p>因为我们是武断地从表 A 开始，我们可以把同样的算法用在 B，然后 C，然后 D, 然后 E。最后保留成本最低的执行计划。</p>
+<p>顺便说一句，这个算法有个名字，叫『最近邻居算法』。</p>
+<p>抛开细节不谈，只需一个良好的模型和一个 N<em>log(N) 复杂度的排序，问题就轻松解决了。这个算法的复杂度是 O(N</em>log(N)) ，对比一下完全动态规划的 O(3^N)。如果你有个20个联接的大型查询，这意味着 26 vs 3,486,784,401 ，天壤之别！</p>
+<p>这个算法的问题是，我们做的假设是：找到 2 个表的最佳联接方法，保留这个联接结果，再联接下一个表，就能得到最低的成本。但是：</p>
+<ul>
+<li>即使在 A, B, C 之间，A JOIN B 可得最低成本</li>
+<li>(A JOIN C) JOIN B 也许比 (A JOIN B) JOIN C 更好。</li>
+</ul>
+<p>为了改善这一状况，你可以多次使用基于不同规则的贪心算法，并保留最佳的执行计划。</p>
+<h5 id=查询计划缓存>查询计划缓存</h5>
+<p>由于创建查询计划是耗时的，大多数据库把计划保存在查询计划缓存，来避免重复计算。这个话题比较大，因为数据库需要知道什么时候更新过时的计划。办法是设置一个上限，如果一个表的统计变化超过了上限，关于该表的查询计划就从缓存中清除。</p>
+<h3 id=查询执行器>查询执行器</h3>
+<p>在这个阶段，我们有了一个优化的执行计划，再编译为可执行代码。然后，如果有足够资源（内存，CPU），查询执行器就会执行它。计划中的操作符 (JOIN, SORT BY …) 可以顺序或并行执行，这取决于执行器。为了获得和写入数据，查询执行器与数据管理器交互，本文下一部分来讨论数据管理器。</p>
+<h2 id=数据管理器-1>数据管理器</h2>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20210503154627.png style=display:block;width:50% alt=NAME align=center> </div>
+<p>在这一步，查询管理器执行了查询，需要从表和索引获取数据，于是向数据管理器提出请求。但是有 2 个问题：</p>
+<ul>
+<li>关系型数据库使用事务模型，所以，当其他人在同一时刻使用或修改数据时，你无法得到这部分数据。</li>
+<li>数据提取是数据库中速度最慢的操作，所以数据管理器需要足够聪明地获得数据并保存在内存缓冲区内。</li>
+</ul>
+<p>在这一部分，我们看看关系型数据库是如何处理这两个问题的。</p>
+<h3 id=缓存管理器>缓存管理器</h3>
+<p>前文已经说过，数据库的主要瓶颈是磁盘 I/O。为了提高性能，现代数据库使用缓存管理器。</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20210503154658.png style=display:block;width:50% alt=NAME align=center> </div>
+<p>查询执行器不会直接从文件系统拿数据，而是向缓存管理器要。缓存管理器有一个内存缓存区，叫做缓冲池，从内存读取数据显著地提升数据库性能。对此很难给出一个数量级，因为这取决于你需要的是哪种操作：</p>
+<ul>
+<li>顺序访问（比如：全扫描） vs 随机访问（比如：按照row id访问）</li>
+<li>读还是写</li>
+</ul>
+<p>以及数据库使用的磁盘类型：</p>
+<ul>
+<li>7.2k/10k/15k rpm的硬盘</li>
+<li>SSD</li>
+<li>RAID 1/5/…</li>
+</ul>
+<p>要我说，内存比磁盘要快100到10万倍。然而，这导致了另一个问题（数据库总是这样…)，缓存管理器需要在查询执行器使用数据之前得到数据，否则查询管理器不得不等待数据从缓慢的磁盘中读出来。</p>
+<h4 id=预读>预读</h4>
+<p>这个问题叫预读。查询执行器知道它将需要什么数据，因为它了解整个查询流，而且通过统计也了解磁盘上的数据。过程是这样的：</p>
+<ul>
+<li>当查询执行器处理它的第一批数据时，会告诉缓存管理器预先装载第二批数据</li>
+<li>当开始处理第二批数据时，告诉缓存管理器预先装载第三批数据，并且告诉缓存管理器第一批可以从缓存里清掉了。</li>
+<li>……</li>
+</ul>
+<p>缓存管理器在缓冲池里保存所有的这些数据。为了确定一条数据是否有用，缓存管理器给缓存的数据添加了额外的信息（叫闩锁）。</p>
+<p>有时查询执行器不知道它需要什么数据，有的数据库也不提供这个功能。相反，它们使用一种推测预读法（比如：如果查询执行器想要数据1、3、5，它不久后很可能会要 7、9、11），或者顺序预读法（这时候缓存管理器只是读取一批数据后简单地从磁盘加载下一批连续数据）。</p>
+<p>为了监控预读的工作状况，现代数据库引入了一个度量叫缓冲/缓存命中率，用来显示请求的数据在缓存中找到而不是从磁盘读取的频率。</p>
+<p>注：糟糕的缓存命中率不总是意味着缓存工作状态不佳。</p>
+<p>缓冲只是容量有限的内存空间，因此，为了加载新的数据，它需要移除一些数据。加载和清除缓存需要一些磁盘和网络I/O的成本。如果你有个经常执行的查询，那么每次都把查询结果加载然后清除，效率就太低了。现代数据库用缓冲区置换策略来解决这个问题。</p>
+<h4 id=缓冲区置换>缓冲区置换</h4>
+<blockquote>
+<p>多数现代数据库(至少 SQL Server, MySQL, Oracle 和 DB2)使用 LRU 算法。</p>
+</blockquote>
+<p>LRU代表最近最少使用（Least Recently Used）算法，背后的原理是：在缓存里保留的数据是最近使用的，所以更有可能再次使用。</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20210503154947.png style=display:block;width:50% alt=NAME align=center> </div>
+<p>为了更好的理解，我假设缓冲区里的数据没有被闩锁锁住（就是说是可以被移除的）。在这个简单的例子里，缓冲区可以保存 3 个元素：</p>
+<ul>
+<li>1：缓存管理器（简称CM）使用数据1，把它放入空的缓冲区</li>
+<li>2：CM使用数据4，把它放入半载的缓冲区</li>
+<li>3：CM使用数据3，把它放入半载的缓冲区</li>
+<li>4：CM使用数据9，缓冲区满了，所以数据1被清除，因为它是最后一个最近使用的，数据9加入到缓冲区</li>
+<li>5：CM使用数据4，数据4已经在缓冲区了，所以它再次成为第一个最近使用的。</li>
+<li>6：CM使用数据1，缓冲区满了，所以数据9被清除，因为它是最后一个最近使用的，数据1加入到缓冲区</li>
+<li>……</li>
+</ul>
+<p>这个算法效果很好，但是有些限制。<strong>如果对一个大表执行全表扫描怎么办</strong>？换句话说，当表/索引的大小超出缓冲区会发生什么？使用这个算法会清除之前缓存内所有的数据，而且全扫描的数据很可能只使用一次。</p>
+<h4 id=缓冲区置换改进>缓冲区置换：改进</h4>
+<p>为了防止这个现象，有些数据库增加了特殊的规则，比如Oracle文档中的描述：</p>
+<blockquote>
+<p>『对非常大的表来说，数据库通常使用直接路径来读取，即直接加载区块，来避免填满缓冲区。对于中等大小的表，数据库可以使用直接读取或缓存读取。如果选择缓存读取，数据库把区块置于LRU的尾部，防止清空当前缓冲区。』</p>
+</blockquote>
+<p>还有一些可能，比如使用高级版本的LRU，叫做 LRU-K。例如，SQL Server 使用 LRU-2。</p>
+<p>这个算法的原理是把更多的历史记录考虑进来。简单LRU（也就是 LRU-1），只考虑最后一次使用的数据。LRU-K呢：</p>
+<ul>
+<li>考虑数据最后第K次使用的情况</li>
+<li>数据使用的次数加进了权重</li>
+<li>一批新数据加载进入缓存，旧的但是经常使用的数据不会被清除（因为权重更高）</li>
+<li>但是这个算法不会保留缓存中不再使用的数据</li>
+<li>所以数据如果不再使用，权重值随着时间推移而降低</li>
+</ul>
+<p>计算权重是需要成本的，所以SQL Server只是使用 K=2，这个值性能不错而且额外开销可以接受。</p>
+<h4 id=其他算法>其他算法</h4>
+<p>当然还有其他管理缓存的算法，比如：</p>
+<ul>
+<li>2Q（类LRU-K算法）</li>
+<li>CLOCK（类LRU-K算法）</li>
+<li>MRU（最新使用的算法，用LRU同样的逻辑但不同的规则）</li>
+<li>LRFU（Least Recently and Frequently Used，最近最少使用最近最不常用）</li>
+<li>……</li>
+</ul>
+<h4 id=写缓冲区>写缓冲区</h4>
+<p>我只探讨了读缓存 —— 在使用之前预先加载数据。用来保存数据、成批刷入磁盘，而不是逐条写入数据从而造成很多单次磁盘访问。</p>
+<p>要记住，<strong>缓冲区保存的是页（最小的数据单位）而不是行（逻辑上/人类习惯的观察数据的方式）</strong>。缓冲池内的页如果被修改了但还没有写入磁盘，就是脏页。有很多算法来决定写入脏页的最佳时机，但这个问题与事务的概念高度关联，下面我们就谈谈事务。</p>
+<h3 id=事务管理器>事务管理器</h3>
+<p>最后但同样重要的，是事务管理器，我们将看到这个进程是如何保证每个查询在自己的事务内执行的。但开始之前，我们需要理解ACID事务的概念。</p>
+<p>一个ACID事务是一个工作单元，它要保证4个属性：</p>
+<ul>
+<li>原子性（Atomicity）: 事务『要么全部完成，要么全部取消』，即使它持续运行10个小时。如果事务崩溃，状态回到事务之前（事务回滚）。</li>
+<li>一致性（Consistency）: 只有合法的数据（依照关系约束和函数约束）能写入数据库，一致性与原子性和隔离性有关。</li>
+<li>隔离性（Isolation）: 如果2个事务 A 和 B 同时运行，事务 A 和 B 最终的结果是相同的，不管 A 是结束于 B 之前/之后/运行期间。</li>
+<li>持久性（Durability）: 一旦事务提交（也就是成功执行）,不管发生什么（崩溃或者出错），数据要保存在数据库中。</li>
+</ul>
+<p>在同一个事务内，你可以运行多个SQL查询来读取、创建、更新和删除数据。当两个事务使用相同的数据，麻烦就来了。经典的例子是从账户A到账户B的汇款。假设有2个事务：</p>
+<ul>
+<li>事务1（T1）从账户A取出100美元给账户B</li>
+<li>事务2（T2）从账户A取出50美元给账户B</li>
+</ul>
+<p>我们回来看看ACID属性：</p>
+<ul>
+<li>原子性确保不管 T1 期间发生什么（服务器崩溃、网络中断…），你不能出现账户A 取走了100美元但没有给账户B 的现象（这就是数据不一致状态）。</li>
+<li>隔离性确保如果 T1 和 T2 同时发生，最终A将减少150美元，B将得到150美元，而不是其他结果，比如因为 T2 部分抹除了 T1 的行为，A减少150美元而B只得到50美元（这也是不一致状态）。</li>
+<li>持久性确保如果 T1 刚刚提交，数据库就发生崩溃，T1 不会消失得无影无踪。</li>
+<li>一致性确保钱不会在系统内生成或灭失。</li>
+</ul>
+<h3 id=并发控制>并发控制</h3>
+<p>确保隔离性、一致性和原子性的真正问题是<strong>对相同数据的写操作（增、更、删）</strong>：</p>
+<ul>
+<li>如果所有事务只是读取数据，它们可以同时工作，不会更改另一个事务的行为。</li>
+<li>如果（至少）有一个事务在修改其他事务读取的数据，数据库需要找个办法对其它事务隐藏这种修改。而且，它还需要确保这个修改操作不会被另一个看不到这些数据修改的事务擦除。</li>
+</ul>
+<p>这个问题叫<strong>并发控制</strong>。</p>
+<p>最简单的解决办法是依次执行每个事务（即顺序执行），但这样就完全没有伸缩性了，在一个多处理器/多核服务器上只有一个核心在工作，效率很低。</p>
+<ul>
+<li>理想的办法是，每次一个事务创建或取消时：</li>
+<li>监控所有事务的所有操作</li>
+<li>检查是否2个（或更多）事务的部分操作因为读取/修改相同的数据而存在冲突</li>
+<li>重新编排冲突事务中的操作来减少冲突的部分</li>
+<li>按照一定的顺序执行冲突的部分（同时非冲突事务仍然在并发运行）</li>
+<li>考虑事务有可能被取消</li>
+</ul>
+<p>用更正规的说法，这是对冲突的调度问题。更具体点儿说，这是个非常困难而且CPU开销很大的优化问题。企业级数据库无法承担等待几个小时，来寻找每个新事务活动最好的调度，因此就使用不那么理想的方式以避免更多的时间浪费在解决冲突上。</p>
+<h3 id=锁管理器>锁管理器</h3>
+<blockquote>
+<p>为了解决这个问题，多数数据库使用<strong>锁</strong>和/或<strong>数据版本控制</strong>。这是个很大的话题，我会集中探讨锁，和一点点数据版本控制。</p>
+</blockquote>
+<h4 id=悲观锁>悲观锁</h4>
+<h4 id=悲观锁-1>悲观锁</h4>
+<p>原理是：</p>
+<ul>
+<li>如果一个事务需要一条数据,它就把数据锁住</li>
+<li>如果另一个事务也需要这条数据, 它就必须要等第一个事务释放这条数据</li>
+</ul>
+<p>这个锁叫<strong>排他锁</strong>。</p>
+<p>但是对一个仅仅读取数据的事务使用排他锁非常昂贵，因为这会迫使其它只需要读取相同数据的事务等待。因此就有了另一种锁，<strong>共享锁</strong>。</p>
+<p><strong>共享锁是这样的</strong>：</p>
+<ul>
+<li>如果一个事务只需要读取数据A, 它会给数据A加上『共享锁』并读取</li>
+<li>如果第二个事务也需要仅仅读取数据A, 它会给数据A加上『共享锁』并读取</li>
+<li>如果第三个事务需要修改数据A, 它会给数据A加上『排他锁』，但是必须等待另外两个事务释放它们的共享锁。</li>
+</ul>
+<p>同样的，如果一块数据被加上排他锁，一个只需要读取该数据的事务必须等待排他锁释放才能给该数据加上共享锁。</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20210503155723.png style=display:block;width:50% alt=NAME align=center> </div>
+<p>锁管理器是添加和释放锁的进程，在内部用一个哈希表保存锁信息（关键字是被锁的数据），并且了解每一块数据是：</p>
+<ul>
+<li>被哪个事务加的锁</li>
+<li>哪个事务在等待数据解锁</li>
+</ul>
+<h4 id=死锁>死锁</h4>
+<p>但是使用锁会导致一种情况，2个事务永远在等待一块数据：</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20210503155747.png style=display:block;width:50% alt=NAME align=center> </div>
+<p>在本图中：</p>
+<ul>
+<li>事务A 给 数据1 加上排他锁并且等待获取数据2</li>
+<li>事务B 给 数据2 加上排他锁并且等待获取数据1</li>
+</ul>
+<p>这叫<strong>死锁</strong>。</p>
+<p>在死锁发生时，锁管理器要选择取消（回滚）一个事务，以便消除死锁。这可是个艰难的决定：</p>
+<ul>
+<li>杀死数据修改量最少的事务（这样能减少回滚的成本）？</li>
+<li>杀死持续时间最短的事务，因为其它事务的用户等的时间更长？</li>
+<li>杀死能用更少时间结束的事务（避免可能的资源饥荒）？</li>
+<li>一旦发生回滚，有多少事务会受到回滚的影响？</li>
+</ul>
+<p>在作出选择之前，锁管理器需要检查是否有死锁存在。</p>
+<p>哈希表可以看作是个图表（见上文图），图中出现循环就说明有死锁。由于检查循环是昂贵的（所有锁组成的图表是很庞大的），经常会通过简单的途径解决：<strong>使用超时设定</strong>。如果一个锁在超时时间内没有加上，那事务就进入死锁状态。</p>
+<p>锁管理器也可以在加锁之前检查该锁会不会变成死锁，但是想要完美的做到这一点还是很昂贵的。因此这些预检经常设置一些基本规则。</p>
+<h4 id=两段锁>两段锁</h4>
+<blockquote>
+<p>实现纯粹的隔离最简单的方法是：事务开始时获取锁，结束时释放锁。就是说，事务开始前必须等待确保自己能加上所有的锁，当事务结束时释放自己持有的锁。这是行得通的，但是为了等待所有的锁，大量的时间被浪费了。</p>
+</blockquote>
+<p>更快的方法是<strong>两段锁协议</strong>（Two-Phase Locking Protocol，2PC，由 DB2 和 SQL Server使用），在这里，事务分为两个阶段：</p>
+<ul>
+<li><strong>成长阶段</strong>：事务可以获得锁，但不能释放锁。</li>
+<li><strong>收缩阶段</strong>：事务可以释放锁（对于已经处理完而且不会再次处理的数据），但不能获得新锁。</li>
+</ul>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20210503155901.png style=display:block;width:50% alt=NAME align=center> </div>
+<p>这两条简单规则背后的过程是：</p>
+<ul>
+<li>释放不再使用的锁，来降低其它事务的等待时间</li>
+<li>防止发生这类情况：事务最初获得的数据，在事务开始后被修改，当事务重新读取该数据时发生不一致。</li>
+</ul>
+<p>这个规则可以很好地工作，但有个例外：如果修改了一条数据、释放了关联的锁后，事务被取消（回滚），而另一个事务读到了修改后的值，但最后这个值却被回滚。为了避免这个问题，<strong>所有独占锁必须在事务结束时释放</strong>。</p>
+<h4 id=版本控制>版本控制</h4>
+<blockquote>
+<p>当然了，真实的数据库使用更复杂的系统，涉及到更多类型的锁（比如意向锁，intention locks）和更多的粒度（行级锁、页级锁、分区锁、表锁、表空间锁），但是思路是相同的。</p>
+</blockquote>
+<p>我只探讨纯粹基于锁的方法，<strong>数据版本控制是解决这个问题的另一个方法</strong>。</p>
+<p>版本控制是这样的：</p>
+<ul>
+<li>每个事务可以在相同时刻修改相同的数据</li>
+<li>每个事务有自己的数据拷贝（或者叫版本）</li>
+<li>如果2个事务修改相同的数据，只接受一个修改，另一个将被拒绝，相关的事务回滚（或重新运行）</li>
+</ul>
+<p>这将提高性能，因为：</p>
+<ul>
+<li>读事务不会阻塞写事务</li>
+<li>写事务不会阻塞读</li>
+<li>没有『臃肿缓慢』的锁管理器带来的额外开销</li>
+</ul>
+<p>除了两个事务写相同数据的时候，数据版本控制各个方面都比锁表现得更好。只不过，你很快就会发现磁盘空间消耗巨大。</p>
+<p><strong>数据版本控制和锁机制是两种不同的见解</strong>：乐观锁和悲观锁。两者各有利弊，完全取决于使用场景（读多还是写多）。</p>
+<blockquote>
+<p>一些数据库，比如DB2（直到版本 9.7）和 SQL Server（不含快照隔离）仅使用锁机制。其他的像PostgreSQL, MySQL 和 Oracle 使用锁和鼠标版本控制混合机制。</p>
+</blockquote>
+<h3 id=日志管理器>日志管理器</h3>
+<p>我们已经知道，为了提升性能，数据库把数据保存在内存缓冲区内。但如果当事务提交时服务器崩溃，崩溃时还在内存里的数据会丢失，这破坏了事务的持久性。你可以把所有数据都写在磁盘上，但是如果服务器崩溃，最终数据可能只有部分写入磁盘，这破坏了事务的原子性。</p>
+<p><strong>事务作出的任何修改必须是或者撤销，或者完成</strong>。</p>
+<p>有 2 个办法解决这个问题：</p>
+<ul>
+<li><strong>影子副本/页（Shadow copies/pages）</strong>：每个事务创建自己的数据库副本（或部分数据库的副本），并基于这个副本来工作。一旦出错，这个副本就被移除；一旦成功，数据库立即使用文件系统的一个把戏，把副本替换到数据中，然后删掉『旧』数据。</li>
+<li><strong>事务日志（Transaction log）</strong>：事务日志是一个存储空间，在每次写盘之前，数据库在事务日志中写入一些信息，这样当事务崩溃或回滚，数据库知道如何移除或完成尚未完成的事务。</li>
+</ul>
+<h4 id=wal预写式日志>WAL（预写式日志）</h4>
+<blockquote>
+<p>影子副本/页在运行较多事务的大型数据库时制造了大量磁盘开销，所以现代数据库使用<strong>事务日志</strong>。事务日志必须保存在<strong>稳定的存储</strong>上，我不会深挖存储技术，但至少RAID磁盘是必须的，以防磁盘故障。</p>
+</blockquote>
+<p>多数数据库（至少是Oracle,SQL Server,DB2,PostgreSQL, MySQL 和SQLite) 使用预写日志协议（Write-Ahead Logging protocol ，WAL）来处理事务日志。WAL协议有 3 个规则：</p>
+<ul>
+<li>每个对数据库的修改都产生一条日志记录，在数据写入磁盘之前日志记录必须写入事务日志。</li>
+<li>日志记录必须按顺序写入；记录 A 发生在记录 B 之前，则 A 必须写在 B 之前。</li>
+<li>当一个事务提交时，在事务成功之前，提交顺序必须写入到事务日志。</li>
+</ul>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20210503160352.png style=display:block;width:50% alt=NAME align=center> </div>
+<p>这个工作由日志管理器完成。简单的理解就是，日志管理器处于缓存管理器（cache manager）和数据访问管理器（data access manager，负责把数据写入磁盘）之间，每个 update / delete / create / commit / rollback 操作在写入磁盘之前先写入事务日志。这个过程并不简单，原因在于<strong>如何找到写日志的同时保持良好的性能的方法</strong>，如果事务日志写得太慢，整体都会慢下来。</p>
+<h4 id=aries>ARIES</h4>
+<blockquote>
+<p>1992年，IBM 研究人员『发明』了WAL的增强版，叫 ARIES。ARIES 或多或少地在现代数据库中使用，逻辑未必相同，但AIRES背后的概念无处不在。ARIES 代表『数据库恢复原型算法』（Algorithms forRecovery andIsolationExploitingSemantics）。</p>
+</blockquote>
+<p>这个技术要达到一个双重目标：</p>
+<ul>
+<li>写日志的同时保持良好性能</li>
+<li>快速和可靠的数据恢复</li>
+</ul>
+<p>有多个原因让数据库不得不回滚事务：</p>
+<ul>
+<li>因为用户取消</li>
+<li>因为服务器或网络故障</li>
+<li>因为事务破坏了数据库完整性（比如一个列有唯一性约束而事务添加了重复值）</li>
+<li>因为死锁</li>
+</ul>
+<h4 id=日志内容>日志内容</h4>
+<blockquote>
+<p>有时候（比如网络出现故障），数据库可以恢复事务。这怎么可能呢？为了回答这个问题，我们需要了解日志里保存的信息。</p>
+</blockquote>
+<p>事务的<strong>每一个操作（增/删/改）产生一条日志</strong>，由如下内容组成：</p>
+<ul>
+<li>LSN：一个唯一的日志序列号（Log Sequence Number）。LSN是按时间顺序分配的，这意味着如果操作 A 先于操作 B，log A 的 LSN 要比 log B 的 LSN 小。</li>
+<li>TransID：产生操作的事务ID。</li>
+<li>PageID：被修改的数据在磁盘上的位置。磁盘数据的最小单位是页，所以数据的位置就是它所处页的位置。</li>
+<li>PrevLSN：同一个事务产生的上一条日志记录的链接。</li>
+<li>UNDO：取消本次操作的方法。比如，如果操作是一次更新，UNDO将或者保存元素更新前的值/状态（物理UNDO），或者回到原来状态的反向操作（<strong>逻辑UNDO</strong>, 只使用逻辑UNDO，因为处理物理UNDO太过混乱了)。</li>
+<li>REDO：重复本次操作的方法。 同样的，有 2 种方法：或者保存操作后的元素值/状态，或者保存操作本身以便重复。</li>
+<li>…：（供您参考，一个 ARIES 日志还有 2 个字段：UndoNxtLSN 和 Type）。</li>
+</ul>
+<p>磁盘上每个页（保存数据的，不是保存日志的）都记录着最后一个修改该数据操作的LSN。</p>
+<blockquote>
+<p>注：据我所知，只有 PostgreSQL 没有使用UNDO，而是用一个垃圾回收服务来删除旧版本的数据。这个跟 PostgreSQL 对数据版本控制的实现有关。</p>
+</blockquote>
+<p>为了更好的说明这一点，这有一个简单的日志记录演示图，是由查询 “<code>UPDATE FROM PERSON SET AGE = 18;</code>” 产生的:</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20210503160551.png style=display:block;width:50% alt=NAME align=center> </div>
+<p>每条日志都有一个唯一的LSN，链接在一起的日志属于同一个事务。日志按照时间顺序链接（链接列表的最后一条日志是最后一个操作产生的）。</p>
+<h4 id=日志缓冲区>日志缓冲区</h4>
+<blockquote>
+<p>为了防止写日志成为主要的瓶颈，数据库使用了日志缓冲区。</p>
+</blockquote>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20210503160636.png style=display:block;width:50% alt=NAME align=center> </div>
+<p>当查询执行器要求做一次修改：</p>
+<ol>
+<li>
+<p>缓存管理器将修改存入自己的缓冲区；</p>
+</li>
+<li>
+<p>日志管理器将相关的日志存入自己的缓冲区；</p>
+</li>
+<li>
+<p>到了这一步，查询执行器认为操作完成了（因此可以请求做另一次修改）；</p>
+</li>
+<li>
+<p>接着（不久以后）日志管理器把日志写入事务日志，什么时候写日志由某算法来决定。</p>
+</li>
+<li>
+<p>接着（不久以后）缓存管理器把修改写入磁盘，什么时候写盘由某算法来决定。</p>
+</li>
+</ol>
+<p><strong>当事务提交，意味着事务每一个操作的5个步骤都完成了</strong>。写事务日志是很快的，因为它只是『在事务日志某处增加一条日志』；而数据写盘就更复杂了，因为要用『能够快速读取的方式写入数据』。</p>
+<h4 id=steal-和-force-策略>STEAL 和 FORCE 策略</h4>
+<blockquote>
+<p>出于性能方面的原因，<strong>第 5 步有可能在提交之后完成</strong>，因为一旦发生崩溃，还有可能用REDO日志恢复事务。这叫做 <strong>NO-FORCE策略</strong>。</p>
+</blockquote>
+<p>数据库可以选择FORCE策略（比如第 5 步在提交之前必须完成）来降低恢复时的负载。</p>
+<p>另一个问题是，<strong>要选择数据是一步步的写入（STEAL策略），还是缓冲管理器需要等待提交命令来一次性全部写入（NO-STEAL策略）</strong>。选择STEAL还是NO-STEAL取决于你想要什么：快速写入但是从 UNDO 日志恢复缓慢，还是快速恢复。</p>
+<p>下面是这些策略对恢复的影响：</p>
+<ul>
+<li><strong>STEAL/NO-FORCE 需要 UNDO 和 REDO: 性能高</strong>，但是日志和恢复过程更复杂 (比如 ARIES)。多数数据库选择这个策略。 注：这是我从多个学术论文和教程里看到的，但并没有看到官方文档里显式说明这一点。</li>
+<li>STEAL/ FORCE 只需要 UNDO.</li>
+<li>NO-STEAL/NO-FORCE 只需要 REDO.</li>
+<li>NO-STEAL/FORCE 什么也不需要: 性能最差，而且需要巨大的内存。</li>
+</ul>
+<h4 id=关于恢复>关于恢复</h4>
+<blockquote>
+<p>Ok，有了不错的日志，我们来用用它们！</p>
+</blockquote>
+<p>假设新来的实习生让数据库崩溃了，你重启了数据库，恢复过程开始了。</p>
+<p>ARIES从崩溃中恢复有三个阶段：</p>
+<ul>
+<li>
+<ol>
+<li><strong>分析阶段</strong>：恢复进程读取全部事务日志，来重建崩溃过程中所发生事情的时间线，决定哪个事务要回滚（所有未提交的事务都要回滚）、崩溃时哪些数据需要写盘。</li>
+</ol>
+</li>
+<li>
+<ol start=2>
+<li><strong>Redo阶段</strong>：这一关从分析中选中的一条日志记录开始，使用 REDO 来将数据库恢复到崩溃之前的状态。</li>
+</ol>
+<ul>
+<li>在REDO阶段，REDO日志按照时间顺序处理（使用LSN）。</li>
+<li>对每一条日志，恢复进程需要读取包含数据的磁盘页LSN。</li>
+<li>如果LSN（磁盘页）>= LSN（日志记录），说明数据已经在崩溃前写到磁盘（但是值已经被日志之后、崩溃之前的某个操作覆盖），所以不需要做什么。</li>
+<li>如果LSN（磁盘页）&lt; LSN（日志记录），那么磁盘上的页将被更新。</li>
+<li>即使将被回滚的事务，REDO也是要做的，因为这样简化了恢复过程（但是我相信现代数据库不会这么做的）。</li>
+</ul>
+</li>
+<li>
+<ol start=3>
+<li><strong>Undo阶段</strong>：这一阶段回滚所有崩溃时未完成的事务。回滚从每个事务的最后一条日志开始，并且按照时间倒序处理UNDO日志（使用日志记录的PrevLSN）。</li>
+</ol>
+</li>
+</ul>
+<p>恢复过程中，事务日志必须留意恢复过程的操作，以便写入磁盘的数据与事务日志相一致。一个解决办法是移除被取消的事务产生的日志记录，但是这个太困难了。相反，ARIES在事务日志中记录补偿日志，来逻辑上删除被取消的事务的日志记录。</p>
+<p>当事务被『手工』取消，或者被锁管理器取消（为了消除死锁），或仅仅因为网络故障而取消，那么分析阶段就不需要了。对于哪些需要 REDO 哪些需要 UNDO 的信息在 2 个内存表中：</p>
+<ul>
+<li>事务表（保存当前所有事务的状态）</li>
+<li>脏页表（保存哪些数据需要写入磁盘）</li>
+</ul>
+<p>当新的事务产生时，这两个表由缓存管理器和事务管理器更新。因为是在内存中，当数据库崩溃时它们也被破坏掉了。</p>
+<p>分析阶段的任务就是在崩溃之后，用事务日志中的信息重建上述的两个表。为了加快分析阶段，ARIES提出了一个概念：<strong>检查点（check point）</strong>，就是不时地把事务表和脏页表的内容，还有此时最后一条LSN写入磁盘。那么在分析阶段当中，只需要分析这个LSN之后的日志即可。</p>
+<h2 id=最后>最后</h2>
+<p>如果你想很好地了解数据库，我推荐这篇研究论文：<a href=https://dsf.berkeley.edu/papers/fntdb07-architecture.pdf>Architecture of a Database System</a>，对数据库有很好的介绍（共110页），而且非计算机专业人士也能读懂。</p>
+<p>所以，当你不得不在问题多多的 NoSQL数据库和坚如磐石的关系型数据库之间抉择的时候，要三思而行。不要误会，某些 NoSQL数据库是很棒的，但是它们毕竟还年轻，只是解决了少量应用关注的一些特定问题。</p>
+<style>.feedback--answer{display:inline-block}.feedback--answer-no{margin-left:1em}.feedback--response{display:none;margin-top:1em}.feedback--response__visible{display:block}</style>
+<div class=d-print-none>
+<h2 class=feedback--title>Feedback</h2>
+<p class=feedback--question>Was this page helpful?</p>
+<button class="btn btn-primary mb-4 feedback--answer feedback--answer-yes">Yes</button>
+<button class="btn btn-primary mb-4 feedback--answer feedback--answer-no">No</button>
+<p class="feedback--response feedback--response-yes">
+Glad to hear it! Please <a href=https://github.com/infilos/infilos.com/issues/new>tell us how we can improve</a>.
+</p>
+<p class="feedback--response feedback--response-no">
+Sorry to hear that. Please <a href=https://github.com/infilos/infilos.com/issues/new>tell us how we can improve</a>.
+</p>
+</div>
+<script>const yesButton=document.querySelector('.feedback--answer-yes'),noButton=document.querySelector('.feedback--answer-no'),yesResponse=document.querySelector('.feedback--response-yes'),noResponse=document.querySelector('.feedback--response-no'),disableButtons=()=>{yesButton.disabled=!0,noButton.disabled=!0},sendFeedback=b=>{if(typeof ga!='function')return;const a={command:'send',hitType:'event',category:'Helpful',action:'click',label:window.location.pathname,value:b};ga(a.command,a.hitType,a.category,a.action,a.label,a.value)};yesButton.addEventListener('click',()=>{yesResponse.classList.add('feedback--response__visible'),disableButtons(),sendFeedback(1)}),noButton.addEventListener('click',()=>{noResponse.classList.add('feedback--response__visible'),disableButtons(),sendFeedback(0)})</script>
+<br>
+</div>
+</main>
+</div>
+</div>
+<footer class="bg-dark py-5 row d-print-none">
+<div class="container-fluid mx-sm-5">
+<div class=row>
+<div class="col-6 col-sm-4 text-xs-center order-sm-2">
+</div>
+<div class="col-6 col-sm-4 text-right text-xs-center order-sm-3">
+<ul class="list-inline mb-0">
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Weibo aria-label=Weibo>
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://weibo.com/u/3848950217>
+<i class="fab fa-weibo"></i>
+</a>
+</li>
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Twitter aria-label=Twitter>
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://twitter.com/zhange_zzg>
+<i class="fab fa-twitter"></i>
+</a>
+</li>
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title="Stack Overflow" aria-label="Stack Overflow">
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://stackoverflow.com>
+<i class="fab fa-stack-overflow"></i>
+</a>
+</li>
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=GitHub aria-label=GitHub>
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://github.com/infilos/infilos.com>
+<i class="fab fa-github"></i>
+</a>
+</li>
+</ul>
+</div>
+<div class="col-12 col-sm-4 text-center py-2 order-sm-2">
+<small class=text-white>&copy; 2021 infilos.com All Rights Reserved</small>
+</div>
+</div>
+</div>
+</footer>
+</div>
+<script src=/js/popper.min.js integrity=sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49 crossorigin=anonymous></script>
+<script src=/js/bootstrap.min.js integrity=sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy crossorigin=anonymous></script>
+<script src=/js/main.min.5c74b870c6953931a705f390a49c7e4c0a842ec5c83b24354758dd674343ed0d.js integrity="sha256-XHS4cMaVOTGnBfOQpJx+TAqELsXIOyQ1R1jdZ0ND7Q0=" crossorigin=anonymous></script>
+<script src=https://cdn.jsdelivr.net/npm/docsearch.js@2.6.3/dist/cdn/docsearch.min.js></script>
+<script>docsearch({apiKey:'123',indexName:'infilos_com',inputSelector:'.td-search-input',debug:!1})</script>
+</body>
+</html>

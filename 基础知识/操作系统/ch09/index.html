@@ -1,0 +1,487 @@
+<!doctype html><html lang=zh class=no-js>
+<head>
+<meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no">
+<meta name=generator content="Hugo 0.88.1">
+<meta name=ROBOTS content="INDEX, FOLLOW">
+<link rel="shortcut icon" href=/favicons/favicon.ico>
+<link rel=apple-touch-icon href=/favicons/apple-touch-icon-180x180.png sizes=180x180>
+<link rel=icon type=image/png href=/favicons/favicon-16x16.png sizes=16x16>
+<link rel=icon type=image/png href=/favicons/favicon-32x32.png sizes=32x32>
+<link rel=icon type=image/png href=/favicons/android-36x36.png sizes=36x36>
+<link rel=icon type=image/png href=/favicons/android-48x48.png sizes=48x48>
+<link rel=icon type=image/png href=/favicons/android-72x72.png sizes=72x72>
+<link rel=icon type=image/png href=/favicons/android-96x96.png sizes=96x96>
+<link rel=icon type=image/png href=/favicons/android-144x144.png sizes=144x144>
+<link rel=icon type=image/png href=/favicons/android-192x192.png sizes=192x192>
+<title>调度-比例份额 | infilos.com</title><meta property="og:title" content="调度-比例份额">
+<meta property="og:description" content="在本章中，我们卡一个不同类型的调度程序——比例份额调度程序，有时也称为公平份额调度程序。基于一个简单的思想：调度程序的最终目标是确保每个工作都能获得一定比例的的 CPU 时间，而不是优化周转时间和响应时间。
+比例份额调度程序有一个非常优秀的现代实例，名为彩票调度。基本思想很简单：每个一段实现，都会举行一次彩票抽奖，以确定接下来应该运行哪个进程，越是应该频繁运行的进程，越是应该拥有更多的赢得彩票的机会。
+基本概念：彩票数表示份额 彩票调度背后是一个非常基本的概念：彩票数代表了进程占有某个资源的份额。一个进程拥有的彩票数占总彩票数的百分比，就是它占有资源的份额。
+下面来看一个例子。假设有两个进程 AB，A 拥有 75 张彩票，B 拥有 25 张。因此我们希望 A 占用 75% 的 CPU 时间，而 B 占用 25%。
+通过不断定时(比如每个时间片)的抽取彩票，彩票调度从概率上获得这种份额比例。抽取彩票的过程很简单：调度程序知道总的彩票数。调度程序抽取中奖彩票，即 0~99 之间的一个数字，拥有这个数对应的彩票的进程中奖。假设进程 A 拥有 0~74 共 75 张彩票，进程 B 拥有 75~99 共 25 张彩票，中奖的彩票就决定了运行 A 还是 B。调度程序然后加载中奖进程的状态并使其运行。
+ 提示：利用随机性 彩票调度最精彩的地方在于利用了随机性。当你需要作出决定时，采用随机的方式常常是既简单又可靠的选择。 随机方法限度与传统的决策方式，至少有 3 点优势。第一，随机方法常常可以避免奇怪的边角情况，较传统的算法可能在处理这些情况时遇到麻烦。例如 LRU 替换策略。虽然 LRU 是很好的替换算法，但在有重复序列的负载时表现很差。但随机方法就没有这种最差情况。 第二，随机方法很轻量，几乎不需要记录任何状态。在传统的公平份额调度算法中，记录每个集成已经获得了多少的 CPU 时间需要对每个进程计时，这必须在每次运行结束后更新。而采用随机方式后每个进程只需要非常少的状态记录。 第三，随机方法很快。只要能够很快的产生随机数，做出决策就很快。因此，随机方式在对运行速递要求很高的场景非常适用。当然，越是需要快的计算速度，随机就越倾向于伪随机。
+ 下面是彩票调度程序输出的中奖彩票：
+63 85 70 39 76 17 29 41 36 39 10 99 68 83 63 62 43 0 49 49 下面是对应的调度结果：">
+<meta property="og:type" content="article">
+<meta property="og:url" content="/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/ch09/"><meta property="article:section" content="基础知识">
+<meta property="og:site_name" content="infilos.com">
+<meta itemprop=name content="调度-比例份额">
+<meta itemprop=description content="在本章中，我们卡一个不同类型的调度程序——比例份额调度程序，有时也称为公平份额调度程序。基于一个简单的思想：调度程序的最终目标是确保每个工作都能获得一定比例的的 CPU 时间，而不是优化周转时间和响应时间。
+比例份额调度程序有一个非常优秀的现代实例，名为彩票调度。基本思想很简单：每个一段实现，都会举行一次彩票抽奖，以确定接下来应该运行哪个进程，越是应该频繁运行的进程，越是应该拥有更多的赢得彩票的机会。
+基本概念：彩票数表示份额 彩票调度背后是一个非常基本的概念：彩票数代表了进程占有某个资源的份额。一个进程拥有的彩票数占总彩票数的百分比，就是它占有资源的份额。
+下面来看一个例子。假设有两个进程 AB，A 拥有 75 张彩票，B 拥有 25 张。因此我们希望 A 占用 75% 的 CPU 时间，而 B 占用 25%。
+通过不断定时(比如每个时间片)的抽取彩票，彩票调度从概率上获得这种份额比例。抽取彩票的过程很简单：调度程序知道总的彩票数。调度程序抽取中奖彩票，即 0~99 之间的一个数字，拥有这个数对应的彩票的进程中奖。假设进程 A 拥有 0~74 共 75 张彩票，进程 B 拥有 75~99 共 25 张彩票，中奖的彩票就决定了运行 A 还是 B。调度程序然后加载中奖进程的状态并使其运行。
+ 提示：利用随机性 彩票调度最精彩的地方在于利用了随机性。当你需要作出决定时，采用随机的方式常常是既简单又可靠的选择。 随机方法限度与传统的决策方式，至少有 3 点优势。第一，随机方法常常可以避免奇怪的边角情况，较传统的算法可能在处理这些情况时遇到麻烦。例如 LRU 替换策略。虽然 LRU 是很好的替换算法，但在有重复序列的负载时表现很差。但随机方法就没有这种最差情况。 第二，随机方法很轻量，几乎不需要记录任何状态。在传统的公平份额调度算法中，记录每个集成已经获得了多少的 CPU 时间需要对每个进程计时，这必须在每次运行结束后更新。而采用随机方式后每个进程只需要非常少的状态记录。 第三，随机方法很快。只要能够很快的产生随机数，做出决策就很快。因此，随机方式在对运行速递要求很高的场景非常适用。当然，越是需要快的计算速度，随机就越倾向于伪随机。
+ 下面是彩票调度程序输出的中奖彩票：
+63 85 70 39 76 17 29 41 36 39 10 99 68 83 63 62 43 0 49 49 下面是对应的调度结果：">
+<meta itemprop=wordCount content="468">
+<meta itemprop=keywords content><meta name=twitter:card content="summary">
+<meta name=twitter:title content="调度-比例份额">
+<meta name=twitter:description content="在本章中，我们卡一个不同类型的调度程序——比例份额调度程序，有时也称为公平份额调度程序。基于一个简单的思想：调度程序的最终目标是确保每个工作都能获得一定比例的的 CPU 时间，而不是优化周转时间和响应时间。
+比例份额调度程序有一个非常优秀的现代实例，名为彩票调度。基本思想很简单：每个一段实现，都会举行一次彩票抽奖，以确定接下来应该运行哪个进程，越是应该频繁运行的进程，越是应该拥有更多的赢得彩票的机会。
+基本概念：彩票数表示份额 彩票调度背后是一个非常基本的概念：彩票数代表了进程占有某个资源的份额。一个进程拥有的彩票数占总彩票数的百分比，就是它占有资源的份额。
+下面来看一个例子。假设有两个进程 AB，A 拥有 75 张彩票，B 拥有 25 张。因此我们希望 A 占用 75% 的 CPU 时间，而 B 占用 25%。
+通过不断定时(比如每个时间片)的抽取彩票，彩票调度从概率上获得这种份额比例。抽取彩票的过程很简单：调度程序知道总的彩票数。调度程序抽取中奖彩票，即 0~99 之间的一个数字，拥有这个数对应的彩票的进程中奖。假设进程 A 拥有 0~74 共 75 张彩票，进程 B 拥有 75~99 共 25 张彩票，中奖的彩票就决定了运行 A 还是 B。调度程序然后加载中奖进程的状态并使其运行。
+ 提示：利用随机性 彩票调度最精彩的地方在于利用了随机性。当你需要作出决定时，采用随机的方式常常是既简单又可靠的选择。 随机方法限度与传统的决策方式，至少有 3 点优势。第一，随机方法常常可以避免奇怪的边角情况，较传统的算法可能在处理这些情况时遇到麻烦。例如 LRU 替换策略。虽然 LRU 是很好的替换算法，但在有重复序列的负载时表现很差。但随机方法就没有这种最差情况。 第二，随机方法很轻量，几乎不需要记录任何状态。在传统的公平份额调度算法中，记录每个集成已经获得了多少的 CPU 时间需要对每个进程计时，这必须在每次运行结束后更新。而采用随机方式后每个进程只需要非常少的状态记录。 第三，随机方法很快。只要能够很快的产生随机数，做出决策就很快。因此，随机方式在对运行速递要求很高的场景非常适用。当然，越是需要快的计算速度，随机就越倾向于伪随机。
+ 下面是彩票调度程序输出的中奖彩票：
+63 85 70 39 76 17 29 41 36 39 10 99 68 83 63 62 43 0 49 49 下面是对应的调度结果：">
+<script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga('create','UA-123062585-1','auto'),ga('send','pageview'))</script>
+<script async src=https://www.google-analytics.com/analytics.js></script>
+<link rel=preload href=/scss/main.min.847464b684a6e89d7276700a5c500c17ab494dd1755b2654a7b27d8b59e3347e.css as=style>
+<link href=/scss/main.min.847464b684a6e89d7276700a5c500c17ab494dd1755b2654a7b27d8b59e3347e.css rel=stylesheet integrity>
+<script src=/js/jquery-3.5.1.min.js integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin=anonymous></script>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/docsearch.js@2/dist/cdn/docsearch.min.css>
+</head>
+<body class=td-page>
+<header>
+<nav class="js-navbar-scroll navbar navbar-expand navbar-dark flex-column flex-md-row td-navbar">
+<a class=navbar-brand href=/>
+<span class=navbar-logo><svg id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512" style="enable-background:new 0 0 512 512"><path style="fill:#ffc107" d="M432.384 143.616c-4.165-4.164-10.917-4.164-15.083.0l-60.352 60.352c-4.164 4.165-4.164 10.917.0 15.083 21.187 20.463 54.951 19.876 75.413-1.311 19.962-20.668 19.962-53.435.0-74.102L432.384 143.616z"/><path style="fill:#607d8b" d="M42.667 277.334c-5.891.003-10.669-4.771-10.672-10.662-.002-4.338 2.623-8.245 6.64-9.882l234.667-96c5.455-2.233 11.687.38 13.92 5.835s-.38 11.687-5.835 13.92l-234.667 96C45.433 277.069 44.056 277.337 42.667 277.334z"/><path style="fill:#546e7a" d="M391.552 56.448l-32-32C343.938 8.745 322.689-.059 300.544.0h-3.755c-46.082.024-83.432 37.374-83.456 83.456v3.755c-.053 22.138 8.75 43.377 24.448 58.987l32 32c4.165 4.164 10.917 4.164 15.083.0L391.531 71.531C395.701 67.372 395.71 60.62 391.552 56.448z"/><path style="fill:#607d8b" d="M160 469.334c-3.279.006-6.379-1.497-8.405-4.075L34.261 315.926c-3.635-4.636-2.823-11.341 1.813-14.976s11.341-2.823 14.976 1.813l117.333 149.333c3.629 4.641 2.809 11.344-1.832 14.973C164.681 468.533 162.375 469.329 160 469.334z"/><path style="fill:#455a64" d="M487.467 86.848l-3.669-3.648c-37.687-36.557-97.71-36.197-134.955.811l-51.413 51.413c-36.996 37.25-37.357 97.263-.811 134.955l3.584 3.669c1.7 2.457 4.671 3.706 7.616 3.2 2.831.005 5.548-1.115 7.552-3.115l172.181-172.181c4.189-4.143 4.226-10.896.083-15.085-.028-.028-.055-.056-.083-.083L487.467 86.848z"/><g><path style="fill:#ffc107" d="M501.333 192H480c-5.891.0-10.667-4.776-10.667-10.667s4.776-10.667 10.667-10.667h21.333c5.891.0 10.667 4.776 10.667 10.667S507.225 192 501.333 192z"/><path style="fill:#ffc107" d="M394.667 298.667c-5.891.0-10.667-4.776-10.667-10.667v-21.333c0-5.891 4.776-10.667 10.667-10.667 5.891.0 10.667 4.776 10.667 10.667V288C405.333 293.891 400.558 298.667 394.667 298.667z"/><path style="fill:#ffc107" d="M480 277.334c-2.831.005-5.548-1.115-7.552-3.115l-21.333-21.333c-4.093-4.237-3.975-10.99.262-15.083 4.134-3.993 10.687-3.993 14.821.0l21.333 21.333c4.159 4.172 4.148 10.926-.024 15.085C485.514 276.209 482.815 277.327 480 277.334z"/></g><g><path style="fill:#455a64" d="M266.667 448H96c-29.455.0-53.333 23.878-53.333 53.333.0 5.891 4.776 10.667 10.667 10.667h256c5.891.0 10.667-4.776 10.667-10.667C320 471.878 296.122 448 266.667 448z"/><circle style="fill:#455a64" cx="32" cy="288" r="32"/></g><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/></svg></span><span class=font-weight-bold>infilos.com</span>
+</a>
+<div class="collapse navbar-collapse" id=navbarSupportedContent>
+<ul class="navbar-nav mr-auto">
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+基础
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/%e6%93%8d%e4%bd%9c%e7%b3%bb%e7%bb%9f>操作系统</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/%e6%80%a7%e8%83%bd%e4%b9%8b%e6%ae%87>性能之殇</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/io%e6%a8%a1%e5%9e%8b>IO 模型</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/%e7%bd%91%e7%bb%9c%e5%9f%ba%e7%a1%80>网络基础</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/tcp-ip>TCP-IP</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/http>HTTP</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+语言
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/java>Java 编程</a>
+<a class=dropdown-item href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/jvm-core>JVM 核心</a>
+<a class=dropdown-item href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/jvm-concurrent>JVM 并发</a>
+<a class=dropdown-item href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/scala>Scala 编程</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+框架库
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93/spring>Spring</a>
+<a class=dropdown-item href=/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93/hikari>Hikari</a>
+<a class=dropdown-item href=/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93/parboiled>Parboiled</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+分布式
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%88%86%e5%b8%83%e5%bc%8f/base>基本构成</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+大数据
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%ad%98%e5%82%a8%e7%b3%bb%e7%bb%9f>存储系统</a>
+<a class=dropdown-item href=/%e6%9f%a5%e8%af%a2%e7%b3%bb%e7%bb%9f>查询系统</a>
+<a class=dropdown-item href=/%e6%b6%88%e6%81%af%e7%b3%bb%e7%bb%9f>消息系统</a>
+<a class=dropdown-item href=/%e5%a4%84%e7%90%86%e7%b3%bb%e7%bb%9f>处理系统</a>
+<a class=dropdown-item href=/%e7%ae%a1%e7%90%86%e7%b3%bb%e7%bb%9f>管理系统</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+中后台
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e8%ae%be%e6%96%bd>基础设施</a>
+<a class=dropdown-item href=/%e4%ba%a4%e4%ba%92%e7%95%8c%e9%9d%a2>交互界面</a>
+<a class=dropdown-item href=/%e4%b8%9a%e5%8a%a1%e7%b3%bb%e7%bb%9f>业务系统</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+模式架构
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e6%a8%a1%e5%bc%8f%e6%9e%b6%e6%9e%84/design-pattern>设计模式</a>
+<a class=dropdown-item href=/%e6%a8%a1%e5%bc%8f%e6%9e%b6%e6%9e%84/micro-service>微服务架构</a>
+</div>
+</li>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e9%9d%a2%e8%af%95%e9%97%ae%e7%ad%94>
+<span>面试</span>
+</a>
+</li>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e7%ae%a1%e7%90%86%e8%b7%af%e5%be%84>
+<span>管理</span>
+</a>
+</li>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e5%bc%80%e6%ba%90%e9%a1%b9%e7%9b%ae>
+<span>开源</span>
+</a>
+</li>
+</ul>
+<div class="form-inline my-2 my-lg-0">
+<div class="nav-item nav-search-item my-2 my-md-0">
+<input type=search class="form-control td-search-input" placeholder="&#xf002; 站内搜索…" aria-label=站内搜索… autocomplete=off>
+</div>
+</div>
+</div>
+</nav>
+</header>
+<div class="container-fluid td-outer">
+<div class=td-main>
+<div class="row flex-xl-nowrap">
+<aside class="col-12 col-md-3 col-xl-2 td-sidebar d-print-none">
+<div id=td-sidebar-menu class=td-sidebar__inner>
+<div id=content-mobile>
+<form class="td-sidebar__search d-flex align-items-center">
+<input type=search class="form-control td-search-input" placeholder="&#xf002; 站内搜索…" aria-label=站内搜索… autocomplete=off>
+<button class="btn btn-link td-sidebar__toggle d-md-none p-0 ml-3 fas fa-bars" type=button data-toggle=collapse data-target=#td-section-nav aria-controls=td-docs-nav aria-expanded=false aria-label="Toggle section navigation">
+</button>
+</form>
+</div>
+<div id=content-desktop></div>
+<nav class="collapse td-sidebar-nav" id=td-section-nav>
+<ul class="td-sidebar-nav__section pr-md-3 ul-0">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e59fbae7a180e79fa5e8af86-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section tree-root" id=m-e59fbae7a180e79fa5e8af86><span>基础知识</span></a>
+<ul class=ul-1>
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9f-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9f><span>操作系统</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch02-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/ch02/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch02><span>基本概念</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch04-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/ch04/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch04><span>抽象-进程</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch05-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/ch05/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch05><span>插叙-进程 API</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch06-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/ch06/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch06><span>机制-受限直接执行</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch07-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/ch07/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch07><span>进程调度</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch08-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/ch08/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch08><span>调度-多级反馈队列</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child active-path" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch09-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/ch09/ class="align-left pl-0 active td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch09><span class=td-sidebar-nav-active-item>调度-比例份额</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch10-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/ch10/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch10><span>多处理器调度</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch13-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/ch13/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch13><span>抽象-地址空间</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch14-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/ch14/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch14><span>内存接口</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch15-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/ch15/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch15><span>地址转换</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch16-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/ch16/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch16><span>分段</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e59fbae7a180e79fa5e8af86e680a7e883bde4b98be6ae87-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%80%A7%E8%83%BD%E4%B9%8B%E6%AE%87/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e59fbae7a180e79fa5e8af86e680a7e883bde4b98be6ae87><span>性能之殇</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e680a7e883bde4b98be6ae87ch01-e586afe8afbae4be9de69bbce793b6e9a288-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%80%A7%E8%83%BD%E4%B9%8B%E6%AE%87/ch01-%E5%86%AF%E8%AF%BA%E4%BE%9D%E6%9B%BC%E7%93%B6%E9%A2%88/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e680a7e883bde4b98be6ae87ch01-e586afe8afbae4be9de69bbce793b6e9a288><span>冯诺依曼瓶颈</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e680a7e883bde4b98be6ae87ch02-cpue5ae9ee78eb0-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%80%A7%E8%83%BD%E4%B9%8B%E6%AE%87/ch02-cpu%E5%AE%9E%E7%8E%B0/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e680a7e883bde4b98be6ae87ch02-cpue5ae9ee78eb0><span>CPU实现</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e680a7e883bde4b98be6ae87ch03-e4ba8be4bbb6e9a9b1e58aa8-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%80%A7%E8%83%BD%E4%B9%8B%E6%AE%87/ch03-%E4%BA%8B%E4%BB%B6%E9%A9%B1%E5%8A%A8/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e680a7e883bde4b98be6ae87ch03-e4ba8be4bbb6e9a9b1e58aa8><span>事件驱动</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e680a7e883bde4b98be6ae87ch04-unixe8bf9be7a88be6a8a1e59e8b-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%80%A7%E8%83%BD%E4%B9%8B%E6%AE%87/ch04-unix%E8%BF%9B%E7%A8%8B%E6%A8%A1%E5%9E%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e680a7e883bde4b98be6ae87ch04-unixe8bf9be7a88be6a8a1e59e8b><span>Unix进程模型</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e680a7e883bde4b98be6ae87ch05-dpdk-sdn-e5a4a7e9a1b5e58685e5ad98-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%80%A7%E8%83%BD%E4%B9%8B%E6%AE%87/ch05-dpdk-sdn-%E5%A4%A7%E9%A1%B5%E5%86%85%E5%AD%98/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e680a7e883bde4b98be6ae87ch05-dpdk-sdn-e5a4a7e9a1b5e58685e5ad98><span>DPDK-SDN-大页内存</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e680a7e883bde4b98be6ae87ch06-e5b180e983a8e680a7e4b88ee4b990e8a782-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%80%A7%E8%83%BD%E4%B9%8B%E6%AE%87/ch06-%E5%B1%80%E9%83%A8%E6%80%A7%E4%B8%8E%E4%B9%90%E8%A7%82/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e680a7e883bde4b98be6ae87ch06-e5b180e983a8e680a7e4b88ee4b990e8a782><span>局部性与乐观</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e680a7e883bde4b98be6ae87ch07-e585b1e5908ce79a84e793b6e9a288-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%80%A7%E8%83%BD%E4%B9%8B%E6%AE%87/ch07-%E5%85%B1%E5%90%8C%E7%9A%84%E7%93%B6%E9%A2%88/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e680a7e883bde4b98be6ae87ch07-e585b1e5908ce79a84e793b6e9a288><span>共同的瓶颈</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e59fbae7a180e79fa5e8af86ioe6a8a1e59e8b-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/io%E6%A8%A1%E5%9E%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e59fbae7a180e79fa5e8af86ioe6a8a1e59e8b><span>IO 模型</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86ioe6a8a1e59e8bch01-ioe6a8a1e59e8b-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/io%E6%A8%A1%E5%9E%8B/ch01-io%E6%A8%A1%E5%9E%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86ioe6a8a1e59e8bch01-ioe6a8a1e59e8b><span>Linux IO/线程 模型</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86ioe6a8a1e59e8bch02-ioe99bb6e68bb7e8b49d-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/io%E6%A8%A1%E5%9E%8B/ch02-io%E9%9B%B6%E6%8B%B7%E8%B4%9D/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86ioe6a8a1e59e8bch02-ioe99bb6e68bb7e8b49d><span>Linux IO 零拷贝</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86ioe6a8a1e59e8bch03-nettye6a8a1e59e8b-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/io%E6%A8%A1%E5%9E%8B/ch03-netty%E6%A8%A1%E5%9E%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86ioe6a8a1e59e8bch03-nettye6a8a1e59e8b><span>Netty IO 模型</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86ioe6a8a1e59e8bch04-redise6a8a1e59e8b-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/io%E6%A8%A1%E5%9E%8B/ch04-redis%E6%A8%A1%E5%9E%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86ioe6a8a1e59e8bch04-redise6a8a1e59e8b><span>Redis IO 模型</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86ioe6a8a1e59e8bch05-nginxe6a8a1e59e8b-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/io%E6%A8%A1%E5%9E%8B/ch05-nginx%E6%A8%A1%E5%9E%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86ioe6a8a1e59e8bch05-nginxe6a8a1e59e8b><span>Nginx IO 模型</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86ioe6a8a1e59e8bch06-mysqle6a8a1e59e8b-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/io%E6%A8%A1%E5%9E%8B/ch06-mysql%E6%A8%A1%E5%9E%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86ioe6a8a1e59e8bch06-mysqle6a8a1e59e8b><span>MySQL 模型</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180><span>网络基础</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch01-e7bd91e7bb9ce58886e5b182-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/ch01-%E7%BD%91%E7%BB%9C%E5%88%86%E5%B1%82/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch01-e7bd91e7bb9ce58886e5b182><span>网络分层</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch02-ipe58d8fe8aeae-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/ch02-ip%E5%8D%8F%E8%AE%AE/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch02-ipe58d8fe8aeae><span>IP 协议</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch03-tcpe58d8fe8aeae-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/ch03-tcp%E5%8D%8F%E8%AE%AE/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch03-tcpe58d8fe8aeae><span>TCP 协议</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch04-udpe58d8fe8aeae-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/ch04-udp%E5%8D%8F%E8%AE%AE/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch04-udpe58d8fe8aeae><span>UDP 协议</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch05-httpe58d8fe8aeae-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/ch05-http%E5%8D%8F%E8%AE%AE/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch05-httpe58d8fe8aeae><span>HTTP 协议</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch06-websocket-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/ch06-websocket/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch06-websocket><span>WebSocket</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch07-dnse69c8de58aa1-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/ch07-dns%E6%9C%8D%E5%8A%A1/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch07-dnse69c8de58aa1><span>DNS 服务</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch08-e6b58fe8a788e599a8e8bf87e7a88b-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/ch08-%E6%B5%8F%E8%A7%88%E5%99%A8%E8%BF%87%E7%A8%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch08-e6b58fe8a788e599a8e8bf87e7a88b><span>浏览器过程</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e59fbae7a180e79fa5e8af86tcp-ip-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/tcp-ip/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e59fbae7a180e79fa5e8af86tcp-ip><span>TCP-IP</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86tcp-ipch01-e68fa1e6898be69cbae588b6-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/tcp-ip/ch01-%E6%8F%A1%E6%89%8B%E6%9C%BA%E5%88%B6/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86tcp-ipch01-e68fa1e6898be69cbae588b6><span>握手机制</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86tcp-ipch02-e58d8fe8aeaee6a088e7b2bee8a681-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/tcp-ip/ch02-%E5%8D%8F%E8%AE%AE%E6%A0%88%E7%B2%BE%E8%A6%81/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86tcp-ipch02-e58d8fe8aeaee6a088e7b2bee8a681><span>协议栈精要</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86tcp-ipch03-e8b083e4bc98e58f82e695b0-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/tcp-ip/ch03-%E8%B0%83%E4%BC%98%E5%8F%82%E6%95%B0/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86tcp-ipch03-e8b083e4bc98e58f82e695b0><span>调优参数</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86tcp-ipch04-e79086e8a7a3e7bd91e7bb9ce6a088-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/tcp-ip/ch04-%E7%90%86%E8%A7%A3%E7%BD%91%E7%BB%9C%E6%A0%88/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86tcp-ipch04-e79086e8a7a3e7bd91e7bb9ce6a088><span>理解网络栈</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86tcp-ipch05-rfc-1180-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/tcp-ip/ch05-rfc-1180/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86tcp-ipch05-rfc-1180><span>RFC-1180</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86tcp-ipch06-e58fafe99da0e680a7e79691e997ae-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/tcp-ip/ch06-%E5%8F%AF%E9%9D%A0%E6%80%A7%E7%96%91%E9%97%AE/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86tcp-ipch06-e58fafe99da0e680a7e79691e997ae><span>可靠性疑问</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e59fbae7a180e79fa5e8af86http-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/http/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e59fbae7a180e79fa5e8af86http><span>HTTP</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86httpch01-e6a682e8bfb0-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/http/ch01-%E6%A6%82%E8%BF%B0/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86httpch01-e6a682e8bfb0><span>HTTP 概述</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86httpch02-urle4b88ee8b584e6ba90-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/http/ch02-url%E4%B8%8E%E8%B5%84%E6%BA%90/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86httpch02-urle4b88ee8b584e6ba90><span>URL 与资源</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86httpch03-httpe68aa5e69687-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/http/ch03-http%E6%8A%A5%E6%96%87/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86httpch03-httpe68aa5e69687><span>HTTP 报文</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86httpch04-e8bf9ee68ea5e7aea1e79086-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/http/ch04-%E8%BF%9E%E6%8E%A5%E7%AE%A1%E7%90%86/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86httpch04-e8bf9ee68ea5e7aea1e79086><span>连接管理</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86httpch99-e680a7e883bde68ea2e7b4a2-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/http/ch99-%E6%80%A7%E8%83%BD%E6%8E%A2%E7%B4%A2/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86httpch99-e680a7e883bde68ea2e7b4a2><span>性能探索</span></a>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</div>
+</aside>
+<aside class="d-none d-xl-block col-xl-2 td-sidebar-toc d-print-none">
+<div class="td-page-meta ml-2 pb-1 pt-2 mb-0">
+<a href=https://github.com/infilos/infilos.com/edit/master/content/zh/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/%e6%93%8d%e4%bd%9c%e7%b3%bb%e7%bb%9f/CH09.md target=_blank><i class="fa fa-edit fa-fw"></i> 编辑此页</a>
+<a href="https://github.com/infilos/infilos.com/new/master/content/zh/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/%e6%93%8d%e4%bd%9c%e7%b3%bb%e7%bb%9f/CH09.md?filename=change-me.md&value=---%0Atitle%3A+%22Long+Page+Title%22%0AlinkTitle%3A+%22Short+Nav+Title%22%0Aweight%3A+100%0Adescription%3A+%3E-%0A+++++Page+description+for+heading+and+indexes.%0A---%0A%0A%23%23+Heading%0A%0AEdit+this+template+to+create+your+new+page.%0A%0A%2A+Give+it+a+good+name%2C+ending+in+%60.md%60+-+e.g.+%60getting-started.md%60%0A%2A+Edit+the+%22front+matter%22+section+at+the+top+of+the+page+%28weight+controls+how+its+ordered+amongst+other+pages+in+the+same+directory%3B+lowest+number+first%29.%0A%2A+Add+a+good+commit+message+at+the+bottom+of+the+page+%28%3C80+characters%3B+use+the+extended+description+field+for+more+detail%29.%0A%2A+Create+a+new+branch+so+you+can+preview+your+new+file+and+request+a+review+via+Pull+Request.%0A" target=_blank><i class="fa fa-edit fa-fw"></i> 添加子页面</a>
+<a href="https://github.com/infilos/infilos.com/issues/new?title=%e8%b0%83%e5%ba%a6-%e6%af%94%e4%be%8b%e4%bb%bd%e9%a2%9d" target=_blank><i class="fab fa-github fa-fw"></i> 提交文档问题</a>
+<a id=print href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/_print/><i class="fa fa-print fa-fw"></i> 整节打印</a>
+</div>
+<div class=td-toc><nav id=TableOfContents>
+<ul>
+<li><a href=#基本概念彩票数表示份额>基本概念：彩票数表示份额</a></li>
+<li><a href=#彩票机制>彩票机制</a></li>
+<li><a href=#实现>实现</a></li>
+<li><a href=#一个例子>一个例子</a></li>
+<li><a href=#如何分配彩票>如何分配彩票</a></li>
+<li><a href=#为什么是不确定的>为什么是不确定的</a></li>
+<li><a href=#小结>小结</a></li>
+</ul>
+</nav></div>
+</aside>
+<main class="col-12 col-md-9 col-xl-8 pl-md-5" role=main>
+<nav aria-label=breadcrumb class="d-none d-md-block d-print-none">
+<ol class="breadcrumb spb-1">
+<li class=breadcrumb-item>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/>基础知识</a>
+</li>
+<li class=breadcrumb-item>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/>操作系统</a>
+</li>
+<li class="breadcrumb-item active" aria-current=page>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/ch09/>调度-比例份额</a>
+</li>
+</ol>
+</nav>
+<div class=td-content>
+<h1>调度-比例份额</h1>
+<header class=article-meta>
+</header>
+<p>在本章中，我们卡一个不同类型的调度程序——比例份额调度程序，有时也称为公平份额调度程序。基于一个简单的思想：调度程序的最终目标是确保每个工作都能获得一定比例的的 CPU 时间，而不是优化周转时间和响应时间。</p>
+<p>比例份额调度程序有一个非常优秀的现代实例，名为彩票调度。基本思想很简单：每个一段实现，都会举行一次彩票抽奖，以确定接下来应该运行哪个进程，越是应该频繁运行的进程，越是应该拥有更多的赢得彩票的机会。</p>
+<h2 id=基本概念彩票数表示份额>基本概念：彩票数表示份额</h2>
+<p>彩票调度背后是一个非常基本的概念：彩票数代表了进程占有某个资源的份额。一个进程拥有的彩票数占总彩票数的百分比，就是它占有资源的份额。</p>
+<p>下面来看一个例子。假设有两个进程 AB，A 拥有 75 张彩票，B 拥有 25 张。因此我们希望 A 占用 75% 的 CPU 时间，而 B 占用 25%。</p>
+<p>通过不断定时(比如每个时间片)的抽取彩票，彩票调度从概率上获得这种份额比例。抽取彩票的过程很简单：调度程序知道总的彩票数。调度程序抽取中奖彩票，即 0~99 之间的一个数字，拥有这个数对应的彩票的进程中奖。假设进程 A 拥有 0~74 共 75 张彩票，进程 B 拥有 75~99 共 25 张彩票，中奖的彩票就决定了运行 A 还是 B。调度程序然后加载中奖进程的状态并使其运行。</p>
+<blockquote>
+<p><strong>提示：利用随机性</strong>
+彩票调度最精彩的地方在于利用了随机性。当你需要作出决定时，采用随机的方式常常是既简单又可靠的选择。
+随机方法限度与传统的决策方式，至少有 3 点优势。第一，随机方法常常可以避免奇怪的边角情况，较传统的算法可能在处理这些情况时遇到麻烦。例如 LRU 替换策略。虽然 LRU 是很好的替换算法，但在有重复序列的负载时表现很差。但随机方法就没有这种最差情况。
+第二，随机方法很轻量，几乎不需要记录任何状态。在传统的公平份额调度算法中，记录每个集成已经获得了多少的 CPU 时间需要对每个进程计时，这必须在每次运行结束后更新。而采用随机方式后每个进程只需要非常少的状态记录。
+第三，随机方法很快。只要能够很快的产生随机数，做出决策就很快。因此，随机方式在对运行速递要求很高的场景非常适用。当然，越是需要快的计算速度，随机就越倾向于伪随机。</p>
+</blockquote>
+<p>下面是彩票调度程序输出的中奖彩票：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>63 85 70 39 76 17 29 41 36 39 10 99 68 83 63 62 43 0 49 49
+</code></pre></div><p>下面是对应的调度结果：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>A     A  A       A  A  A  A  A  A       A       A  A  A  A  A  A
+   B		 B						B        B
+</code></pre></div><p>从这个例子中可以看出，彩票调度中利用了随机性，这实现了从概率上满足期望的比例，但并不能保证。在上面的例子中，工作 B 运行了 20 个时间片中的 4 个，只是占了 20%，而不是期望的 25%。但是，这两个工作运行的时间越长，它们得到的 CPU 时间比例就会越接近期望。</p>
+<blockquote>
+<p><strong>提示：用彩票来表示份额</strong>
+彩票(步长)调度的设计中，最强大最基本的机制是彩票。在这些例子中，彩票用于表示一个进程占有 CPU 的份额，但也可以用在更多的地方。比如在迅疾管理程序的虚拟管理的最新研究工作中，Waldspurger 提出了用彩票来表示用户占用操作系统内存的方法。因此，如果你需要通过什么机制来表示所有权比例，这个概念可能就是彩票。</p>
+</blockquote>
+<h2 id=彩票机制>彩票机制</h2>
+<p>彩票调度还提供了一种机制，以不同且有效的方式来调度彩票。一种方式是利用彩票货币的概念。这种方式允许拥有一组彩票的用户以它们喜欢的某种货币，将彩票分给自己的不同工作。之后操作系统再自动将这种货币兑换为正确的全局彩票。</p>
+<p>比如，假设用户 A 和 B 每人拥有 100 张彩票。用户 A 有两个工作 A1 和 A2，他以自己的货币，给每个工作 500 张彩票(共 1000 张)。用户 B 只运行一个工作，给它 10 张彩票(共 10 张)。操作系统将进行兑换，将 A1 和 A2 拥有的 A 的货币个 500 张兑换成全局货币个 50 张。类似的，兑换给 B1 的 10 张彩票兑换成 100 张。然后会对全局彩票货币进行抽奖(共 200 张)，决定哪个工作运行。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>User A -&gt; 500 (A&#39;s currency) to A1 -&gt; 50 (global currency)
+       -&gt; 500 (A&#39;s currency) to A2 -&gt; 50 (global currency)
+User B -&gt; 10 (B&#39;s currency) to B1 -&gt; 100 (global currency)
+</code></pre></div><p>另一个有用的机制是彩票转让。通过转让，一个进程可以临时将自己的彩票交给另一个进程。这种机制在客户端-服务器交互的场景中尤其有用，在这种场景中，客户端进程向服务端发送消息，请求其按自己的需求执行工作，为了加速服务端的执行，客户端可以将自己的彩票转让给服务端，从而尽可能加速服务端执行自己请求的速度。服务端执行结束后会将这部分彩票归还给客户端。</p>
+<p>最后，彩票通胀有时也很有用。利用通胀，一个进程可以临时提升或降低自己拥有的彩票的数量。当然在竞争环境中，进程之间互相不信任，这种机制就没有意义。一个贪婪的进程可能给自己非常多的彩票，从而接管机器。但是，通胀可以用于进程之间互相信任的环境。在这种情况下，如果一个进程知道它需要更多 CPU 时间，就可以增加自己的彩票，从而将自己的需求告知操作系统，这一切不需要与任何其他进程通信。</p>
+<h2 id=实现>实现</h2>
+<p>彩票调度中最不可思议的部分可能是其简单的实现。只需要一个不错的随机数生成器来选择中奖彩票和一个记录系统中所有进程的数据结构，以及所有彩票的总数。</p>
+<p>假设我们用列表记录进程。下面的例子中有 ABC 三个进程，每个进程有一定数量的彩票。</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20190907174520.png style=display:block;width:50% alt=NAME align=center> </div>
+<p>在做出调度之前，首相要从彩票总数中选择一个随机数(中奖号码)。假设选择了 300，然后遍历链表，用一个简单的计数器帮助我们找到中奖者：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=color:#0000cf;font-weight:700>1</span>    <span style=color:#8f5902;font-style:italic>// counter: used to track if we&#39;ve found the winner yet
+</span><span style=color:#8f5902;font-style:italic></span><span style=color:#0000cf;font-weight:700>2</span>    <span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>counter</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#0000cf;font-weight:700>0</span><span style=color:#000;font-weight:700>;</span>
+<span style=color:#0000cf;font-weight:700>3</span>
+<span style=color:#0000cf;font-weight:700>4</span>    <span style=color:#8f5902;font-style:italic>// winner: use some call to a random number generator to
+</span><span style=color:#8f5902;font-style:italic></span><span style=color:#0000cf;font-weight:700>5</span>    <span style=color:#8f5902;font-style:italic>//         get a value, between 0 and the total # of tickets
+</span><span style=color:#8f5902;font-style:italic></span><span style=color:#0000cf;font-weight:700>6</span>    <span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>winner</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>getrandom</span><span style=color:#000;font-weight:700>(</span><span style=color:#0000cf;font-weight:700>0</span><span style=color:#000;font-weight:700>,</span> <span style=color:#000>totaltickets</span><span style=color:#000;font-weight:700>);</span>
+<span style=color:#0000cf;font-weight:700>7</span>
+<span style=color:#0000cf;font-weight:700>8</span>    <span style=color:#8f5902;font-style:italic>// current: use this to walk through the list of jobs
+</span><span style=color:#8f5902;font-style:italic></span><span style=color:#0000cf;font-weight:700>9</span>    <span style=color:#000>node_t</span> <span style=color:#ce5c00;font-weight:700>*</span><span style=color:#000>current</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>head</span><span style=color:#000;font-weight:700>;</span>
+<span style=color:#0000cf;font-weight:700>10</span>
+<span style=color:#0000cf;font-weight:700>11</span>   <span style=color:#8f5902;font-style:italic>// loop until the sum of ticket values is &gt; the winner
+</span><span style=color:#8f5902;font-style:italic></span><span style=color:#0000cf;font-weight:700>12</span>   <span style=color:#204a87;font-weight:700>while</span> <span style=color:#000;font-weight:700>(</span><span style=color:#000>current</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000;font-weight:700>{</span>
+<span style=color:#0000cf;font-weight:700>13</span>       <span style=color:#000>counter</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>counter</span> <span style=color:#ce5c00;font-weight:700>+</span> <span style=color:#000>current</span><span style=color:#ce5c00;font-weight:700>-&gt;</span><span style=color:#000>tickets</span><span style=color:#000;font-weight:700>;</span>
+<span style=color:#0000cf;font-weight:700>14</span>       <span style=color:#000>if</span> <span style=color:#000;font-weight:700>(</span><span style=color:#000>counter</span> <span style=color:#ce5c00;font-weight:700>&gt;</span> <span style=color:#000>winner</span><span style=color:#000;font-weight:700>)</span>
+<span style=color:#0000cf;font-weight:700>15</span>           <span style=color:#204a87;font-weight:700>break</span><span style=color:#000;font-weight:700>;</span> <span style=color:#8f5902;font-style:italic>// found the winner
+</span><span style=color:#8f5902;font-style:italic></span><span style=color:#0000cf;font-weight:700>16</span>       <span style=color:#000>current</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>current</span><span style=color:#ce5c00;font-weight:700>-&gt;</span><span style=color:#000>next</span><span style=color:#000;font-weight:700>;</span>
+<span style=color:#0000cf;font-weight:700>17</span>   <span style=color:#000;font-weight:700>}</span>
+<span style=color:#0000cf;font-weight:700>18</span>   <span style=color:#8f5902;font-style:italic>// &#39;current&#39; is the winner: schedule it...
+</span></code></pre></div><p>这段代码从前向后遍历进程列表，将每张彩票的值加到 counter 上，直至查过 winner。这时，当前的列表元素所对应的进程就是中奖者。在我们的例子中，中奖彩票是 300。首先，计 A 的票后，counter 增加到 100。因为 100 小于 300，继续遍历。然后 counter 增加到 150 即 B 的彩票，仍然小于 300，继续遍历。最后，counter 增加到 400，因此退出遍历，current 指向中奖者 C。</p>
+<p>要让这个过程更加高效，建议将列表项按照彩票数递减排序。这个顺序不会影响算法的正确性，但能保证用最小的迭代次数找到需要的节点，尤其当大多数彩票被少数进程掌握时。</p>
+<h2 id=一个例子>一个例子</h2>
+<p>为了更好的理解彩票调度的运行过程，我们现在简单研究一下两个互相竞争工作的完成时间，每个工作都有相同数目的 100 张彩票，以及相同的运行时间 R。</p>
+<p>在这种情况下，我们希望两个工作能够在大约相同的时间完成，但由于彩票调度算法的随机性，有时一个工作会先于另一个完成。为了量化这种区别，我们顶一个了一个简单的不公平指标 U，将两个工作完成时刻相除得到 U 的值。比如运行时间 R 为 10，第一个工作在时刻 10 完成，另一个在 20，U = 10/20 = 0.5。如果两个工作几乎同时完成，U 的值将接近于 1。在这种情况下我们的目标是：完美的公平调度程序可以做到 U=1。</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20190907175658.png style=display:block;width:50% alt=NAME align=center> </div>
+<p>上图展示了两个工作的运行时间从 1 到 1000 变化时，30 次实验的平均 U 值。可以看出，当工作时间执行很短时，平均不公平度非常糟糕。只有当工作执行非常多的时间片时，彩票调度算法才能得到期望的结果。</p>
+<h2 id=如何分配彩票>如何分配彩票</h2>
+<p>关于彩票调度还有一个问题没有提到，那就是如何为工作分配彩票？这是一个非常棘手的问题，系统的运行严重依赖于彩票的分配。假设用户自己知道如何分配，因此可以给每个用户一定量的彩票，由用户按照需要自主分配自己的工作。然而这种方案似乎什么也没有解决——还是没有给出具体的分配策略。因此对于给定的一组工作，彩票分配的问题依然没有最佳答案。</p>
+<h2 id=为什么是不确定的>为什么是不确定的</h2>
+<p>你可能还想知道，究竟为什么要利用随机性？从上面的内容可以看出，虽然随机方式可以使调度程序的实现变得简单且大致正确，但偶尔并不能产生正确的比例，尤其是在工作时间较短的情况下。由于这个原因，Waldspurger 提出了步长调度，一个确定性的公平分配算法。</p>
+<p>步长调度也很简单。系统中的每个工作都有自己的步长，这个值与票数值成反比。在上面的例子中，ABC 这 3 个工作的票数分别是 100、50、250，我们通过用一个大数分别除以他们的票数来获得每个进程的步长。比如用 1000 除以这些票数值，得到了 3 个进程的步长分别为 100、200、40。我们称这个值为每个进程的步长。每次进程运行后，我们会让他的计数器(行程值)增加它的步长，以记录它的总体进展。</p>
+<p>之后，调度程序使用进程的步长以及行程值来确定调度哪个进程。基本思路很简单：当需要进行调度时，选择目前拥有最小行程值的进程，并且在运行之后将该进程的行程值增加一个步长。下面是是 Waldspurger 给出的伪代码：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>current = remove_min(queue);       // pick client with minimum pass
+schedule(current);                 // use resource for quantum
+current-&gt;pass += current-&gt;stride;  // compute next pass using stride
+insert(queue, current);			   // put back into the queue
+</code></pre></div><p>在我们的例子中三个进程的步长分别为 100、200、40，初始行程都是 0。因此，最初所有进程都可能被选择调度。假设选择 A，执行一个时间片后行程值为 100。然后运行 B，行程值为 200。最后运行 C，行程值为 40。这时，算法选择最小的行程值，即 C，执行并增加为 80。然后 C 会再次运行，行程增加为 120。现在需要运行 A，行程值增加到 200。然后 C 再次连续运行两次，行程值为 200。此时，所有行程值再次相等，这个过程会无限重复下去。下图展示了一段时间内的变化过程：</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20190907181446.png style=display:block;width:50% alt=NAME align=center> </div>
+<p>可以看出 C 运行了 5 次、A 为 2 次、B 为 1 次，真好是票数的比例——200、100、50。彩票调度算法只能一段时间后在概率上实现比例，而步长调度算法可以在每个调度周期后做到完全正确。</p>
+<p>你可能想知道，既然有了可以精确控制的步长算法，为什么还需要彩票算法呢？好吧，彩票调度有一个步长调度没有的优势——不需要全局状态。假如有个新的进程在上面的步长调度执行过程中假如系统，应该怎样设置它的行程值呢？设置为 0 则会使其独占 CPU。而彩票调度算法不需要对每个进程记录全局状态，只需要用新进程的票数更新全局的总票数即可。因此彩票调度算法能够更加合理的处理新加入的进程。</p>
+<h2 id=小结>小结</h2>
+<p>本章介绍了比例份额调度的概念，并简单讨论了两种实现：彩票调度和步长调度。彩票调度通过随机值，聪明的做到了按比例分配。步长调度算法能够确定的获得需要的比例。虽然两者都很有趣，但由于一些原因，并没有作为 CPU 调度程序被广泛使用。一个原因是这两种方式都不能很好的适合 IO；另一个原因是其中最难的票数分配问题并没有确定的解决方式。比如，如何知道浏览器进程拥有多少票数？通用调度程序(类似 MLFQ)做的更好，因此得到了广泛的应用。</p>
+<p>结果，比例份额调度程序只有在这些问题可以相对容易解决的领域才更有用。比如虚拟数据中心，你可能会希望分配 1/4 的 CPU 周期给 Windows 虚拟机，剩余的则分配给 Linux 系统，比例分配的方式则会更加简单高效。</p>
+<style>.feedback--answer{display:inline-block}.feedback--answer-no{margin-left:1em}.feedback--response{display:none;margin-top:1em}.feedback--response__visible{display:block}</style>
+<div class=d-print-none>
+<h2 class=feedback--title>Feedback</h2>
+<p class=feedback--question>Was this page helpful?</p>
+<button class="btn btn-primary mb-4 feedback--answer feedback--answer-yes">Yes</button>
+<button class="btn btn-primary mb-4 feedback--answer feedback--answer-no">No</button>
+<p class="feedback--response feedback--response-yes">
+Glad to hear it! Please <a href=https://github.com/infilos/infilos.com/issues/new>tell us how we can improve</a>.
+</p>
+<p class="feedback--response feedback--response-no">
+Sorry to hear that. Please <a href=https://github.com/infilos/infilos.com/issues/new>tell us how we can improve</a>.
+</p>
+</div>
+<script>const yesButton=document.querySelector('.feedback--answer-yes'),noButton=document.querySelector('.feedback--answer-no'),yesResponse=document.querySelector('.feedback--response-yes'),noResponse=document.querySelector('.feedback--response-no'),disableButtons=()=>{yesButton.disabled=!0,noButton.disabled=!0},sendFeedback=b=>{if(typeof ga!='function')return;const a={command:'send',hitType:'event',category:'Helpful',action:'click',label:window.location.pathname,value:b};ga(a.command,a.hitType,a.category,a.action,a.label,a.value)};yesButton.addEventListener('click',()=>{yesResponse.classList.add('feedback--response__visible'),disableButtons(),sendFeedback(1)}),noButton.addEventListener('click',()=>{noResponse.classList.add('feedback--response__visible'),disableButtons(),sendFeedback(0)})</script>
+<br>
+</div>
+</main>
+</div>
+</div>
+<footer class="bg-dark py-5 row d-print-none">
+<div class="container-fluid mx-sm-5">
+<div class=row>
+<div class="col-6 col-sm-4 text-xs-center order-sm-2">
+</div>
+<div class="col-6 col-sm-4 text-right text-xs-center order-sm-3">
+<ul class="list-inline mb-0">
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Weibo aria-label=Weibo>
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://weibo.com/u/3848950217>
+<i class="fab fa-weibo"></i>
+</a>
+</li>
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Twitter aria-label=Twitter>
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://twitter.com/zhange_zzg>
+<i class="fab fa-twitter"></i>
+</a>
+</li>
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title="Stack Overflow" aria-label="Stack Overflow">
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://stackoverflow.com>
+<i class="fab fa-stack-overflow"></i>
+</a>
+</li>
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=GitHub aria-label=GitHub>
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://github.com/infilos/infilos.com>
+<i class="fab fa-github"></i>
+</a>
+</li>
+</ul>
+</div>
+<div class="col-12 col-sm-4 text-center py-2 order-sm-2">
+<small class=text-white>&copy; 2021 infilos.com All Rights Reserved</small>
+</div>
+</div>
+</div>
+</footer>
+</div>
+<script src=/js/popper.min.js integrity=sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49 crossorigin=anonymous></script>
+<script src=/js/bootstrap.min.js integrity=sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy crossorigin=anonymous></script>
+<script src=/js/main.min.5c74b870c6953931a705f390a49c7e4c0a842ec5c83b24354758dd674343ed0d.js integrity="sha256-XHS4cMaVOTGnBfOQpJx+TAqELsXIOyQ1R1jdZ0ND7Q0=" crossorigin=anonymous></script>
+<script src=https://cdn.jsdelivr.net/npm/docsearch.js@2.6.3/dist/cdn/docsearch.min.js></script>
+<script>docsearch({apiKey:'123',indexName:'infilos_com',inputSelector:'.td-search-input',debug:!1})</script>
+</body>
+</html>

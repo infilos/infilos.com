@@ -1,0 +1,869 @@
+<!doctype html><html lang=zh class=no-js>
+<head>
+<meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no">
+<meta name=generator content="Hugo 0.88.1">
+<meta name=ROBOTS content="INDEX, FOLLOW">
+<link rel="shortcut icon" href=/favicons/favicon.ico>
+<link rel=apple-touch-icon href=/favicons/apple-touch-icon-180x180.png sizes=180x180>
+<link rel=icon type=image/png href=/favicons/favicon-16x16.png sizes=16x16>
+<link rel=icon type=image/png href=/favicons/favicon-32x32.png sizes=32x32>
+<link rel=icon type=image/png href=/favicons/android-36x36.png sizes=36x36>
+<link rel=icon type=image/png href=/favicons/android-48x48.png sizes=48x48>
+<link rel=icon type=image/png href=/favicons/android-72x72.png sizes=72x72>
+<link rel=icon type=image/png href=/favicons/android-96x96.png sizes=96x96>
+<link rel=icon type=image/png href=/favicons/android-144x144.png sizes=144x144>
+<link rel=icon type=image/png href=/favicons/android-192x192.png sizes=192x192>
+<title>CH04-核心知识 | infilos.com</title><meta property="og:title" content="CH04-核心知识">
+<meta property="og:description" content="事务 概念 事务指的是满足 ACID 特性的一组操作，可以通过 Commit 提交一个事务，也可以使用 Rollback 进行回滚。
+ ACID  原子性：Atomicity  事务被视为不可分割的最小单元，事务的所有操作要么全部提交成功，要么全部失败回滚。 回滚可以用日志来实现，日志记录着事务所执行的修改操作，在回滚时反向执行这些修改操作即可。   一致性：Consistency  数据库在事务执行前后都保持一致性状态。在一致性状态下，所有事务对一个数据的读取结果都是相同的。   隔离性：Isolation  一个事务所做的修改在最终提交以前，对其它事务是不可见的。   持久性：Durability  一旦事务提交，则其所做的修改将会永远保存到数据库中。即使系统发生崩溃，事务执行的结果也不能丢失。 可以通过数据库备份和恢复来实现，在系统发生崩溃时，使用备份的数据库进行数据恢复。    事务的 ACID 特性概念简单，但不是很好理解，主要是因为这几个特性不是一种平级关系:
+ 只有满足一致性，事务的执行结果才是正确的。 在无并发的情况下，事务串行执行，隔离性一定能够满足。此时只要能满足原子性，就一定能满足一致性。 在并发的情况下，多个事务并行执行，事务不仅要满足原子性，还需要满足隔离性，才能满足一致性。 事务满足持久化是为了能应对数据库崩溃的情况。   AUTOCOMMIT MySQL 默认采用自动提交模式。也就是说，如果不显式使用START TRANSACTION语句来开始一个事务，那么每个查询都会被当做一个事务自动提交。
+并发一致性 在并发环境下，事务的隔离性很难保证，因此会出现很多并发一致性问题。
+  产生并发不一致性问题主要原因是破坏了事务的隔离性，解决方法是通过并发控制来保证隔离性。
+  并发控制可以通过封锁来实现，但是封锁操作需要用户自己控制，相当复杂。
+  数据库管理系统提供了事务的隔离级别，让用户以一种更轻松的方式处理并发一致性问题。
+  丢失修改 T1 和 T2 两个事务都对一个数据进行修改，T1 先修改，T2 随后修改，T2 的修改覆盖了 T1 的修改。">
+<meta property="og:type" content="article">
+<meta property="og:url" content="/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/rdbms/ch04-%E6%A0%B8%E5%BF%83%E7%9F%A5%E8%AF%86/"><meta property="article:section" content="存储系统">
+<meta property="og:site_name" content="infilos.com">
+<meta itemprop=name content="CH04-核心知识">
+<meta itemprop=description content="事务 概念 事务指的是满足 ACID 特性的一组操作，可以通过 Commit 提交一个事务，也可以使用 Rollback 进行回滚。
+ ACID  原子性：Atomicity  事务被视为不可分割的最小单元，事务的所有操作要么全部提交成功，要么全部失败回滚。 回滚可以用日志来实现，日志记录着事务所执行的修改操作，在回滚时反向执行这些修改操作即可。   一致性：Consistency  数据库在事务执行前后都保持一致性状态。在一致性状态下，所有事务对一个数据的读取结果都是相同的。   隔离性：Isolation  一个事务所做的修改在最终提交以前，对其它事务是不可见的。   持久性：Durability  一旦事务提交，则其所做的修改将会永远保存到数据库中。即使系统发生崩溃，事务执行的结果也不能丢失。 可以通过数据库备份和恢复来实现，在系统发生崩溃时，使用备份的数据库进行数据恢复。    事务的 ACID 特性概念简单，但不是很好理解，主要是因为这几个特性不是一种平级关系:
+ 只有满足一致性，事务的执行结果才是正确的。 在无并发的情况下，事务串行执行，隔离性一定能够满足。此时只要能满足原子性，就一定能满足一致性。 在并发的情况下，多个事务并行执行，事务不仅要满足原子性，还需要满足隔离性，才能满足一致性。 事务满足持久化是为了能应对数据库崩溃的情况。   AUTOCOMMIT MySQL 默认采用自动提交模式。也就是说，如果不显式使用START TRANSACTION语句来开始一个事务，那么每个查询都会被当做一个事务自动提交。
+并发一致性 在并发环境下，事务的隔离性很难保证，因此会出现很多并发一致性问题。
+  产生并发不一致性问题主要原因是破坏了事务的隔离性，解决方法是通过并发控制来保证隔离性。
+  并发控制可以通过封锁来实现，但是封锁操作需要用户自己控制，相当复杂。
+  数据库管理系统提供了事务的隔离级别，让用户以一种更轻松的方式处理并发一致性问题。
+  丢失修改 T1 和 T2 两个事务都对一个数据进行修改，T1 先修改，T2 随后修改，T2 的修改覆盖了 T1 的修改。">
+<meta itemprop=wordCount content="482">
+<meta itemprop=keywords content><meta name=twitter:card content="summary">
+<meta name=twitter:title content="CH04-核心知识">
+<meta name=twitter:description content="事务 概念 事务指的是满足 ACID 特性的一组操作，可以通过 Commit 提交一个事务，也可以使用 Rollback 进行回滚。
+ ACID  原子性：Atomicity  事务被视为不可分割的最小单元，事务的所有操作要么全部提交成功，要么全部失败回滚。 回滚可以用日志来实现，日志记录着事务所执行的修改操作，在回滚时反向执行这些修改操作即可。   一致性：Consistency  数据库在事务执行前后都保持一致性状态。在一致性状态下，所有事务对一个数据的读取结果都是相同的。   隔离性：Isolation  一个事务所做的修改在最终提交以前，对其它事务是不可见的。   持久性：Durability  一旦事务提交，则其所做的修改将会永远保存到数据库中。即使系统发生崩溃，事务执行的结果也不能丢失。 可以通过数据库备份和恢复来实现，在系统发生崩溃时，使用备份的数据库进行数据恢复。    事务的 ACID 特性概念简单，但不是很好理解，主要是因为这几个特性不是一种平级关系:
+ 只有满足一致性，事务的执行结果才是正确的。 在无并发的情况下，事务串行执行，隔离性一定能够满足。此时只要能满足原子性，就一定能满足一致性。 在并发的情况下，多个事务并行执行，事务不仅要满足原子性，还需要满足隔离性，才能满足一致性。 事务满足持久化是为了能应对数据库崩溃的情况。   AUTOCOMMIT MySQL 默认采用自动提交模式。也就是说，如果不显式使用START TRANSACTION语句来开始一个事务，那么每个查询都会被当做一个事务自动提交。
+并发一致性 在并发环境下，事务的隔离性很难保证，因此会出现很多并发一致性问题。
+  产生并发不一致性问题主要原因是破坏了事务的隔离性，解决方法是通过并发控制来保证隔离性。
+  并发控制可以通过封锁来实现，但是封锁操作需要用户自己控制，相当复杂。
+  数据库管理系统提供了事务的隔离级别，让用户以一种更轻松的方式处理并发一致性问题。
+  丢失修改 T1 和 T2 两个事务都对一个数据进行修改，T1 先修改，T2 随后修改，T2 的修改覆盖了 T1 的修改。">
+<script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga('create','UA-123062585-1','auto'),ga('send','pageview'))</script>
+<script async src=https://www.google-analytics.com/analytics.js></script>
+<link rel=preload href=/scss/main.min.847464b684a6e89d7276700a5c500c17ab494dd1755b2654a7b27d8b59e3347e.css as=style>
+<link href=/scss/main.min.847464b684a6e89d7276700a5c500c17ab494dd1755b2654a7b27d8b59e3347e.css rel=stylesheet integrity>
+<script src=/js/jquery-3.5.1.min.js integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin=anonymous></script>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/docsearch.js@2/dist/cdn/docsearch.min.css>
+</head>
+<body class=td-page>
+<header>
+<nav class="js-navbar-scroll navbar navbar-expand navbar-dark flex-column flex-md-row td-navbar">
+<a class=navbar-brand href=/>
+<span class=navbar-logo><svg id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512" style="enable-background:new 0 0 512 512"><path style="fill:#ffc107" d="M432.384 143.616c-4.165-4.164-10.917-4.164-15.083.0l-60.352 60.352c-4.164 4.165-4.164 10.917.0 15.083 21.187 20.463 54.951 19.876 75.413-1.311 19.962-20.668 19.962-53.435.0-74.102L432.384 143.616z"/><path style="fill:#607d8b" d="M42.667 277.334c-5.891.003-10.669-4.771-10.672-10.662-.002-4.338 2.623-8.245 6.64-9.882l234.667-96c5.455-2.233 11.687.38 13.92 5.835s-.38 11.687-5.835 13.92l-234.667 96C45.433 277.069 44.056 277.337 42.667 277.334z"/><path style="fill:#546e7a" d="M391.552 56.448l-32-32C343.938 8.745 322.689-.059 300.544.0h-3.755c-46.082.024-83.432 37.374-83.456 83.456v3.755c-.053 22.138 8.75 43.377 24.448 58.987l32 32c4.165 4.164 10.917 4.164 15.083.0L391.531 71.531C395.701 67.372 395.71 60.62 391.552 56.448z"/><path style="fill:#607d8b" d="M160 469.334c-3.279.006-6.379-1.497-8.405-4.075L34.261 315.926c-3.635-4.636-2.823-11.341 1.813-14.976s11.341-2.823 14.976 1.813l117.333 149.333c3.629 4.641 2.809 11.344-1.832 14.973C164.681 468.533 162.375 469.329 160 469.334z"/><path style="fill:#455a64" d="M487.467 86.848l-3.669-3.648c-37.687-36.557-97.71-36.197-134.955.811l-51.413 51.413c-36.996 37.25-37.357 97.263-.811 134.955l3.584 3.669c1.7 2.457 4.671 3.706 7.616 3.2 2.831.005 5.548-1.115 7.552-3.115l172.181-172.181c4.189-4.143 4.226-10.896.083-15.085-.028-.028-.055-.056-.083-.083L487.467 86.848z"/><g><path style="fill:#ffc107" d="M501.333 192H480c-5.891.0-10.667-4.776-10.667-10.667s4.776-10.667 10.667-10.667h21.333c5.891.0 10.667 4.776 10.667 10.667S507.225 192 501.333 192z"/><path style="fill:#ffc107" d="M394.667 298.667c-5.891.0-10.667-4.776-10.667-10.667v-21.333c0-5.891 4.776-10.667 10.667-10.667 5.891.0 10.667 4.776 10.667 10.667V288C405.333 293.891 400.558 298.667 394.667 298.667z"/><path style="fill:#ffc107" d="M480 277.334c-2.831.005-5.548-1.115-7.552-3.115l-21.333-21.333c-4.093-4.237-3.975-10.99.262-15.083 4.134-3.993 10.687-3.993 14.821.0l21.333 21.333c4.159 4.172 4.148 10.926-.024 15.085C485.514 276.209 482.815 277.327 480 277.334z"/></g><g><path style="fill:#455a64" d="M266.667 448H96c-29.455.0-53.333 23.878-53.333 53.333.0 5.891 4.776 10.667 10.667 10.667h256c5.891.0 10.667-4.776 10.667-10.667C320 471.878 296.122 448 266.667 448z"/><circle style="fill:#455a64" cx="32" cy="288" r="32"/></g><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/></svg></span><span class=font-weight-bold>infilos.com</span>
+</a>
+<div class="collapse navbar-collapse" id=navbarSupportedContent>
+<ul class="navbar-nav mr-auto">
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+基础
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/%e6%93%8d%e4%bd%9c%e7%b3%bb%e7%bb%9f>操作系统</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/%e6%80%a7%e8%83%bd%e4%b9%8b%e6%ae%87>性能之殇</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/io%e6%a8%a1%e5%9e%8b>IO 模型</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/%e7%bd%91%e7%bb%9c%e5%9f%ba%e7%a1%80>网络基础</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/tcp-ip>TCP-IP</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/http>HTTP</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+语言
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/java>Java 编程</a>
+<a class=dropdown-item href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/jvm-core>JVM 核心</a>
+<a class=dropdown-item href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/jvm-concurrent>JVM 并发</a>
+<a class=dropdown-item href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/scala>Scala 编程</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+框架库
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93/spring>Spring</a>
+<a class=dropdown-item href=/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93/hikari>Hikari</a>
+<a class=dropdown-item href=/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93/parboiled>Parboiled</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+分布式
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%88%86%e5%b8%83%e5%bc%8f/base>基本构成</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+大数据
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%ad%98%e5%82%a8%e7%b3%bb%e7%bb%9f>存储系统</a>
+<a class=dropdown-item href=/%e6%9f%a5%e8%af%a2%e7%b3%bb%e7%bb%9f>查询系统</a>
+<a class=dropdown-item href=/%e6%b6%88%e6%81%af%e7%b3%bb%e7%bb%9f>消息系统</a>
+<a class=dropdown-item href=/%e5%a4%84%e7%90%86%e7%b3%bb%e7%bb%9f>处理系统</a>
+<a class=dropdown-item href=/%e7%ae%a1%e7%90%86%e7%b3%bb%e7%bb%9f>管理系统</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+中后台
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e8%ae%be%e6%96%bd>基础设施</a>
+<a class=dropdown-item href=/%e4%ba%a4%e4%ba%92%e7%95%8c%e9%9d%a2>交互界面</a>
+<a class=dropdown-item href=/%e4%b8%9a%e5%8a%a1%e7%b3%bb%e7%bb%9f>业务系统</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+模式架构
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e6%a8%a1%e5%bc%8f%e6%9e%b6%e6%9e%84/design-pattern>设计模式</a>
+<a class=dropdown-item href=/%e6%a8%a1%e5%bc%8f%e6%9e%b6%e6%9e%84/micro-service>微服务架构</a>
+</div>
+</li>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e9%9d%a2%e8%af%95%e9%97%ae%e7%ad%94>
+<span>面试</span>
+</a>
+</li>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e7%ae%a1%e7%90%86%e8%b7%af%e5%be%84>
+<span>管理</span>
+</a>
+</li>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e5%bc%80%e6%ba%90%e9%a1%b9%e7%9b%ae>
+<span>开源</span>
+</a>
+</li>
+</ul>
+<div class="form-inline my-2 my-lg-0">
+<div class="nav-item nav-search-item my-2 my-md-0">
+<input type=search class="form-control td-search-input" placeholder="&#xf002; 站内搜索…" aria-label=站内搜索… autocomplete=off>
+</div>
+</div>
+</div>
+</nav>
+</header>
+<div class="container-fluid td-outer">
+<div class=td-main>
+<div class="row flex-xl-nowrap">
+<aside class="col-12 col-md-3 col-xl-2 td-sidebar d-print-none">
+<div id=td-sidebar-menu class=td-sidebar__inner>
+<div id=content-mobile>
+<form class="td-sidebar__search d-flex align-items-center">
+<input type=search class="form-control td-search-input" placeholder="&#xf002; 站内搜索…" aria-label=站内搜索… autocomplete=off>
+<button class="btn btn-link td-sidebar__toggle d-md-none p-0 ml-3 fas fa-bars" type=button data-toggle=collapse data-target=#td-section-nav aria-controls=td-docs-nav aria-expanded=false aria-label="Toggle section navigation">
+</button>
+</form>
+</div>
+<div id=content-desktop></div>
+<nav class="collapse td-sidebar-nav" id=td-section-nav>
+<ul class="td-sidebar-nav__section pr-md-3 ul-0">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e5ad98e582a8e7b3bbe7bb9f-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section tree-root" id=m-e5ad98e582a8e7b3bbe7bb9f><span>存储系统</span></a>
+<ul class=ul-1>
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e5ad98e582a8e7b3bbe7bb9frdbms-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/rdbms/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e5ad98e582a8e7b3bbe7bb9frdbms><span>RDBMS</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9frdbmsch01-e5b7a5e4bd9ce696b9e5bc8f-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/rdbms/ch01-%E5%B7%A5%E4%BD%9C%E6%96%B9%E5%BC%8F/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9frdbmsch01-e5b7a5e4bd9ce696b9e5bc8f><span>CH01-工作方式</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9frdbmsch02-e8aebee8aea1e79086e8aeba-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/rdbms/ch02-%E8%AE%BE%E8%AE%A1%E7%90%86%E8%AE%BA/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9frdbmsch02-e8aebee8aea1e79086e8aeba><span>CH02-设计理论</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9frdbmsch03-e8aebee8aea1e6b581e7a88b-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/rdbms/ch03-%E8%AE%BE%E8%AE%A1%E6%B5%81%E7%A8%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9frdbmsch03-e8aebee8aea1e6b581e7a88b><span>CH03-设计流程</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child active-path" id=m-e5ad98e582a8e7b3bbe7bb9frdbmsch04-e6a0b8e5bf83e79fa5e8af86-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/rdbms/ch04-%E6%A0%B8%E5%BF%83%E7%9F%A5%E8%AF%86/ class="align-left pl-0 active td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9frdbmsch04-e6a0b8e5bf83e79fa5e8af86><span class=td-sidebar-nav-active-item>CH04-核心知识</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e5ad98e582a8e7b3bbe7bb9fsql-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/sql/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e5ad98e582a8e7b3bbe7bb9fsql><span>SQL</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fsqlch01-e8afade6b395e59fbae7a180-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/sql/ch01-%E8%AF%AD%E6%B3%95%E5%9F%BA%E7%A1%80/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fsqlch01-e8afade6b395e59fbae7a180><span>CH01-语法基础</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fsqlch02-e69fa5e8afa2e7bb83e4b9a0-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/sql/ch02-%E6%9F%A5%E8%AF%A2%E7%BB%83%E4%B9%A0/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fsqlch02-e69fa5e8afa2e7bb83e4b9a0><span>CH02-查询练习</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fsqlch03-e69fa5e8afa2e8bf9be998b6-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/sql/ch03-%E6%9F%A5%E8%AF%A2%E8%BF%9B%E9%98%B6/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fsqlch03-e69fa5e8afa2e8bf9be998b6><span>CH03-查询进阶</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fsqlch04-e69fa5e8afa2e4bc98e58c96-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/sql/ch04-%E6%9F%A5%E8%AF%A2%E4%BC%98%E5%8C%96/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fsqlch04-e69fa5e8afa2e4bc98e58c96><span>CH04-查询优化</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e5ad98e582a8e7b3bbe7bb9fmysql><span>MySQL</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch01-e695b0e68daee7b1bbe59e8b-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql/ch01-%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch01-e695b0e68daee7b1bbe59e8b><span>CH01-数据类型</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch02-e5ad98e582a8e5bc95e6938e-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql/ch02-%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch02-e5ad98e582a8e5bc95e6938e><span>CH02-存储引擎</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch03-e7b4a2e5bc95be6a091-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql/ch03-%E7%B4%A2%E5%BC%95b+%E6%A0%91/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch03-e7b4a2e5bc95be6a091><span>CH03-索引B+树</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch04-e680a7e883bde4bc98e58c96-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql/ch04-%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch04-e680a7e883bde4bc98e58c96><span>CH04-性能优化</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch05-e58886e5ba93e58886e8a1a8-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql/ch05-%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch05-e58886e5ba93e58886e8a1a8><span>CH05-分库分表</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch06-e5a48de588b6e58886e7a6bb-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql/ch06-%E5%A4%8D%E5%88%B6%E5%88%86%E7%A6%BB/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch06-e5a48de588b6e58886e7a6bb><span>CH06-复制分离</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch07-e689a7e8a18ce8bf87e7a88b-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql/ch07-%E6%89%A7%E8%A1%8C%E8%BF%87%E7%A8%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch07-e689a7e8a18ce8bf87e7a88b><span>CH07-执行过程</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e5ad98e582a8e7b3bbe7bb9fredis-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/redis/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e5ad98e582a8e7b3bbe7bb9fredis><span>Redis</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fredisch01-e59fbae69cace7b1bbe59e8b-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/redis/ch01-%E5%9F%BA%E6%9C%AC%E7%B1%BB%E5%9E%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fredisch01-e59fbae69cace7b1bbe59e8b><span>CH01-基本类型</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fredisch02-e9ab98e7baa7e7b1bbe59e8b-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/redis/ch02-%E9%AB%98%E7%BA%A7%E7%B1%BB%E5%9E%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fredisch02-e9ab98e7baa7e7b1bbe59e8b><span>CH02-高级类型</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fredisch03-stream-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/redis/ch03-stream/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fredisch03-stream><span>CH03-Stream</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fredisch04-e5afb9e8b1a1e69cbae588b6-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/redis/ch04-%E5%AF%B9%E8%B1%A1%E6%9C%BA%E5%88%B6/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fredisch04-e5afb9e8b1a1e69cbae588b6><span>CH04-对象机制</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fredisch05-e5ba95e5b182e7bb93e69e84-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/redis/ch05-%E5%BA%95%E5%B1%82%E7%BB%93%E6%9E%84/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fredisch05-e5ba95e5b182e7bb93e69e84><span>CH05-底层结构</span></a>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</div>
+</aside>
+<aside class="d-none d-xl-block col-xl-2 td-sidebar-toc d-print-none">
+<div class="td-page-meta ml-2 pb-1 pt-2 mb-0">
+<a href=https://github.com/infilos/infilos.com/edit/master/content/zh/%e5%ad%98%e5%82%a8%e7%b3%bb%e7%bb%9f/rdbms/CH04-%e6%a0%b8%e5%bf%83%e7%9f%a5%e8%af%86.md target=_blank><i class="fa fa-edit fa-fw"></i> 编辑此页</a>
+<a href="https://github.com/infilos/infilos.com/new/master/content/zh/%e5%ad%98%e5%82%a8%e7%b3%bb%e7%bb%9f/rdbms/CH04-%e6%a0%b8%e5%bf%83%e7%9f%a5%e8%af%86.md?filename=change-me.md&value=---%0Atitle%3A+%22Long+Page+Title%22%0AlinkTitle%3A+%22Short+Nav+Title%22%0Aweight%3A+100%0Adescription%3A+%3E-%0A+++++Page+description+for+heading+and+indexes.%0A---%0A%0A%23%23+Heading%0A%0AEdit+this+template+to+create+your+new+page.%0A%0A%2A+Give+it+a+good+name%2C+ending+in+%60.md%60+-+e.g.+%60getting-started.md%60%0A%2A+Edit+the+%22front+matter%22+section+at+the+top+of+the+page+%28weight+controls+how+its+ordered+amongst+other+pages+in+the+same+directory%3B+lowest+number+first%29.%0A%2A+Add+a+good+commit+message+at+the+bottom+of+the+page+%28%3C80+characters%3B+use+the+extended+description+field+for+more+detail%29.%0A%2A+Create+a+new+branch+so+you+can+preview+your+new+file+and+request+a+review+via+Pull+Request.%0A" target=_blank><i class="fa fa-edit fa-fw"></i> 添加子页面</a>
+<a href="https://github.com/infilos/infilos.com/issues/new?title=CH04-%e6%a0%b8%e5%bf%83%e7%9f%a5%e8%af%86" target=_blank><i class="fab fa-github fa-fw"></i> 提交文档问题</a>
+<a id=print href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/rdbms/_print/><i class="fa fa-print fa-fw"></i> 整节打印</a>
+</div>
+<div class=td-toc><nav id=TableOfContents>
+<ul>
+<li><a href=#事务>事务</a>
+<ul>
+<li><a href=#概念>概念</a></li>
+<li><a href=#acid>ACID</a></li>
+<li><a href=#autocommit>AUTOCOMMIT</a></li>
+</ul>
+</li>
+<li><a href=#并发一致性>并发一致性</a>
+<ul>
+<li><a href=#丢失修改>丢失修改</a></li>
+<li><a href=#脏读>脏读</a></li>
+<li><a href=#不可重复读>不可重复读</a></li>
+<li><a href=#幻读>幻读</a></li>
+</ul>
+</li>
+<li><a href=#封锁>封锁</a>
+<ul>
+<li><a href=#封锁粒度>封锁粒度</a></li>
+<li><a href=#封锁类型>封锁类型</a></li>
+<li><a href=#封锁协议>封锁协议</a></li>
+<li><a href=#mysql隐式显式锁定>MySQL：隐式/显式锁定</a></li>
+</ul>
+</li>
+<li><a href=#隔离级别>隔离级别</a></li>
+<li><a href=#多版本并发控制>多版本并发控制</a>
+<ul>
+<li><a href=#版本号>版本号</a></li>
+<li><a href=#隐藏的列>隐藏的列</a></li>
+<li><a href=#undo-日志>Undo 日志</a></li>
+<li><a href=#实现过程>实现过程</a></li>
+<li><a href=#快照读与当前读>快照读与当前读</a></li>
+</ul>
+</li>
+<li><a href=#next-key-locks>Next-Key Locks</a>
+<ul>
+<li><a href=#record-locks>Record Locks</a></li>
+<li><a href=#gap-locks>Gap Locks</a></li>
+<li><a href=#next-key-locks-1>Next-Key Locks</a></li>
+</ul>
+</li>
+</ul>
+</nav></div>
+</aside>
+<main class="col-12 col-md-9 col-xl-8 pl-md-5" role=main>
+<nav aria-label=breadcrumb class="d-none d-md-block d-print-none">
+<ol class="breadcrumb spb-1">
+<li class=breadcrumb-item>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/>存储系统</a>
+</li>
+<li class=breadcrumb-item>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/rdbms/>RDBMS</a>
+</li>
+<li class="breadcrumb-item active" aria-current=page>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/rdbms/ch04-%E6%A0%B8%E5%BF%83%E7%9F%A5%E8%AF%86/>CH04-核心知识</a>
+</li>
+</ol>
+</nav>
+<div class=td-content>
+<h1>CH04-核心知识</h1>
+<header class=article-meta>
+</header>
+<h2 id=事务>事务</h2>
+<h3 id=概念>概念</h3>
+<p>事务指的是满足 ACID 特性的一组操作，可以通过 Commit 提交一个事务，也可以使用 Rollback 进行回滚。</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20210503161528.png style=display:block;width:50% alt=NAME align=center> </div>
+<h3 id=acid>ACID</h3>
+<ul>
+<li>原子性：Atomicity
+<ul>
+<li>事务被视为不可分割的最小单元，事务的所有操作要么全部提交成功，要么全部失败回滚。</li>
+<li>回滚可以用日志来实现，日志记录着事务所执行的修改操作，在回滚时反向执行这些修改操作即可。</li>
+</ul>
+</li>
+<li>一致性：Consistency
+<ul>
+<li>数据库在事务执行前后都保持一致性状态。在一致性状态下，所有事务对一个数据的读取结果都是相同的。</li>
+</ul>
+</li>
+<li>隔离性：Isolation
+<ul>
+<li>一个事务所做的修改在最终提交以前，对其它事务是不可见的。</li>
+</ul>
+</li>
+<li>持久性：Durability
+<ul>
+<li>一旦事务提交，则其所做的修改将会永远保存到数据库中。即使系统发生崩溃，事务执行的结果也不能丢失。</li>
+<li>可以通过数据库备份和恢复来实现，在系统发生崩溃时，使用备份的数据库进行数据恢复。</li>
+</ul>
+</li>
+</ul>
+<p>事务的 ACID 特性概念简单，但不是很好理解，主要是因为这几个特性不是一种平级关系:</p>
+<ul>
+<li>只有满足一致性，事务的执行结果才是正确的。</li>
+<li>在无并发的情况下，事务串行执行，隔离性一定能够满足。此时只要能满足原子性，就一定能满足一致性。</li>
+<li>在并发的情况下，多个事务并行执行，事务不仅要满足原子性，还需要满足隔离性，才能满足一致性。</li>
+<li>事务满足持久化是为了能应对数据库崩溃的情况。</li>
+</ul>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20210503161752.png style=display:block;width:50% alt=NAME align=center> </div>
+<h3 id=autocommit>AUTOCOMMIT</h3>
+<p>MySQL 默认采用自动提交模式。也就是说，如果不显式使用<code>START TRANSACTION</code>语句来开始一个事务，那么每个查询都会被当做一个事务自动提交。</p>
+<h2 id=并发一致性>并发一致性</h2>
+<p>在并发环境下，事务的隔离性很难保证，因此会出现很多并发一致性问题。</p>
+<ul>
+<li>
+<p>产生并发不一致性问题主要原因是破坏了事务的隔离性，解决方法是通过并发控制来保证隔离性。</p>
+</li>
+<li>
+<p>并发控制可以通过封锁来实现，但是封锁操作需要用户自己控制，相当复杂。</p>
+</li>
+<li>
+<p>数据库管理系统提供了事务的隔离级别，让用户以一种更轻松的方式处理并发一致性问题。</p>
+</li>
+</ul>
+<h3 id=丢失修改>丢失修改</h3>
+<p>T1 和 T2 两个事务都对一个数据进行修改，T1 先修改，T2 随后修改，T2 的修改覆盖了 T1 的修改。</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20210503161851.png style=display:block;width:50% alt=NAME align=center> </div>
+<h3 id=脏读>脏读</h3>
+<p>T1 修改一个数据，T2 随后读取这个数据。如果 T1 撤销了这次修改，那么 T2 读取的数据是脏数据。</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20210503161930.png style=display:block;width:50% alt=NAME align=center> </div>
+<h3 id=不可重复读>不可重复读</h3>
+<p>T2 读取一个数据，T1 对该数据做了修改。如果 T2 再次读取这个数据，此时读取的结果和第一次读取的结果不同。</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20210503161952.png style=display:block;width:50% alt=NAME align=center> </div>
+<h3 id=幻读>幻读</h3>
+<p>T1 读取某个范围的数据，T2 在这个范围内插入新的数据，T1 再次读取这个范围的数据，此时读取的结果和和第一次读取的结果不同。</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20210503162018.png style=display:block;width:50% alt=NAME align=center> </div>
+<h2 id=封锁>封锁</h2>
+<h3 id=封锁粒度>封锁粒度</h3>
+<p>MySQL 中提供了两种封锁粒度: <strong>行级锁以及表级锁</strong>。</p>
+<ul>
+<li>
+<p>应该尽量只锁定需要修改的那部分数据，而不是所有的资源。</p>
+<ul>
+<li>锁定的数据量越少，发生锁争用的可能就越小，系统的并发程度就越高。</li>
+</ul>
+</li>
+<li>
+<p>但是加锁需要消耗资源，锁的各种操作(包括获取锁、释放锁、以及检查锁状态)都会增加系统开销。</p>
+<ul>
+<li>因此封锁粒度越小，系统开销就越大。</li>
+</ul>
+</li>
+</ul>
+<p>在选择封锁粒度时，需要在锁开销和并发程度之间做一个权衡。</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20210503162201.png style=display:block;width:50% alt=NAME align=center> </div>
+<h3 id=封锁类型>封锁类型</h3>
+<h4 id=读写锁>读写锁</h4>
+<ul>
+<li>排它锁(Exclusive)，简写为 X 锁，又称写锁。</li>
+<li>共享锁(Shared)，简写为 S 锁，又称读锁。</li>
+</ul>
+<p>有以下两个规定:</p>
+<ul>
+<li>一个事务对数据对象 A 加了 X 锁，就可以对 A 进行读取和更新。加锁期间其它事务不能对 A 加任何锁。</li>
+<li>一个事务对数据对象 A 加了 S 锁，可以对 A 进行读取操作，但是不能进行更新操作。加锁期间其它事务能对 A 加 S 锁，但是不能加 X 锁。</li>
+</ul>
+<p>锁的兼容关系如下:</p>
+<table>
+<thead>
+<tr>
+<th style=text-align:center>-</th>
+<th style=text-align:center>X</th>
+<th style=text-align:center>S</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style=text-align:center>X</td>
+<td style=text-align:center>×</td>
+<td style=text-align:center>×</td>
+</tr>
+<tr>
+<td style=text-align:center>S</td>
+<td style=text-align:center>×</td>
+<td style=text-align:center>√</td>
+</tr>
+</tbody>
+</table>
+<h4 id=意向锁>意向锁</h4>
+<p>使用意向锁(Intention Locks)可以更容易地支持多粒度封锁。</p>
+<p>在存在行级锁和表级锁的情况下，事务 T 想要对表 A 加 X 锁，就需要先检测是否有其它事务对表 A 或者表 A 中的任意一行加了锁，那么就需要对表 A 的每一行都检测一次，这是非常耗时的。</p>
+<p>意向锁在原来的 X/S 锁之上引入了 IX/IS，IX/IS 都是表锁，用来表示一个事务想要在表中的某个数据行上加 X 锁或 S 锁。有以下两个规定:</p>
+<ul>
+<li>一个事务在获得某个数据行对象的 S 锁之前，必须先获得表的 IS 锁或者更强的锁；</li>
+<li>一个事务在获得某个数据行对象的 X 锁之前，必须先获得表的 IX 锁。</li>
+</ul>
+<p>通过引入意向锁，事务 T 想要对表 A 加 X 锁，只需要先检测是否有其它事务对表 A 加了 X/IX/S/IS 锁，如果加了就表示有其它事务正在使用这个表或者表中某一行的锁，因此事务 T 加 X 锁失败。</p>
+<p>各种锁的兼容关系如下:</p>
+<table>
+<thead>
+<tr>
+<th style=text-align:center>-</th>
+<th style=text-align:center>X</th>
+<th style=text-align:center>IX</th>
+<th style=text-align:center>S</th>
+<th style=text-align:center>IS</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style=text-align:center>X</td>
+<td style=text-align:center>×</td>
+<td style=text-align:center>×</td>
+<td style=text-align:center>×</td>
+<td style=text-align:center>×</td>
+</tr>
+<tr>
+<td style=text-align:center>IX</td>
+<td style=text-align:center>×</td>
+<td style=text-align:center>√</td>
+<td style=text-align:center>×</td>
+<td style=text-align:center>√</td>
+</tr>
+<tr>
+<td style=text-align:center>S</td>
+<td style=text-align:center>×</td>
+<td style=text-align:center>×</td>
+<td style=text-align:center>√</td>
+<td style=text-align:center>√</td>
+</tr>
+<tr>
+<td style=text-align:center>IS</td>
+<td style=text-align:center>×</td>
+<td style=text-align:center>√</td>
+<td style=text-align:center>√</td>
+<td style=text-align:center>√</td>
+</tr>
+</tbody>
+</table>
+<p>解释如下:</p>
+<ul>
+<li>任意 IS/IX 锁之间都是兼容的，因为它们只是表示想要对表加锁，而不是真正加锁；</li>
+<li>S 锁只与 S 锁和 IS 锁兼容，也就是说事务 T 想要对数据行加 S 锁，其它事务可以已经获得对表或者表中的行的 S 锁。</li>
+</ul>
+<h3 id=封锁协议>封锁协议</h3>
+<h4 id=三级封锁协议>三级封锁协议</h4>
+<p><strong>一级封锁协议</strong></p>
+<p>事务 T 要修改数据 A 时必须加 X 锁，直到 T 结束才释放锁。</p>
+<p>可以解决丢失修改问题，因为不能同时有两个事务对同一个数据进行修改，那么事务的修改就不会被覆盖。</p>
+<table>
+<thead>
+<tr>
+<th style=text-align:center>T1</th>
+<th style=text-align:center>T2</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style=text-align:center>lock-x(A)</td>
+<td style=text-align:center></td>
+</tr>
+<tr>
+<td style=text-align:center>read A=20</td>
+<td style=text-align:center></td>
+</tr>
+<tr>
+<td style=text-align:center></td>
+<td style=text-align:center>lock-x(A)</td>
+</tr>
+<tr>
+<td style=text-align:center></td>
+<td style=text-align:center>wait</td>
+</tr>
+<tr>
+<td style=text-align:center>write A=19</td>
+<td style=text-align:center>.</td>
+</tr>
+<tr>
+<td style=text-align:center>commit</td>
+<td style=text-align:center>.</td>
+</tr>
+<tr>
+<td style=text-align:center>unlock-x(A)</td>
+<td style=text-align:center>.</td>
+</tr>
+<tr>
+<td style=text-align:center></td>
+<td style=text-align:center>obtain</td>
+</tr>
+<tr>
+<td style=text-align:center></td>
+<td style=text-align:center>read A=19</td>
+</tr>
+<tr>
+<td style=text-align:center></td>
+<td style=text-align:center>write A=21</td>
+</tr>
+<tr>
+<td style=text-align:center></td>
+<td style=text-align:center>commit</td>
+</tr>
+<tr>
+<td style=text-align:center></td>
+<td style=text-align:center>unlock-x(A)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>二级封锁协议</strong></p>
+<p>在一级的基础上，要求读取数据 A 时必须加 S 锁，读取完马上释放 S 锁。</p>
+<p>可以解决读脏数据问题，因为如果一个事务在对数据 A 进行修改，根据 1 级封锁协议，会加 X 锁，那么就不能再加 S 锁了，也就是不会读入数据。</p>
+<table>
+<thead>
+<tr>
+<th style=text-align:center>T1</th>
+<th style=text-align:center>T2</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style=text-align:center>lock-x(A)</td>
+<td style=text-align:center></td>
+</tr>
+<tr>
+<td style=text-align:center>read A=20</td>
+<td style=text-align:center></td>
+</tr>
+<tr>
+<td style=text-align:center>write A=19</td>
+<td style=text-align:center></td>
+</tr>
+<tr>
+<td style=text-align:center></td>
+<td style=text-align:center>lock-s(A)</td>
+</tr>
+<tr>
+<td style=text-align:center></td>
+<td style=text-align:center>wait</td>
+</tr>
+<tr>
+<td style=text-align:center>rollback</td>
+<td style=text-align:center>.</td>
+</tr>
+<tr>
+<td style=text-align:center>A=20</td>
+<td style=text-align:center>.</td>
+</tr>
+<tr>
+<td style=text-align:center>unlock-x(A)</td>
+<td style=text-align:center>.</td>
+</tr>
+<tr>
+<td style=text-align:center></td>
+<td style=text-align:center>obtain</td>
+</tr>
+<tr>
+<td style=text-align:center></td>
+<td style=text-align:center>read A=20</td>
+</tr>
+<tr>
+<td style=text-align:center></td>
+<td style=text-align:center>commit</td>
+</tr>
+<tr>
+<td style=text-align:center></td>
+<td style=text-align:center>unlock-s(A)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>三级封锁协议</strong></p>
+<p>在二级的基础上，要求读取数据 A 时必须加 S 锁，直到事务结束了才能释放 S 锁。</p>
+<p>可以解决不可重复读的问题，因为读 A 时，其它事务不能对 A 加 X 锁，从而避免了在读的期间数据发生改变。</p>
+<table>
+<thead>
+<tr>
+<th style=text-align:center>T1</th>
+<th style=text-align:center>T2</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style=text-align:center>lock-s(A)</td>
+<td style=text-align:center></td>
+</tr>
+<tr>
+<td style=text-align:center>read A=20</td>
+<td style=text-align:center></td>
+</tr>
+<tr>
+<td style=text-align:center></td>
+<td style=text-align:center>lock-x(A)</td>
+</tr>
+<tr>
+<td style=text-align:center></td>
+<td style=text-align:center>wait</td>
+</tr>
+<tr>
+<td style=text-align:center>read A=20</td>
+<td style=text-align:center>.</td>
+</tr>
+<tr>
+<td style=text-align:center>commit</td>
+<td style=text-align:center>.</td>
+</tr>
+<tr>
+<td style=text-align:center>unlock-s(A)</td>
+<td style=text-align:center>.</td>
+</tr>
+<tr>
+<td style=text-align:center></td>
+<td style=text-align:center>obtain</td>
+</tr>
+<tr>
+<td style=text-align:center></td>
+<td style=text-align:center>read A=20</td>
+</tr>
+<tr>
+<td style=text-align:center></td>
+<td style=text-align:center>write A=19</td>
+</tr>
+<tr>
+<td style=text-align:center></td>
+<td style=text-align:center>commit</td>
+</tr>
+<tr>
+<td style=text-align:center></td>
+<td style=text-align:center>unlock-X(A)</td>
+</tr>
+</tbody>
+</table>
+<h4 id=两段锁协议>两段锁协议</h4>
+<p>加锁和解锁分为两个阶段进行。</p>
+<p>可串行化调度是指，通过并发控制，使得并发执行的事务结果与某个串行执行的事务结果相同。</p>
+<p>事务遵循两段锁协议是保证可串行化调度的充分条件。例如以下操作满足两段锁协议，它是可串行化调度。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-html data-lang=html>lock-x(A)...lock-s(B)...lock-s(C)...unlock(A)...unlock(C)...unlock(B)
+</code></pre></div><p>但不是必要条件，例如以下操作不满足两段锁协议，但是它还是可串行化调度。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-html data-lang=html>lock-x(A)...unlock(A)...lock-s(B)...unlock(B)...lock-s(C)...unlock(C)
+</code></pre></div><h3 id=mysql隐式显式锁定>MySQL：隐式/显式锁定</h3>
+<p>MySQL 的 InnoDB 存储引擎采用两段锁协议，会根据隔离级别在需要的时候自动加锁，并且所有的锁都是在同一时刻被释放，这被称为隐式锁定。</p>
+<p>InnoDB 也可以使用特定的语句进行显示锁定:</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sql data-lang=sql><span style=color:#204a87;font-weight:700>SELECT</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#000;font-weight:700>...</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>LOCK</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>In</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>SHARE</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>MODE</span><span style=color:#000;font-weight:700>;</span><span style=color:#f8f8f8;text-decoration:underline>
+</span><span style=color:#f8f8f8;text-decoration:underline></span><span style=color:#204a87;font-weight:700>SELECT</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#000;font-weight:700>...</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>FOR</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>UPDATE</span><span style=color:#000;font-weight:700>;</span><span style=color:#f8f8f8;text-decoration:underline>
+</span></code></pre></div><h2 id=隔离级别>隔离级别</h2>
+<ul>
+<li>未提交读：Read Uncommitted
+<ul>
+<li>事务中的修改，即使没有提交，对其它事务也是可见的。</li>
+</ul>
+</li>
+<li>提交读：Read Committed
+<ul>
+<li>一个事务只能读取已经提交的事务所做的修改。换句话说，一个事务所做的修改在提交之前对其它事务是不可见的。</li>
+</ul>
+</li>
+<li>可重复读：Repeatable Read
+<ul>
+<li>保证在同一个事务中多次读取同样数据的结果是一样的。</li>
+</ul>
+</li>
+<li>可串行化：Serializable
+<ul>
+<li>强制事务串行执行。</li>
+</ul>
+</li>
+</ul>
+<hr>
+<table>
+<thead>
+<tr>
+<th style=text-align:center>隔离级别</th>
+<th style=text-align:center>脏读</th>
+<th style=text-align:center>不可重复读</th>
+<th style=text-align:center>幻影读</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style=text-align:center>未提交读</td>
+<td style=text-align:center>√</td>
+<td style=text-align:center>√</td>
+<td style=text-align:center>√</td>
+</tr>
+<tr>
+<td style=text-align:center>提交读</td>
+<td style=text-align:center>×</td>
+<td style=text-align:center>√</td>
+<td style=text-align:center>√</td>
+</tr>
+<tr>
+<td style=text-align:center>可重复读</td>
+<td style=text-align:center>×</td>
+<td style=text-align:center>×</td>
+<td style=text-align:center>√</td>
+</tr>
+<tr>
+<td style=text-align:center>可串行化</td>
+<td style=text-align:center>×</td>
+<td style=text-align:center>×</td>
+<td style=text-align:center>×</td>
+</tr>
+</tbody>
+</table>
+<h2 id=多版本并发控制>多版本并发控制</h2>
+<p>多版本并发控制(Multi-Version Concurrency Control, MVCC)是 MySQL 的 InnoDB 存储引擎实现隔离级别的一种具体方式，用于实现提交读和可重复读这两种隔离级别。而未提交读隔离级别总是读取最新的数据行，无需使用 MVCC。可串行化隔离级别需要对所有读取的行都加锁，单纯使用 MVCC 无法实现。</p>
+<h3 id=版本号>版本号</h3>
+<ul>
+<li>系统版本号: 是一个递增的数字，每开始一个新的事务，系统版本号就会自动递增。</li>
+<li>事务版本号: 事务开始时的系统版本号。</li>
+</ul>
+<h3 id=隐藏的列>隐藏的列</h3>
+<p>MVCC 在每行记录后面都保存着两个隐藏的列，用来存储两个版本号:</p>
+<ul>
+<li>创建版本号: 指示创建一个数据行的快照时的系统版本号；</li>
+<li>删除版本号: 如果该快照的删除版本号大于当前事务版本号表示该快照有效，否则表示该快照已经被删除了。</li>
+</ul>
+<h3 id=undo-日志>Undo 日志</h3>
+<p>MVCC 使用到的快照存储在 Undo 日志中，该日志通过回滚指针把一个数据行(Record)的所有快照连接起来。</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20210503162944.png style=display:block;width:50% alt=NAME align=center> </div>
+<h3 id=实现过程>实现过程</h3>
+<p>以下实现过程针对可重复读隔离级别。</p>
+<p>当开始新一个事务时，该事务的版本号肯定会大于当前所有数据行快照的创建版本号，理解这一点很关键。</p>
+<h4 id=1-select>1. SELECT</h4>
+<p>多个事务必须读取到同一个数据行的快照，并且这个快照是距离现在最近的一个有效快照。但是也有例外，如果有一个事务正在修改该数据行，那么它可以读取事务本身所做的修改，而不用和其它事务的读取结果一致。</p>
+<p>把没有对一个数据行做修改的事务称为 T，T 所要读取的数据行快照的创建版本号必须小于 T 的版本号，因为如果大于或者等于 T 的版本号，那么表示该数据行快照是其它事务的最新修改，因此不能去读取它。除此之外，T 所要读取的数据行快照的删除版本号必须大于 T 的版本号，因为如果小于等于 T 的版本号，那么表示该数据行快照是已经被删除的，不应该去读取它。</p>
+<h4 id=2-insert>2. INSERT</h4>
+<p>将当前系统版本号作为数据行快照的创建版本号。</p>
+<h4 id=3-delete>3. DELETE</h4>
+<p>将当前系统版本号作为数据行快照的删除版本号。</p>
+<h4 id=4-update>4. UPDATE</h4>
+<p>将当前系统版本号作为更新前的数据行快照的删除版本号，并将当前系统版本号作为更新后的数据行快照的创建版本号。可以理解为先执行 DELETE 后执行 INSERT。</p>
+<h3 id=快照读与当前读>快照读与当前读</h3>
+<h4 id=1-快照读>1. 快照读</h4>
+<p>使用 MVCC 读取的是快照中的数据，这样可以减少加锁所带来的开销。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sql data-lang=sql><span style=color:#204a87;font-weight:700>select</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#ce5c00;font-weight:700>*</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>from</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>table</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#000;font-weight:700>...;</span><span style=color:#f8f8f8;text-decoration:underline>
+</span></code></pre></div><h4 id=2-当前读>2. 当前读</h4>
+<p>读取的是最新的数据，需要加锁。以下第一个语句需要加 S 锁，其它都需要加 X 锁。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sql data-lang=sql><span style=color:#204a87;font-weight:700>select</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#ce5c00;font-weight:700>*</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>from</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>table</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>where</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#ce5c00;font-weight:700>?</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>lock</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>in</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>share</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>mode</span><span style=color:#000;font-weight:700>;</span><span style=color:#f8f8f8;text-decoration:underline>
+</span><span style=color:#f8f8f8;text-decoration:underline></span><span style=color:#204a87;font-weight:700>select</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#ce5c00;font-weight:700>*</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>from</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>table</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>where</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#ce5c00;font-weight:700>?</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>for</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>update</span><span style=color:#000;font-weight:700>;</span><span style=color:#f8f8f8;text-decoration:underline>
+</span><span style=color:#f8f8f8;text-decoration:underline></span><span style=color:#204a87;font-weight:700>insert</span><span style=color:#000;font-weight:700>;</span><span style=color:#f8f8f8;text-decoration:underline>
+</span><span style=color:#f8f8f8;text-decoration:underline></span><span style=color:#204a87;font-weight:700>update</span><span style=color:#000;font-weight:700>;</span><span style=color:#f8f8f8;text-decoration:underline>
+</span><span style=color:#f8f8f8;text-decoration:underline></span><span style=color:#204a87;font-weight:700>delete</span><span style=color:#000;font-weight:700>;</span><span style=color:#f8f8f8;text-decoration:underline>
+</span></code></pre></div><h2 id=next-key-locks>Next-Key Locks</h2>
+<p>Next-Key Locks 是 MySQL 的 InnoDB 存储引擎的一种锁实现。</p>
+<p>MVCC 不能解决幻读的问题，Next-Key Locks 就是为了解决这个问题而存在的。在可重复读(REPEATABLE READ)隔离级别下，使用 MVCC + Next-Key Locks 可以解决幻读问题。</p>
+<h3 id=record-locks>Record Locks</h3>
+<p>锁定一个记录上的索引，而不是记录本身。</p>
+<p>如果表没有设置索引，InnoDB 会自动在主键上创建隐藏的聚簇索引，因此 Record Locks 依然可以使用。</p>
+<h3 id=gap-locks>Gap Locks</h3>
+<p>锁定索引之间的间隙，但是不包含索引本身。例如当一个事务执行以下语句，其它事务就不能在 t.c 中插入 15。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sql data-lang=sql><span style=color:#204a87;font-weight:700>SELECT</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>c</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>FROM</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#000>t</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>WHERE</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>c</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>BETWEEN</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#0000cf;font-weight:700>10</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>and</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#0000cf;font-weight:700>20</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>FOR</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>UPDATE</span><span style=color:#000;font-weight:700>;</span><span style=color:#f8f8f8;text-decoration:underline>
+</span></code></pre></div><h3 id=next-key-locks-1>Next-Key Locks</h3>
+<p>它是 Record Locks 和 Gap Locks 的结合，不仅锁定一个记录上的索引，也锁定索引之间的间隙。例如一个索引包含以下值: 10, 11, 13, and 20，那么就需要锁定以下区间:</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sql data-lang=sql><span style=color:#000;font-weight:700>(</span><span style=color:#000>negative</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#000>infinity</span><span style=color:#000;font-weight:700>,</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#0000cf;font-weight:700>10</span><span style=color:#000;font-weight:700>]</span><span style=color:#f8f8f8;text-decoration:underline>
+</span><span style=color:#f8f8f8;text-decoration:underline></span><span style=color:#000;font-weight:700>(</span><span style=color:#0000cf;font-weight:700>10</span><span style=color:#000;font-weight:700>,</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#0000cf;font-weight:700>11</span><span style=color:#000;font-weight:700>]</span><span style=color:#f8f8f8;text-decoration:underline>
+</span><span style=color:#f8f8f8;text-decoration:underline></span><span style=color:#000;font-weight:700>(</span><span style=color:#0000cf;font-weight:700>11</span><span style=color:#000;font-weight:700>,</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#0000cf;font-weight:700>13</span><span style=color:#000;font-weight:700>]</span><span style=color:#f8f8f8;text-decoration:underline>
+</span><span style=color:#f8f8f8;text-decoration:underline></span><span style=color:#000;font-weight:700>(</span><span style=color:#0000cf;font-weight:700>13</span><span style=color:#000;font-weight:700>,</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#0000cf;font-weight:700>20</span><span style=color:#000;font-weight:700>]</span><span style=color:#f8f8f8;text-decoration:underline>
+</span><span style=color:#f8f8f8;text-decoration:underline></span><span style=color:#000;font-weight:700>(</span><span style=color:#0000cf;font-weight:700>20</span><span style=color:#000;font-weight:700>,</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#000>positive</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#000>infinity</span><span style=color:#000;font-weight:700>)</span><span style=color:#f8f8f8;text-decoration:underline>
+</span></code></pre></div>
+<style>.feedback--answer{display:inline-block}.feedback--answer-no{margin-left:1em}.feedback--response{display:none;margin-top:1em}.feedback--response__visible{display:block}</style>
+<div class=d-print-none>
+<h2 class=feedback--title>Feedback</h2>
+<p class=feedback--question>Was this page helpful?</p>
+<button class="btn btn-primary mb-4 feedback--answer feedback--answer-yes">Yes</button>
+<button class="btn btn-primary mb-4 feedback--answer feedback--answer-no">No</button>
+<p class="feedback--response feedback--response-yes">
+Glad to hear it! Please <a href=https://github.com/infilos/infilos.com/issues/new>tell us how we can improve</a>.
+</p>
+<p class="feedback--response feedback--response-no">
+Sorry to hear that. Please <a href=https://github.com/infilos/infilos.com/issues/new>tell us how we can improve</a>.
+</p>
+</div>
+<script>const yesButton=document.querySelector('.feedback--answer-yes'),noButton=document.querySelector('.feedback--answer-no'),yesResponse=document.querySelector('.feedback--response-yes'),noResponse=document.querySelector('.feedback--response-no'),disableButtons=()=>{yesButton.disabled=!0,noButton.disabled=!0},sendFeedback=b=>{if(typeof ga!='function')return;const a={command:'send',hitType:'event',category:'Helpful',action:'click',label:window.location.pathname,value:b};ga(a.command,a.hitType,a.category,a.action,a.label,a.value)};yesButton.addEventListener('click',()=>{yesResponse.classList.add('feedback--response__visible'),disableButtons(),sendFeedback(1)}),noButton.addEventListener('click',()=>{noResponse.classList.add('feedback--response__visible'),disableButtons(),sendFeedback(0)})</script>
+<br>
+</div>
+</main>
+</div>
+</div>
+<footer class="bg-dark py-5 row d-print-none">
+<div class="container-fluid mx-sm-5">
+<div class=row>
+<div class="col-6 col-sm-4 text-xs-center order-sm-2">
+</div>
+<div class="col-6 col-sm-4 text-right text-xs-center order-sm-3">
+<ul class="list-inline mb-0">
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Weibo aria-label=Weibo>
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://weibo.com/u/3848950217>
+<i class="fab fa-weibo"></i>
+</a>
+</li>
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Twitter aria-label=Twitter>
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://twitter.com/zhange_zzg>
+<i class="fab fa-twitter"></i>
+</a>
+</li>
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title="Stack Overflow" aria-label="Stack Overflow">
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://stackoverflow.com>
+<i class="fab fa-stack-overflow"></i>
+</a>
+</li>
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=GitHub aria-label=GitHub>
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://github.com/infilos/infilos.com>
+<i class="fab fa-github"></i>
+</a>
+</li>
+</ul>
+</div>
+<div class="col-12 col-sm-4 text-center py-2 order-sm-2">
+<small class=text-white>&copy; 2021 infilos.com All Rights Reserved</small>
+</div>
+</div>
+</div>
+</footer>
+</div>
+<script src=/js/popper.min.js integrity=sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49 crossorigin=anonymous></script>
+<script src=/js/bootstrap.min.js integrity=sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy crossorigin=anonymous></script>
+<script src=/js/main.min.5c74b870c6953931a705f390a49c7e4c0a842ec5c83b24354758dd674343ed0d.js integrity="sha256-XHS4cMaVOTGnBfOQpJx+TAqELsXIOyQ1R1jdZ0ND7Q0=" crossorigin=anonymous></script>
+<script src=https://cdn.jsdelivr.net/npm/docsearch.js@2.6.3/dist/cdn/docsearch.min.js></script>
+<script>docsearch({apiKey:'123',indexName:'infilos_com',inputSelector:'.td-search-input',debug:!1})</script>
+</body>
+</html>

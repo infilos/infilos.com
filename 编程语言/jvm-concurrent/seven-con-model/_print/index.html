@@ -1,0 +1,919 @@
+<!doctype html><html lang=zh class=no-js>
+<head>
+<meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no">
+<meta name=generator content="Hugo 0.88.1">
+<meta name=ROBOTS content="INDEX, FOLLOW">
+<link rel=canonical type=text/html href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/seven-con-model/>
+<link rel="shortcut icon" href=/favicons/favicon.ico>
+<link rel=apple-touch-icon href=/favicons/apple-touch-icon-180x180.png sizes=180x180>
+<link rel=icon type=image/png href=/favicons/favicon-16x16.png sizes=16x16>
+<link rel=icon type=image/png href=/favicons/favicon-32x32.png sizes=32x32>
+<link rel=icon type=image/png href=/favicons/android-36x36.png sizes=36x36>
+<link rel=icon type=image/png href=/favicons/android-48x48.png sizes=48x48>
+<link rel=icon type=image/png href=/favicons/android-72x72.png sizes=72x72>
+<link rel=icon type=image/png href=/favicons/android-96x96.png sizes=96x96>
+<link rel=icon type=image/png href=/favicons/android-144x144.png sizes=144x144>
+<link rel=icon type=image/png href=/favicons/android-192x192.png sizes=192x192>
+<title>七并发模型 | infilos.com</title><meta property="og:title" content="七并发模型">
+<meta property="og:description" content="Infilos Wiki Website">
+<meta property="og:type" content="website">
+<meta property="og:url" content="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/seven-con-model/"><meta property="og:site_name" content="infilos.com">
+<meta itemprop=name content="七并发模型">
+<meta itemprop=description content="Infilos Wiki Website"><meta name=twitter:card content="summary">
+<meta name=twitter:title content="七并发模型">
+<meta name=twitter:description content="Infilos Wiki Website">
+<script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga('create','UA-123062585-1','auto'),ga('send','pageview'))</script>
+<script async src=https://www.google-analytics.com/analytics.js></script>
+<link rel=preload href=/scss/main.min.847464b684a6e89d7276700a5c500c17ab494dd1755b2654a7b27d8b59e3347e.css as=style>
+<link href=/scss/main.min.847464b684a6e89d7276700a5c500c17ab494dd1755b2654a7b27d8b59e3347e.css rel=stylesheet integrity>
+<script src=/js/jquery-3.5.1.min.js integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin=anonymous></script>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/docsearch.js@2/dist/cdn/docsearch.min.css>
+</head>
+<body class=td-section>
+<header>
+<nav class="js-navbar-scroll navbar navbar-expand navbar-dark flex-column flex-md-row td-navbar">
+<a class=navbar-brand href=/>
+<span class=navbar-logo><svg id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512" style="enable-background:new 0 0 512 512"><path style="fill:#ffc107" d="M432.384 143.616c-4.165-4.164-10.917-4.164-15.083.0l-60.352 60.352c-4.164 4.165-4.164 10.917.0 15.083 21.187 20.463 54.951 19.876 75.413-1.311 19.962-20.668 19.962-53.435.0-74.102L432.384 143.616z"/><path style="fill:#607d8b" d="M42.667 277.334c-5.891.003-10.669-4.771-10.672-10.662-.002-4.338 2.623-8.245 6.64-9.882l234.667-96c5.455-2.233 11.687.38 13.92 5.835s-.38 11.687-5.835 13.92l-234.667 96C45.433 277.069 44.056 277.337 42.667 277.334z"/><path style="fill:#546e7a" d="M391.552 56.448l-32-32C343.938 8.745 322.689-.059 300.544.0h-3.755c-46.082.024-83.432 37.374-83.456 83.456v3.755c-.053 22.138 8.75 43.377 24.448 58.987l32 32c4.165 4.164 10.917 4.164 15.083.0L391.531 71.531C395.701 67.372 395.71 60.62 391.552 56.448z"/><path style="fill:#607d8b" d="M160 469.334c-3.279.006-6.379-1.497-8.405-4.075L34.261 315.926c-3.635-4.636-2.823-11.341 1.813-14.976s11.341-2.823 14.976 1.813l117.333 149.333c3.629 4.641 2.809 11.344-1.832 14.973C164.681 468.533 162.375 469.329 160 469.334z"/><path style="fill:#455a64" d="M487.467 86.848l-3.669-3.648c-37.687-36.557-97.71-36.197-134.955.811l-51.413 51.413c-36.996 37.25-37.357 97.263-.811 134.955l3.584 3.669c1.7 2.457 4.671 3.706 7.616 3.2 2.831.005 5.548-1.115 7.552-3.115l172.181-172.181c4.189-4.143 4.226-10.896.083-15.085-.028-.028-.055-.056-.083-.083L487.467 86.848z"/><g><path style="fill:#ffc107" d="M501.333 192H480c-5.891.0-10.667-4.776-10.667-10.667s4.776-10.667 10.667-10.667h21.333c5.891.0 10.667 4.776 10.667 10.667S507.225 192 501.333 192z"/><path style="fill:#ffc107" d="M394.667 298.667c-5.891.0-10.667-4.776-10.667-10.667v-21.333c0-5.891 4.776-10.667 10.667-10.667 5.891.0 10.667 4.776 10.667 10.667V288C405.333 293.891 400.558 298.667 394.667 298.667z"/><path style="fill:#ffc107" d="M480 277.334c-2.831.005-5.548-1.115-7.552-3.115l-21.333-21.333c-4.093-4.237-3.975-10.99.262-15.083 4.134-3.993 10.687-3.993 14.821.0l21.333 21.333c4.159 4.172 4.148 10.926-.024 15.085C485.514 276.209 482.815 277.327 480 277.334z"/></g><g><path style="fill:#455a64" d="M266.667 448H96c-29.455.0-53.333 23.878-53.333 53.333.0 5.891 4.776 10.667 10.667 10.667h256c5.891.0 10.667-4.776 10.667-10.667C320 471.878 296.122 448 266.667 448z"/><circle style="fill:#455a64" cx="32" cy="288" r="32"/></g><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/></svg></span><span class=font-weight-bold>infilos.com</span>
+</a>
+<div class="collapse navbar-collapse" id=navbarSupportedContent>
+<ul class="navbar-nav mr-auto">
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+基础
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/%e6%93%8d%e4%bd%9c%e7%b3%bb%e7%bb%9f>操作系统</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/%e6%80%a7%e8%83%bd%e4%b9%8b%e6%ae%87>性能之殇</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/io%e6%a8%a1%e5%9e%8b>IO 模型</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/%e7%bd%91%e7%bb%9c%e5%9f%ba%e7%a1%80>网络基础</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/tcp-ip>TCP-IP</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/http>HTTP</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+语言
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/java>Java 编程</a>
+<a class=dropdown-item href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/jvm-core>JVM 核心</a>
+<a class=dropdown-item href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/jvm-concurrent>JVM 并发</a>
+<a class=dropdown-item href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/scala>Scala 编程</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+框架库
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93/spring>Spring</a>
+<a class=dropdown-item href=/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93/hikari>Hikari</a>
+<a class=dropdown-item href=/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93/parboiled>Parboiled</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+分布式
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%88%86%e5%b8%83%e5%bc%8f/base>基本构成</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+大数据
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%ad%98%e5%82%a8%e7%b3%bb%e7%bb%9f>存储系统</a>
+<a class=dropdown-item href=/%e6%9f%a5%e8%af%a2%e7%b3%bb%e7%bb%9f>查询系统</a>
+<a class=dropdown-item href=/%e6%b6%88%e6%81%af%e7%b3%bb%e7%bb%9f>消息系统</a>
+<a class=dropdown-item href=/%e5%a4%84%e7%90%86%e7%b3%bb%e7%bb%9f>处理系统</a>
+<a class=dropdown-item href=/%e7%ae%a1%e7%90%86%e7%b3%bb%e7%bb%9f>管理系统</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+中后台
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e8%ae%be%e6%96%bd>基础设施</a>
+<a class=dropdown-item href=/%e4%ba%a4%e4%ba%92%e7%95%8c%e9%9d%a2>交互界面</a>
+<a class=dropdown-item href=/%e4%b8%9a%e5%8a%a1%e7%b3%bb%e7%bb%9f>业务系统</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+模式架构
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e6%a8%a1%e5%bc%8f%e6%9e%b6%e6%9e%84/design-pattern>设计模式</a>
+<a class=dropdown-item href=/%e6%a8%a1%e5%bc%8f%e6%9e%b6%e6%9e%84/micro-service>微服务架构</a>
+</div>
+</li>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e9%9d%a2%e8%af%95%e9%97%ae%e7%ad%94>
+<span>面试</span>
+</a>
+</li>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e7%ae%a1%e7%90%86%e8%b7%af%e5%be%84>
+<span>管理</span>
+</a>
+</li>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e5%bc%80%e6%ba%90%e9%a1%b9%e7%9b%ae>
+<span>开源</span>
+</a>
+</li>
+</ul>
+<div class="form-inline my-2 my-lg-0">
+<div class="nav-item nav-search-item my-2 my-md-0">
+<input type=search class="form-control td-search-input" placeholder="&#xf002; 站内搜索…" aria-label=站内搜索… autocomplete=off>
+</div>
+</div>
+</div>
+</nav>
+</header>
+<div class="container-fluid td-outer">
+<div class=td-main>
+<div class="row flex-xl-nowrap">
+<div class="col-12 col-md-3 col-xl-2 td-sidebar d-print-none">
+</div>
+<div class="d-none d-xl-block col-xl-2 td-toc d-print-none">
+</div>
+<main class="col-12 col-md-9 col-xl-8 pl-md-5" role=main>
+<div class=td-content>
+<div class="pageinfo pageinfo-primary d-print-none">
+<p>
+这是本节的多页打印视图。
+<a href=# onclick="return print(),!1">点击此处打印</a>.
+</p><p>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/seven-con-model/>返回本页常规视图</a>.
+</p>
+</div>
+<h1 class=title>七并发模型</h1>
+<ul>
+<li>1: <a href=#pg-9e8488238989b4b3e74c52dab6e905c4>CH01-概述</a></li>
+<li>2: <a href=#pg-08c0ee787c817f14f935fad1204511d9>CH02-线程与锁</a></li>
+<li>3: <a href=#pg-863c44755469185d47dac793e6f63e5e>CH03-函数式编程</a></li>
+<li>4: <a href=#pg-995265fd277aa7595ec961f2477df23c>CH04-分离标识与状态</a></li>
+<li>5: <a href=#pg-2088bfdfcf2607897425d3329b4e72be>CH05-Actor</a></li>
+<li>6: <a href=#pg-c96ce2185f8ad7df39844cad80b20fb8>CH06-CSP</a></li>
+<li>7: <a href=#pg-0c5db9e3b31ab4a3d8c8d6701349d1d2>CH07-数据并行</a></li>
+<li>8: <a href=#pg-e6a823875924d673ce8c7f4db3a59c0f>CH08-Lambda 架构</a></li>
+<li>9: <a href=#pg-88846afa73141c54ccdf97483b44d566>CH09-未来方向</a></li>
+</ul>
+<div class=content>
+</div>
+</div>
+<div class=td-content>
+<h1 id=pg-9e8488238989b4b3e74c52dab6e905c4>1 - CH01-概述</h1>
+<p>基于摩尔定律的“免费午餐”时代已结束，为了让代码运行的更快，现在需要以软件的形式利用多核优势，发掘并行编程的潜力。</p>
+<h2 id=并发-vs-并行>并发 vs. 并行</h2>
+<p>并发程序含有多个逻辑上的独立执行块，它们可以独立的并行执行，也可以串行执行。</p>
+<p>并行程序解决问题的速度往往比串行程序快的多，因为它可以同时执行整个任务的多个部分。并行程序可能有多个独立执行块，也可能仅有一个。</p>
+<p>并发是问题域中的概念——程序需要被设计成能够处理多个同时(或者几乎同时)发生的事件；而并行则是方法域中的概念——通过将问题中的多个部分并行执行来加速解决问题。</p>
+<p>来自 Rob Pike 的经典描述：</p>
+<ul>
+<li>并发是同一时间应对(dealing with)多件事情的能力。</li>
+<li>并行是同一时间动手做(doing)多件事情的能力。</li>
+</ul>
+<p>并发与并行经常被混淆的原因之一是，传统的“线程与锁”模型并没有显式的支持并行。如果要用线程与锁模型为多核进行开发，唯一的选择就是写一个并发的程序，然后并行的运行在多核上。</p>
+<p>并发程序的执行通常是不确定的，它会随着事件时序的改变而给出不同的结果。对于真正的并发程序，不确定性是与生俱来且伴随始终的属性。与之相反，并行程序可能是确定的——比如将数组中的每个数都加倍，一种做法是将数组分为两个部分然后分别交给两个核处理，这种做法的结果是确定的。</p>
+<h2 id=并行架构>并行架构</h2>
+<p>人们通常认为并行等同于多核，但现代计算机在不同层次上使用了并行技术。比如在由多个晶体管组成的单个核内，可以在位级和指令级两个层次上并行使用这些晶体管资源。</p>
+<h3 id=位级并行>位级并行</h3>
+<p>因为并行，32 位计算机要比 8 位计算机的运算速度快。对于两个 32 位数的加法运算，8 位计算机必须进行多次 8 位运算，而 32 位计算机可以一步完成。计算机经历了 8、16、32 位时代，目前处于 64 位时代，由于位升级带来的性能提升存在瓶颈，因此我们短期内无法进入 128 位时代。</p>
+<h3 id=指令级并行>指令级并行</h3>
+<p>现代 CPU 的并行度很高，其中使用的技术包括流水线、乱序执行和分支预测等。</p>
+<p>开发者可以不用关心 CPU 的内部并行细节，因为尽管 CPU 内部的并行度很高，但是经过精心设计，从外部看上去所有处理器都像是串行的。</p>
+<p>但这种看上去像是串行的设计也逐渐变得不再适用。CPU 的设计者们为单核提升速度变得越来越困难。进入多核时代后我们必须要面对的情况是：无论表面上还是实质上，指令都不再是串行执行了。</p>
+<h3 id=数据级>数据级</h3>
+<p>数据级并行(也称单指令多数据，SIMD)架构，可以并行的在大量数据上施加同一操作。这并不适合解决所有问题，但在有些场景可以大展身手。</p>
+<p>比如图像处理，为了增加图片亮度就需要增加每一个像素的亮度，现代 GPU 也因图像处理的特点演化成了极其强大的数据并行处理器。</p>
+<h3 id=任务级>任务级</h3>
+<p>这也是大家所认为的并行形式——多处理器。从开发者的角度看，多处理器架构最明显的分类特征是其内存模型(共享内存模型或分布式内存模型)。</p>
+<ul>
+<li>对于共享内存模型，每个处理器都能访问整个内存，处理器之间的通信也通过内存完成。</li>
+<li>对于分布式内存模型，每个处理器都拥有自己的内存，处理器之间的通信主要通过网络完成。</li>
+</ul>
+<div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180925002419.png style=display:block;width:60% alt=NAME align=center>
+</div>
+<p>通过内存通信比通过网络通信更加简单快速，因此使用共享内存模型编写也更容易。但是当处理器个数不断增加，共享内存模型就会遇到瓶颈——这时不得不转向分布式内存模型。如果要开发一个容错系统，就要使用多台计算机以规避硬件故障对系统的影响，此时也必须借助分布式内存模型。</p>
+<h2 id=并发不只是多核>并发，不只是多核</h2>
+<p>并发的目的不仅仅在于让程序以并行方式运行以发挥多核优势。如果能够正确的使用并发，程序还能获得以下优点：及时响应、高效、容错、简单。</p>
+<h3 id=并发的真实世界>并发的真实世界</h3>
+<p>世界是并发的，为了与其有效交互，软件也应该是并发的。并发是系统及时响应的关键。比如，文件下载可以在后台运行，用户就不必等待鼠标上的沙漏了。再比如，Web 服务器可以并发的处理多个连接请求，一个慢请求不会影响服务器对其他请求的响应。</p>
+<h3 id=分布式世界>分布式世界</h3>
+<p>我们有时候需要解决地理分布问题。软件在非同步运行的多台计算机上分布式的运行，其本质也是并发。</p>
+<p>此外，分布式软件还具有容错性。其中一台或一个区域内的几台机器宕机后，剩余机器仍然能够提供服务。</p>
+<h3 id=不可预测的世界>不可预测的世界</h3>
+<p>任何软件都无法避免 BUG 的存在，即便是没有 BUG，也无法完全避免硬件故障。为了增强软件的容错性，并发代码的关键是独立性和故障检测。</p>
+<ul>
+<li>独立性：一个故障不会影响到故障任务以外的其他任务。</li>
+<li>故障检测：当一个任务失败时，需要通知负责处理故障的其他任务来解决。</li>
+</ul>
+<p>而串行程序的容错性远不如并发程序。</p>
+<h3 id=复杂的世界>复杂的世界</h3>
+<p>在选对编程语言和工具的情况下，一个并发的解决方案要比串行方案简单清晰。</p>
+<p>用串行方案解决一个现实世界的并发问题往往需要付出额外的代价，而且最终方案会晦涩难懂。如果解决方案有着与现实问题类似的并发结构，事情就会变得简单很多。</p>
+<h2 id=七种模型>七种模型</h2>
+<ul>
+<li>线程与锁：存在很多总所周知的不足，但它是其他模型的基础，也是很多并发软件的首选。</li>
+<li>函数式编程：函数式编程逐渐变得重要的原因之一，是其对并发和并行编程提供了良好的支持。函数式编程消除了可变状态，所以从根本上就是线程安全的，而且易于并行执行。</li>
+<li>分离标识与状态：Clojure 是一种指令式与函数式混搭的语言，在两种编码方式上取得了微秒的平衡来发挥两者的优势。</li>
+<li>Actor：是一种适用性很广的并发编程模型，适用于共享内存模型和分布式内存模型，也适合解决地理分布问题，能提供强大的容错性。</li>
+<li>通讯顺序进程(CSP)：CSP 与 Actor 模型在表面上很相似，两者都基于消息传递。但是 CSP 模型侧重于传递信息的通道，而 Actor 模型侧重于通道两端的实体，因此基于 CSP 模型的代码会有明显不同的风格。</li>
+<li>数据级并行：GPU 利用了数据级并行，不仅可以快速的处理图像，还可以用于更加广阔的领域。</li>
+<li>Lambda 架构：Lambda 架构综合了 MapReduce 和流式处理的特点，是一种可以处理多种大数据问题的架构。</li>
+</ul>
+<p>后续将针对每种模型详细讨论以下问题：</p>
+<ol>
+<li>该模型适用于解决并发问题？还是并行问题？还是两者都适用？</li>
+<li>该模型适用于哪种并行架构？</li>
+<li>该模型是否有利于写出高容错的代码，或是能够解决分布式问题的代码？</li>
+</ol>
+</div>
+<div class=td-content style=page-break-before:always>
+<h1 id=pg-08c0ee787c817f14f935fad1204511d9>2 - CH02-线程与锁</h1>
+<p>虽然该模型稍显原始且难以驾驭、不够可靠还有点危险，但仍然是并发编程的首选项，也是其他并发模型的基石。</p>
+<h2 id=对硬件运行过程形式化>对硬件运行过程形式化</h2>
+<p>该模型其实是对底层硬件运行过程的形式化。这种形式化既是该模型的最大优点、也是其最大的缺点。</p>
+<p>该模型非常简单直接，几乎所有编程语言都提供了对该模型的支持，且不对其使用方式加以限制。</p>
+<h2 id=互斥与内存模型>互斥与内存模型</h2>
+<p>互斥：使用锁来保证某一时间仅有一个线程可以访问数据。它会带来竟态条件和死锁。</p>
+<p>乱序执行的来源：</p>
+<ul>
+<li>编译器和静态优化</li>
+<li>JVM 动态优化</li>
+<li>底层硬件优化</li>
+</ul>
+<p>从直觉上来说，编译器、JVM、硬件都不应该修改原有的代码逻辑，但是近几年的运行效率提升，尤其是共享内存架构的运行效率提升，均基于此类代码的优化。</p>
+<p>Java 内存模型为这类优化提供了标准。</p>
+<h3 id=内存可见性>内存可见性</h3>
+<p>Java 内存模型定义了一个线程对内存的修改何时对另一个线程可见。基本原则是，如果读线程和写线程不进行同步，就不能保证可见性。</p>
+<h3 id=多把锁>多把锁</h3>
+<p>很容易得出一个结论：让多线程代码安全运行的方法只能是让所有的代码都同步。但是这么做有两个缺点：</p>
+<ul>
+<li>效率低下：如果每个方法都同步，大多数线程会频繁阻塞，也就失去了并发的意义。</li>
+<li>死锁：哲学家就餐问题。</li>
+</ul>
+<h3 id=总结>总结</h3>
+<ul>
+<li>对共享变量的所有访问都需要同步化。</li>
+<li>读线程、写线程都需要同步化。</li>
+<li>按照约定的全局顺序来获取多把锁。</li>
+<li>当持有锁时避免调用外部方法(无法确保线程安全性)。</li>
+<li>持有锁的时间尽可能的短。</li>
+</ul>
+<h2 id=更多同步机制>更多同步机制</h2>
+<h3 id=内置锁的限制>内置锁的限制</h3>
+<ul>
+<li>一个线程因为等待内置锁而进入阻塞之后，就无法中断该线程了。</li>
+<li>尝试获得内置锁时无法设置超时。</li>
+<li>必须通过 synchronized 块来获取内置锁。</li>
+</ul>
+<h3 id=可中断的锁>可中断的锁</h3>
+<p>ReentrantLock 提供了显式的加解锁方法，可以在代码的不同位置来实现加解锁逻辑，这是 synchronized 块无法做到的。</p>
+<p>同时，ReentrantLock 提供的 lockInterruptibly 方法可以用于终止死锁线程。</p>
+<h3 id=超时设置>超时设置</h3>
+<p>ReentrantLock 还可以为获取锁的超时设置超时时间。</p>
+<h3 id=交替锁>交替锁</h3>
+<p>设想我们要在链表插入一个节点，一种做法是用锁保护整个链表，但链表加锁时其他使用者无法访问该链表。而交替锁可以做到仅锁住链表的一部分，允许不涉及被锁部分的其他线程继续自由的访问链表。同样可以由 ReentrantLock 实现。</p>
+<h3 id=条件变量>条件变量</h3>
+<p>并发编程经常需要等待某个事件发生。比如从队列删除元素前需要等待队列非空、向缓存添加数据前需要等待缓存拥有足够的空间。这时就需要条件变量 Condition。</p>
+<p>一个条件变量需要与一把锁关联，线程在开始等待条件之前必须先获取这把锁。获取锁后，线程检查所有等待的条件是否为真。如果条件为真，线程将解锁并继续执行。</p>
+<p>如果条件不为真，线程会调优 await 方法，它将原子的解锁并阻塞等待该条件。</p>
+<p>当另一个线程调用了 signal 或 signalAll，意味着对应的条件可能已变为真，await 方法将原子的恢复运行并重新加锁。</p>
+<h3 id=原子变量>原子变量</h3>
+<p>比如 AtomicInteger。与锁相比，原子变量有很多好处。首先，我们不会忘记在正确的时候获取锁；其次，由于没有锁的参与，对原子变量的操作不会引发死锁；最后，原子变量是无锁(lock-free)非阻塞(non-blocking)算法的基础，这种算法可以不使用锁和阻塞来达到同步的目的。</p>
+<p>无锁代码比起有锁代码更加复杂，JUC 中的类都尽量使用了无锁代码。</p>
+<h3 id=总结-1>总结</h3>
+<p>ReentrantLock 和 JUC.atomic 突破了使用内置锁的限制，可以利用它们做到：</p>
+<ol>
+<li>在线程获取锁时将其中断。</li>
+<li>设置线程获取锁时的超时时间。</li>
+<li>按任意顺序获取和释放锁。</li>
+<li>用条件变量来等待某个条件变为真。</li>
+<li>使用原子变量来避免使用锁。</li>
+</ol>
+<h2 id=利用已有工具>利用已有工具</h2>
+<h3 id=线程池>线程池</h3>
+<p>比如，编写服务端应用时为每个连接请求创建一个线程，这样存在两个隐患：</p>
+<ol>
+<li>创建线程是有代价的。</li>
+<li>连接数的增长会使得线程数不断增长，而系统资源(如内存)是有限的。</li>
+</ol>
+<p>可以使用线程池来对线程进行复用，JUC 提供了各种类型的线程池。</p>
+<h3 id=写时复制>写时复制</h3>
+<p>比如 CopyOnWriteArrayList，它使用了保护性复制策略。它并非在遍历链表前进行复制，而是在链表被修改时复制，已经投入使用的迭代器会使用当时的旧副本。</p>
+<h3 id=其他概念>其他概念</h3>
+<ul>
+<li>使用线程构建“生产者——消费者模型”。</li>
+<li>毒丸(Poison Pill) 是一个特殊对象，告诉消费者“数据已取完，你可以退出了”。</li>
+<li>使用线程构建“单生产者——多消费者模型”。</li>
+<li>使用并发集合汇总多个消费者并发生成的结果。</li>
+<li>使用线程池来优化线程的使用。</li>
+<li>使用 ConcurrentHashMap 的分段锁优势，避免过多线程对单个资源的过度竞争。</li>
+<li>为各个消费者提供各自的结构缓存，最后再汇总这些缓存，以避免没有必要的数据竞争。</li>
+</ul>
+<h3 id=总结-2>总结</h3>
+<ul>
+<li>使用线程池，而不是直接创建线程。</li>
+<li>使用写时复制让监听器先关的代码更简单高效。</li>
+<li>使用同步队列构建生产者消费者模型。</li>
+<li>ConcurrentHashMap 提供了更好的并发访问。</li>
+</ul>
+<h2 id=本章总结>本章总结</h2>
+<h3 id=优点>优点</h3>
+<ul>
+<li>适用面广，是许多其他技术的基础，更加接近于本质——近似对硬件工作方式的形式化，真确应用可以得到很高的效率。能够解决从小达到不同粒度的问题。</li>
+<li>该模型可以被集成到大多数编程语言中。语言设计者可以轻易让一门指令式语言或 OO 语言支持该模型。</li>
+</ul>
+<h3 id=缺点>缺点</h3>
+<ul>
+<li>该模型没有为并行提供直接的支持。</li>
+<li>该模型仅支持共享内存模型。如果要支持分布式内存模型则需要借助其他工具。</li>
+<li>最大的缺点在于“无助”，应用开发者在编程语言层面没有得到足够的帮助。</li>
+</ul>
+<h3 id=隐性错误>隐性错误</h3>
+<p>应用多线程的难点不在编程，而在于难以测试。而测试中的一个大问题是难以复现。</p>
+<p>随着项目的迭代和时间的流式，复杂的多线程代码会变得难以维护。</p>
+</div>
+<div class=td-content style=page-break-before:always>
+<h1 id=pg-863c44755469185d47dac793e6f63e5e>3 - CH03-函数式编程</h1>
+<h1 id=ch03-函数式编程>CH03-函数式编程</h1>
+<p>命令式编程的代码由一些列该变全局状态的语句构成，而函数是编程则是将计算过程抽象成表达式求值。这些表达式由纯数学函数构成，这些作为一类对象(可以像操作数值一样操作函数)的数学函数没有副作用。因为没有副作用，函数式编程可以更容易做到线程安全，因此尤其适合用于并发编程。同时，函数式编程也是一个直接支持并行的模型。</p>
+<h2 id=函数式>函数式</h2>
+<p>线程与锁的模型中，核心是共享可变状态。而对不可变的数据，多线程不使用锁就可以安全的访问。</p>
+<h3 id=抛弃可变状态>抛弃可变状态</h3>
+<ul>
+<li>可变状态的风险
+<ul>
+<li>被隐藏的可变状态</li>
+<li>逃逸的可变状态</li>
+</ul>
+</li>
+</ul>
+<h3 id=惰性>惰性</h3>
+<p>惰性序列不仅意味着仅在需要时候才生成尾元素，还意味着序列的头元素在使用后可以被丢弃。</p>
+<h2 id=函数式并行>函数式并行</h2>
+<blockquote>
+<p>基于 Clojure 的语言特性。</p>
+</blockquote>
+<h3 id=总结>总结</h3>
+<ul>
+<li>pmap 可以将映射操作并行化，构造一个半懒惰的 map。</li>
+<li>利用 partition-all 可以对并行的映射操作执行批处理，从而提高效率。</li>
+<li>fold 使用分而治之的策略，可以将 reduce 操作并行化。</li>
+<li>clojure.core.reducers 包内提供的类似 map、mapcat、filter 的函数返回的不是序列，而是 reduciable，这是简化操作的关键。</li>
+</ul>
+<h2 id=函数式并发>函数式并发</h2>
+<p>在 Java 这类命令式语言中，求值顺序与源码的语句顺序紧密相关，虽然编译器和运行时都可能造成一些乱序，但一般来说，求值顺序与其在代码中的顺序基本一致。</p>
+<p>函数式语言更有一种声明式的风格。函数式程序并不是描述“如何求值以得到结果”，而是描述“结构应当是什么样的”。因此，在函数式编程中，如何安排求值顺序来获得最终结果是相对自由的，这正是函数式编程可以轻松实现并行的关键所在。</p>
+<h3 id=引用透明性>引用透明性</h3>
+<p>指的是，在任何调用函数的位置，都可以使用函数运行的结构来替换函数的调用，而不会对程序产生影响。</p>
+<p>虽然 Java 中有些操作也可以达到这样的效果，但函数式编程中的每个函数都具有引用透明性。当然，除了带有副作用的函数。</p>
+<h3 id=数据流>数据流</h3>
+<div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180925220241.png style=display:block;width:50% alt=NAME align=center>
+</div>
+<p>如上图中所示的数据流，由于 (+ 1 2) 和 (+ 3 4) 之间没有依赖关系，所以理论上这两步求值能以任意顺序进行，包括同时执行。前两步求值得到结果后，最优异步加法才能进行。</p>
+<p>理论上，运行时可以从这幅图的左端出发，向右端推进数据。当一个函数所依赖的数据都可用时，该函数就可以执行了。至少在理论上所有函数都可以同时执行。这种方式被称为“数据流式编程”。</p>
+<p>Clojure 语言中提供了 future 和 promise 来支持这种执行方式。即以操作数据流的形式完成并发编程任务。</p>
+<h2 id=总结-1>总结</h2>
+<p>许多人对并行编程的理解存在一个误区：认为并行一定会伴随着不确定性，如果不串行执行就不能依赖某一种执行顺序的结果，必须时刻警惕竟态条件。</p>
+<p>当然，有一些并发程序一定会带有不确定性。这对它们来说是不可避免的——有一些场景天生就依赖时序。但这并不意味着所有的并行程序都具有不确定性。</p>
+<p>在使用线程与锁模型的程序中，大多数潜藏的竟态条件并不来自于问题本身的不确定性，而是因此在解决方案的细节中。</p>
+<p>函数式编程具有引用透明性，因此可以随意改变其执行顺序，而不会对最终结果产生影响。我们可以顺理成章的让互相独立的函数并行执行。</p>
+<blockquote>
+<p>关于函数式</p>
+<p>开发者对编程语言的偏好很大程度上取决于语言的类型系统。使用 Java、Scala 之类的静态类型语言，与使用 Python、Ruby 之类的动态类型语言的体验是完全不同的。</p>
+<p>静态类型语言强迫开发者在早期就必须选择正确的类型。只有付出这样的代价，编译器才能确保运行时不会发生类型错误，同时类型系统还可以优化执行效率。</p>
+<p>在函数式编程中也存在这样的分歧。像 Haskell 这种静态类型的函数式语言利用 单子 和 幺半群 等数学概念为类型系统增加了以下能力：明确限制了某些函数和某些值可以使用的位置，在保持函数性的同时能够检测代码的副作用。</p>
+<p>但 Clojure 并不拥有静态类型系统。</p>
+<p>想要深入学习函数式理论可以尝试学习 Haskell，如《趣学 Haskell》。</p>
+<p>想要在生产中应用函数式编程则可以尝试学习 Scala，如《Scala 函数式编程》。</p>
+</blockquote>
+<h3 id=优点>优点</h3>
+<p>函数式编程的最大好处是我们可以确信程序会按照我们预想的方式运行。一旦上手，比起等价的命令式程序，函数式会更加简单、更易推理、更易测试。</p>
+<p>如果采用了函数式解决方案，利用函数式的引用透明性，可以轻松将程序并行化，或者将程序应用于并发环境。由于函数式的不可变特性，大部分存在于线程与锁的 BUG 将销声匿迹。</p>
+<h3 id=缺点>缺点</h3>
+<p>很多人认为函数式代码比起命令式代码的效率低。对于某些场景确实存在性能损失，但大部分性能损失是远低于预期的。而且用少许性能损失来换取健壮性和扩展性的提升是值得的。</p>
+<p>而且，函数式的优点也远远不止于体现在并发编程上。</p>
+</div>
+<div class=td-content style=page-break-before:always>
+<h1 id=pg-995265fd277aa7595ec961f2477df23c>4 - CH04-分离标识与状态</h1>
+<p>在此要特别强调不纯粹的函数是语言与命令式语言的区别。在命令式语言中，变量默认都是状态易变的，代码会经常修改变量。而在不纯粹的函数式语言中，变量默认是状态不易变的，代码仅在十分必要时才修改变量。</p>
+<p>本节将介绍如何使用可变量和持久数据结构来分离状态与标识。采用这些技术，多线程可以不使用锁来访问可变量，同时也不会出现隐藏可变状态或逃逸可变状态。</p>
+<h2 id=基本组件>基本组件</h2>
+<h3 id=原子变量>原子变量</h3>
+<h3 id=持久数据结构>持久数据结构</h3>
+<p>这里所说的持久并不是指将数据持久化到磁盘或保存到数据库中，而是指数据结构在被修改时总是保留其之前的版本，从而为代码提供一致的数据视角。</p>
+<p>持久数据结构在被修改时，看上去就像是创建了一个完整的副本。如果持久数据结构在实现时也是创建完整的副本，将会非常低效且带来很大的使用限制。幸运的是，持久数据结构选择了更精巧的方法，即“共享结构”。</p>
+<p>比如创建一个列表：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-clojure data-lang=clojure><span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>def </span><span style=color:#000>listv1</span> <span style=color:#000;font-weight:700>(</span><span style=color:#204a87>list </span><span style=color:#0000cf;font-weight:700>1</span> <span style=color:#0000cf;font-weight:700>2</span> <span style=color:#0000cf;font-weight:700>3</span><span style=color:#000;font-weight:700>))</span>
+</code></pre></div><div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180925224911.png style=display:block;width:50% alt=NAME align=center>
+</div>
+<p>先现在使用 cons 创建一个上述列表的修改版，cons 返回列表的副本并在副本的首部添加一个元素：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-clojure data-lang=clojure><span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>def </span><span style=color:#000>listv2</span> <span style=color:#000;font-weight:700>(</span><span style=color:#204a87>cons </span><span style=color:#0000cf;font-weight:700>4</span> <span style=color:#000>listv1</span><span style=color:#000;font-weight:700>))</span>
+</code></pre></div><div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180925225128.png style=display:block;width:50% alt=NAME align=center>
+</div>
+<p>新列表可以完全共享原列表的元素——不需要进行复制，如上图所示。</p>
+<p>下面再尝试创建一个修改版：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-clojure data-lang=clojure><span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>def </span><span style=color:#000>listv3</span> <span style=color:#000;font-weight:700>(</span><span style=color:#204a87>cons </span><span style=color:#0000cf;font-weight:700>5</span> <span style=color:#000;font-weight:700>(</span><span style=color:#204a87>rest </span><span style=color:#000>listv1</span><span style=color:#000;font-weight:700>)))</span>
+</code></pre></div><div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180925225259.png style=display:block;width:50% alt=NAME align=center>
+</div>
+<p>这时仅共享了原始列表的部分元素，但扔不需要进行复制。有些情况下是无法避免复制的。有共同尾端的列表可以共享结构——如果两个列表拥有不同的尾端，就只能进行复制了。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-clojure data-lang=clojure><span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>def </span><span style=color:#000>listv1</span> <span style=color:#000;font-weight:700>(</span><span style=color:#204a87>list </span><span style=color:#0000cf;font-weight:700>1</span> <span style=color:#0000cf;font-weight:700>2</span> <span style=color:#0000cf;font-weight:700>3</span> <span style=color:#0000cf;font-weight:700>4</span><span style=color:#000;font-weight:700>))</span>
+<span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>def </span><span style=color:#000>listv2</span> <span style=color:#000;font-weight:700>(</span><span style=color:#204a87>take </span><span style=color:#0000cf;font-weight:700>2</span> <span style=color:#000>listv1</span><span style=color:#000;font-weight:700>))</span>
+</code></pre></div><div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180925225456.png style=display:block;width:50% alt=NAME align=center>
+</div>
+<p>在 Clojure 中集合都是持久的。持久的 vector、map、set 在实现上都比列表复杂，但它们都使用了共享结构，且与 Ruby 或 Java 中对应的数据结构心梗接近。</p>
+<h3 id=标识与状态>标识与状态</h3>
+<p>如果一个线程引用了持久数据结构，那么其他线程对数据结构的修改对该线程就是不可见的。因此持久数据结构对并发编程的意义非比寻常，其分离了标识(inentity)与状态(state)。</p>
+<p>油箱中有多少油呢？现在可能有一半油，一段时间后可能就空了，再后来可能又满了。“油箱中有多少油”是一个标识，其状态是一直在改变的，也就是说，实际上它是一系列不同的值。</p>
+<p>命令式语言中，变量混合了标识与状态——一个标识只能拥有一个值。这让我们很容易忽略一个事实：状态实际上是随时间变化的一系列值。持久化数据结构将标识与状态进行了分离——如果获取了一个标识的当前状态，无论将来对这个标识怎样修改，获取的那个状态将不会改变。</p>
+<h3 id=重试>重试</h3>
+<p>由于 Clojure 是函数式语言，其原子是无锁的——内部使用了 JUC.AtomicReference 提供的 compareAndSet 方法。因此使用原子变量的效率很高且不会发生阻塞，因此也不会有死锁。</p>
+<p>但这要求 swap!(用于更新原子变量的值)需要处理这种情况：当 swap! 调用其参数函数来生成新值、但尚未修改原子变量的值时，其他线程就修改了原子变量的值。如果发生了这种情况，swap! 就需要重试。swap! 将放弃从参数函数中生成的值，并使用原子变量的新值来重新调用参数函数。因此这要求该参数函数必须没有副作用——否则，多次重试时也会多次引起这些副作用。</p>
+<h3 id=校验器>校验器</h3>
+<p>在创建原子变量时可以提供一个校验器。校验器是一个函数，当改变原子变量的值时就会调用它。如果校验器返回 true，就允许本次修改，否则就放弃本次修改。</p>
+<p>校验器在原子变量的值改变生效之前被调用。与“重试”机制中传给 swap! 的参数函数类似，当 swap! 进行重试时，校验器可能会被调用多次，因此校验器不能有副作用。</p>
+<h3 id=监视器>监视器</h3>
+<p>可以为原子变量添加一个监视器。添加监视器时需要提供一个键值和一个监视函数。键值用于区分不同的监视器。原子变量的值被改变时会调用监视器。监视器接收四个参数——调用 add-watch 时指定的键值、原子变量的引用、原子变量的旧值、原子变量的新值。</p>
+<p>与校验器不同，监视器是在原子变量的值改变之后才被调用，且无论 swap! 重试多少次，监视器仅会被触发一次。因此监视器可以拥有副作用。注意：监视器被调用时，原子变量的值可能已被再次改变，因此监视器必须使用参数中提供的(触发时的)新值，而不能通过对原子变量进行解引用来获取(当前的)新值。</p>
+<h2 id=代理与软件事务内存>代理与软件事务内存</h2>
+<p>下面介绍两种可变数据类型：代理(agent) 和引用(ref)。与原子变量性质相同，代理和引用都可以用于并发，也能与持久数据结构一起使用，以实现标识与状态的分离。学习引用时将介绍 Clojure 中实现的对软件事务内存的支持，使变量在无锁的情况下可以被并行的修改，同时仍保持一致性。</p>
+<h3 id=代理>代理</h3>
+<p>与原子变量类似，代理包含了对一个值的引用。可以通过 deref 或 @ 获取其值。与 swap! 类似，send 接受一个函数，并用代理的当前值作为参数来调用该函数，函数的返回值再作为代理的新值。</p>
+<p>send 与 swap! 的区别是，前者会(在代理的值更新之前)立即返回——传给 send 的函数将在某个时间点被调用。如果多个线程同时调用 send，传给 send 的函数将被串行调用：同一事件只会调用一个。也就是说该函数不会进行重试，并且可以具有副作用。</p>
+<blockquote>
+<p>与 Actor 相似？两者存在很大的差异：</p>
+<ol>
+<li>通过 deref 可以获得代理的值，而 actor 没有提供直接获取值的方式。</li>
+<li>actor 可以包含行为，而代理不可以：对数据的操作函数必须由调用者提供。</li>
+<li>actor 提供了复杂的错误检测和错误恢复机制，而代理仅提供了简单的错误报告机制。</li>
+<li>使用多个 actor 可能会引起死锁，但使用多个代理不会。</li>
+</ol>
+</blockquote>
+<p>send 的异步更新机制相比同步优势明显，尤其是当更新操作会发生阻塞或需要持续很久时。但异步更新也很复杂，尤其是在错误处理方面。</p>
+<p>在 Clojure 中，一旦代理发生错误，就会进入失效状态，之后对代理数据的任何操作都会失败。</p>
+<p>创建代理时其默认的错误处理模式为 fail。也可以将错误处理模式设置为 continue，这意味着失效状态的代理不再需要通过 restart-agent 重置就可以继续新的操作。如果设置了错误处理函数，错误处理模式会被默认设置为 continue，代理出现错误时则会调用错误处理函数。</p>
+<h3 id=软件事务内存>软件事务内存</h3>
+<p>引用(ref)比原子变量或代理更加复杂，通过引用可以实现软件事务内存(STM)。通过原子变量和代理每次仅能修改一个变量，而通过 STM 可以多多个变量进程并发一致的修改，就像数据库中的事务可以对多行数据进行并发一致的修改一样。</p>
+<p>引用也是包装了对一个值的引用，使用 deref 或 @ 获取值；使用 alter 函数来修改引用的值，但不同于 swap! 或 send，使用时不能只是简单的被调用。因为只能在一个事务中才能修改引用的值。</p>
+<h4 id=事务>事务</h4>
+<p>STM 事务具有原子性、一致性、隔离性。</p>
+<ul>
+<li>原子性：在其他事务看来，当前事务的副作用要么全部发生，要么都不发生。</li>
+<li>一致性：事务保证全程遵守校验器定义的规范，如果事务的一系列修改中存在一个校验失败，那么所有的修改都不会发生。</li>
+<li>隔离性：多个事务可以同时运行，但同时运行的事务的结果，与串行运行这些事务的结构应当完全一样。</li>
+</ul>
+<p>这三个性质是许多数据库支持的 ACID 特性中的前三个，唯一遗漏的性质是——持久性，STM 的数据在电源故障或系统崩溃时会丢失。如果需要用到持久性则完全可以直接使用数据库。</p>
+<h4 id=隔离性选择>隔离性选择</h4>
+<p>大多数场景适合使用完全隔离的事务，但对于有些场景来说，隔离性是个过强的约束。如果使用 commute 替换 alter，就可以得到不那么强的隔离性。</p>
+<h4 id=多个引用>多个引用</h4>
+<p>事务通常会涉及多个引用，否则应该使用原子变量或代理。</p>
+<p>对，你猜对了，又是银行转账的例子。</p>
+<p>如果 STM 运行期间检测到多个并发事务的修改发生冲突，那其中一个或几个事务将进行重试。就像修改原子变量一样，需要保证事务没有副作用(除了更新引用的值意外的其操作)。</p>
+<h4 id=重试事务>重试事务</h4>
+<p>基于无锁的重试，可以避免死锁。</p>
+<h4 id=事务的安全副作用>事务的安全副作用</h4>
+<p>代理具有事务性。如果在事务中使用 send 来更新一个代理，那么 send 仅会在事务成功时生效。如果需要在事务成功时产生一些副作用，那 send 将是最佳选择。</p>
+<h2 id=适用场景>适用场景</h2>
+<p>Clojure 对共享可变状态的三种支持机制：</p>
+<ul>
+<li>原子变量：可以对一个值进行同步更新，同步的意思是当 swap! 调用返回时更新已经完成。无法对多个变量进行一致性更新。</li>
+<li>代理：对一个值进行异步更新，异步的意思是更新可能在 send 返回后完成。对多个代理不能一致更新。</li>
+<li>引用：可以对多个值进行一致的、同步的更新。</li>
+</ul>
+<h3 id=原子变量还是-stm>原子变量还是 STM</h3>
+<p>当解决一个涉及多个值需要一致更新的问题时，即可以使用多个引用并通过 STM 来保证一致性，也可以将这些值整合到一个数据结构中并用一个原子变量管理这个单个数据结构的访问一致性。</p>
+<p>该如何选择呢？答案是因人而异，两种方案都正确，尽量选择简单的，比如数据结构肯能会很复杂。在性能上，根据使用场景的特点和数据访问模式的不同，肯定会存在差异，所以需要有效的压力测试进行评估。</p>
+<p>虽然 STM 带有很多光芒，但就 Clojure 而言，由于语言的函数性减少了对可变量的使用，因此大部分问题都可以使用原子变量来解决。而更简单的方案通常会更有效。</p>
+<h2 id=总结>总结</h2>
+<h3 id=优点>优点</h3>
+<p>传统的命令式语言混淆了标识与状态这两个概念，而 Clojure 的持久数据结构将可变量的标识与状态分离开来。这解决了基于锁的方案的大部分缺点。</p>
+<h3 id=缺点>缺点</h3>
+<p>基于 Clojure 方式的并发编程不支持分布式编程，因此也无法直接提供容错性。好在 Clojure 运行于 JVM，可以使用一些第三方库来解决该问题，比如 Akka。</p>
+<h3 id=其他语言>其他语言</h3>
+<p>Haskell 提供了类似本章的功能，不过作为一种纯粹的函数式语言，它的风格会带来一种非常不同的编程体验。值得一提的是 Haskell 提供了完整的 STM 实现。可以参考 <a href=https://www.microsoft.com/en-us/research/publication/beautiful-concurrency/>Beautiful Concurrency</a>。</p>
+<p>另外，大部分主流语言都提供了 STM 实现，包括 GCC 支持的编程语言。但是有证据表明，STM 模型并不适合于命令式编程语言。</p>
+</div>
+<div class=td-content style=page-break-before:always>
+<h1 id=pg-2088bfdfcf2607897425d3329b4e72be>5 - CH05-Actor</h1>
+<p>使用 Actor 就像租车——如果我们需要，可以很快速的租到一辆；如果车辆发生故障，也不需要自己修理，直接换一辆即可。</p>
+<p>Actor 模型是一种适用性非常好的通用并发编程模型。它可以应用于共享内存架构和分布式内存架构，适合解决地理分布问题，同时还能提供很好的容错性。</p>
+<h2 id=更加面向对象>更加面向对象</h2>
+<p>函数式编程使用可变状态，也就避免了共享可变状态带来的一系列问题。相比之下，使用 Actor 模型保留了可变状态，但不将其共享。</p>
+<p>Actor 类似于 OOP 中的对象——其中封装了状态，并通过消息与其他 Actor 通信。两者的区别是所有 Actor 可以同时运行，而且，与 OO 式的“消息传递(实质上是方法调用)”不同，actor 之间是真实的在传递消息。</p>
+<p>Actor 模型是一个通用的并发编程模型，几乎可以用在任何一种编程语言里，最典型的是 Erlang。而我们将使用 Elixir 来介绍 actor 模型，它是 Erlang 虚拟机(BEAM)上一种较新的编程语言。</p>
+<p>与 Clojure 相比，Elixir 是一种不纯粹的、动态类型的函数式语言。</p>
+<h2 id=消息与信箱>消息与信箱</h2>
+<blockquote>
+<p>在 Elixir 中，进程是一个轻量级的概念，比操作系统的线程还要轻，它消耗更少的资源且创建代价很低。Elixir 程序可以毫不困难的创建数千个进程，通常不需要依赖线程池技术。</p>
+</blockquote>
+<h3 id=对列式信箱>对列式信箱</h3>
+<p>异步的发送消息是使用 actor 模型的重要特性之一。消息并非直接发送到一个 actor，而是发送到一个 mailbox。</p>
+<p>这样的设计解耦了 actor 之间的关系——actor 都以自己的步调运行，发送消息时也不会被阻塞。</p>
+<p>虽然所有 Actor 可以同时运行，但它们都按照信箱接收到消息的顺序来依次处理消息，且仅在当前消息处理完成之后才会开始处理下一条消息，因此我们只需要关心发送消息时的并发问题即可。</p>
+<h3 id=接收消息>接收消息</h3>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-elixir data-lang=elixir><span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>loop</span> <span style=color:#204a87;font-weight:700>do</span> 
+  <span style=color:#204a87;font-weight:700>receive</span> <span style=color:#204a87;font-weight:700>do</span> 
+    <span style=color:#000;font-weight:700>{</span><span style=color:#4e9a06>:greet</span><span style=color:#000;font-weight:700>,</span> <span style=color:#000>name</span><span style=color:#000;font-weight:700>}</span> <span style=color:#ce5c00;font-weight:700>-&gt;</span> <span style=color:#000>IO</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>puts</span><span style=color:#000;font-weight:700>(</span><span style=color:#4e9a06>&#34;Hello </span><span style=color:#4e9a06>#{</span><span style=color:#000>name</span><span style=color:#4e9a06>}</span><span style=color:#4e9a06>&#34;</span><span style=color:#000;font-weight:700>)</span> 
+    <span style=color:#000;font-weight:700>{</span><span style=color:#4e9a06>:praise</span><span style=color:#000;font-weight:700>,</span> <span style=color:#000>name</span><span style=color:#000;font-weight:700>}</span> <span style=color:#ce5c00;font-weight:700>-&gt;</span> <span style=color:#000>IO</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>puts</span><span style=color:#000;font-weight:700>(</span><span style=color:#4e9a06>&#34;</span><span style=color:#4e9a06>#{</span><span style=color:#000>name</span><span style=color:#4e9a06>}</span><span style=color:#4e9a06>, you&#39;re amazing&#34;</span><span style=color:#000;font-weight:700>)</span> 
+    <span style=color:#000;font-weight:700>{</span><span style=color:#4e9a06>:celebrate</span><span style=color:#000;font-weight:700>,</span> <span style=color:#000>name</span><span style=color:#000;font-weight:700>,</span> <span style=color:#000>age</span><span style=color:#000;font-weight:700>}</span> <span style=color:#ce5c00;font-weight:700>-&gt;</span> <span style=color:#000>IO</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>puts</span><span style=color:#000;font-weight:700>(</span><span style=color:#4e9a06>&#34;Here&#39;s to another </span><span style=color:#4e9a06>#{</span><span style=color:#000>age</span><span style=color:#4e9a06>}</span><span style=color:#4e9a06> years, </span><span style=color:#4e9a06>#{</span><span style=color:#000>name</span><span style=color:#4e9a06>}</span><span style=color:#4e9a06>&#34;</span><span style=color:#000;font-weight:700>)</span> 
+  <span style=color:#204a87;font-weight:700>end</span> 
+  <span style=color:#000>loop</span> 
+<span style=color:#204a87;font-weight:700>end</span>
+</code></pre></div><p>通常 actor 会进行无限循环，通过 receive 等待接收消息，并进行消息处理。在 Elixir 的 actor 实现中，内部的一个函数通过递归调用自己来进行无限循环，用 receive 来等待一个消息，通过模式匹配来决定如何处理消息。这</p>
+<blockquote>
+<p>Elixir 实现了尾调用消除，即，如果函数在最后调用了自己，那么递归调用将被替换成一个简单的跳转，这样可以避免递归引起的堆栈移除。</p>
+</blockquote>
+<h3 id=连接到进程>连接到进程</h3>
+<p>为了彻底关闭一个 actor，需要满足两个条件。第一个是需要告诉 actor 在完成消息处理后就关闭；第二个是需要知道 actor 何时完成关闭。</p>
+<p>首先，通过接收一个显式的关闭消息来满足第一个条件：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-elixir data-lang=elixir><span style=color:#204a87;font-weight:700>receive</span> <span style=color:#204a87;font-weight:700>do</span>
+  <span style=color:#000>...</span>
+  <span style=color:#000;font-weight:700>{</span><span style=color:#4e9a06>:shutdown</span><span style=color:#000;font-weight:700>}</span> <span style=color:#ce5c00;font-weight:700>-&gt;</span> <span style=color:#000>exit</span><span style=color:#000;font-weight:700>(</span><span style=color:#4e9a06>:normal</span><span style=color:#000;font-weight:700>)</span>
+  <span style=color:#000>...</span>
+</code></pre></div><p>然后，通过一个方法来获知 actor 是否完全关闭。下面的代码将 <code>:trap_exit</code> 设为 true，并用 spawn_link 替换 spawn 以连接到进程：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-elixir data-lang=elixir><span style=color:#000>Process</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>flag</span><span style=color:#000;font-weight:700>(</span><span style=color:#4e9a06>:trap_exit</span><span style=color:#000;font-weight:700>,</span> <span style=color:#000>true</span><span style=color:#000;font-weight:700>)</span>
+<span style=color:#000>pid</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>spawn_link</span><span style=color:#000;font-weight:700>(</span><span style=color:#ce5c00;font-weight:700>&amp;</span><span style=color:#000>Talker</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>loop</span><span style=color:#ce5c00;font-weight:700>/</span><span style=color:#0000cf;font-weight:700>0</span><span style=color:#000;font-weight:700>)</span>
+</code></pre></div><p>现在当创建的进程关闭时，就会得到一个通知(是一个系统产生的消息)。</p>
+<h3 id=双向通信>双向通信</h3>
+<p>Actor 是以异步的方式发送消息的——发送者因此不会被阻塞。那么如何获得一个消息的回复呢？</p>
+<p>Actor 模型没有提供直接回复消息的机制，但我们可以轻松实现：将发送进程的标示符包含在消息中，接收者接收到消息后提取其中的标识符，然后向该标识符表示的进程发送回复消息。</p>
+<h3 id=为进程命名>为进程命名</h3>
+<p>将一个消息发送给某个进程时，需要知道进程的标示符。当我们自己创建进程时没有问题，但如何向别人创建的进程发送消息呢？最简单的方式就是为进程命名。</p>
+<h2 id=错误处理与容错>错误处理与容错</h2>
+<h3 id=错误检测>错误检测</h3>
+<p>前面我们使用 spawn_link 建立了两个进程之间的连接，这样就可以检测到某个进程的终止。Linking 是 Elixir 编程中的一个重要概念。</p>
+<ul>
+<li>进程的异常终止通过连接进行传播。</li>
+<li>连接是双向的。</li>
+<li>正常终止时不影响相连接的其他进程。</li>
+<li>通过设置 trap_exit 标识可以让一个进程捕获到另一个进程的终止消息，即，将该进程转化为系统进程。</li>
+</ul>
+<h3 id=管理进程>管理进程</h3>
+<p>可以创建一个系统进程来管理其他若干个进程。</p>
+<h3 id=错误处理内核模式>错误处理内核模式</h3>
+<blockquote>
+<p>Tony Hoare 有一句名言：
+软件设计有两种方式：一种是使软件过于简单，明显的没有缺陷；另一种是使软件过于复杂，没有明显的缺陷。</p>
+</blockquote>
+<p>Actor 提供了一种容错的方式：错误处理内核模式。在两者之间找到了一种平衡。</p>
+<p>一个软件系统如何应用了错误处理内核模式，那么使该系统正确运行的前提是其错误处理内核必须能够正确运行。程序的程序通常使用尽可能小的错误处理内核——小而简单到明显没有缺陷。</p>
+<p>对于一个使用 actor 模型的程序，其错误处理内核是顶层的管理者，管理着子进程——对子进程进行启动、停止、重启等操作。</p>
+<p>程序的每个模块都有自己的错误处理内核——模块正确运行的前提是其错误处理内核必须正确运行。子模块也会拥有自己的错误处理内核，依次类推。这就构成了一个错误处理的层级树，较危险的操作都会被下放给底层的 actor 执行。</p>
+<div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180926225042.png style=display:block;width:50% alt=NAME align=center>
+</div>
+<p>错误处理内核机制主要解决了防御式编程中碰到的一些棘手问题。</p>
+<h4 id=任其崩溃>任其崩溃</h4>
+<p>防御式编程主要通过预言可能出现的缺陷来实现容错性。使用 actor 模型并不需要使用防御式编程，而是遵循“任其崩溃”的哲学，让 actor 的上层管理者来处理这些问题。这样做的优势在于：</p>
+<ol>
+<li>代码会变得更加简洁从而易于理解，可以清晰区分稳定代码和脆弱代码。</li>
+<li>多个 actor 之间是相互独立的，并不共享状态，因此一个 actor 的崩溃不太会殃及到其他 actor。尤其重要的是一个 actor 的崩溃不会影响到其管理者，这样管理者才能正确处理此次崩溃。</li>
+<li>管理者也可以选择不处理崩溃，而是记录崩溃的原因，这样我们就会得到崩溃通知并进行后续处理。</li>
+</ol>
+<h2 id=分布式>分布式</h2>
+<p>相比已经介绍过的并发模型，actor 模型的一个重大优点是它支持分布式——它可以将消息发送到另外一台计算机，就像发送到本地计算机上的 actor 一样。这被称为地理位置透明。</p>
+<h3 id=otp>OTP</h3>
+<p>上面演示的代码过于底层，而 OTP 为使用 Actor 模型提供更多工具。</p>
+<ul>
+<li>更简便的消息匹配。</li>
+<li>进程管理。</li>
+<li>更好的重启逻辑。</li>
+<li>调试与日志。</li>
+<li>代码热升级。</li>
+<li>发布管理、故障切换、自动扩容等。</li>
+</ul>
+<p>主要概念包括：</p>
+<ul>
+<li>节点</li>
+<li>连接节点</li>
+<li>远程执行</li>
+<li>远程消息</li>
+<li>等等。</li>
+</ul>
+<h2 id=总结>总结</h2>
+<h3 id=优点>优点</h3>
+<ul>
+<li>消息传递与封装</li>
+<li>容错</li>
+<li>分布式编程</li>
+</ul>
+<h3 id=缺点>缺点</h3>
+<p>Actor 除了优点，也会带来它独有的一些问题。</p>
+<p>Actor 模型并没有直接提供并行支持，事实上可以自己构造，但由于 actor 之间不共享状态，仅通过消息传递进行交流会不太适合实施细粒度的并行。</p>
+<blockquote>
+<p>个人认为应用 Actor 模型的最大障碍是开发者们的思维方式转变，尤其对于一个以 Java 这种命令式语言作为生产语言的团队来说。</p>
+</blockquote>
+<blockquote>
+<p>另外，如果想要深入理解 Actor 模型，可以直接参考 Erlang/OTP，如果想要在生产中构建基于 Actor 模型的项目，推荐使用运行于 JVM 的 Akka，当然，如果同时使用 Scala 语言就更好了，因为 Java 中一贯的编程思路如共享可变状态、对象可变等不利于使用 Actor 模型。</p>
+</blockquote>
+</div>
+<div class=td-content style=page-break-before:always>
+<h1 id=pg-c96ce2185f8ad7df39844cad80b20fb8>6 - CH06-CSP</h1>
+<blockquote>
+<p>CSP 看上去类似于 Actor，但最大的区别在于：actor 模型的重点在于参与交流的实体，而 CSP 模型的重点在于用于交流的通道。</p>
+</blockquote>
+<p>大家都在跌跌不休的争论涡轮增压与自然吸气孰优孰劣，让中置发动机布局与前置发动机布局一较高下，却忘记了最重要的方面其实与车辆本身无关。你能去往何方、能多快到达目的地，首要的决定因素是道路网络而不是车辆本身。</p>
+<p>消息传递系统与之类似，决定其特性和功能的首要因素并不是用于传递消息的代码或消息的内容，而是消息的传输通道。</p>
+<h2 id=万物皆通信>万物皆通信</h2>
+<p>使用 actor 模型的程序是由独立的、并发执行的实体组成，这些实体之间通过发送消息进行通信。每个 actor 都有一个信箱，用于保存已经收到但尚未被处理的消息。</p>
+<p>与 actor 模型类似，CSP 模型也是由独立的、并发执行的实体组成，实体之间也是通过发送消息进行通信。但两种模型的重要差别在于：CSP 模型不关注发送消息的实体，而是关注发送消息时使用的 channel(通道)。通道是第一类对象，它不想 actor 的信箱一样与实体紧耦合，而是可以单独创建和读写，并在进程之间传递。</p>
+<p>与函数式编程和 actor 模型类似，CSP 模型也是正在复兴的古董。由于近来 Go 语言的兴起，CSP 模型又流行了起来。</p>
+<h2 id=channel-与-go-block>channel 与 go block</h2>
+<p>core.async 库将 Go 的并发模型引入了 Clojure，channel 与 go block 是其提供的主要工具。在大小有限的线程池中，go block 允许多个并发任务复用线程资源。</p>
+<h3 id=channel>channel</h3>
+<p>一个 channel 就是一个线程安全的队列——任何任务只要持有 channel 的引用，就可以向其一端添加消息，也可以从另一端删除消息。在 actor 模型中，消息是从指定的 actor 发往指定的另一个 actor；与之不同，使用 channel 发送消息时发送者并不知道谁是接收者，反之亦然。</p>
+<h4 id=缓存区>缓存区</h4>
+<p>默认情况下，channel 是同步的(或称无缓存的)——一个任务向 channel 写入消息的操作会一直阻塞到另一个任务从 channel 中删除该消息。</p>
+<p>如果向创建 channel 的 chan 函数传入缓存区大小，就可以创建一个有缓存的 channel。当缓存没有被消息填满时，向其写入消息会理解返回，不会阻塞。</p>
+<h4 id=关闭>关闭</h4>
+<p><code>close!</code> 可以关闭一个 channel。从已经关闭的空的 channel 中读出消息将会得到 nil；向已经关闭的 channel 写入消息时，消息将会被丢弃，写入 nil 则会报错。</p>
+<h4 id=缓存已满>缓存已满</h4>
+<p>默认情况下，向一个缓存已满的 channel 写入消息将会一直被阻塞。但通过向 chan 函数传入缓冲区来改变这个策略。</p>
+<ul>
+<li>default：阻塞</li>
+<li>dropping-buffer：满时丢弃，不再阻塞</li>
+<li>sliding-buffer：启用已有消息，使用新消息填充，不再阻塞</li>
+</ul>
+<h3 id=go-block>go block</h3>
+<p>线程创建与启动都会带来开销，这也正是使用线程池的原因。但是线程池并非总是适用，尤其是当线程可能会被阻塞时，使用线程池则可能会带来麻烦。</p>
+<h4 id=阻塞问题>阻塞问题</h4>
+<p>线程池技术是处理 CPU 密集型任务的利器——任务进行时会占用某个线程，任务结束后将线程返还给线程池，以使得线程能够被复用。但涉及线程通信时使用线程池是否合适呢？如果线程被阻塞，那么它将被无限期占用，这就削弱了使用线程池技术的优势。</p>
+<p>这种问题是存在解决方案的，但通常会对代码风格加以限制，使之变成事件驱动式编程。事件驱动是一种编程风格。</p>
+<p>虽然这些方案能够解决问题，但破坏了控制流的自然表达形式，让代码变得难以阅读和理解。更糟的是，这些方案还会大量使用全局状态，因为事件处理器需要保存一些数据，以便之后的事件处理器使用。我们已经学习过这个结论了：状态与并发不要混用。</p>
+<p>go block 提供了一种两全其美的解决方案——既可以写出事件驱动的代码来解决目前遇到的阻塞问题，又可以不牺牲代码的结构性和可读性。其原理是 go block 在底层将串行的代码透明的重写成了事件驱动的形式。</p>
+<h4 id=控制反转>控制反转</h4>
+<p>与其他 Lisp 方言类似，Clojure 有一套强大的宏系统。如果你使用过其他语言的宏系统，就会觉得 Lisp 的宏更像是魔法，它可以进行神奇的代码变换。go 宏就是其中一个小魔法。</p>
+<p>go block 中的代码会被转换成一个状态机。当从 channel 中读出消息或向 channel 中写入消息时，状态机将暂停，并释放它所占用的线程的控制权。当代码可以继续运行时，状态机进行一次状态转换，并可能在另一个线程中继续运行。</p>
+<p>通过这样的控制反转，core.async 运行时可以在有限的线程池中高效的运行多个 go block。</p>
+<h4 id=状态机暂停>状态机暂停</h4>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-clojure data-lang=clojure><span style=color:#000>channels.core=&gt;</span> <span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>def </span><span style=color:#000>ch</span> <span style=color:#000;font-weight:700>(</span><span style=color:#000>chan</span><span style=color:#000;font-weight:700>))</span> 
+<span style=color:#ce5c00;font-weight:700>#</span><span style=color:#4e9a06>&#39;channels.core/ch</span> 
+<span style=color:#000>channels.core=&gt;</span> <span style=color:#000;font-weight:700>(</span><span style=color:#000>go</span> 
+  <span style=color:#ce5c00;font-weight:700>#</span><span style=color:#000>_=&gt;</span> <span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>let </span><span style=color:#000;font-weight:700>[</span><span style=color:#000>x</span> <span style=color:#000;font-weight:700>(</span><span style=color:#000>&lt;!</span> <span style=color:#000>ch</span><span style=color:#000;font-weight:700>)</span> 
+  <span style=color:#ce5c00;font-weight:700>#</span><span style=color:#000>_=&gt;</span> <span style=color:#000>y</span> <span style=color:#000;font-weight:700>(</span><span style=color:#000>&lt;!</span> <span style=color:#000>ch</span><span style=color:#000;font-weight:700>)]</span> 
+  <span style=color:#ce5c00;font-weight:700>#</span><span style=color:#000>_=&gt;</span> <span style=color:#000;font-weight:700>(</span><span style=color:#204a87>println </span><span style=color:#4e9a06>&#34;Sum:&#34;</span> <span style=color:#000;font-weight:700>(</span><span style=color:#204a87>+ </span><span style=color:#000>x</span> <span style=color:#000>y</span><span style=color:#000;font-weight:700>))))</span> 
+<span style=color:#ce5c00;font-weight:700>#</span><span style=color:#000>&lt;ManyToManyChannel</span> <span style=color:#000>clojure.core.async.impl.channels.ManyToManyChannel</span><span style=color:#ce5c00;font-weight:700>@</span><span style=color:#0000cf;font-weight:700>13</span><span style=color:#000>ac7b98&gt;</span> 
+<span style=color:#000>channels.core=&gt;</span> <span style=color:#000;font-weight:700>(</span><span style=color:#000>&gt;!!</span> <span style=color:#000>ch</span> <span style=color:#0000cf;font-weight:700>3</span><span style=color:#000;font-weight:700>)</span> 
+<span style=color:#000>nil</span> 
+<span style=color:#000>channels.core=&gt;</span> <span style=color:#000;font-weight:700>(</span><span style=color:#000>&gt;!!</span> <span style=color:#000>ch</span> <span style=color:#0000cf;font-weight:700>4</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000>nil</span> 
+<span style=color:#000>Sum</span><span style=color:#a40000>:</span> <span style=color:#0000cf;font-weight:700>7</span>
+</code></pre></div><p>这段代码首先创建了一个名为 ch 的 channel。然后创建了一个 go block，用来从 ch 中读取两个值，再输出两个值之和。虽然看上去 go block 从 channel 中读取数据时应当阻塞，实际上却发生了有趣的事情。</p>
+<p>这段代码并没有使用 <code>&lt;!!</code> 从 channel 中读取数据，而是使用了 <code>&lt;!</code>。单个谈好意味着本次读 channel 是进行暂停操作，而不是进行阻塞操作。</p>
+<p>如下图所示，go block 将串行的代码转换成拥有 3 个状态的状态机：</p>
+<div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180927222228.png style=display:block;width:50% alt=NAME align=center>
+</div>
+<p>该状态机包含以下 3 个状态：</p>
+<ol>
+<li>初始状态会直接暂停，等待 ch 中有数据可以被读取。满足条件时进入状态 2。</li>
+<li>状态机首先从将 ch 读取的值绑定到 x 上，然后暂停，等待 ch 中下一个可以被读取的数据。满足条件时，进入状态 3。</li>
+<li>状态机将从 ch 中读取的值绑定到 y 上。输出计算结构，然后终止。</li>
+</ol>
+<h4 id=go-block-的成本很低>go block 的成本很低</h4>
+<p>go block 的只要意义在于其效率。与使用线程不同，使用 go block 的成本很低，因此可以创建很多个而不用担心耗尽资源。这看上去是个小小的改进，但实际上不用担心资源而能随意创建并发任务有着革命性的意义。</p>
+<p>你可能已经注意到 go block 返回的是一个 channel，go block 运行完成时会将结果写入到这个 channel 中。</p>
+<p>经过试验，创建并运行 10 万个 go block 仅需 3/4 秒。这意味着 go block 的性能比起 Elixir 的进程毫不逊色——该成绩非常优秀，因为 Elixir 运行在以并发性能为设计主旨的 Erlang 虚拟机中，而 Clojure 却运行于 JVM。</p>
+<h2 id=总结>总结</h2>
+<h3 id=优点>优点</h3>
+<p>与 Actor 模型相比，CSP 模型的最大优点是灵活性。使用 actor 模型时，负责通信的媒介与执行单元是紧耦合的——即 actor 的信箱。而使用 CSP 模型时，channel 是第一类对象，可以被独立的创建、写入、读取，也可以在不同的执行单元中传递。</p>
+<p>Clojure 语言的创始人 Rich Hickey 解释了他选择 CSP 而非 actor 的原因：</p>
+<blockquote>
+<p>我个人对 actor 模型并不感兴趣。在 actor 模型中，生产者与消费者还是紧耦合在一起的。诚然，我们可以使用 actor 模型实现消息通信用的队列，但是 actor 模型本身就已经使用了队列，用它来实现基础的消息通信用的队列未免显得画蛇添足。</p>
+</blockquote>
+<p>从更务实的角度来说，现在的 CSP 模型的实现，比如 core.async 库，使用了控制反转技术，不仅提高了异步程序的效率，还为原本使用回调函数来解决的应用领域提供了一种显著改进的编程模型。</p>
+<h3 id=缺点>缺点</h3>
+<p>基于 CSP 模型的编程语言也可以支持分布式和容错性，但与基于 actor 模型的编程语言不通，这两个主题没有得到足够多的重视和支持——也没有基于 CSP 模型实现的 OTP。</p>
+<p>与使用线程锁模型和 actor 模型一样，CSP 模型也容易受到死锁影响，且没有提供直接的并行支持。使用 CSP 模型时，并行需要建立在并发的基础上，这也就引入了不确定性。</p>
+<h3 id=结语>结语</h3>
+<p>CSP 模型和 Actor 模型各自的开发社区侧重点不同并各自发展，从而形成了两者之间的诸多差异。Actor 模型的开发社区侧重于容错性和分布式，而 CSP 模型的开发社区侧重于效率和代码表达的流畅性。</p>
+<blockquote>
+<p>如果为 Actor 模型引入 CSP 形式的流畅性呢？</p>
+</blockquote>
+</div>
+<div class=td-content style=page-break-before:always>
+<h1 id=pg-0c5db9e3b31ab4a3d8c8d6701349d1d2>7 - CH07-数据并行</h1>
+<p>数据并行就像是八车道的高速公路，虽然每辆车的速度相对平缓，但由于多辆车可以同时行进，所以通过某一点的车流量可以很大。</p>
+<p>到目前为止，我们讨论的每一项技术都可以用于解决多种编程问题。相比之下，数据并行只适用于很窄的范围。顾名思义，数据并行是并行编程技术，而不是并发编程技术。</p>
+<h2 id=gpgpu>GPGPU</h2>
+<p>图形处理单元(GPU)是隐藏在电脑中的超级计算机。现代 GPU 是一个强力的数据并行处理器，其用于数学计算时的性能超越 CPU，这种做法称为基于图形处理器的通用计算，即 GPGPU。</p>
+<h3 id=图形处理与数据并行>图形处理与数据并行</h3>
+<p>计算机图形学主要研究如何处理数据、如何处理大量数据以及如何快速处理大量数据。3D 游戏的一个场景是由无数个小三角构成的，每个三角形都需根据与视点的透视关系计算出其在屏幕上的位置，并进行裁剪、光照处理、修饰纹理等，这些操作每秒钟都要进行 25 次以上。</p>
+<p>虽然需要处理的计算量是很大的，但它有一个非常好的特性：施加在数据上的操作都s&rsquo;s是相对姜丹的向量操作或矩阵操作。因此这种场景非常适合数据并行——多个计算资源会在不同的数据上并行施加相同的操作。</p>
+<p>现代 GPU 是十分复杂但非常强力的并行处理器，其 1 秒钟可以处理几十亿个三角形。虽然设计 GPU 的主要目的是为了满足图形计算的需要，但是 GPU 也可用于更广的领域。</p>
+<p>数据并行可以通过多种方式来实现，我们要学习其中两种：流水线和多 ALU。</p>
+<h4 id=流水线>流水线</h4>
+<p>虽然看上去两数相乘是一个原子操作，但如果从芯片上的门电路角度看，这个操作实际上是分几步完成的。这些操作通常被排列成流水线型，如下图：</p>
+<div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180928003718.png style=display:block;width:50% alt=NAME align=center>
+</div>
+<p>上图是一个拥有 5 个步骤的流水线，如果每一步需要一个时钟周期来完成，那将一组数(两个数)相乘就需要 5 个时钟周期。但如果有多组数相乘，就可以通过让流水线饱和来获得更好的性能，如下图：</p>
+<div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180928003922.png style=display:block;width:50% alt=NAME align=center>
+</div>
+<p>如果需要将 1000 组数相乘，每组数需要 5 个时钟周期，看上去总共需要 5000 个时钟周期，而如上图所示，仅需要略多于 1000 个时钟周期即可完成。</p>
+<h4 id=多-alu>多 ALU</h4>
+<p>CPU 中负责进行乘法运算的组件称为算术逻辑单元，即 ALU，如下图：</p>
+<div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180928005927.png style=display:block;width:30% alt=NAME align=center>
+</div>
+<p>只需要搭配足够多的内存总线，多个 ALU 就可以同时获取多个操作数，这样施加在大量数据上的运算就可以并行了，如下图：</p>
+<div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180928005954.png style=display:block;width:60% alt=NAME align=center>
+</div>
+<p>GPU 的内存总线通常有 256 位或更宽，也就是说一次可以获取 8 个或更多个 32 位的浮点数。</p>
+<h4 id=混乱的局面>混乱的局面</h4>
+<p>为了获得更好的性能，现实中的 GPU 会综合使用流水线、多 ALU 以及许多本书尚未提及的技术，这就进一步增加了理解 GPU 的难度。更遗憾的是，不同的 GPU 之间的共性很少，如果必须针对某个 GPU 架构开发代码，GPGPU 编程并非最佳选择。</p>
+<p>OpenCL 定义了一种类 C 的语言，可以针对多种架构抽象的进行编程。不过的 GPU 厂商会提供各自的编译器和驱动程序，使代码可以被编译并运行在对应的 GPU 上。</p>
+<h2 id=总结>总结</h2>
+<h3 id=优点>优点</h3>
+<p>数据并行非常适用于处理大量数值数据，尤其适合用于科学计算、工程计算及仿真领域，比如流体力学、有限元分析、N 体模型、模拟退火、蚁群优化、神经网络等。</p>
+<p>GPU 不仅是强大的数据并行处理器，在能耗方面也变现出众，比传统的 CPU 有更加优秀的 GFLOPS/watt 指标。世界上最快的超级计算机都广泛使用 GPU 或专用数据并行协处理器，其中能耗指标低是一个重要的原因。</p>
+<h3 id=缺点>缺点</h3>
+<p>数据并行编程，更准确的说是 GPGPU 编程，在其适合领域内所向披靡。但并不适用于所有问题领域。值得一提的是，虽然用数据并行可以解决一些非数值问题(如自然语言处理)，但这样做并不容易——现今的工具集绝大多数关注的是数值处理。</p>
+<p>对 OpenCL 内核的调优是个技术活，理解底层架构的细节才能有效的进行调优。如果要写出高效的跨平台代码，就会变得异常复杂。在解决某些问题时，从主机往设备上复制数据会消耗大量时间，这会减弱甚至低效我们从事并行计算中获得的收益&mldr;..</p>
+</div>
+<div class=td-content style=page-break-before:always>
+<h1 id=pg-e6a823875924d673ce8c7f4db3a59c0f>8 - CH08-Lambda 架构</h1>
+<p>如果需要将一大批货物从国家的一端运送到另一端，18 轮的打开车是不二之选。如果紧要运行一个包裹，大卡车就不太适用了，因此综合性的航运公司也会适用一些小型货车进行本地的货物收发。</p>
+<p>Lambda 架构采用了类似的方法，既使用了可以进行大规模数据批处理的 MapReduce 技术，也使用了可以快速处理数据并及时反馈的流处理技术，这样混搭能够为大数据问题提供扩展性、响应性、容错性都很优秀的解决方案。</p>
+<h2 id=并行计算>并行计算</h2>
+<p>不同于传统数据处理，大数据领域广泛使用了并行计算——只要有足够的计算资源就可以处理 TB 级别的数据。Lambda 架构是一种大数据处理技术。</p>
+<p>与上一章讨论的 GPGPU 编程类似，Lambda 架构也使用了数据并行技术。与 GPGPU 不同的是，Lambda 架构站在大规模场景的角度来解决问题，它可以将数据和计算分布到几十台或几百台机器构建的集群上运行。这种技术不但解决了之间因为规模庞大而无法解决的问题，还可以构建出对硬件错误和认为错误进行容错的系统。</p>
+<p>Lambda 架构包含了很多内如，本章只侧重于其并发和分布式特性(更多内如可以参考 Big Data 一书)。对于 Lambda 架构中的诸多组件，本书侧重介绍两个主要的层：批处理层和加速层。</p>
+<p>批处理层使用 MapReduce 这类批处理技术从历史数据中对批处理视图进行预计算。这种计算效率高但延迟也高，所以又增加了一个加速层，使用流处理等低延迟技术从接收到的新数据中计算实时视图。合并这两种视图，就可以获得最终的计算结果。</p>
+<p>这是本书中最复杂的专题。它以很多其他技术作为基石，其中最重要的就是 MapReduce。</p>
+<div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180927231239.png style=display:block;width:50% alt=NAME align=center>
+</div>
+<h2 id=mapreduce>MapReduce</h2>
+<p>MapReduce 是一个多语义的术语。它可以指代一类算法，这类算法分为两个步骤：对一个数据首先进行映射操作(map)，然后进行化简(reduce)操作。</p>
+<p>MapReduce 还可以指代一类系统：这类系统使用了上述算法，将计算过程高效的分布到一个集群上。这类系统不仅可以将数据和数据处理过程分不到集群的多台机器上，还可以在一台或多个计算机崩溃时继续运转。</p>
+<p>当 MapReduce 指代一类系统时，可以说它是 Google 发明的。除了 Google，最流行的 MapReduce 框架是 Hadoop。</p>
+<h3 id=hadoop-基础>Hadoop 基础</h3>
+<p>Hadoop 就是用来处理大量数据的工具。如果你的数据不是以 GB 或更大的单位来度量的，那就不适用使用 Hadoop。Hadoop 的效率源自于它将数据分块后分别交给多台计算机进行处理。</p>
+<p>我们很容易猜到，一个 MapReduce 任务由两种主要的组件构成：mapper 和 reducer。mapper 负责将某种输入格式映射为许多键值对；reducer 负责将这些键值对转换为最终的输出格式。mapper 和 reducer 可以分布在很多不同的机器上。</p>
+<div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180927231929.png style=display:block;width:50% alt=NAME align=center>
+</div>
+<p>输入通常由一个或多个大文本文件构成。Hadoop 对这些文件进行分片(每一片的大小是可配置的)，并将每个分片发送个一个 mapper，mapper 将输出一系列键值对，Hadoop 再将这些键值对发送给 reducer。</p>
+<p>一个 mapper 产生的键值对可以发送给多个 reducer。键值对的键决定了那个 reducer 会接收这个键值对——Hadoop 确保具有相同键的键值对(无论由哪个 mapper 产生)都会发送给同一个 reducer 处理。这个阶段通常被称为洗牌(shuffle)。</p>
+<p>Hadoop 为每个键调用一次 reducer，并传入所有与该键对应的值。reducer 将这些值合并，再生产最终的输出结果。</p>
+<h2 id=批处理层>批处理层</h2>
+<h3 id=传统数据系统的缺陷>传统数据系统的缺陷</h3>
+<p>数据系统不是一个新概念——从计算机发明之初，数据库就一直负责存储和处理数据。传统数据库适用于一台计算机，但随着要处理的数据量越来越大，数据库就必须使用多台机器。</p>
+<h4 id=扩展性>扩展性</h4>
+<p>利用一些技术(如复制、分片等)可以将传统数据库扩展到多台机器上，但随着计算机数量和数据量的增长，这种方案会变得越来越困难。超过一定程度，增加计算机资源将无法继续提升性能。</p>
+<h4 id=维护成本>维护成本</h4>
+<p>维护一个跨越多台计算机的数据库的成本是比较高的。如果要求维护时不能停机，那么维护将变得更加困难——比如对数据库进行重新分片。随着数据量和查询数量的增加，容错、备份、确保数据一致性等工作的难度会呈几何级数增长。</p>
+<h4 id=复杂度>复杂度</h4>
+<p>复制和分片通常要求应用层提供一些支持——应用需要知道将请求发送给哪一台机器，以及应该更行哪一个数据分片。开发者习惯使用的许多特性(比如事务)在数据库分片后将无法使用。也就是说开发者必须显式处理失败的事务并进行重试。这都增加了传统数据库的复杂性，也增加了出错的可能。</p>
+<h4 id=认为错误>认为错误</h4>
+<p>讨论容错性时很容易被忽略的就是认为错误。许多数据故障不是由于存储故障引起的，而是由于管理员或开发人员的认为错误引起的。如果运气比较好，这类错误可以被快速定位，并通过还原备份来恢复，但不是所有错误都可以被轻易解决。设想一下，如果有一个隐藏了几周的数据错误突然引发了大面积崩溃，我们又该如何修复数据库呢？</p>
+<p>有时，我们可以分析错误影响的范围，并使用临时的脚本来修复数据库。有时我们可以通过重放数据库日志来回滚这个错误。有时，我们只能承认运气不佳。每次一来运气可不是长久之计。</p>
+<h4 id=报表与分析>报表与分析</h4>
+<p>传统数据库擅长于运营支持，即处理日常的业务数据。如果要处理历史数据，比如生成报表或进行数据分析，传统数据库的效率就比较低了。</p>
+<p>典型的解决方案是在独立的数据仓库中使用另一种格式来维护历史数据。数据从业务数据库向数据仓库的迁移过程就是著名的 ETL。这种方案不仅复杂，而且需要准确预测将来需要什么样的信息。有时会碰到这种情况：由于缺乏必要的信息或者信息格式不对，无法生成所需报表或进行某些分析。</p>
+<h3 id=永恒的真相>永恒的真相</h3>
+<p>我们可以将信息分为两类——原始数据和(从原始数据生成的)衍生数据。原始数据是永恒的真相，也是 Lambda 架构的基础。</p>
+<h2 id=加速层>加速层</h2>
+<div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180927233815.png style=display:block;width:50% alt=NAME align=center>
+</div>
+<p>上图展示了批处理层与加速层的协作方式。有新数据生成时，一方面给将其添加到原始数据中，这样批处理层就可以进行处理；另一方面将其传递给加速层，加速层会生成一个实时视图，实时视图会和批处理视图合并来满足对最新数据的查询。</p>
+<p>实时视图仅包含最后一次生成批处理视图后产生的原始数据所对应的衍生信息，当这部分数据被批处理层处理后，该实时视图被弃用。</p>
+<h3 id=设计加速层>设计加速层</h3>
+<p>不同的应用对实时性的要求是不同的——有一些要求数据在妙级可用，有些甚至是毫秒。</p>
+<p>由于加速层需要使用增量算法，因此要比构建批处理层复杂的多。这意味着加速层不能只处理原始数据，也就享受不到原始数据的原始特性了。我们必须重新面对传统数据库的特性：随机写、复杂的锁机制和事务机制。</p>
+<p>从好的方面来看，加速层只需要处理一部分数据，就是那部分还未被批处理层处理的珊瑚橘。一旦批处理层赶上进度，旧的数据就会从加速层移除。</p>
+<h4 id=同步与异步>同步与异步</h4>
+<p>最容易想到的构建加速层的方式是模仿传统的同步数据库。其实可以将传统数据库看做是 Lambda 架构的一种退化特例(没有批处理层)。</p>
+<div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180927235403.png style=display:block;width:30% alt=NAME align=center>
+</div>
+<p>在这种模型中，客户端直接和数据库通信，并在数据库进行更新操作时阻塞。这种模型非常合理，在某些场景下这是唯一能满足特定需求的方法。不过在另一些场景中，异步架构更合适一些。</p>
+<div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180927235612.png style=display:block;width:60% alt=NAME align=center>
+</div>
+<p>在这种模型中，客户端将更新操作添加到队列(如 Kafka)，这一步是无阻塞的。流处理器将串行的处理这些更新操作并对数据库进行更新。</p>
+<p>用队列将客户端和数据库解耦，会使更新操作变得更加复杂。不过，根据异步的特性，如果可以接受异步方案，也会获得非常显著的好处：</p>
+<ul>
+<li>客户端不会阻塞，所以少量的客户端就能处理大量数据，从而提高吞吐。</li>
+<li>业务压力激增会导致客户端或数据库超载，也会导致同步系统超时或丢失一些更新。而异步系统则不同，只需要将未处理的更新操作保持在队列中，在业务压力恢复稳定后可逐渐赶上进度。</li>
+<li>稍后我们将了解到：流处理器可以被并行化，也可以在多台计算机上进行分布式计算，即改善了性能也提供了容错。</li>
+</ul>
+<h4 id=如何让数据过期>如何让数据过期</h4>
+<p>假设批处理层需要两个小时处理数据，那么很容易就会认为加速层需要保留这两个小时以内的数据。实际上加速层需要保留两倍的数据，如下图所示。</p>
+<div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180928000204.png style=display:block;width:60% alt=NAME align=center>
+</div>
+<p>假设 N-1 次批处理刚刚结束，第 N 次批处理正要开始。如果每次批处理需要运行两个小时，这意味着批处理视图会落后两个小时。因此加速层需要保持这落后的两个小时数据，还要保持批处理层运行的两个小时中所有的新数据，总共需要保持 4 个小时的数据。</p>
+<p>当第 N 次批处理结束时，需要让最早两个小时的数据过期，但仍保存其后两个小时的数据。有多种方法可以达到目的，不过最容易的就是同时维护两个加速层，并交替使用它们，如下图：</p>
+<div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180928000538.png style=display:block;width:60% alt=NAME align=center>
+</div>
+<p>当一次梳理完成时，批处理视图中的新数据就变得可用，就可以将当前用户处理请求的加速层换到另一个加速层上。切换后闲置的加速层会清理其数据库，并在新的批处理开始时重新建立视图。</p>
+<p>这种做法的好处是，一方面不需要费心识别加速层的数据库中那些数据需要被过期清理，另一方面由于每次切换后加速层都是从一个空数据库开始运行，因此达到了更好的性能和可靠性。当然为此付出的代价是必须维护两份加速层的数据并且消耗两份计算资源，不过考虑到加速层仅仅处理总数据量中很小的一部分，因此付出的代价不那么大。</p>
+<h2 id=总结>总结</h2>
+<p>Lambda 架构将我们已经学到的一些内容进行了融合：</p>
+<ol>
+<li>原始数据是永恒的真相，这让我们想到分离状态与标识的做法。</li>
+<li>Hadoop 并行化解问题的方法是先将数据切分，在进行化简操作，这类似于并行函数式编程的做法。</li>
+<li>类似于 actor 模型，Lambda 架构将处理过程分布大集群上，既改善了性能又提供了容错。</li>
+<li>Storm 的元组流类似于 Actor 和 CSP 中的消息机制。</li>
+</ol>
+<h3 id=优点>优点</h3>
+<p>Lambda 架构非常适合报表与分析——以前则是使用数仓来完成这类任务。</p>
+<h3 id=缺点>缺点</h3>
+<p>仅适合大数据量。</p>
+<blockquote>
+<p>显然本书仅涉及了 Lambda 架构，或者说是大数据处理问题的一些皮毛。但好的一点是将其他并发编程模型与 Lambda 架构进行了相似性关联，在构建大数据处理系统时可以借鉴已有的、微观的并发编程模型，从思路上、从形式上。</p>
+</blockquote>
+</div>
+<div class=td-content style=page-break-before:always>
+<h1 id=pg-88846afa73141c54ccdf97483b44d566>9 - CH09-未来方向</h1>
+<h2 id=未来趋势>未来趋势</h2>
+<ul>
+<li>未来是“不变”的</li>
+<li>未来是分布式的</li>
+</ul>
+<h2 id=未尽之路>未尽之路</h2>
+<ul>
+<li>Fork/Join 模型和 Wokr-Stealing 算法
+<ul>
+<li>PS. 这是 Akka 的核心</li>
+</ul>
+</li>
+<li>数据流</li>
+<li>Reactive Programming</li>
+<li>Functional Reactive Programming</li>
+<li>网格计算</li>
+<li>元组空间</li>
+</ul>
+</div>
+</main>
+</div>
+</div>
+<footer class="bg-dark py-5 row d-print-none">
+<div class="container-fluid mx-sm-5">
+<div class=row>
+<div class="col-6 col-sm-4 text-xs-center order-sm-2">
+</div>
+<div class="col-6 col-sm-4 text-right text-xs-center order-sm-3">
+<ul class="list-inline mb-0">
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Weibo aria-label=Weibo>
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://weibo.com/u/3848950217>
+<i class="fab fa-weibo"></i>
+</a>
+</li>
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Twitter aria-label=Twitter>
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://twitter.com/zhange_zzg>
+<i class="fab fa-twitter"></i>
+</a>
+</li>
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title="Stack Overflow" aria-label="Stack Overflow">
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://stackoverflow.com>
+<i class="fab fa-stack-overflow"></i>
+</a>
+</li>
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=GitHub aria-label=GitHub>
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://github.com/infilos/infilos.com>
+<i class="fab fa-github"></i>
+</a>
+</li>
+</ul>
+</div>
+<div class="col-12 col-sm-4 text-center py-2 order-sm-2">
+<small class=text-white>&copy; 2021 infilos.com All Rights Reserved</small>
+</div>
+</div>
+</div>
+</footer>
+</div>
+<script src=/js/popper.min.js integrity=sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49 crossorigin=anonymous></script>
+<script src=/js/bootstrap.min.js integrity=sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy crossorigin=anonymous></script>
+<script src=/js/main.min.5c74b870c6953931a705f390a49c7e4c0a842ec5c83b24354758dd674343ed0d.js integrity="sha256-XHS4cMaVOTGnBfOQpJx+TAqELsXIOyQ1R1jdZ0ND7Q0=" crossorigin=anonymous></script>
+<script src=https://cdn.jsdelivr.net/npm/docsearch.js@2.6.3/dist/cdn/docsearch.min.js></script>
+<script>docsearch({apiKey:'123',indexName:'infilos_com',inputSelector:'.td-search-input',debug:!1})</script>
+</body>
+</html>

@@ -1,0 +1,1275 @@
+<!doctype html><html lang=zh class=no-js>
+<head>
+<meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no">
+<meta name=generator content="Hugo 0.88.1">
+<meta name=ROBOTS content="INDEX, FOLLOW">
+<link rel="shortcut icon" href=/favicons/favicon.ico>
+<link rel=apple-touch-icon href=/favicons/apple-touch-icon-180x180.png sizes=180x180>
+<link rel=icon type=image/png href=/favicons/favicon-16x16.png sizes=16x16>
+<link rel=icon type=image/png href=/favicons/favicon-32x32.png sizes=32x32>
+<link rel=icon type=image/png href=/favicons/android-36x36.png sizes=36x36>
+<link rel=icon type=image/png href=/favicons/android-48x48.png sizes=48x48>
+<link rel=icon type=image/png href=/favicons/android-72x72.png sizes=72x72>
+<link rel=icon type=image/png href=/favicons/android-96x96.png sizes=96x96>
+<link rel=icon type=image/png href=/favicons/android-144x144.png sizes=144x144>
+<link rel=icon type=image/png href=/favicons/android-192x192.png sizes=192x192>
+<title>CH15-高级同步-内存序 | infilos.com</title><meta property="og:title" content="CH15-高级同步-内存序">
+<meta property="og:description" content="因果关系与顺序是非常直观的，黑客往往能比一般人更好的掌握这些概念。在编写、分析和调试使用标准互斥机制(尤其是锁)的顺序、并行代码时，这些直觉可以成为非常强大的工具。不幸的是，当面对那些并未使用标准机制的代码时这种直觉将彻底失败。一个重要的例子当然是一些代码使用了这些标准机制，但是另外一些使用了更弱的同步机制。事实上，一些人认为更弱也算是一个有点。本章将帮助你了解有效实现同步原语和性能敏感代码的内存排序。
+15.1 排序：Why & How？  内存排序的一个动机可以在代码清单 15.1 中的石蕊测试中看到，咋一看似乎 exists 子句可能永远不会触发。毕竟，如果 exists 子句中的 0:r2=0，我们可以期望“线程 P0 中由 x1 加载到 r2”发生在“线程 P1 对 x1 的保存”，进一步期望“P1 中由 x0 加载到 r2”必须发生在“P0 对 x0 的保存”，因此 1:r2=2，从而不会触发 exists 子句。这个例子是对称的，因此类似的原因会让我们认为 1:r2=0 保证 0:r2=2。不幸的是，内存屏障的缺失使得这些期望破灭。即使是在相对更强排序的系统(x86)上，CPU 也有权对 P0 和 P1 中的语句进行重排序。
+ QQ 15.1：编译器同样能够对代码清单 15.1 中 P0 和 P1 的内存访问进行重排序，对吗？
+通常来说，编译器优化比 CPU 可以执行更加广泛和深刻的重排序。但是，在这种情况下，READ_ONCE 和 WRITE_ONCE 中的易失性访问会阻止编译器重排序。而且还要做许多其他事情，因此本节中的示例将大量使用 READ_ONCE 和 WRITE_ONCE。有关 READ_ONCE 和 WRITE_ONCE 的更多细节可以参考 15.3 节。
+ 这种重排序趋向可以使用诸如 Litmus7 之类的工具进行验证，该工具发现在我的笔记本上进行的 1 亿次实验中有 314 次反直觉排序。奇怪的是，两个加载返回值为 2 的完全合法的结果发生的概率反而较低，只有 167 次。这里的教训很清楚：增加反干涉性并不一定意味着能够降低概率！">
+<meta property="og:type" content="article">
+<meta property="og:url" content="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/dive-parallel/ch15/"><meta property="article:section" content="编程语言">
+<meta property="og:site_name" content="infilos.com">
+<meta itemprop=name content="CH15-高级同步-内存序">
+<meta itemprop=description content="因果关系与顺序是非常直观的，黑客往往能比一般人更好的掌握这些概念。在编写、分析和调试使用标准互斥机制(尤其是锁)的顺序、并行代码时，这些直觉可以成为非常强大的工具。不幸的是，当面对那些并未使用标准机制的代码时这种直觉将彻底失败。一个重要的例子当然是一些代码使用了这些标准机制，但是另外一些使用了更弱的同步机制。事实上，一些人认为更弱也算是一个有点。本章将帮助你了解有效实现同步原语和性能敏感代码的内存排序。
+15.1 排序：Why & How？  内存排序的一个动机可以在代码清单 15.1 中的石蕊测试中看到，咋一看似乎 exists 子句可能永远不会触发。毕竟，如果 exists 子句中的 0:r2=0，我们可以期望“线程 P0 中由 x1 加载到 r2”发生在“线程 P1 对 x1 的保存”，进一步期望“P1 中由 x0 加载到 r2”必须发生在“P0 对 x0 的保存”，因此 1:r2=2，从而不会触发 exists 子句。这个例子是对称的，因此类似的原因会让我们认为 1:r2=0 保证 0:r2=2。不幸的是，内存屏障的缺失使得这些期望破灭。即使是在相对更强排序的系统(x86)上，CPU 也有权对 P0 和 P1 中的语句进行重排序。
+ QQ 15.1：编译器同样能够对代码清单 15.1 中 P0 和 P1 的内存访问进行重排序，对吗？
+通常来说，编译器优化比 CPU 可以执行更加广泛和深刻的重排序。但是，在这种情况下，READ_ONCE 和 WRITE_ONCE 中的易失性访问会阻止编译器重排序。而且还要做许多其他事情，因此本节中的示例将大量使用 READ_ONCE 和 WRITE_ONCE。有关 READ_ONCE 和 WRITE_ONCE 的更多细节可以参考 15.3 节。
+ 这种重排序趋向可以使用诸如 Litmus7 之类的工具进行验证，该工具发现在我的笔记本上进行的 1 亿次实验中有 314 次反直觉排序。奇怪的是，两个加载返回值为 2 的完全合法的结果发生的概率反而较低，只有 167 次。这里的教训很清楚：增加反干涉性并不一定意味着能够降低概率！">
+<meta itemprop=wordCount content="7251">
+<meta itemprop=keywords content><meta name=twitter:card content="summary">
+<meta name=twitter:title content="CH15-高级同步-内存序">
+<meta name=twitter:description content="因果关系与顺序是非常直观的，黑客往往能比一般人更好的掌握这些概念。在编写、分析和调试使用标准互斥机制(尤其是锁)的顺序、并行代码时，这些直觉可以成为非常强大的工具。不幸的是，当面对那些并未使用标准机制的代码时这种直觉将彻底失败。一个重要的例子当然是一些代码使用了这些标准机制，但是另外一些使用了更弱的同步机制。事实上，一些人认为更弱也算是一个有点。本章将帮助你了解有效实现同步原语和性能敏感代码的内存排序。
+15.1 排序：Why & How？  内存排序的一个动机可以在代码清单 15.1 中的石蕊测试中看到，咋一看似乎 exists 子句可能永远不会触发。毕竟，如果 exists 子句中的 0:r2=0，我们可以期望“线程 P0 中由 x1 加载到 r2”发生在“线程 P1 对 x1 的保存”，进一步期望“P1 中由 x0 加载到 r2”必须发生在“P0 对 x0 的保存”，因此 1:r2=2，从而不会触发 exists 子句。这个例子是对称的，因此类似的原因会让我们认为 1:r2=0 保证 0:r2=2。不幸的是，内存屏障的缺失使得这些期望破灭。即使是在相对更强排序的系统(x86)上，CPU 也有权对 P0 和 P1 中的语句进行重排序。
+ QQ 15.1：编译器同样能够对代码清单 15.1 中 P0 和 P1 的内存访问进行重排序，对吗？
+通常来说，编译器优化比 CPU 可以执行更加广泛和深刻的重排序。但是，在这种情况下，READ_ONCE 和 WRITE_ONCE 中的易失性访问会阻止编译器重排序。而且还要做许多其他事情，因此本节中的示例将大量使用 READ_ONCE 和 WRITE_ONCE。有关 READ_ONCE 和 WRITE_ONCE 的更多细节可以参考 15.3 节。
+ 这种重排序趋向可以使用诸如 Litmus7 之类的工具进行验证，该工具发现在我的笔记本上进行的 1 亿次实验中有 314 次反直觉排序。奇怪的是，两个加载返回值为 2 的完全合法的结果发生的概率反而较低，只有 167 次。这里的教训很清楚：增加反干涉性并不一定意味着能够降低概率！">
+<script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga('create','UA-123062585-1','auto'),ga('send','pageview'))</script>
+<script async src=https://www.google-analytics.com/analytics.js></script>
+<link rel=preload href=/scss/main.min.847464b684a6e89d7276700a5c500c17ab494dd1755b2654a7b27d8b59e3347e.css as=style>
+<link href=/scss/main.min.847464b684a6e89d7276700a5c500c17ab494dd1755b2654a7b27d8b59e3347e.css rel=stylesheet integrity>
+<script src=/js/jquery-3.5.1.min.js integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin=anonymous></script>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/docsearch.js@2/dist/cdn/docsearch.min.css>
+</head>
+<body class=td-page>
+<header>
+<nav class="js-navbar-scroll navbar navbar-expand navbar-dark flex-column flex-md-row td-navbar">
+<a class=navbar-brand href=/>
+<span class=navbar-logo><svg id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512" style="enable-background:new 0 0 512 512"><path style="fill:#ffc107" d="M432.384 143.616c-4.165-4.164-10.917-4.164-15.083.0l-60.352 60.352c-4.164 4.165-4.164 10.917.0 15.083 21.187 20.463 54.951 19.876 75.413-1.311 19.962-20.668 19.962-53.435.0-74.102L432.384 143.616z"/><path style="fill:#607d8b" d="M42.667 277.334c-5.891.003-10.669-4.771-10.672-10.662-.002-4.338 2.623-8.245 6.64-9.882l234.667-96c5.455-2.233 11.687.38 13.92 5.835s-.38 11.687-5.835 13.92l-234.667 96C45.433 277.069 44.056 277.337 42.667 277.334z"/><path style="fill:#546e7a" d="M391.552 56.448l-32-32C343.938 8.745 322.689-.059 300.544.0h-3.755c-46.082.024-83.432 37.374-83.456 83.456v3.755c-.053 22.138 8.75 43.377 24.448 58.987l32 32c4.165 4.164 10.917 4.164 15.083.0L391.531 71.531C395.701 67.372 395.71 60.62 391.552 56.448z"/><path style="fill:#607d8b" d="M160 469.334c-3.279.006-6.379-1.497-8.405-4.075L34.261 315.926c-3.635-4.636-2.823-11.341 1.813-14.976s11.341-2.823 14.976 1.813l117.333 149.333c3.629 4.641 2.809 11.344-1.832 14.973C164.681 468.533 162.375 469.329 160 469.334z"/><path style="fill:#455a64" d="M487.467 86.848l-3.669-3.648c-37.687-36.557-97.71-36.197-134.955.811l-51.413 51.413c-36.996 37.25-37.357 97.263-.811 134.955l3.584 3.669c1.7 2.457 4.671 3.706 7.616 3.2 2.831.005 5.548-1.115 7.552-3.115l172.181-172.181c4.189-4.143 4.226-10.896.083-15.085-.028-.028-.055-.056-.083-.083L487.467 86.848z"/><g><path style="fill:#ffc107" d="M501.333 192H480c-5.891.0-10.667-4.776-10.667-10.667s4.776-10.667 10.667-10.667h21.333c5.891.0 10.667 4.776 10.667 10.667S507.225 192 501.333 192z"/><path style="fill:#ffc107" d="M394.667 298.667c-5.891.0-10.667-4.776-10.667-10.667v-21.333c0-5.891 4.776-10.667 10.667-10.667 5.891.0 10.667 4.776 10.667 10.667V288C405.333 293.891 400.558 298.667 394.667 298.667z"/><path style="fill:#ffc107" d="M480 277.334c-2.831.005-5.548-1.115-7.552-3.115l-21.333-21.333c-4.093-4.237-3.975-10.99.262-15.083 4.134-3.993 10.687-3.993 14.821.0l21.333 21.333c4.159 4.172 4.148 10.926-.024 15.085C485.514 276.209 482.815 277.327 480 277.334z"/></g><g><path style="fill:#455a64" d="M266.667 448H96c-29.455.0-53.333 23.878-53.333 53.333.0 5.891 4.776 10.667 10.667 10.667h256c5.891.0 10.667-4.776 10.667-10.667C320 471.878 296.122 448 266.667 448z"/><circle style="fill:#455a64" cx="32" cy="288" r="32"/></g><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/></svg></span><span class=font-weight-bold>infilos.com</span>
+</a>
+<div class="collapse navbar-collapse" id=navbarSupportedContent>
+<ul class="navbar-nav mr-auto">
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+基础
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/%e6%93%8d%e4%bd%9c%e7%b3%bb%e7%bb%9f>操作系统</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/%e6%80%a7%e8%83%bd%e4%b9%8b%e6%ae%87>性能之殇</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/io%e6%a8%a1%e5%9e%8b>IO 模型</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/%e7%bd%91%e7%bb%9c%e5%9f%ba%e7%a1%80>网络基础</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/tcp-ip>TCP-IP</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/http>HTTP</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+语言
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/java>Java 编程</a>
+<a class=dropdown-item href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/jvm-core>JVM 核心</a>
+<a class=dropdown-item href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/jvm-concurrent>JVM 并发</a>
+<a class=dropdown-item href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/scala>Scala 编程</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+框架库
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93/spring>Spring</a>
+<a class=dropdown-item href=/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93/hikari>Hikari</a>
+<a class=dropdown-item href=/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93/parboiled>Parboiled</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+分布式
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%88%86%e5%b8%83%e5%bc%8f/base>基本构成</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+大数据
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%ad%98%e5%82%a8%e7%b3%bb%e7%bb%9f>存储系统</a>
+<a class=dropdown-item href=/%e6%9f%a5%e8%af%a2%e7%b3%bb%e7%bb%9f>查询系统</a>
+<a class=dropdown-item href=/%e6%b6%88%e6%81%af%e7%b3%bb%e7%bb%9f>消息系统</a>
+<a class=dropdown-item href=/%e5%a4%84%e7%90%86%e7%b3%bb%e7%bb%9f>处理系统</a>
+<a class=dropdown-item href=/%e7%ae%a1%e7%90%86%e7%b3%bb%e7%bb%9f>管理系统</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+中后台
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e8%ae%be%e6%96%bd>基础设施</a>
+<a class=dropdown-item href=/%e4%ba%a4%e4%ba%92%e7%95%8c%e9%9d%a2>交互界面</a>
+<a class=dropdown-item href=/%e4%b8%9a%e5%8a%a1%e7%b3%bb%e7%bb%9f>业务系统</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+模式架构
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e6%a8%a1%e5%bc%8f%e6%9e%b6%e6%9e%84/design-pattern>设计模式</a>
+<a class=dropdown-item href=/%e6%a8%a1%e5%bc%8f%e6%9e%b6%e6%9e%84/micro-service>微服务架构</a>
+</div>
+</li>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e9%9d%a2%e8%af%95%e9%97%ae%e7%ad%94>
+<span>面试</span>
+</a>
+</li>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e7%ae%a1%e7%90%86%e8%b7%af%e5%be%84>
+<span>管理</span>
+</a>
+</li>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e5%bc%80%e6%ba%90%e9%a1%b9%e7%9b%ae>
+<span>开源</span>
+</a>
+</li>
+</ul>
+<div class="form-inline my-2 my-lg-0">
+<div class="nav-item nav-search-item my-2 my-md-0">
+<input type=search class="form-control td-search-input" placeholder="&#xf002; 站内搜索…" aria-label=站内搜索… autocomplete=off>
+</div>
+</div>
+</div>
+</nav>
+</header>
+<div class="container-fluid td-outer">
+<div class=td-main>
+<div class="row flex-xl-nowrap">
+<aside class="col-12 col-md-3 col-xl-2 td-sidebar d-print-none">
+<div id=td-sidebar-menu class=td-sidebar__inner>
+<div id=content-mobile>
+<form class="td-sidebar__search d-flex align-items-center">
+<input type=search class="form-control td-search-input" placeholder="&#xf002; 站内搜索…" aria-label=站内搜索… autocomplete=off>
+<button class="btn btn-link td-sidebar__toggle d-md-none p-0 ml-3 fas fa-bars" type=button data-toggle=collapse data-target=#td-section-nav aria-controls=td-docs-nav aria-expanded=false aria-label="Toggle section navigation">
+</button>
+</form>
+</div>
+<div id=content-desktop></div>
+<nav class="collapse td-sidebar-nav" id=td-section-nav>
+<ul class="td-sidebar-nav__section pr-md-3 ul-0">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e7bc96e7a88be8afade8a880-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section tree-root" id=m-e7bc96e7a88be8afade8a880><span>编程语言</span></a>
+<ul class=ul-1>
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e7bc96e7a88be8afade8a880java-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880java><span>Java 编程</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-base-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-base/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880javajava-base><span>Java 基础</span></a>
+<ul class="ul-3 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-basech01-e99da2e59091e5afb9e8b1a1-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-base/ch01-%E9%9D%A2%E5%90%91%E5%AF%B9%E8%B1%A1/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-basech01-e99da2e59091e5afb9e8b1a1><span>CH01-面向对象</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-basech02-e59fbae69cace79fa5e8af86-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-base/ch02-%E5%9F%BA%E6%9C%AC%E7%9F%A5%E8%AF%86/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-basech02-e59fbae69cace79fa5e8af86><span>CH02-基本知识</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-basech03-e59fbae69cace59bbee8b0b1-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-base/ch03-%E5%9F%BA%E6%9C%AC%E5%9B%BE%E8%B0%B1/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-basech03-e59fbae69cace59bbee8b0b1><span>CH03-基本图谱</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-basech04-e6b39be59e8be69cbae588b6-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-base/ch04-%E6%B3%9B%E5%9E%8B%E6%9C%BA%E5%88%B6/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-basech04-e6b39be59e8be69cbae588b6><span>CH04-泛型机制</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-basech05-e6b3a8e8a7a3e69cbae588b6-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-base/ch05-%E6%B3%A8%E8%A7%A3%E6%9C%BA%E5%88%B6/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-basech05-e6b3a8e8a7a3e69cbae588b6><span>CH05-注解机制</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-basech06-e5bc82e5b8b8e69cbae588b6-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-base/ch06-%E5%BC%82%E5%B8%B8%E6%9C%BA%E5%88%B6/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-basech06-e5bc82e5b8b8e69cbae588b6><span>CH06-异常机制</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-basech07-e58f8de5b084e69cbae588b6-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-base/ch07-%E5%8F%8D%E5%B0%84%E6%9C%BA%E5%88%B6/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-basech07-e58f8de5b084e69cbae588b6><span>CH07-反射机制</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-basech08-spie69cbae588b6-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-base/ch08-spi%E6%9C%BA%E5%88%B6/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-basech08-spie69cbae588b6><span>CH08-SPI 机制</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-collection-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-collection/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880javajava-collection><span>Java 集合</span></a>
+<ul class="ul-3 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-collectionch01-e99b86e59088e7bb93e69e84-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-collection/ch01-%E9%9B%86%E5%90%88%E7%BB%93%E6%9E%84/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-collectionch01-e99b86e59088e7bb93e69e84><span>CH01-集合结构</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-collectionch02-arraylist-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-collection/ch02-arraylist/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-collectionch02-arraylist><span>CH02-ArrayList</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-collectionch03-linkedlist-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-collection/ch03-linkedlist/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-collectionch03-linkedlist><span>CH03-LinkedList</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-collectionch04-stack-queue-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-collection/ch04-stack-queue/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-collectionch04-stack-queue><span>CH04-Stack-Queue</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-collectionch05-priorityqueue-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-collection/ch05-priorityqueue/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-collectionch05-priorityqueue><span>CH05-PriorityQueue</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-collectionch06-hashset-map-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-collection/ch06-hashset-map/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-collectionch06-hashset-map><span>CH06-HashSet-Map</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-collectionch07-linkedhashset-map-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-collection/ch07-linkedhashset-map/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-collectionch07-linkedhashset-map><span>CH07-LinkedHashSet-Map</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-collectionch08-treeset-map-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-collection/ch08-treeset-map/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-collectionch08-treeset-map><span>CH08-TreeSet-Map</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-collectionch09-weakhashmap-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-collection/ch09-weakhashmap/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-collectionch09-weakhashmap><span>CH09-WeakHashMap</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrent-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880javajava-concurrent><span>Java 并发</span></a>
+<ul class="ul-3 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch01-e5b9b6e58f91e4bd93e7b3bb-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch01-%E5%B9%B6%E5%8F%91%E4%BD%93%E7%B3%BB/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch01-e5b9b6e58f91e4bd93e7b3bb><span>CH01-并发体系</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch02-e79086e8aebae59fbae7a180-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch02-%E7%90%86%E8%AE%BA%E5%9F%BA%E7%A1%80/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch02-e79086e8aebae59fbae7a180><span>CH02-理论基础</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch03-e7babfe7a88be59fbae7a180-1-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch03-%E7%BA%BF%E7%A8%8B%E5%9F%BA%E7%A1%80-1/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch03-e7babfe7a88be59fbae7a180-1><span>CH03-线程基础-1</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch04-e7babfe7a88be59fbae7a180-2-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch04-%E7%BA%BF%E7%A8%8B%E5%9F%BA%E7%A1%80-2/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch04-e7babfe7a88be59fbae7a180-2><span>CH04-线程基础-2</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch05-synchronized-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch05-synchronized/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch05-synchronized><span>CH05-Synchronized</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch06-volatile-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch06-volatile/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch06-volatile><span>CH06-Volatile</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch07-final-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch07-final/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch07-final><span>CH07-Final</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch08-e5b9b6e58f91e6a682e8a788-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch08-%E5%B9%B6%E5%8F%91%E6%A6%82%E8%A7%88/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch08-e5b9b6e58f91e6a682e8a788><span>CH08-并发概览</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch09-e5ba95e5b182e694afe69291-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch09-%E5%BA%95%E5%B1%82%E6%94%AF%E6%92%91/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch09-e5ba95e5b182e694afe69291><span>CH09-底层支撑</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch10-locksupport-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch10-locksupport/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch10-locksupport><span>CH10-LockSupport</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch11-aqs-1-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch11-aqs-1/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch11-aqs-1><span>CH11-AQS-1</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch12-aqs-2-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch12-aqs-2/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch12-aqs-2><span>CH12-AQS-2</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch13-aqs-3-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch13-aqs-3/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch13-aqs-3><span>CH13-AQS-3</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch14-aqs-4-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch14-aqs-4/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch14-aqs-4><span>CH14-AQS-4</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch15-reentrantlock-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch15-reentrantlock/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch15-reentrantlock><span>CH15-ReentrantLock</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch16-reentrantreadwritelock-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch16-reentrantreadwritelock/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch16-reentrantreadwritelock><span>CH16-ReentrantReadWriteLock</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch17-concurrenthashmap-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch17-concurrenthashmap/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch17-concurrenthashmap><span>CH17-ConcurrentHashMap</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch18-concurrentlinkedqueue-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch18-concurrentlinkedqueue/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch18-concurrentlinkedqueue><span>CH18-ConcurrentLinkedQueue</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch19-blockingqueue-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch19-blockingqueue/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch19-blockingqueue><span>CH19-BlockingQueue</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch20-futuretask-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch20-futuretask/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch20-futuretask><span>CH20-FutureTask</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch21-threadpoolexecutor-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch21-threadpoolexecutor/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch21-threadpoolexecutor><span>CH21-ThreadPoolExecutor</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch22-scheduledthreadpoolexecutor-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch22-scheduledthreadpoolexecutor/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch22-scheduledthreadpoolexecutor><span>CH22-ScheduledThreadPoolExecutor</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch23-forkjoin-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch23-forkjoin/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch23-forkjoin><span>CH23-ForkJoin.md</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch24-countdownlatch-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch24-countdownlatch/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch24-countdownlatch><span>CH24-CountDownLatch</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch25-cyclicbarrier-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch25-cyclicbarrier/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch25-cyclicbarrier><span>CH25-CyclicBarrier</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch26-semaphore-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch26-semaphore/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch26-semaphore><span>CH26-Semaphore</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch27-phaser-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch27-phaser/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch27-phaser><span>CH27-Phaser</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch28-exchanger-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch28-exchanger/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch28-exchanger><span>CH28-Exchanger</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch29-threadlocal-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch29-threadlocal/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch29-threadlocal><span>CH29-ThreadLocal</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch30-alllocks-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch30-alllocks/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch30-alllocks><span>CH30-AllLocks</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch31-allqueues-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch31-allqueues/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch31-allqueues><span>CH31-AllQueues</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch32-allpools-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch32-allpools/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch32-allpools><span>CH32-AllPools</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-io-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-io/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880javajava-io><span>Java I/0</span></a>
+<ul class="ul-3 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-ioch01-ioe58886e7b1bb-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-io/ch01-io%E5%88%86%E7%B1%BB/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-ioch01-ioe58886e7b1bb><span>CH01-IO分类</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-ioch02-e8a385e9a5b0e6a8a1e5bc8f-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-io/ch02-%E8%A3%85%E9%A5%B0%E6%A8%A1%E5%BC%8F/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-ioch02-e8a385e9a5b0e6a8a1e5bc8f><span>CH02-装饰模式</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-ioch03-inputstream-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-io/ch03-inputstream/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-ioch03-inputstream><span>CH03-InputStream</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-ioch04-outputstream-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-io/ch04-outputstream/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-ioch04-outputstream><span>CH04-OutputStream</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-ioch05-e5b8b8e794a8e6938de4bd9c-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-io/ch05-%E5%B8%B8%E7%94%A8%E6%93%8D%E4%BD%9C/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-ioch05-e5b8b8e794a8e6938de4bd9c><span>CH05-常用操作.md</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-ioch06-ioe5ae9ee78eb0-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-io/ch06-io%E5%AE%9E%E7%8E%B0/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-ioch06-ioe5ae9ee78eb0><span>CH06-IO实现</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-ioch07-ioe6a8a1e59e8b-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-io/ch07-io%E6%A8%A1%E5%9E%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-ioch07-ioe6a8a1e59e8b><span>CH07-IO模型</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-ioch08-bioe58e9fe79086-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-io/ch08-bio%E5%8E%9F%E7%90%86/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-ioch08-bioe58e9fe79086><span>CH08-BIO原理</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-ioch09-nioe59fbae7a180-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-io/ch09-nio%E5%9F%BA%E7%A1%80/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-ioch09-nioe59fbae7a180><span>CH09-NIO基础</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-ioch10-nioe58e9fe79086-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-io/ch10-nio%E5%8E%9F%E7%90%86/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-ioch10-nioe58e9fe79086><span>CH10-NIO原理</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-ioch11-aioe58e9fe79086-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-io/ch11-aio%E5%8E%9F%E7%90%86/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-ioch11-aioe58e9fe79086><span>CH11-AIO原理</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-ioch12-e99bb6e68bb7e8b49d-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-io/ch12-%E9%9B%B6%E6%8B%B7%E8%B4%9D/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-ioch12-e99bb6e68bb7e8b49d><span>CH12-零拷贝</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-ioch13-e58685e5ad98e698a0e5b084-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-io/ch13-%E5%86%85%E5%AD%98%E6%98%A0%E5%B0%84/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-ioch13-e58685e5ad98e698a0e5b084><span>CH13-内存映射</span></a>
+</li>
+</ul>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e7bc96e7a88be8afade8a880jvm-core-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-core><span>JVM 核心</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm><span>JVM Core</span></a>
+<ul class="ul-3 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch01-jvme6a682e8a788-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm/ch01-jvm%E6%A6%82%E8%A7%88/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch01-jvme6a682e8a788><span>CH01-JVM概览</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch02-jvme5ad97e88a82e7a081-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm/ch02-jvm%E5%AD%97%E8%8A%82%E7%A0%81/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch02-jvme5ad97e88a82e7a081><span>CH02-JVM字节码</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch03-jvme7b1bbe58aa0e8bdbd-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm/ch03-jvm%E7%B1%BB%E5%8A%A0%E8%BD%BD/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch03-jvme7b1bbe58aa0e8bdbd><span>CH03-JVM类加载</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch04-jvme58685e5ad98e7bb93e69e84-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm/ch04-jvm%E5%86%85%E5%AD%98%E7%BB%93%E6%9E%84/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch04-jvme58685e5ad98e7bb93e69e84><span>CH04-JVM内存结构</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch05-jvme58685e5ad98e6a8a1e59e8b-1-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm/ch05-jvm%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B-1/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch05-jvme58685e5ad98e6a8a1e59e8b-1><span>CH05-JVM内存模型-1</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch06-jvme58685e5ad98e6a8a1e59e8b-2-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm/ch06-jvm%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B-2/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch06-jvme58685e5ad98e6a8a1e59e8b-2><span>CH06-JVM内存模型-2</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch07-jvme59e83e59cbee59b9ee694b6-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm/ch07-jvm%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch07-jvme59e83e59cbee59b9ee694b6><span>CH07-JVM垃圾回收</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch08-jvm-g1-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm/ch08-jvm-g1/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch08-jvm-g1><span>CH08-JVM-G1.md</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch09-jvm-zgc-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm/ch09-jvm-zgc/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch09-jvm-zgc><span>CH09-JVM-ZGC</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch10-jvme8b083e4bc98e58f82e695b0-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm/ch10-jvm%E8%B0%83%E4%BC%98%E5%8F%82%E6%95%B0/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch10-jvme8b083e4bc98e58f82e695b0><span>CH10-JVM调优参数</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch11-jvm-oom-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm/ch11-jvm-oom/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch11-jvm-oom><span>CH11-JVM-OOM</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch12-jvme7babfe7a88bdump-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm/ch12-jvm%E7%BA%BF%E7%A8%8Bdump/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch12-jvme7babfe7a88bdump><span>CH12-JVM线程Dump</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch13-jvme8b083e8af95e591bde4bba4-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm/ch13-jvm%E8%B0%83%E8%AF%95%E5%91%BD%E4%BB%A4/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch13-jvme8b083e8af95e591bde4bba4><span>CH13-JVM调试命令</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch14-jvme8b083e8af95e5b7a5e585b7-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm/ch14-jvm%E8%B0%83%E8%AF%95%E5%B7%A5%E5%85%B7/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch14-jvme8b083e8af95e5b7a5e585b7><span>CH14-JVM调试工具</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch15-jvme58aa8e68081e8b083e8af95-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm/ch15-jvm%E5%8A%A8%E6%80%81%E8%B0%83%E8%AF%95/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch15-jvme58aa8e68081e8b083e8af95><span>CH15-JVM动态调试</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-133-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/jmm-133/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-133><span>JSR 133</span></a>
+<ul class="ul-3 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-133ch01-e68c87e4bba4e9878de68e92-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/jmm-133/ch01-%E6%8C%87%E4%BB%A4%E9%87%8D%E6%8E%92/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-133ch01-e68c87e4bba4e9878de68e92><span>CH01-指令重排</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-133ch02-e58685e5ad98e5b18fe99a9c-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/jmm-133/ch02-%E5%86%85%E5%AD%98%E5%B1%8F%E9%9A%9C/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-133ch02-e58685e5ad98e5b18fe99a9c><span>CH02-内存屏障</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-133ch03-e5a49ae5a484e79086e599a8-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/jmm-133/ch03-%E5%A4%9A%E5%A4%84%E7%90%86%E5%99%A8/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-133ch03-e5a49ae5a484e79086e599a8><span>CH03-多处理器</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-133ch04-e5bc80e58f91e68c87e58d97-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/jmm-133/ch04-%E5%BC%80%E5%8F%91%E6%8C%87%E5%8D%97/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-133ch04-e5bc80e58f91e68c87e58d97><span>CH04-开发指南</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-spec-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/jmm-spec/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-spec><span>JMM 规范</span></a>
+<ul class="ul-3 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-specch01-jmme8a784e88c83-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/jmm-spec/ch01-jmm%E8%A7%84%E8%8C%83/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-specch01-jmme8a784e88c83><span>CH01-JMM规范</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-specch02-jmme8a7a3e9878a-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/jmm-spec/ch02-jmm%E8%A7%A3%E9%87%8A/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-specch02-jmme8a7a3e9878a><span>CH02-JMM Explain</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-specch03-jmme58e9fe58899-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/jmm-spec/ch03-jmm%E5%8E%9F%E5%88%99/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-specch03-jmme58e9fe58899><span>CH03-JMM原则</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-specch04-jsr133-faq-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/jmm-spec/ch04-jsr133-faq/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-specch04-jsr133-faq><span>CH04-JSR133-FAQ</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-specch05-jsr133-cook-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/jmm-spec/ch05-jsr133-cook/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-specch05-jsr133-cook><span>CH05-JSR133-Cook</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v2/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2><span>JVM 深入理解 V2</span></a>
+<ul class="ul-3 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch01-e8b5b0e8bf9bjava-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v2/ch01-%E8%B5%B0%E8%BF%9Bjava/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch01-e8b5b0e8bf9bjava><span>CH01-走近 Java</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch02-e58685e5ad98e58cbae59f9fe4b88ee6baa2e587bae5bc82e5b8b8-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v2/ch02-%E5%86%85%E5%AD%98%E5%8C%BA%E5%9F%9F%E4%B8%8E%E6%BA%A2%E5%87%BA%E5%BC%82%E5%B8%B8/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch02-e58685e5ad98e58cbae59f9fe4b88ee6baa2e587bae5bc82e5b8b8><span>CH02-内存区域与溢出</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch03-e59e83e59cbee694b6e99b86e4b88ee58886e9858de7ad96e795a5-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v2/ch03-%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E4%B8%8E%E5%88%86%E9%85%8D%E7%AD%96%E7%95%A5/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch03-e59e83e59cbee694b6e99b86e4b88ee58886e9858de7ad96e795a5><span>CH03-垃圾收集与分配策略</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch04-e680a7e883bde79b91e68ea7e4b88ee69585e99a9ce5a484e79086-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v2/ch04-%E6%80%A7%E8%83%BD%E7%9B%91%E6%8E%A7%E4%B8%8E%E6%95%85%E9%9A%9C%E5%A4%84%E7%90%86/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch04-e680a7e883bde79b91e68ea7e4b88ee69585e99a9ce5a484e79086><span>CH04-性能监控与故障处理</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch05-e8b083e4bc98e6a188e4be8b-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v2/ch05-%E8%B0%83%E4%BC%98%E6%A1%88%E4%BE%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch05-e8b083e4bc98e6a188e4be8b><span>CH05-调优案例</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch06-e7b1bbe69687e4bbb6e7bb93e69e84-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v2/ch06-%E7%B1%BB%E6%96%87%E4%BB%B6%E7%BB%93%E6%9E%84/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch06-e7b1bbe69687e4bbb6e7bb93e69e84><span>CH06-类文件结构</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch07-e7b1bbe58aa0e8bdbde69cbae588b6-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v2/ch07-%E7%B1%BB%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch07-e7b1bbe58aa0e8bdbde69cbae588b6><span>CH07-类加载</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch08-e5ad97e88a82e7a081e689a7e8a18ce5bc95e6938e-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v2/ch08-%E5%AD%97%E8%8A%82%E7%A0%81%E6%89%A7%E8%A1%8C%E5%BC%95%E6%93%8E/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch08-e5ad97e88a82e7a081e689a7e8a18ce5bc95e6938e><span>CH08-字节码执行引擎</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch09-e6a188e4be8be4b88ee5ae9ee68898-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v2/ch09-%E6%A1%88%E4%BE%8B%E4%B8%8E%E5%AE%9E%E6%88%98/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch09-e6a188e4be8be4b88ee5ae9ee68898><span>CH09-案例与实战</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch10-e7bc96e8af91e69c9fe4bc98e58c96-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v2/ch10-%E7%BC%96%E8%AF%91%E6%9C%9F%E4%BC%98%E5%8C%96/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch10-e7bc96e8af91e69c9fe4bc98e58c96><span>CH10-编译期优化</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch11-e8bf90e8a18ce697b6e4bc98e58c96-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v2/ch11-%E8%BF%90%E8%A1%8C%E6%97%B6%E4%BC%98%E5%8C%96/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch11-e8bf90e8a18ce697b6e4bc98e58c96><span>CH11-运行时优化</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch12-e58685e5ad98e6a8a1e59e8be4b88ee7babfe7a88b-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v2/ch12-%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B%E4%B8%8E%E7%BA%BF%E7%A8%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch12-e58685e5ad98e6a8a1e59e8be4b88ee7babfe7a88b><span>CH12-内存模型与线程</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch13-e7babfe7a88be5ae89e585a8e4b88ee99481e4bc98e58c96-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v2/ch13-%E7%BA%BF%E7%A8%8B%E5%AE%89%E5%85%A8%E4%B8%8E%E9%94%81%E4%BC%98%E5%8C%96/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch13-e7babfe7a88be5ae89e585a8e4b88ee99481e4bc98e58c96><span>CH13-线程安全与锁优化</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2endix-b-e68c87e4bba4e8a1a8-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v2/endix-b-%E6%8C%87%E4%BB%A4%E8%A1%A8/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2endix-b-e68c87e4bba4e8a1a8><span>Endix-B-字节码指令</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2endix-c-e58f82e695b0e8a1a8-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v2/endix-c-%E5%8F%82%E6%95%B0%E8%A1%A8/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2endix-c-e58f82e695b0e8a1a8><span>Endix-C-虚拟机参数</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v3-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v3/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v3><span>JVM 深入理解 V3</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e7bc96e7a88be8afade8a880jvm-concurrent-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-concurrent><span>JVM 并发</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practice-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/java-con-practice/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practice><span>Java 并发实战</span></a>
+<ul class="ul-3 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech01-e7ae80e4bb8b-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/java-con-practice/ch01-%E7%AE%80%E4%BB%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech01-e7ae80e4bb8b><span>CH01-简介</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech02-e7babfe7a88be5ae89e585a8e680a7-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/java-con-practice/ch02-%E7%BA%BF%E7%A8%8B%E5%AE%89%E5%85%A8%E6%80%A7/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech02-e7babfe7a88be5ae89e585a8e680a7><span>CH02-线程安全性</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech03-e5afb9e8b1a1e585b1e4baab-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/java-con-practice/ch03-%E5%AF%B9%E8%B1%A1%E5%85%B1%E4%BA%AB/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech03-e5afb9e8b1a1e585b1e4baab><span>CH03-对象共享</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech04-e5afb9e8b1a1e7bb84e59088-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/java-con-practice/ch04-%E5%AF%B9%E8%B1%A1%E7%BB%84%E5%90%88/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech04-e5afb9e8b1a1e7bb84e59088><span>CH04-对象组合</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech05-e59fbae7a180e69e84e5bbbae59d97-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/java-con-practice/ch05-%E5%9F%BA%E7%A1%80%E6%9E%84%E5%BB%BA%E5%9D%97/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech05-e59fbae7a180e69e84e5bbbae59d97><span>CH05-基础构建块</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech06-e4bbbbe58aa1e689a7e8a18c-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/java-con-practice/ch06-%E4%BB%BB%E5%8A%A1%E6%89%A7%E8%A1%8C/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech06-e4bbbbe58aa1e689a7e8a18c><span>CH06-任务执行</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech07-e58f96e6b688e585b3e997ad-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/java-con-practice/ch07-%E5%8F%96%E6%B6%88%E5%85%B3%E9%97%AD/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech07-e58f96e6b688e585b3e997ad><span>CH07-取消关闭</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech08-e7babfe7a88be6b1a0-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/java-con-practice/ch08-%E7%BA%BF%E7%A8%8B%E6%B1%A0/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech08-e7babfe7a88be6b1a0><span>CH08-线程池</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech09-guie5ba94e794a8-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/java-con-practice/ch09-gui%E5%BA%94%E7%94%A8/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech09-guie5ba94e794a8><span>CH09-GUI应用</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech10-e6b4bbe8b783e680a7e58db1e999a9-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/java-con-practice/ch10-%E6%B4%BB%E8%B7%83%E6%80%A7%E5%8D%B1%E9%99%A9/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech10-e6b4bbe8b783e680a7e58db1e999a9><span>CH10-活跃性危险</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech11-e680a7e883bde4b88ee4bcb8e7bca9-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/java-con-practice/ch11-%E6%80%A7%E8%83%BD%E4%B8%8E%E4%BC%B8%E7%BC%A9/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech11-e680a7e883bde4b88ee4bcb8e7bca9><span>CH11-性能与伸缩</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech12-e6b58be8af95-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/java-con-practice/ch12-%E6%B5%8B%E8%AF%95/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech12-e6b58be8af95><span>CH12-测试</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech13-e698bee5bc8fe99481-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/java-con-practice/ch13-%E6%98%BE%E5%BC%8F%E9%94%81/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech13-e698bee5bc8fe99481><span>CH13-显式锁</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech14-e887aae5ae9ae4b989e689a9e5b195-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/java-con-practice/ch14-%E8%87%AA%E5%AE%9A%E4%B9%89%E6%89%A9%E5%B1%95/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech14-e887aae5ae9ae4b989e689a9e5b195><span>CH14-自定义扩展</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech15-e58e9fe5ad90e4b88ee99d9ee998bbe5a19ee5908ce6ada5-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/java-con-practice/ch15-%E5%8E%9F%E5%AD%90%E4%B8%8E%E9%9D%9E%E9%98%BB%E5%A1%9E%E5%90%8C%E6%AD%A5/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech15-e58e9fe5ad90e4b88ee99d9ee998bbe5a19ee5908ce6ada5><span>CH15-原子与非阻塞同步</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech16-e58685e5ad98e6a8a1e59e8b-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/java-con-practice/ch16-%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech16-e58685e5ad98e6a8a1e59e8b><span>CH16-内存模型</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-pattern-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/java-con-pattern/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-pattern><span>Java 并发模式</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallel-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/dive-parallel/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallel><span>深入理解并行</span></a>
+<ul class="ul-3 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch01-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/dive-parallel/ch01/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch01><span>CH01-关于本书</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch02-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/dive-parallel/ch02/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch02><span>CH02-简介</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch03-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/dive-parallel/ch03/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch03><span>CH03-硬件特性</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch04-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/dive-parallel/ch04/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch04><span>CH04-并行工具</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch05-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/dive-parallel/ch05/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch05><span>CH05-计数</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch06-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/dive-parallel/ch06/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch06><span>CH06-分割同步设计</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch07-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/dive-parallel/ch07/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch07><span>CH07-锁</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch08-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/dive-parallel/ch08/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch08><span>CH08-数据所有权</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch09-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/dive-parallel/ch09/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch09><span>CH09-延后处理</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch10-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/dive-parallel/ch10/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch10><span>CH10-数据结构</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch11-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/dive-parallel/ch11/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch11><span>CH11-验证</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch12-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/dive-parallel/ch12/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch12><span>CH12-形式验证</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch13-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/dive-parallel/ch13/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch13><span>CH13-综合应用</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch14-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/dive-parallel/ch14/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch14><span>CH14-高级同步</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child active-path" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch15-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/dive-parallel/ch15/ class="align-left pl-0 active td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch15><span class=td-sidebar-nav-active-item>CH15-高级同步-内存序</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelendix-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/dive-parallel/endix/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelendix><span>ENDIX-C-内存屏障</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-model-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/seven-con-model/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-model><span>七并发模型</span></a>
+<ul class="ul-3 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-modelch01-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/seven-con-model/ch01/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-modelch01><span>CH01-概述</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-modelch02-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/seven-con-model/ch02/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-modelch02><span>CH02-线程与锁</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-modelch03-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/seven-con-model/ch03/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-modelch03><span>CH03-函数式编程</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-modelch04-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/seven-con-model/ch04/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-modelch04><span>CH04-分离标识与状态</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-modelch05-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/seven-con-model/ch05/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-modelch05><span>CH05-Actor</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-modelch06-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/seven-con-model/ch06/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-modelch06><span>CH06-CSP</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-modelch07-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/seven-con-model/ch07/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-modelch07><span>CH07-数据并行</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-modelch08-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/seven-con-model/ch08/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-modelch08><span>CH08-Lambda 架构</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-modelch09-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/seven-con-model/ch09/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-modelch09><span>CH09-未来方向</span></a>
+</li>
+</ul>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e7bc96e7a88be8afade8a880scala-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880scala><span>Scala 编程</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-core-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880scalascala-core><span>Scala 精要</span></a>
+<ul class="ul-3 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-corecase-class-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/case-class/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-corecase-class><span>Case Class</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coretype-system-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/type-system/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coretype-system><span>类型系统</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-corefunctional-1-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/functional-1/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-corefunctional-1><span>函数式-基础</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-corefunctional-2-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/functional-2/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-corefunctional-2><span>函数式-用例</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-corefuture-1-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/future-1/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-corefuture-1><span>Future-基础</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-corefuture-2-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/future-2/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-corefuture-2><span>Future-用例</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-corefuture-3-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/future-3/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-corefuture-3><span>Future-集合</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-corefuture-4-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/future-4/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-corefuture-4><span>Future-Promise</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coreimplicits-1-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/implicits-1/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coreimplicits-1><span>Implicits-基础</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coreimplicits-2-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/implicits-2/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coreimplicits-2><span>Implicits-进阶</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coretrait-1-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/trait-1/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coretrait-1><span>Trait-基础</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coretrait-2-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/trait-2/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coretrait-2><span>Trait-用例</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coretry-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/try/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coretry><span>Try</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coretype-1-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/type-1/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coretype-1><span>Type-用例</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coretype-2-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/type-2/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coretype-2><span>Type-进阶</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coreprimitive-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/primitive/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coreprimitive><span>Primitive</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-corenumbers-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/numbers/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-corenumbers><span>Numbers</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-corestrings-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/strings/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-corestrings><span>String</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-corecontrol-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/control/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-corecontrol><span>Control</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-corepattern-match-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/pattern-match/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-corepattern-match><span>Pattern Match</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coreclass-object-1-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/class-object-1/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coreclass-object-1><span>Class Object: 基础</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coreclass-object-2-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/class-object-2/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coreclass-object-2><span>Class Object: 类</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coreclass-object-3-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/class-object-3/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coreclass-object-3><span>Class Object: 方法</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coreclass-object-4-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/class-object-4/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coreclass-object-4><span>Class Object: 对象</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coreclass-object-5-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/class-object-5/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coreclass-object-5><span>函数式对象</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coreclass-object-6-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/class-object-6/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coreclass-object-6><span>整体类层级</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coreclass-object-7-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/class-object-7/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coreclass-object-7><span>组合继承</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-corepackage-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/package/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-corepackage><span>Package</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coresbt-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/sbt/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coresbt><span>SBT</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-corepredef-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/predef/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-corepredef><span>Predef</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coreio-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/io/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coreio><span>I/O</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-corereserved-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/reserved/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-corereserved><span>保留字</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coreexception-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/exception/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coreexception><span>Exception</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coreannotation-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/annotation/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coreannotation><span>Inject Type</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coretype-class-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/type-class/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coretype-class><span>Type Class</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coremap-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/map/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coremap><span>Map Flatmap</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coregeneric-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/generic/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coregeneric><span>泛型型变</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-corecommon-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/common/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-corecommon><span>常见问题</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coreplaceholder-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/placeholder/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coreplaceholder><span>占位符</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coremulti-vars-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/multi-vars/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coremulti-vars><span>多变量赋值</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coreconstructor-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/constructor/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coreconstructor><span>构造器</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-corefunctional-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/functional/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-corefunctional><span>函数式入门</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coremonoid-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/monoid/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coremonoid><span>Monoid</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-corefunc-type-class-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/func-type-class/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-corefunc-type-class><span>函数式与类型类</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coreasync-programming-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/async-programming/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coreasync-programming><span>异步编程</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-corescala-style-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/scala-style/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-corescala-style><span>战略Scala风格</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-func-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-func/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880scalascala-func><span>Scala 函数式</span></a>
+<ul class="ul-3 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-funcch00-e7b2bee8a681-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-func/ch00-%E7%B2%BE%E8%A6%81/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-funcch00-e7b2bee8a681><span>CH00-精要</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-funcch01-e5ae9ae4b989-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-func/ch01-%E5%AE%9A%E4%B9%89/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-funcch01-e5ae9ae4b989><span>CH01-定义</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-funcch02-e587bde695b0-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-func/ch02-%E5%87%BD%E6%95%B0/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-funcch02-e587bde695b0><span>CH02-函数</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-funcch03-e695b0e68dae-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-func/ch03-%E6%95%B0%E6%8D%AE/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-funcch03-e695b0e68dae><span>CH03-数据</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-funcch04-e5bc82e5b8b8-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-func/ch04-%E5%BC%82%E5%B8%B8/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-funcch04-e5bc82e5b8b8><span>CH04-异常</span></a>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</div>
+</aside>
+<aside class="d-none d-xl-block col-xl-2 td-sidebar-toc d-print-none">
+<div class="td-page-meta ml-2 pb-1 pt-2 mb-0">
+<a href=https://github.com/infilos/infilos.com/edit/master/content/zh/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/jvm-concurrent/dive-parallel/CH15.md target=_blank><i class="fa fa-edit fa-fw"></i> 编辑此页</a>
+<a href="https://github.com/infilos/infilos.com/new/master/content/zh/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/jvm-concurrent/dive-parallel/CH15.md?filename=change-me.md&value=---%0Atitle%3A+%22Long+Page+Title%22%0AlinkTitle%3A+%22Short+Nav+Title%22%0Aweight%3A+100%0Adescription%3A+%3E-%0A+++++Page+description+for+heading+and+indexes.%0A---%0A%0A%23%23+Heading%0A%0AEdit+this+template+to+create+your+new+page.%0A%0A%2A+Give+it+a+good+name%2C+ending+in+%60.md%60+-+e.g.+%60getting-started.md%60%0A%2A+Edit+the+%22front+matter%22+section+at+the+top+of+the+page+%28weight+controls+how+its+ordered+amongst+other+pages+in+the+same+directory%3B+lowest+number+first%29.%0A%2A+Add+a+good+commit+message+at+the+bottom+of+the+page+%28%3C80+characters%3B+use+the+extended+description+field+for+more+detail%29.%0A%2A+Create+a+new+branch+so+you+can+preview+your+new+file+and+request+a+review+via+Pull+Request.%0A" target=_blank><i class="fa fa-edit fa-fw"></i> 添加子页面</a>
+<a href="https://github.com/infilos/infilos.com/issues/new?title=CH15-%e9%ab%98%e7%ba%a7%e5%90%8c%e6%ad%a5-%e5%86%85%e5%ad%98%e5%ba%8f" target=_blank><i class="fab fa-github fa-fw"></i> 提交文档问题</a>
+<a id=print href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/dive-parallel/_print/><i class="fa fa-print fa-fw"></i> 整节打印</a>
+</div>
+<div class=td-toc><nav id=TableOfContents>
+<ul>
+<li><a href=#151-排序why--how>15.1 排序：Why & How？</a>
+<ul>
+<li><a href=#1511-为什么硬件乱序>15.1.1 为什么硬件乱序？</a></li>
+<li><a href=#1512-如何强制排序>15.1.2 如何强制排序</a></li>
+<li><a href=#1513-经验法则>15.1.3 经验法则</a></li>
+</ul>
+</li>
+<li><a href=#152-技巧与陷阱>15.2 技巧与陷阱</a>
+<ul>
+<li><a href=#1521-变量带有多个值>15.2.1 变量带有多个值</a></li>
+<li><a href=#1522-内存引用重排序>15.2.2 内存引用重排序</a></li>
+<li><a href=#1523-地址依赖>15.2.3 地址依赖</a></li>
+<li><a href=#1524-数据依赖>15.2.4 数据依赖</a></li>
+<li><a href=#1525-控制依赖>15.2.5 控制依赖</a></li>
+<li><a href=#1526-缓存连贯性>15.2.6 缓存连贯性</a></li>
+<li><a href=#1527-多重原子性>15.2.7 多重原子性</a></li>
+</ul>
+</li>
+<li><a href=#153-compile-time-consternation>15.3 Compile-Time Consternation</a>
+<ul>
+<li><a href=#1531-memory-reference-restrictions>15.3.1 Memory-Reference Restrictions</a></li>
+<li><a href=#1532-address--and-data-dependency-diﬃculties>15.3.2 Address- and Data-Dependency Diﬃculties</a></li>
+<li><a href=#1533-control-dependency-calamities>15.3.3 Control-Dependency Calamities</a></li>
+</ul>
+</li>
+<li><a href=#154-hardware-speciﬁcs>15.4 Hardware Speciﬁcs</a></li>
+<li><a href=#155-where-is-memory-ordering-needed>15.5. WHERE IS MEMORY ORDERING NEEDED?</a></li>
+</ul>
+</nav></div>
+</aside>
+<main class="col-12 col-md-9 col-xl-8 pl-md-5" role=main>
+<nav aria-label=breadcrumb class="d-none d-md-block d-print-none">
+<ol class="breadcrumb spb-1">
+<li class=breadcrumb-item>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/>编程语言</a>
+</li>
+<li class=breadcrumb-item>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/>JVM 并发</a>
+</li>
+<li class=breadcrumb-item>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/dive-parallel/>深入理解并行</a>
+</li>
+<li class="breadcrumb-item active" aria-current=page>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/dive-parallel/ch15/>CH15-高级同步-内存序</a>
+</li>
+</ol>
+</nav>
+<div class=td-content>
+<h1>CH15-高级同步-内存序</h1>
+<header class=article-meta>
+</header>
+<p>因果关系与顺序是非常直观的，黑客往往能比一般人更好的掌握这些概念。在编写、分析和调试使用标准互斥机制(尤其是锁)的顺序、并行代码时，这些直觉可以成为非常强大的工具。不幸的是，当面对那些并未使用标准机制的代码时这种直觉将彻底失败。一个重要的例子当然是一些代码使用了这些标准机制，但是另外一些使用了更弱的同步机制。事实上，一些人认为更弱也算是一个有点。本章将帮助你了解有效实现同步原语和性能敏感代码的内存排序。</p>
+<h2 id=151-排序why--how>15.1 排序：Why & How？</h2>
+<div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180923002742.png style=display:block;width:100% alt=NAME align=center>
+</div>
+<p>内存排序的一个动机可以在代码清单 15.1 中的石蕊测试中看到，咋一看似乎 exists 子句可能永远不会触发。毕竟，如果 exists 子句中的 <code>0:r2=0</code>，我们可以期望“线程 P0 中由 x1 加载到 r2”发生在“线程 P1 对 x1 的保存”，进一步期望“P1 中由 x0 加载到 r2”必须发生在“P0 对 x0 的保存”，因此 <code>1:r2=2</code>，从而不会触发 exists 子句。这个例子是对称的，因此类似的原因会让我们认为 <code>1:r2=0</code> 保证 <code>0:r2=2</code>。不幸的是，内存屏障的缺失使得这些期望破灭。即使是在相对更强排序的系统(x86)上，CPU 也有权对 P0 和 P1 中的语句进行重排序。</p>
+<blockquote>
+<p>QQ 15.1：编译器同样能够对代码清单 15.1 中 P0 和 P1 的内存访问进行重排序，对吗？</p>
+<p>通常来说，编译器优化比 CPU 可以执行更加广泛和深刻的重排序。但是，在这种情况下，READ_ONCE 和 WRITE_ONCE 中的易失性访问会阻止编译器重排序。而且还要做许多其他事情，因此本节中的示例将大量使用 READ_ONCE 和 WRITE_ONCE。有关 READ_ONCE 和 WRITE_ONCE 的更多细节可以参考 15.3 节。</p>
+</blockquote>
+<p>这种重排序趋向可以使用诸如 Litmus7 之类的工具进行验证，该工具发现在我的笔记本上进行的 1 亿次实验中有 314 次反直觉排序。奇怪的是，两个加载返回值为 2 的完全合法的结果发生的概率反而较低，只有 167 次。这里的教训很清楚：增加反干涉性并不一定意味着能够降低概率！</p>
+<h3 id=1511-为什么硬件乱序>15.1.1 为什么硬件乱序？</h3>
+<p>但是为什么第一处会发生内存乱序呢？是 CPU 自身不能追踪顺序吗？</p>
+<p>人们期望计算机能够对事物保持追踪，而且很多人还坚持要求它们能够快速的追踪事物。然而如第 3 章中看到的那样，主存没有办法跟上 CPU 的速度，因为在从内存中读取单个变量的时间内，CPU 可以执行数百个指令。因此 CPU 引入了越来越大的缓存，如图 3.9 所示，这意味着虽然一个 CPU 对指定变量的第一次加载会导致昂贵的缓存未命中，如第 3.1.5 一节所述，随后的重复加载会因为初始化未命中会将该变量记载到该 CPU 的缓存中，因此 CPU 后续会非常快速的执行与该变量相关的操作。</p>
+<p>然而，还需要适应从多个 CPU 到一组共享变量的频繁并发存储。在缓存一致性系统中，如果缓存包含指定变量的多个副本，则该变量的所有副本必须拥有相同的值。这对于并发加载非常有效，但对于并发存储不太友好：每个存储必须对旧值的所有副本(这是另一个缓存未命中)执行一些操作，考虑到光的有限速度和物质的原子性质，这要比性急的软件黑客预期的速度慢。</p>
+<p>因此，CPU 配备了存储缓冲区，如图 15.1 所示。当一个 CPU 需要保存的变量 不在缓存时，新值将会被放置到 CPU 的存储缓冲区。然后 CPU 可以立即继续后续的执行，而不必等待存储对滞留在其他 CPU 缓存中的所有旧值执行操作。</p>
+<div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180922215555.png style=display:block;width:50% alt=NAME align=center>
+</div>
+<p>尽管存储缓冲区能够大大提升性能，但可能导致指令和内存引用无序执行，这反过来会导致严重的混淆。需要特别之处的是，这些存储缓冲区会导致内存错误排序，如清单 15.1 中 store-buffering 石蕊测试所示。</p>
+<p>表 15.1 展示了内存乱序是如何发生的。第一行是初始状态，这时 CPU0 的缓存中持有 x1、CPU1 的缓存中持有 x0，两个变量的值均为 0。第二行展示了基于 CPU 存储的状态变化(即代码清单 15.1 中的第 9~18 行)。因为两个 CPU 在缓存中都没有要保存的变量，因此两个 CPU 都将他们的存储记录在自己的存储缓冲区中。</p>
+<div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180922215645.png style=display:block;width:80% alt=NAME align=center>
+</div>
+<p>第 3 行展示了两个加载(即代码清单 15.1 中的第 1~19 行)。因为变量已被 CPU 的各自缓存加载，因此加载操作会立即返回已缓存的值，这里都是 0。</p>
+<p>但是 CPU 还没有完成：稍后会清空自己的存储缓冲区。因为缓存在名为缓存行的较大的块中移动数据，并且因为每个缓存行可以保存多个变量，因此每个 CPU 必须将缓存行放入自己的缓存中，以便它可以更新与其存储器中的变量对应的缓存行部分，但不会影响缓存行的任何其他部分。每个 CPU 还必须确保缓存行不存在于任何其他 CPU 的缓存中，因此使用了“读无效”操作。如第 4 行所示，在两个“读无效”操作完成之后，两个 CPU 都交换了缓存行，因此 CPU0 的缓存现在包含 x0，而 CPU1 的缓存现在包含 x1。一旦两个变量出现在他们的新家中，每个 CPU 都可以将其存储缓冲区放入对应的缓存行中，使每个变量的最终值如第 5 行所示。</p>
+<blockquote>
+<p>QQ 15.3: 但是这些值不需要由缓存被刷新到主存吗？</p>
+<p>令人惊讶的是并不必要！在某些系统上，如果两个变量被大量使用，它们可能会在 CPU 之间来回反弹，而不会落到主存中。</p>
+</blockquote>
+<p>总之，需要存储缓冲区来支持 CPU 高效的处理存储指令，但是可能会导致反直觉的存储器乱序。</p>
+<p>但是如果你的算法真的需要有序的内存引用，又该怎么办呢？比如，你正在使用一对标志位来与驱动程序通信，其中一个标志表示驱动程序是否正在运行，另一个标志表示是否存在针对该驱动程序的待处理请求。请求者需要设置请求挂起的标志，然后检查驱动程序运行状态的标志，如果为 false 则唤醒驱动程序。一旦驱动程序开始为所有待处理的请求提供服务，就需要清除待处理请求的标志，然后检查请求挂起标志以查看是否需要重新启动。除非有某种办法可以确保硬件按顺序处理存储和加载，否则这种看起来非常合理的方式将无法工作。这也就是下一节的主题。</p>
+<h3 id=1512-如何强制排序>15.1.2 如何强制排序</h3>
+<p>事实上，存在编译器指令和标准同步原语(比如锁和 RCU)，他们负责通过使用内存屏障(比如 Linux 内核中的 smp_mb)来维护排序错觉。这些内存屏障可以是显式指令，比如在 ARM、POWER、Itanium、Alpha 系统上；或者由其他指令暗含，通常在 X86 系统中既是如此。因为这些标准同步原语维护了排序错觉，从而让你能够以最小的阻力使用这些原语，这样你就可以不用阅读本章的内容了。</p>
+<p>然而，如果你需要实现自己的同步原语，或者仅仅是想了解内存排序是如何工作的，那么请继续阅读！第一站是代码清单 15.2，这里将 Linux 内核的完整内存屏障 smp_mb 分别放置到 P0 和 P1 的存储和加载操作之间，其他部分则与代码清单 15.1 保持相同。这些屏障阻止了我的 X86 电脑上 1 亿次实现的反直觉结果的出现。有趣的是，由于这些屏障增加的开销导致结果合法，其中两个负载的返回值都超过 80 万次，而代码清单 15.1 中的无屏障代码仅有 167 次。</p>
+<div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180923122136.png style=display:block;width:100% alt=NAME align=center>
+</div>
+<p>这些屏障对排序产生了深远的影响，如表 15.2 所示。虽然前两行与表 15.1 相同，同时第 3 行的 smp_mb 也不会改变状态，但是它们能够确保存储在加载之前完成，这会避免代码清单 15.1 中出现的反直觉结果。请注意，变量 x0 和 x1 在第二行仍然具有多个值，但是正如前面承诺的那样，smp_mb 最终会将一切理顺。</p>
+<div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180923123033.png style=display:block;width:70% alt=NAME align=center>
+</div>
+<p>虽然像 smp_mb 这样的完整内存屏障拥有非常强的排序保证，其强度也伴随着极高的代价。很多情况下都可以使用更弱的排序保证来处理，这些保证使用更廉价的内存排序指令，或者在某些情况下根本不适用内存排序指令。表 15.3 提供了 Linux 内核的排序原语及对应保证的清单。每行对应一个原语或原语的类别，以及是否能够提供排序保证，同时又分为 “Prior Ordered Operation” 与 “Subsequent Ordered Operation” 两列。“Y” 表示无条件提供排序保证，否则表示排序保证是部分或有条件提供。“空”则表示不提供任何排序。</p>
+<div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180923124628.png style=display:block;width:70% alt=NAME align=center>
+</div>
+<p>需要注意的是这只是一个速查表，因此并不能替代对内存排序的良好理解。</p>
+<h3 id=1513-经验法则>15.1.3 经验法则</h3>
+<blockquote>
+<p>QQ：但是我怎么知道一个给定的项目可以在这些经验法则的范围内进行设计和编码呢？</p>
+<p>本节的内容将回答该问题。</p>
+</blockquote>
+<ol>
+<li>一个给定线程将按顺序看到自身的访问。</li>
+<li>排序具有条件性的 if-then 语义。</li>
+<li>排序操作必须是成对的。</li>
+<li>排序操作几乎不会提供加速效果。</li>
+<li>排序操作并非魔法。</li>
+</ol>
+<h2 id=152-技巧与陷阱>15.2 技巧与陷阱</h2>
+<p>现在你只知道硬件可以对内存访问进行重排序，而你也可以阻止这一切的发生，下一步则是让你承认自己的自觉有问题。</p>
+<p>首先，让我们快速了解一个变量在一个时间点可能有多少值。</p>
+<h3 id=1521-变量带有多个值>15.2.1 变量带有多个值</h3>
+<p>将一个变量视为在一个定义良好的全局顺序中采用一个定义良好的值序列是很自然的。不幸的是，接下来将对这个令人欣慰的事情说再见。</p>
+<p>考虑代码清单 15.3 中的片段。该代码又多个 CPU 并行执行。第 1 行将共享变量设置为当前 CPU 的 ID，第 2 行从 gettb 函数初始化多个变量，该函数提供在所有 CPU 之间同步的细粒度硬件“基于时间的”计数器的值。第 3~8 行的循环记录了变量保留该 CPU 分配给他的值的时间长度。当然，其中一个 CPU 将赢，因此如果不是第 6~7 行的检查，将永远不会退出循环。</p>
+<div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180923130156.png style=display:block;width:100% alt=NAME align=center>
+</div>
+<p>退出循环后，firsttb 将保留分配后不久的时间戳，lasttb 将保持在指定值的共享变量的最后一次采样之前所采用的时间戳，或者如果共享变量已更改则保持等于在进入循环之前的 firsttb 的值。这样我们可以子啊 532ns 的时间段内绘制每个 CPU 对 state.variable 值的视图，如图 15.4 所示。</p>
+<div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180923130530.png style=display:block;width:70% alt=NAME align=center>
+</div>
+<p>每个横轴表示指定 CPU 随时间的观察结果，左侧的灰色区域表示对应 CPU 的第一次测量之前的时间。在前 5ns 期间，只有 CPU3 对变量的值有判断。在接下来的 10ns 期间，CPU2 和 CPU3 对变量的值不一致，但此后一致认为该值为 2，这实际是最终商定的值。但是 CPU1 认为该值为 1 的持续时间长达 300ns，而 CPU4 认为该值为 4 的持续时间长达 500ns。</p>
+<h3 id=1522-内存引用重排序>15.2.2 内存引用重排序</h3>
+<p>上一节表明，即使是相对强有序的系统(x86)也可能在后续的加载中重排序之前的存储，至少在存储和加载不同的变量是会发生这样的状况。本节以此结果为基础，查看加载和存储的其他组合。</p>
+<h4 id=15221-加载后跟加载>15.2.2.1 加载后跟加载</h4>
+<p>代码清单 15.4 展示了经典的消息传递石蕊测试，x0 表示消息，x1 作为一个标志来表示消息是否可用。在测试中，smp_mb 强制 P0 的存储排序，但是未对加载指定排序。相对强有序的体系结构(如 x86)会强制执行排序。但是弱有序的体系结构通常不会(如 AMP+11)。因此。列表第 25 行的 exists 子句可以被触发。</p>
+<div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180923132117.png style=display:block;width:100% alt=NAME align=center>
+</div>
+<p>从不同位置排序加载的一个基本原理是，这样做允许在较早的加载错过缓存时继续执行，但是后续加载的值已经存在。</p>
+<p>因此，依赖于有序加载的可移植代码必须添加显式排序，比如在清单 15.5 的第 20 行添加的 smp_mb，这会组织触发 exists 子句。</p>
+<div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180923132349.png style=display:block;width:100% alt=NAME align=center>
+</div>
+<h4 id=15222-加载后跟存储>15.2.2.2 加载后跟存储</h4>
+<p>代码清单 15.6 展示了经典的“加载缓冲(load-buffering)”石蕊测试。尽管相对强排序的系统(如 x86 或 IBM Mainframe)不会使用后续的存储来重排序先前的加载，但是较弱排序的系统则允许这种排序(如 AMP+11)。因此第 22 行的 exist 子句确实可能被触发。</p>
+<div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180923171147.png style=display:block;width:100% alt=NAME align=center>
+</div>
+<p>虽然实际硬件很少展示这种重排序，但可能需要这么做的一种原因是当加载错误缓存时，存储缓冲区几乎已满，且后续存储的缓存行已准备就绪。因此，可移植代码必须强制执行任何必要的排序。比如清单 15.7 所示。smp_store_release 和 smp_load_acquire 保证第 22 行的子句永远不会触发。</p>
+<div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180923171422.png style=display:block;width:100% alt=NAME align=center>
+</div>
+<h4 id=15223-存储后跟存储>15.2.2.3 存储后跟存储</h4>
+<p>代码清单 15.8 再次展示了经典的消息传递石蕊测试，其中使用 smp_mb 为 P1 的加载提供排序，但是并未给 P0 的存储提供任何排序。再次，相对强的系统架构会执行强制排序，而相对弱的系统架构则并不一定会这么做，这意味着 exists 子句可能会触发。这种重排序可能有益的一种场景是：当存储缓冲区已满，另一个存储区已准备好执行，但最旧的缓存行尚不可用。在这种情况下，允许存储无需完成将允许继续执行。因此，可移植代码必须显式的对存储进行排序，如代码清单 15.5 所示，从而防止 exists 子句的触发。</p>
+<div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180923172008.png style=display:block;width:100% alt=NAME align=center>
+</div>
+<h3 id=1523-地址依赖>15.2.3 地址依赖</h3>
+<p>当加载指令的返回值被用于计算稍后的内存引用所要使用的地址时，产生地址依赖。</p>
+<p>代码清单 15.9 展示了消息传递模式的一种链式变型。头指针是 x1，它最初引用 int 变量 y(第 5 行)，后者又被初始化为值 1(第 4 行)。P0 将头指针 x1 更新为引用 x0(第 12 行)，但仅将其初始化为 2(第 10 行)并强制排序(第 11 行)。P1 获取头指针 x1(第 21 行)，然后加载引用的值(第 22 行)。因此，从 21 行的加载到 22 行上的加载存在地址依赖性。在这种情况下，第 21 行返回的值恰好是第 22 行使用的地址，但是可能存在很多变化。</p>
+<div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180923172620.png style=display:block;width:100% alt=NAME align=center>
+</div>
+<p>人们可能会期望在第 22 行的取消引用之前排序来自头指针的第 21 行的加载。但是，DEC Alpha 并不是这种做法，它可以使用相关加载的推测值，如第 15.4.1 节中更详细的描述。因此，代码清单 15.9 中的 exists 子句可以被触发。</p>
+<p>代码清单 15.10 展示了如何使其正确的工作，即便是在 DEC Alpha 上，将第 21 行的 READ_ONCE 替换为 lockless_dereference，其作用类似于 DEC Alpha 意外所有平台上的 READ_ONCE 后跟 smp_mb，从而在所有平台上执行所需的排序，进而防止 exists 子句触发。</p>
+<div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180923173137.png style=display:block;width:100% alt=NAME align=center>
+</div>
+<p>但是，如果依赖操作是存储而非加载又会发生什么呢，比如，在代码清单 15.11 中显示的石蕊测试。因为没有产生质量的平台推测存储，第 10 行的 WRITE_ONCE 不可能覆盖第 21 行的 WEITE_ONCE，这意味着第 25 行的 exists 子句及时在 DEC Alpha 上也无法触发，即使没有在依赖负载的情况下需要的 lockless_dereference。</p>
+<div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180923173410.png style=display:block;width:100% alt=NAME align=center>
+</div>
+<p>然而，特别需要注意的是，地址依赖很脆弱，很容易就能被编译器优化打破。</p>
+<h3 id=1524-数据依赖>15.2.4 数据依赖</h3>
+<p>当加载指令的返回值被用于计算稍后的存储指令要存储的数据时，则会发生数据依赖。请注意上面的“数据”：如果加载返回的值用于计算稍后的存储指令要使用的地址时，那么将是地址依赖性。</p>
+<p>代码清单 15.12 与清单 15.7 类似，不同之处在于第 18~19 行之间的 P1 排序不是由获取加载强制执行，而是由数据依赖性完成：第 18 行加载的值是第 19 行要存储的值。这种数据依赖性提供的排序足以放置 exists 子句的触发。</p>
+<div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180923173936.png style=display:block;width:100% alt=NAME align=center>
+</div>
+<p>和地址依赖性一样，数据依赖性也很脆弱，可以被编译器优化轻松破解。如第 15.3.2 节所述。实际上，数据依赖性可能比地址依赖性更加脆弱。原因是地址依赖性通常涉及指针值。相反，如清单 15.12 所示，通过整数值来传递数据依赖性是很诱人的，编译器可以更自由的优化不存在性。仅举一个例子，如果加载的整数乘以常数 0，编译器将知道结果为 0，因此可以用常数 0 替换加载的值，从而打破依赖性。</p>
+<p>简而言之，你可以依赖于数据依赖性，但前提是你要注意防止编译器对他们的破坏。</p>
+<h3 id=1525-控制依赖>15.2.5 控制依赖</h3>
+<p>当需要测试加载指令的返回值以确定是否执行稍后的存储指令时，发生控制依赖性，请注意“稍后的存储指令”：很多平台并不遵循加载到加载控制的依赖关系。</p>
+<p>代码清单 15.13 展示了另一个加载——启动示例，这里使用的是控制依赖关系(第 19 行)来命令第 18 行的加载和第 20 行的存储。这种排序足以避免 exists 子句的触发。</p>
+<div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180923175911.png style=display:block;width:100% alt=NAME align=center>
+</div>
+<p>但是，控制依赖性甚至比数据依赖性更易被优化掉。第 15.3.3 节描述了为了防止编译器破坏控制依赖性必须要遵循的一些规则。</p>
+<p>值得重申的是，控制依赖性仅提供从加载到存储的排序。因此，代码清单 15.14 的第 17~19 行展示的加载到加载过程并不提供排序，因此不会阻止 exists 子句的触发。</p>
+<div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180923180212.png style=display:block;width:100% alt=NAME align=center>
+</div>
+<p>总之，控制依赖关系可能很有用，但它们是高维护项。因此，只有在性能考虑不允许其他解决方案时才应使用。</p>
+<h3 id=1526-缓存连贯性>15.2.6 缓存连贯性</h3>
+<p>在缓存一致性平台上，所有 CPU 都遵循加载到存储指定变量的顺序。幸运的是，当使用 READ_ONCE 和 WRITE_ONCE 时，几乎所有平台都是缓存一致的，如表 15.3 中所示的 SV 一列。</p>
+<p>代码清单 15.15 展示了测试缓存连贯性的石蕊测试，其中 IRIW 代表独立写入的独立读取。因为该石蕊测试仅使用一个变量，所以 P2 和 P3 必须在 P0 和 P1 的存储顺序上达成一致。换句话说，如果 P2 认为 P0 的存储首先进行，则 P3 最好不要相信 P1 的存储首先出现。事实上，如果出现这样的情况，第 35 行的 exists 语句将被触发。</p>
+<div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180923180954.png style=display:block;width:100% alt=NAME align=center>
+</div>
+<p>很容易推测，对于单个内存区域(比如使用 C 语言的 union 关键字设置)，不同大小的重叠加载和存储将提供类似的排序保证。然而 Flur 等人发现了一些令人惊讶的简单石蕊测试，这名这些保证可以在真实硬件上被打破。因此，至少在考虑可移植性的情况下，有必要将代码限制为对指定变量的非重叠相同大小的对齐访问。</p>
+<p>添加更多的变量和线程会增加重排序和违反其他反直觉行文的范围，如下一节所述。</p>
+<h3 id=1527-多重原子性>15.2.7 多重原子性</h3>
+<p>Threads running on a multicopy atomic (SF95) platform are guaranteed to agree on the order of stores, even to diﬀerent variables. A useful mental model of such a system is the single-bus architecture shown in Figure 15.7. If each store resulted in a message on the bus, and if the bus could accommodate only one store at a time, then any pair of CPUs would agree on the order of all stores that they observed. Unfortunately, building a computer system as shown in the ﬁgure, without store buﬀers or even caches, would result in glacial computation. CPU vendors interested in providing multicopy atomicity have therefore instead provided the slightly weaker other-multicopy atomicity (ARM17, Section B2.3), which excludes the CPU doing a given store from the requirement that all CPUs agree on the order of all stores. This means that if only a subset of CPUs are doing stores, the other CPUs will agree on the order of stores, hence the “other” in “other-multicopy atomicity”. Unlike multicopy-atomic platforms, within other-multicopy-atomic platforms, the CPU doing the store is permitted to observe its store early, which allows its later loads to obtain the newly stored value directly from the store buﬀer. This in turn avoids abysmal performance.</p>
+<div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180923181520.png style=display:block;width:70% alt=NAME align=center>
+</div>
+<p>Perhaps there will come a day when all platforms provide some ﬂavor of multicopy atomicity, but in the meantime, non-multicopy-atomic platforms do exist, and so software must deal with them.</p>
+<p>Listing 15.16 (C-WRC+o+o-data-o+o-rmb-o.litmus) demonstrates multicopy atomicity, that is, on a multicopy-atomic platform, the exists clause on line 29 cannot trigger. In contrast, on a non-multicopy-atomic platform this exists clause can trigger, despite P1()’s accesses being ordered by a data dependency and P2()’s accesses being ordered by an smp_rmb(). Recall that the deﬁnition of multicopy atomicity requires that all threads agree on the order of stores, which can be thought of as all stores reaching all threads at the same time. Therefore, a non-multicopy-atomic platform can have a store reach diﬀerent threads at diﬀerent times. In particular, P0()’s store might reach P1() long before it reaches P2(), which raises the possibility that P1()’s store might reach P2() before P0()’s store does.</p>
+<div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180923181539.png style=display:block;width:100% alt=NAME align=center>
+</div>
+<p>This leads to the question of why a real system constrained by the usual laws of physics would ever trigger the exists clause of Listing 15.16. The cartoonish diagram of a such a real system is shown in Figure 15.8. CPU 0 and CPU 1 share a store buﬀer, as do CPUs 2 and 3. This means that CPU 1 can load a value out of the store buﬀer, thus potentially immediately seeing a value stored by CPU 0. In contrast, CPUs 2 and 3 will have to wait for the corresponding cache line to carry this new value to them.</p>
+<div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180923181604.png style=display:block;width:70% alt=NAME align=center>
+</div>
+<p>Table 15.4 shows one sequence of events that can result in the exists clause in Listing 15.16 triggering. This sequence of events will depend critically on P0() and P1() sharing both cache and a store buﬀer in the manner shown in Figure 15.8.</p>
+<div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180923181639.png style=display:block;width:70% alt=NAME align=center>
+</div>
+<p>Row 1 shows the initial state, with the initial value of y in P0()’s and P1()’s shared cache, and the initial value of x in P2()’s cache.</p>
+<p>Row 2 shows the immediate eﬀect of P0() executing its store on line 8. Because the cacheline containing x is not in P0()’s and P1()’s shared cache, the new value (1) is stored in the shared store buﬀer.</p>
+<p>Row 3 shows two transitions. First, P0() issues a read-invalidate operation to fetch the cacheline containing x so that it can ﬂush the new value for x out of the shared store buﬀer. Second, P1() loads from x (line 15), an operation that completes immediately because the new value of x is immediately available from the shared store buﬀer.</p>
+<p>Row 4 also shows two transitions. First, it shows the immediate eﬀect of P1() executing its store to y (line 16), placing the new value into the shared store buﬀer. Second, it shows the start of P2()’s load from y (line 24).</p>
+<p>Row 5 continues the tradition of showing two transitions. First, it shows P1() complete its store to y, ﬂushing from the shared store buﬀer to the cache. Second, it shows P2() request the cacheline containing y.</p>
+<p>Row 6 shows P2() receive the cacheline containing y, allowing it to ﬁnish its load into r2, which takes on the value 1.</p>
+<p>Row 7 shows P2() execute its smp_rmb() (line 25), thus keeping its two loads ordered.</p>
+<p>Row 8 shows P2() execute its load from x, which immediately returns with the value zero from P2()’s cache.</p>
+<p>Row 9 shows P2() ﬁnally responding to P0()’s request for the cacheline containing x, which was made way back up on row 3.</p>
+<p>Finally, row 10 shows P0() ﬁnish its store, ﬂushing its value of x from the shared store buﬀer to the shared cache.</p>
+<p>Note well that the exists clause on line 29 has triggered. The values of r1 and r2 are both the value one, and the ﬁnal value of r3 the value zero. This strange result occurred because P0()’s new value of x was communicated to P1() long before it was communicated to P2().</p>
+<p>This counter-intuitive result happens because although dependencies do provide ordering, they provide it only within the conﬁnes of their own thread. This threethread example requires stronger ordering, which is the subject of Sections 15.2.7.1 through 15.2.7.4.</p>
+<h4 id=15271-cumulativity>15.2.7.1 Cumulativity</h4>
+<p>The three-thread example shown in Listing 15.16 requires cumulative ordering, or cumulativity. A cumulative memory-ordering operation orders not just any given access preceding it, but also earlier accesses by any thread to that same variable.</p>
+<p>Dependencies do not provide cumulativity, which is why the “C” column is blank for both the READ_ONCE() and the smp_read_barrier_depends() rows of Table 15.3. However, as indicated by the “C” in their “C” column, release operations do provide cumulativity. Therefore, Listing 15.17 (C-WRC+o+o-r+a-o.litmus) substitutes a release operation for Listing 15.16’s data dependency. Because the release operation is cumulative, its ordering applies not only to Listing 15.17’s load from x by P1() on line 15, but also to the store to x by P0() on line 8—but only if that load returns the value stored, which matches the 1:r1=1 in the exists clause on line 28. This means that P2()’s load-acquire suﬃces to force the load from x on line 25 to happen after the store on line 8, so the value returned is one, which does not match 2:r3=0, which in turn prevents the exists clause from triggering.</p>
+<p>These ordering constraints are depicted graphically in Figure 15.9. Note also that cumulativity is not limited to a single step back in time. If there was another load from x or store to x from any thread that came before the store on line 13, that prior load or store would also be ordered before the store on line 32, though only if both r1 and r2 both end up containing the address of x.</p>
+<div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180923181924.png style=display:block;width:70% alt=NAME align=center>
+</div>
+<p>In short, use of cumulative ordering operations can suppress non-multicopy-atomic behaviors in some situations. Cumulativity nevertheless has limits, which are examined in the next section.</p>
+<h4 id=15272-propagation>15.2.7.2 Propagation</h4>
+<p>Listing 15.18 (C-W+RWC+o-r+a-o+o-mb-o.litmus) shows the limitations of cumulativity and store-release, even with a full memory barrier. The problem is that although the smp_store_release() on line 12 has cumulativity, and although that cumulativity does order P2()’s load on line 30, the smp_store_release()’s ordering cannot propagate through the combination of P1()’s load (line 21) and P2()’s store (line 28). This means that the exists clause on line 33 really can trigger.</p>
+<div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180923182002.png style=display:block;width:70% alt=NAME align=center>
+</div>
+<p>This situation might seem completely counter-intuitive, but keep in mind that the speed of light is ﬁnite and computers are of non-zero size. It therefore takes time for the eﬀect of the P2()’s store to z to propagate to P1(), which in turn means that it is possible that P1()’s read from z happens much later in time, but nevertheless still sees the old value of zero. This situation is depicted in Figure 15.10: Just because a load sees the old value does not mean that this load executed at an earlier time than did the store of the new value.</p>
+<div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180923182129.png style=display:block;width:70% alt=NAME align=center>
+</div>
+<p>Note that Listing 15.18 also shows the limitations of memory-barrier pairing, given that there are not two but three processes. These more complex litmus tests can instead be said to have cycles, where memory-barrier pairing is the special case of a twothread cycle. The cycle in Listing 15.18 goes through P0() (lines 11 and 12), P1() (lines 20 and 21), P2() (lines 28, 29, and 30), and back to P0() (line 11). The exists clause delineates this cycle: the 1:r1=1 indicates that the smp_load_acquire() on line 20 returned the value stored by the smp_store_release() on line 12, the 1:r2=0 indicates that the WRITE_ONCE() on line 28 came too late to aﬀect the value returned by the READ_ONCE() on line 21, and ﬁnally the 2:r3=0 indicates that the WRITE_ONCE() on line 11 came too late to aﬀect the value returned by the READ_ONCE() on line 30. In this case, the fact that the exists clause can trigger means that the cycle is said to be allowed. In contrast, in cases where the exists clause cannot trigger, the cycle is said to be prohibited.</p>
+<p>But what if we need to keep the exists clause on line 33 of Listing 15.18? One solution is to replace P0()’s smp_store_release() with an smp_mb(), which Table 15.3 shows to have not only cumulativity, but also propagation. The result is shown in Listing 15.19 (C-W+RWC+o-mb-o+a-o+o-mb-o.litmus).</p>
+<div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180923182044.png style=display:block;width:100% alt=NAME align=center>
+</div>
+<p>For completeness, Figure 15.11 shows that the “winning” store among a group of stores to the same variable is not necessarily the store that started last. This should not come as a surprise to anyone who carefully examined Figure 15.5.</p>
+<div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180923182158.png style=display:block;width:70% alt=NAME align=center>
+</div>
+<p>But sometimes time really is on our side. Read on!</p>
+<h4 id=happens-before>Happens-Before</h4>
+<div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180923182236.png style=display:block;width:70% alt=NAME align=center>
+</div>
+<p>As shown in Figure 15.12, on platforms without user-visible speculation, if a load returns the value from a particular store, then, courtesy of the ﬁnite speed of light and the non-zero size of modern computing systems, the store absolutely has to have executed at an earlier time than did the load. This means that carefully constructed programs can rely on the passage of time itself as an memory-ordering operation.</p>
+<p>Of course, just the passage of time by itself is not enough, as was seen in Listing 15.6, which has nothing but store-to-load links and, because it provides absolutely no ordering, still can trigger its exists clause. However, as long as each thread provides even the weakest possible ordering, exists clause would not be able to trigger. For example, Listing 15.21 (C-LB+a-o+o-data-o+o-data-o.litmus) shows P0() ordered with an smp_load_acquire() and both P1() and P2() ordered with data dependencies. These orderings, which are close to the top of Table 15.3, suﬃce to prevent the exists clause from triggering.</p>
+<div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180923182345.png style=display:block;width:100% alt=NAME align=center>
+</div>
+<p>An important, to say nothing of more useful, use of time for ordering memory accesses is covered in the next section.</p>
+<h4 id=release-acquire-chains>Release-Acquire Chains</h4>
+<p>A minimal release-acquire chain was shown in Listing 15.7 (C-LB+a-r+a-r+a-r+ar.litmus), but these chains can be much longer, as shown in Listing 15.22. The longer the release-acquire chain, the more ordering is gained from the passage of time, so that no matter how many threads are involved, the corresponding exists clause cannot trigger.</p>
+<div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180923182441.png style=display:block;width:100% alt=NAME align=center>
+</div>
+<div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180923182508.png style=display:block;width:100% alt=NAME align=center>
+</div>
+<p>Although release-acquire chains are inherently store-to-load creatures, it turns out that they can tolerate one load-to-store step, despite such steps being counter-temporal, as shown in Figure 15.10. For example, Listing 15.23 (C-ISA2+o-r+a-r+a-r+ao.litmus) shows a three-step release-acquire chain, but where P3()’s ﬁnal access is a READ_ONCE() from x0, which is accessed via WRITE_ONCE() by P0(), forming a non-temporal load-to-store link between these two processes. However, because P0()’s smp_store_release() (line 12) is cumulative, if P3()’s READ_ONCE() returns zero, this cumulativity will force the READ_ONCE() to be ordered before P0()’s smp_store_release(). In addition, the release-acquire chain (lines 12, 20, 21, 28, 29, and 37) forces P3()’s READ_ONCE() to be ordered after P0()’s smp_store_ release(). Because P3()’s READ_ONCE() cannot be both before and after P0()’s smp_store_release(), either or both of two things must be true:</p>
+<ol>
+<li>
+<p>P3()’s READ_ONCE() came after P0()’s WRITE_ONCE(), so that the READ_ ONCE() returned the value two, so that the exists clause’s 3:r2=0 is false.</p>
+</li>
+<li>
+<p>The release-acquire chain did not form, that is, one or more of the exists clause’s 1:r2=2, 2:r2=2, or 3:r1=2 is false.</p>
+</li>
+</ol>
+<p>Either way, the exists clause cannot trigger, despite this litmus test containing a notorious load-to-store link between P3() and P0(). But never forget that releaseacquire chains can tolerate only one load-to-store link, as was seen in Listing 15.18.</p>
+<p>Release-acquire chains can also tolerate a single store-to-store step, as shown in Listing 15.24 (C-Z6.2+o-r+a-r+a-r+a-o.litmus). As with the previous example, smp_store_release()’s cumulativity combined with the temporal nature of the release-acquire chain prevents the exists clause on line 36 from triggering. But beware: Adding a second store-to-store step would allow the correspondingly updated exists clause to trigger.</p>
+<div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180923182544.png style=display:block;width:100% alt=NAME align=center>
+</div>
+<p>In short, properly constructed release-acquire chains form a peaceful island of intuitive bliss surrounded by a strongly counter-intuitive sea of more complex memoryordering constraints.</p>
+<h2 id=153-compile-time-consternation>15.3 Compile-Time Consternation</h2>
+<p>Most languages, including C, were developed on uniprocessor systems by people with little or no parallel-programming experience. As a results, unless explicitly told otherwise, these languages assume that the current CPU is the only thing that is reading or writing memory. This in turn means that these languages’ compilers’ optimizers are ready, willing, and oh so able to make dramatic changes to the order, number, and sizes of memory references that your program executes. In fact, the reordering carried out by hardware can seem quite tame by comparison.</p>
+<h3 id=1531-memory-reference-restrictions>15.3.1 Memory-Reference Restrictions</h3>
+<p>Again, unless told otherwise, compilers assume that nothing else is aﬀecting the variables being accessed by the generated code. This assumption is not simply some design error, but is instead enshrined in various standards. 9 This assumption means that compilers are within their rights (as deﬁned by the standards) to optimize the following code so as to hoist the load from a out of the loop, at least in cases where the compiler can prove that do_something() does not modify a:</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=color:#0000cf;font-weight:700>1</span> <span style=color:#000>while</span> <span style=color:#000;font-weight:700>(</span><span style=color:#000>a</span><span style=color:#000;font-weight:700>)</span> 
+<span style=color:#0000cf;font-weight:700>2</span> <span style=color:#000>do_something</span><span style=color:#000;font-weight:700>();</span>
+</code></pre></div><p>The optimized code might look something like this, essentially fusing an arbitrarily large number of intended loads into a single actual load:</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=color:#0000cf;font-weight:700>1</span> <span style=color:#000>if</span> <span style=color:#000;font-weight:700>(</span><span style=color:#000>a</span><span style=color:#000;font-weight:700>)</span> 
+<span style=color:#0000cf;font-weight:700>2</span> <span style=color:#204a87;font-weight:700>for</span> <span style=color:#000;font-weight:700>(;;)</span> 
+<span style=color:#0000cf;font-weight:700>3</span> 	<span style=color:#000>do_something</span><span style=color:#000;font-weight:700>();</span>
+</code></pre></div><p>This optimization might come as a fatal surprise to code elsewhere that expected to terminate this loop by storing a zero to a. Fortunately, there are several ways of avoiding this sort of problem:</p>
+<ol>
+<li>Volatile accesses.</li>
+<li>Atomic variables.</li>
+<li>Prohibitions against introducing data races.</li>
+</ol>
+<p>The volatile restrictions are necessary to write reliable device drivers, and the atomic variables and prohibitions against introducing data races are necessary to write reliable concurrent code.</p>
+<p>Starting with volatile accesses, the following code relies on the volatile casts in READ_ONCE() to prevent the unfortunate inﬁnite-loop optimization:</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=color:#0000cf;font-weight:700>1</span> <span style=color:#000>while</span> <span style=color:#000;font-weight:700>(</span><span style=color:#000>READ_ONCE</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>a</span><span style=color:#000;font-weight:700>))</span> 
+<span style=color:#0000cf;font-weight:700>2</span> 	<span style=color:#000>do_something</span><span style=color:#000;font-weight:700>();</span>
+</code></pre></div><p>READ_ONCE() marks the load with a volatile cast. Now volatile was originally designed for accessing memory-mapped I/O (MMIO) registers, which are accessed using the same load and store instructions that are used when accessing normal memory. However, MMIO registers need not act at all like normal memory. Storing a value to an MMIO register does not necessarily mean that a subsequent load from that register will return the value stored. Loading from an MMIO register might well have side eﬀects, for example, changing the device state or aﬀecting the response to subsequent loads and stores involving other MMIO registers. Loads and stores of diﬀerent sizes to the same MMIO address might well have diﬀerent eﬀects.</p>
+<p>This means that, even on a uniprocessor system, changing the order, number, or size of MMIO accesses is strictly forbidden. And this is exactly the purpose of the C-language volatile keyword, to constrain the compiler so as to allow implementation of reliable device drivers.</p>
+<p>This is why READ_ONCE() prevents the destructive hoisting of the load from a out of the loop: Doing so changes the number of volatile loads from a, so this optimization is disallowed. However, note well that volatile does absolutely nothing to constrain the hardware. Therefore, if the code following the loop needs to see the result of any memory references preceding the store of zero that terminated the loop, you will instead need to use something like smp_store_release() to store the zero and smp_load_ acquire() in the loop condition. But if all you need is to reliably control the loop without any other ordering, READ_ONCE() can do the job.</p>
+<p>Compilers can also replicate loads. For example, consider this all-too-real code fragment:</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=color:#0000cf;font-weight:700>1</span> <span style=color:#000>tmp</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>p</span><span style=color:#000;font-weight:700>;</span> 
+<span style=color:#0000cf;font-weight:700>2</span> <span style=color:#000>if</span> <span style=color:#000;font-weight:700>(</span><span style=color:#000>tmp</span> <span style=color:#ce5c00;font-weight:700>!=</span> <span style=color:#204a87>NULL</span> <span style=color:#ce5c00;font-weight:700>&amp;&amp;</span> <span style=color:#000>tmp</span> <span style=color:#ce5c00;font-weight:700>&lt;=</span> <span style=color:#000>q</span><span style=color:#000;font-weight:700>)</span> 
+<span style=color:#0000cf;font-weight:700>3</span> 	<span style=color:#000>do_something</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>tmp</span><span style=color:#000;font-weight:700>);</span>
+</code></pre></div><p>Here the intent is that the do_something() function is never passed a NULL pointer or a pointer that is greater than q. However, the compiler is within its rights to transform this into the following:</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=color:#0000cf;font-weight:700>1</span> <span style=color:#000>if</span> <span style=color:#000;font-weight:700>(</span><span style=color:#000>p</span> <span style=color:#ce5c00;font-weight:700>!=</span> <span style=color:#204a87>NULL</span> <span style=color:#ce5c00;font-weight:700>&amp;&amp;</span> <span style=color:#000>p</span> <span style=color:#ce5c00;font-weight:700>&lt;=</span> <span style=color:#000>q</span><span style=color:#000;font-weight:700>)</span> 
+<span style=color:#0000cf;font-weight:700>2</span> 	<span style=color:#000>do_something</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>p</span><span style=color:#000;font-weight:700>);</span>
+</code></pre></div><p>In this transformed code, the value of p is loaded three separate times. This transformation might seem silly at ﬁrst glance, but it is quite useful when the surrounding code has consumed all of the machine registers. It is possible that the current value of p passes the test on line 1, but that some other thread stores NULL to p before line 2 executes, and the resulting NULL pointer could be a fatal surprise to do_something(). 10 To prevent the compiler from replicating the load, use READ_ONCE(), for example as follows:</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=color:#0000cf;font-weight:700>1</span> <span style=color:#000>tmp</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>READ_ONCE</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>p</span><span style=color:#000;font-weight:700>);</span> 
+<span style=color:#0000cf;font-weight:700>2</span> <span style=color:#000>if</span> <span style=color:#000;font-weight:700>(</span><span style=color:#000>tmp</span> <span style=color:#ce5c00;font-weight:700>!=</span> <span style=color:#204a87>NULL</span> <span style=color:#ce5c00;font-weight:700>&amp;&amp;</span> <span style=color:#000>tmp</span> <span style=color:#ce5c00;font-weight:700>&lt;=</span> <span style=color:#000>q</span><span style=color:#000;font-weight:700>)</span> 
+<span style=color:#0000cf;font-weight:700>3</span> 	<span style=color:#000>do_something</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>tmp</span><span style=color:#000;font-weight:700>);</span>
+</code></pre></div><p>Alternatively, the variable p could be declared volatile.</p>
+<p>Compilers can also fuse stores. The most infamous example is probably the progressbar example shown below:</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=color:#0000cf;font-weight:700>1</span> <span style=color:#000>while</span> <span style=color:#000;font-weight:700>(</span><span style=color:#ce5c00;font-weight:700>!</span><span style=color:#000>am_done</span><span style=color:#000;font-weight:700>())</span> <span style=color:#000;font-weight:700>{</span> 
+<span style=color:#0000cf;font-weight:700>2</span> 	<span style=color:#000>do_something</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>p</span><span style=color:#000;font-weight:700>);</span> 
+<span style=color:#0000cf;font-weight:700>3</span> 	<span style=color:#000>progress</span><span style=color:#ce5c00;font-weight:700>++</span><span style=color:#000;font-weight:700>;</span> 
+<span style=color:#0000cf;font-weight:700>4</span> <span style=color:#000;font-weight:700>}</span>
+</code></pre></div><p>If the compiler used a feedback-driven optimizer, it might well notice that the store to the shared variable progress was quite expensive, resulting in the following well-intentioned optimization:</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=color:#0000cf;font-weight:700>1</span> <span style=color:#000>while</span> <span style=color:#000;font-weight:700>(</span><span style=color:#ce5c00;font-weight:700>!</span><span style=color:#000>am_done</span><span style=color:#000;font-weight:700>())</span> <span style=color:#000;font-weight:700>{</span> 
+<span style=color:#0000cf;font-weight:700>2</span> 	<span style=color:#000>do_something</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>p</span><span style=color:#000;font-weight:700>);</span> 
+<span style=color:#0000cf;font-weight:700>3</span> 	<span style=color:#000>tmp</span><span style=color:#ce5c00;font-weight:700>++</span><span style=color:#000;font-weight:700>;</span> 
+<span style=color:#0000cf;font-weight:700>4</span> <span style=color:#000;font-weight:700>}</span> 
+<span style=color:#0000cf;font-weight:700>5</span> <span style=color:#000>progress</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>tmp</span><span style=color:#000;font-weight:700>;</span>
+</code></pre></div><p>This might well slightly increase performance, but the poor user watching the progress bar might be forgiven for harboring signiﬁcant ill will towards this particular optimization. The progress bar will after all be stuck at zero for a long time, then jump at the very end. The following code will usually prevent this problem:</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=color:#0000cf;font-weight:700>1</span> <span style=color:#000>while</span> <span style=color:#000;font-weight:700>(</span><span style=color:#ce5c00;font-weight:700>!</span><span style=color:#000>am_done</span><span style=color:#000;font-weight:700>())</span> <span style=color:#000;font-weight:700>{</span> 
+<span style=color:#0000cf;font-weight:700>2</span> 	<span style=color:#000>do_something</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>p</span><span style=color:#000;font-weight:700>);</span> 
+<span style=color:#0000cf;font-weight:700>3</span> 	<span style=color:#000>WRITE_ONCE</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>progress</span><span style=color:#000;font-weight:700>,</span> <span style=color:#000>progress</span> <span style=color:#ce5c00;font-weight:700>+</span> <span style=color:#0000cf;font-weight:700>1</span><span style=color:#000;font-weight:700>);</span> 
+<span style=color:#0000cf;font-weight:700>4</span> <span style=color:#000;font-weight:700>}</span>
+</code></pre></div><p>Exceptions can occur if the compiler is able to analyze do_something() and learn that it has no accesses to atomic or volatile variables. In these cases the compiler could produce two loops, one invoking do_something() and the other incrementing progress. It may be necessary to replace the WRITE_ONCE() with something like smp_store_release() in the unlikely event that this occurs. It is important to note that although the compiler is forbidden from changing the number, size, or order of volatile accesses, it is perfectly within its rights to reorder normal accesses with unrelated volatile accesses.</p>
+<p>Oddly enough, the compiler is within its rights to use a variable as temporary storage just before a normal store to that variable, thus inventing stores to that variable. Fortunately, most compilers avoid this sort of thing, at least outside of stack variables. In any case, using WRITE_ONCE(), declaring the variable volatile, or declaring the variable atomic (in recent C and C++ compilers supporting atomics) will prevent this sort of thing.</p>
+<p>The previous examples involved compiler optimizations that changed the number of accesses. Now, it might seem that preventing the compiler from changing the order of accesses is an act of futility, given that the underlying hardware is free to reorder them. However, modern machines have exact exceptions and exact interrupts, meaning that any interrupt or exception will appear to have happened at a speciﬁc place in the instruction stream, so that the handler will see the eﬀect of all prior instructions, but won’t see the eﬀect of any subsequent instructions. READ_ONCE() and WRITE_ONCE() can therefore be used to control communication between interrupted code and interrupt handlers. 11</p>
+<p>This leaves changes to the size of accesses, which is known as load tearing and store tearing when the actual size is smaller than desired. For example, storing the constant 0x00010002 into a 32-bit variable might seem quite safe. However, there are CPUs that can store small immediate values directly into memory, and on such CPUs, the compiler can be expected to split this into two 16-bit stores in order to avoid the overhead of explicitly forming the 32-bit constant. This could come as a fatal surprise to another thread concurrently loading from this variable, which might not expect to see the result of a half-completed store. Use of READ_ONCE() and WRITE_ONCE() prevent the compiler from engaging in load tearing and store tearing, respectively.</p>
+<p>In short, use of READ_ONCE(), WRITE_ONCE(), and volatile are valuable tools in preventing the compiler from optimizing your parallel algorithm out of existence. Compilers are starting to provide other mechanisms for avoiding load and store tearing, for example, memory_order_relaxed atomic loads and stores, however, volatile is still needed to avoid fusing and splitting of accesses.</p>
+<p>Please note that, it is possible to overdo use of READ_ONCE() and WRITE_ONCE(). For example, if you have prevented a given variable from changing (perhaps by holding the lock guarding all updates to that variable), there is no point in using READ_ONCE(). Similarly, if you have prevented any other CPUs or threads from reading a given variable (perhaps because you are initializing that variable before any other CPU or thread has access to it), there is no point in using WRITE_ONCE(). However, in my experience, developers need to use things like READ_ONCE() and WRITE_ONCE() more often than they think that they do, the overhead of unnecessary uses is quite low. Furthermore, the penalty for failing to use them when needed is quite high.</p>
+<h3 id=1532-address--and-data-dependency-diﬃculties>15.3.2 Address- and Data-Dependency Diﬃculties</h3>
+<p>Compilers do not understand either address or data dependencies, although there are eﬀorts underway to teach them, or at the very least, standardize the process of teaching them (MWB + 17, MRP + 17). In the meantime, it is necessary to be very careful in order to prevent your compiler from breaking your dependencies.</p>
+<h4 id=15321-give-your-dependency-chain-a-good-start>15.3.2.1 Give your dependency chain a good start</h4>
+<p>The load that heads your dependency chain must use proper ordering, for example, lockless_dereference(), rcu_dereference(), or a READ_ONCE() followed by smp_read_barrier_depends(). Failure to follow this rule can have serious side eﬀects:</p>
+<ol>
+<li>
+<p>On DEC Alpha, a dependent load might not be ordered with the load heading the dependency chain, as described in Section 15.4.1.</p>
+</li>
+<li>
+<p>If the load heading the dependency chain is a C11 non-volatile memory_order_ relaxed load, the compiler could omit the load, for example, by using a value that it loaded in the past.</p>
+</li>
+<li>
+<p>If the load heading the dependency chain is a plain load, the compiler can omit the load, again by using a value that it loaded in the past. Worse yet, it could load twice instead of once, so that diﬀerent parts of your code use diﬀerent values—and compilers really do this, especially when under register pressure.</p>
+</li>
+<li>
+<p>The value loaded by the head of the dependency chain must be a pointer. In theory, yes, you could load an integer, perhaps to use it as an array index. In practice, the compiler knows too much about integers, and thus has way too many opportunities to break your dependency chain (MWB + 17).</p>
+</li>
+</ol>
+<h4 id=15322-avoid-arithmetic-dependency-breakage>15.3.2.2 Avoid arithmetic dependency breakage</h4>
+<p>Although it is just ﬁne to do some arithmetic operations on a pointer in your dependency chain, you need to be careful to avoid giving the compiler too much information. After all, if the compiler learns enough to determine the exact value of the pointer, it can use that exact value instead of the pointer itself. As soon as the compiler does that, the dependency is broken and all ordering is lost.</p>
+<ol>
+<li>Although it is permissible to compute oﬀsets from a pointer, these oﬀsets must not result in total cancellation. For example, given a char pointer cp, cp-(uintptr_ t)cp) will cancel and can allow the compiler to break your dependency chain.</li>
+</ol>
+<p>On the other hand, canceling oﬀset values with each other is perfectly safe and legal. For example, if a and b are equal, cp+a-b is an identity function, including preserving the dependency.</p>
+<ol start=2>
+<li>Comparisons can break dependencies. Listing 15.26 shows how this can happen. Here global pointer gp points to a dynamically allocated integer, but if memory is low, it might instead point to the reserve_int variable. This reserve_ int case might need special handling, as shown on lines 6 and 7 of the listing. But the compiler could reasonably transform this code into the form shown in Listing 15.27, especially on systems where instructions with absolute addresses run faster than instructions using addresses supplied in registers. However, there is clearly no ordering between the pointer load on line 5 and the dereference on line 8. Please note that this is simply an example: There are a great many other ways to break dependency chains with comparisons.</li>
+</ol>
+<div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180923183145.png style=display:block;width:100% alt=NAME align=center>
+</div>
+<p>Note that a series of inequality comparisons might, when taken together, give the compiler enough information to determine the exact value of the pointer, at which point the dependency is broken. Furthermore, the compiler might be able to combine information from even a single inequality comparison with other information to learn the exact value, again breaking the dependency. Pointers to elements in arrays are especially susceptible to this latter form of dependency breakage.</p>
+<h4 id=15323-safe-comparison-of-dependent-pointers>15.3.2.3 Safe comparison of dependent pointers</h4>
+<p>It turns out that there are several safe ways to compare dependent pointers:</p>
+<ol>
+<li>
+<p>Comparisons against the NULL pointer. In this case, all the compiler can learn is that the pointer is NULL, in which case you are not allowed to dereference it anyway.</p>
+</li>
+<li>
+<p>The dependent pointer is never dereferenced, whether before or after the comparison.</p>
+</li>
+<li>
+<p>The dependent pointer is compared to a pointer that references objects that were last modiﬁed a very long time ago, where the only unconditionally safe value of “a very long time ago” is “at compile time”. The key point is that there absolutely must be something other than the address or data dependency that guarantees ordering.</p>
+</li>
+<li>
+<p>Comparisons between two pointers, each of which is carrying a good-enough dependency. For example, you have a pair of pointers, each carrying a dependency, and you want to avoid deadlock by acquiring locks of the pointed-to data elements in address order.</p>
+</li>
+<li>
+<p>The comparison is not-equal, and the compiler does not have enough other information to deduce the value of the pointer carrying the dependency.</p>
+</li>
+</ol>
+<p>Pointer comparisons can be quite tricky, and so it is well worth working through the example shown in Listing 15.28. This example uses a simple struct foo shown on lines 1-5 and two global pointers, gp1 and gp2, shown on lines 6 and 7, respectively. This example uses two threads, namely updater() on lines 9-22 and reader() on lines 24-39.</p>
+<div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180923183232.png style=display:block;width:100% alt=NAME align=center>
+</div>
+<p>The updater() thread allocates memory on line 13, and complains bitterly on line 14 if none is available. Lines 15-17 initialize the newly allocated structure, and then line 18 assigns the pointer to gp1. Lines 19 and 20 then update two of the structure’s ﬁelds, and does so after line 18 has made those ﬁelds visible to readers. Please note that unsynchronized update of reader-visible ﬁelds often constitutes a bug. Although there are legitimate use cases doing just this, such use cases require more care than is exercised in this example.</p>
+<p>Finally, line 21 assigns the pointer to gp2.</p>
+<p>The reader() thread ﬁrst fetches gp2 on line 30, with lines 31 and 32 checking for NULL and returning if so. Line 33 then fetches ﬁeld ->b. Now line 34 fetches gp1, and if line 35 sees that the pointers fetched on lines 30 and 34 are equal, line 36 fetches p->c. Note that line 36 uses pointer p fetched on line 30, not pointer q fetched on line 34.</p>
+<p>But this diﬀerence might not matter. An equals comparison on line 35 might lead the compiler to (incorrectly) conclude that both pointers are equivalent, when in fact they carry diﬀerent dependencies. This means that the compiler might well transform line 36 to instead be r2 = q->c, which might well cause the value 44 to be loaded instead of the expected value 144.</p>
+<p>In short, some care is required in order to ensure that dependency chains in your source code are still dependency chains once the compiler has gotten done with them.</p>
+<h3 id=1533-control-dependency-calamities>15.3.3 Control-Dependency Calamities</h3>
+<p>Control dependencies are especially tricky because current compilers do not understand them and can easily break them. The rules and examples in this section are intended to help you prevent your compiler’s ignorance from breaking your code.</p>
+<p>A load-load control dependency requires a full read memory barrier, not simply a data dependency barrier. Consider the following bit of code:</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=color:#0000cf;font-weight:700>1</span> <span style=color:#000>q</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>READ_ONCE</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>x</span><span style=color:#000;font-weight:700>);</span> 
+<span style=color:#0000cf;font-weight:700>2</span> <span style=color:#000>if</span> <span style=color:#000;font-weight:700>(</span><span style=color:#000>q</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000;font-weight:700>{</span> 
+<span style=color:#0000cf;font-weight:700>3</span> 	<span style=color:#ce5c00;font-weight:700>&lt;</span><span style=color:#000>data</span> <span style=color:#000>dependency</span> <span style=color:#000>barrier</span><span style=color:#ce5c00;font-weight:700>&gt;</span> 
+<span style=color:#0000cf;font-weight:700>4</span> 	<span style=color:#000>q</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>READ_ONCE</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>y</span><span style=color:#000;font-weight:700>);</span> 
+<span style=color:#0000cf;font-weight:700>5</span> <span style=color:#000;font-weight:700>}</span>
+</code></pre></div><p>This will not have the desired eﬀect because there is no actual data dependency, but rather a control dependency that the CPU may short-circuit by attempting to predict the outcome in advance, so that other CPUs see the load from y as having happened before the load from x. In such a case what’s actually required is:</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=color:#0000cf;font-weight:700>1</span> <span style=color:#000>q</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>READ_ONCE</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>x</span><span style=color:#000;font-weight:700>);</span> 
+<span style=color:#0000cf;font-weight:700>2</span> <span style=color:#000>if</span> <span style=color:#000;font-weight:700>(</span><span style=color:#000>q</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000;font-weight:700>{</span> 
+<span style=color:#0000cf;font-weight:700>3</span> 	<span style=color:#ce5c00;font-weight:700>&lt;</span><span style=color:#000>read</span> <span style=color:#000>barrier</span><span style=color:#ce5c00;font-weight:700>&gt;</span> 
+<span style=color:#0000cf;font-weight:700>4</span> 	<span style=color:#000>q</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>READ_ONCE</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>y</span><span style=color:#000;font-weight:700>);</span> 
+<span style=color:#0000cf;font-weight:700>5</span> <span style=color:#000;font-weight:700>}</span>
+</code></pre></div><p>However, stores are not speculated. This means that ordering is provided for loadstore control dependencies, as in the following example:</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=color:#0000cf;font-weight:700>1</span> <span style=color:#000>q</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>READ_ONCE</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>x</span><span style=color:#000;font-weight:700>);</span> 
+<span style=color:#0000cf;font-weight:700>2</span> <span style=color:#000>if</span> <span style=color:#000;font-weight:700>(</span><span style=color:#000>q</span><span style=color:#000;font-weight:700>)</span> 
+<span style=color:#0000cf;font-weight:700>3</span> 	<span style=color:#000>WRITE_ONCE</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>y</span><span style=color:#000;font-weight:700>,</span> <span style=color:#0000cf;font-weight:700>1</span><span style=color:#000;font-weight:700>);</span>
+</code></pre></div><p>Control dependencies pair normally with other types of ordering operations. That said, please note that neither READ_ONCE() nor WRITE_ONCE() are optional! Without the READ_ONCE(), the compiler might combine the load from x with other loads from x. Without the WRITE_ONCE(), the compiler might combine the store to y with other stores to y. Either can result in highly counterintuitive eﬀects on ordering.</p>
+<p>Worse yet, if the compiler is able to prove (say) that the value of variable x is always non-zero, it would be well within its rights to optimize the original example by eliminating the “if” statement as follows:</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=color:#0000cf;font-weight:700>1</span> <span style=color:#000>q</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>READ_ONCE</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>x</span><span style=color:#000;font-weight:700>);</span> 
+<span style=color:#0000cf;font-weight:700>2</span> <span style=color:#000>WRITE_ONCE</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>y</span><span style=color:#000;font-weight:700>,</span> <span style=color:#0000cf;font-weight:700>1</span><span style=color:#000;font-weight:700>);</span>  <span style=color:#8f5902;font-style:italic>/* BUG: CPU can reorder!!! */</span>
+</code></pre></div><p>It is tempting to try to enforce ordering on identical stores on both branches of the “if” statement as follows:</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=color:#0000cf;font-weight:700>1</span> <span style=color:#000>q</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>READ_ONCE</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>x</span><span style=color:#000;font-weight:700>);</span> 
+<span style=color:#0000cf;font-weight:700>2</span> <span style=color:#000>if</span> <span style=color:#000;font-weight:700>(</span><span style=color:#000>q</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000;font-weight:700>{</span> 
+<span style=color:#0000cf;font-weight:700>3</span> 	<span style=color:#000>barrier</span><span style=color:#000;font-weight:700>();</span> 
+<span style=color:#0000cf;font-weight:700>4</span> 	<span style=color:#000>WRITE_ONCE</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>y</span><span style=color:#000;font-weight:700>,</span> <span style=color:#0000cf;font-weight:700>1</span><span style=color:#000;font-weight:700>);</span> 
+<span style=color:#0000cf;font-weight:700>5</span> 	<span style=color:#000>do_something</span><span style=color:#000;font-weight:700>();</span> 
+<span style=color:#0000cf;font-weight:700>6</span> <span style=color:#000;font-weight:700>}</span> <span style=color:#204a87;font-weight:700>else</span> <span style=color:#000;font-weight:700>{</span> 
+<span style=color:#0000cf;font-weight:700>7</span> 	<span style=color:#000>barrier</span><span style=color:#000;font-weight:700>();</span> 
+<span style=color:#0000cf;font-weight:700>8</span> 	<span style=color:#000>WRITE_ONCE</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>y</span><span style=color:#000;font-weight:700>,</span> <span style=color:#0000cf;font-weight:700>1</span><span style=color:#000;font-weight:700>);</span> 
+<span style=color:#0000cf;font-weight:700>9</span> 	<span style=color:#000>do_something_else</span><span style=color:#000;font-weight:700>();</span> 
+<span style=color:#0000cf;font-weight:700>10</span> <span style=color:#000;font-weight:700>}</span>
+</code></pre></div><p>Unfortunately, current compilers will transform this as follows at high optimization levels:</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=color:#0000cf;font-weight:700>1</span> <span style=color:#000>q</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>READ_ONCE</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>x</span><span style=color:#000;font-weight:700>);</span> 
+<span style=color:#0000cf;font-weight:700>2</span> <span style=color:#000>barrier</span><span style=color:#000;font-weight:700>();</span> 
+<span style=color:#0000cf;font-weight:700>3</span> <span style=color:#000>WRITE_ONCE</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>y</span><span style=color:#000;font-weight:700>,</span> <span style=color:#0000cf;font-weight:700>1</span><span style=color:#000;font-weight:700>);</span>  <span style=color:#8f5902;font-style:italic>/* BUG: No ordering!!! */</span>
+<span style=color:#0000cf;font-weight:700>4</span> <span style=color:#000>if</span> <span style=color:#000;font-weight:700>(</span><span style=color:#000>q</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000;font-weight:700>{</span> 
+<span style=color:#0000cf;font-weight:700>5</span> 	<span style=color:#000>do_something</span><span style=color:#000;font-weight:700>();</span> 
+<span style=color:#0000cf;font-weight:700>6</span> <span style=color:#000;font-weight:700>}</span> <span style=color:#204a87;font-weight:700>else</span> <span style=color:#000;font-weight:700>{</span> 
+<span style=color:#0000cf;font-weight:700>7</span> 	<span style=color:#000>do_something_else</span><span style=color:#000;font-weight:700>();</span> 
+<span style=color:#0000cf;font-weight:700>8</span> <span style=color:#000;font-weight:700>}</span>
+</code></pre></div><p>Now there is no conditional between the load from x and the store to y, which means that the CPU is within its rights to reorder them: The conditional is absolutely required, and must be present in the assembly code even after all compiler optimizations have been applied. Therefore, if you need ordering in this example, you need explicit memory-ordering operations, for example, a release store:</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=color:#0000cf;font-weight:700>1</span> <span style=color:#000>q</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>READ_ONCE</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>x</span><span style=color:#000;font-weight:700>);</span> 
+<span style=color:#0000cf;font-weight:700>2</span> <span style=color:#000>if</span> <span style=color:#000;font-weight:700>(</span><span style=color:#000>q</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000;font-weight:700>{</span> 
+<span style=color:#0000cf;font-weight:700>3</span> 	<span style=color:#000>smp_store_release</span><span style=color:#000;font-weight:700>(</span><span style=color:#ce5c00;font-weight:700>&amp;</span><span style=color:#000>y</span><span style=color:#000;font-weight:700>,</span> <span style=color:#0000cf;font-weight:700>1</span><span style=color:#000;font-weight:700>);</span> 
+<span style=color:#0000cf;font-weight:700>4</span> 	<span style=color:#000>do_something</span><span style=color:#000;font-weight:700>();</span> 
+<span style=color:#0000cf;font-weight:700>5</span> <span style=color:#000;font-weight:700>}</span> <span style=color:#204a87;font-weight:700>else</span> <span style=color:#000;font-weight:700>{</span> 
+<span style=color:#0000cf;font-weight:700>6</span> 	<span style=color:#000>smp_store_release</span><span style=color:#000;font-weight:700>(</span><span style=color:#ce5c00;font-weight:700>&amp;</span><span style=color:#000>y</span><span style=color:#000;font-weight:700>,</span> <span style=color:#0000cf;font-weight:700>1</span><span style=color:#000;font-weight:700>);</span> 
+<span style=color:#0000cf;font-weight:700>7</span> 	<span style=color:#000>do_something_else</span><span style=color:#000;font-weight:700>();</span> 
+<span style=color:#0000cf;font-weight:700>8</span> <span style=color:#000;font-weight:700>}</span>
+</code></pre></div><p>The initial READ_ONCE() is still required to prevent the compiler from proving the value of x.</p>
+<p>In addition, you need to be careful what you do with the local variable q, otherwise the compiler might be able to guess the value and again remove the needed conditional. For example:</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=color:#0000cf;font-weight:700>1</span> <span style=color:#000>q</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>READ_ONCE</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>x</span><span style=color:#000;font-weight:700>);</span> 
+<span style=color:#0000cf;font-weight:700>2</span> <span style=color:#000>if</span> <span style=color:#000;font-weight:700>(</span><span style=color:#000>q</span> <span style=color:#ce5c00;font-weight:700>%</span> <span style=color:#000>MAX</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000;font-weight:700>{</span> 
+<span style=color:#0000cf;font-weight:700>3</span> 	<span style=color:#000>WRITE_ONCE</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>y</span><span style=color:#000;font-weight:700>,</span> <span style=color:#0000cf;font-weight:700>1</span><span style=color:#000;font-weight:700>);</span> 
+<span style=color:#0000cf;font-weight:700>4</span> 	<span style=color:#000>do_something</span><span style=color:#000;font-weight:700>();</span> 
+<span style=color:#0000cf;font-weight:700>5</span> <span style=color:#000;font-weight:700>}</span> <span style=color:#204a87;font-weight:700>else</span> <span style=color:#000;font-weight:700>{</span> 
+<span style=color:#0000cf;font-weight:700>6</span> 	<span style=color:#000>WRITE_ONCE</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>y</span><span style=color:#000;font-weight:700>,</span> <span style=color:#0000cf;font-weight:700>2</span><span style=color:#000;font-weight:700>);</span> 
+<span style=color:#0000cf;font-weight:700>7</span> 	<span style=color:#000>do_something_else</span><span style=color:#000;font-weight:700>();</span> 
+<span style=color:#0000cf;font-weight:700>8</span> <span style=color:#000;font-weight:700>}</span>
+</code></pre></div><p>If MAX is deﬁned to be 1, then the compiler knows that (q%MAX) is equal to zero, in which case the compiler is within its rights to transform the above code into the following:</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=color:#0000cf;font-weight:700>1</span> <span style=color:#000>q</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>READ_ONCE</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>x</span><span style=color:#000;font-weight:700>);</span> 
+<span style=color:#0000cf;font-weight:700>2</span> <span style=color:#000>WRITE_ONCE</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>y</span><span style=color:#000;font-weight:700>,</span> <span style=color:#0000cf;font-weight:700>2</span><span style=color:#000;font-weight:700>);</span> 
+<span style=color:#0000cf;font-weight:700>3</span> <span style=color:#000>do_something_else</span><span style=color:#000;font-weight:700>();</span>
+</code></pre></div><p>Given this transformation, the CPU is not required to respect the ordering between the load from variable x and the store to variable y. It is tempting to add a barrier() to constrain the compiler, but this does not help. The conditional is gone, and the barrier() won’t bring it back. Therefore, if you are relying on this ordering, you should make sure that MAX is greater than one, perhaps as follows:</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=color:#0000cf;font-weight:700>1</span> <span style=color:#000>q</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>READ_ONCE</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>x</span><span style=color:#000;font-weight:700>);</span> 
+<span style=color:#0000cf;font-weight:700>2</span> <span style=color:#000>BUILD_BUG_ON</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>MAX</span> <span style=color:#ce5c00;font-weight:700>&lt;=</span> <span style=color:#0000cf;font-weight:700>1</span><span style=color:#000;font-weight:700>);</span> 
+<span style=color:#0000cf;font-weight:700>3</span> <span style=color:#000>if</span> <span style=color:#000;font-weight:700>(</span><span style=color:#000>q</span> <span style=color:#ce5c00;font-weight:700>%</span> <span style=color:#000>MAX</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000;font-weight:700>{</span> 
+<span style=color:#0000cf;font-weight:700>4</span> 	<span style=color:#000>WRITE_ONCE</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>y</span><span style=color:#000;font-weight:700>,</span> <span style=color:#0000cf;font-weight:700>1</span><span style=color:#000;font-weight:700>);</span> 
+<span style=color:#0000cf;font-weight:700>5</span> 	<span style=color:#000>do_something</span><span style=color:#000;font-weight:700>();</span> 
+<span style=color:#0000cf;font-weight:700>6</span> <span style=color:#000;font-weight:700>}</span> <span style=color:#204a87;font-weight:700>else</span> <span style=color:#000;font-weight:700>{</span> 
+<span style=color:#0000cf;font-weight:700>7</span> 	<span style=color:#000>WRITE_ONCE</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>y</span><span style=color:#000;font-weight:700>,</span> <span style=color:#0000cf;font-weight:700>2</span><span style=color:#000;font-weight:700>);</span> 
+<span style=color:#0000cf;font-weight:700>8</span> 	<span style=color:#000>do_something_else</span><span style=color:#000;font-weight:700>();</span> 
+<span style=color:#0000cf;font-weight:700>9</span> <span style=color:#000;font-weight:700>}</span>
+</code></pre></div><p>Please note once again that the stores to y diﬀer. If they were identical, as noted earlier, the compiler could pull this store outside of the “if” statement.</p>
+<p>You must also avoid excessive reliance on boolean short-circuit evaluation. Consider this example:</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=color:#0000cf;font-weight:700>1</span> <span style=color:#000>q</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>READ_ONCE</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>x</span><span style=color:#000;font-weight:700>);</span> 
+<span style=color:#0000cf;font-weight:700>2</span> <span style=color:#000>if</span> <span style=color:#000;font-weight:700>(</span><span style=color:#000>q</span> <span style=color:#ce5c00;font-weight:700>||</span> <span style=color:#0000cf;font-weight:700>1</span> <span style=color:#ce5c00;font-weight:700>&gt;</span> <span style=color:#0000cf;font-weight:700>0</span><span style=color:#000;font-weight:700>)</span> 
+<span style=color:#0000cf;font-weight:700>3</span> 	<span style=color:#000>WRITE_ONCE</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>y</span><span style=color:#000;font-weight:700>,</span> <span style=color:#0000cf;font-weight:700>1</span><span style=color:#000;font-weight:700>);</span>
+</code></pre></div><p>Because the ﬁrst condition cannot fault and the second condition is always true, the compiler can transform this example as following, defeating control dependency:</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=color:#0000cf;font-weight:700>1</span> <span style=color:#000>q</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>READ_ONCE</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>x</span><span style=color:#000;font-weight:700>);</span> 
+<span style=color:#0000cf;font-weight:700>2</span> <span style=color:#000>WRITE_ONCE</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>y</span><span style=color:#000;font-weight:700>,</span> <span style=color:#0000cf;font-weight:700>1</span><span style=color:#000;font-weight:700>);</span>
+</code></pre></div><p>This example underscores the need to ensure that the compiler cannot out-guess your code. More generally, although READ_ONCE() does force the compiler to actually emit code for a given load, it does not force the compiler to use the results.</p>
+<p>In addition, control dependencies apply only to the then-clause and else-clause of the if-statement in question. In particular, it does not necessarily apply to code following the if-statement:</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=color:#0000cf;font-weight:700>1</span> <span style=color:#000>q</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>READ_ONCE</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>x</span><span style=color:#000;font-weight:700>);</span> 
+<span style=color:#0000cf;font-weight:700>2</span> <span style=color:#000>if</span> <span style=color:#000;font-weight:700>(</span><span style=color:#000>q</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000;font-weight:700>{</span> 
+<span style=color:#0000cf;font-weight:700>3</span> 	<span style=color:#000>WRITE_ONCE</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>y</span><span style=color:#000;font-weight:700>,</span> <span style=color:#0000cf;font-weight:700>1</span><span style=color:#000;font-weight:700>);</span> 
+<span style=color:#0000cf;font-weight:700>4</span> <span style=color:#000;font-weight:700>}</span> <span style=color:#204a87;font-weight:700>else</span> <span style=color:#000;font-weight:700>{</span>
+<span style=color:#0000cf;font-weight:700>5</span> 	<span style=color:#000>WRITE_ONCE</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>y</span><span style=color:#000;font-weight:700>,</span> <span style=color:#0000cf;font-weight:700>2</span><span style=color:#000;font-weight:700>);</span> 
+<span style=color:#0000cf;font-weight:700>6</span> <span style=color:#000;font-weight:700>}</span> 
+<span style=color:#0000cf;font-weight:700>7</span> <span style=color:#000>WRITE_ONCE</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>z</span><span style=color:#000;font-weight:700>,</span> <span style=color:#0000cf;font-weight:700>1</span><span style=color:#000;font-weight:700>);</span>  <span style=color:#8f5902;font-style:italic>/* BUG: No ordering. */</span>
+</code></pre></div><p>It is tempting to argue that there in fact is ordering because the compiler cannot reorder volatile accesses and also cannot reorder the writes to y with the condition. Unfortunately for this line of reasoning, the compiler might compile the two writes to y as conditional-move instructions, as in this fanciful pseudo-assembly language:</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=color:#0000cf;font-weight:700>1</span> <span style=color:#000>ld</span> <span style=color:#000>r1</span><span style=color:#000;font-weight:700>,</span><span style=color:#000>x</span> 
+<span style=color:#0000cf;font-weight:700>2</span> <span style=color:#000>cmp</span> <span style=color:#000>r1</span><span style=color:#000;font-weight:700>,</span><span style=color:#a40000>$</span><span style=color:#0000cf;font-weight:700>0</span> 
+<span style=color:#0000cf;font-weight:700>3</span> <span style=color:#000>cmov</span><span style=color:#000;font-weight:700>,</span><span style=color:#000>ne</span> <span style=color:#000>r4</span><span style=color:#000;font-weight:700>,</span><span style=color:#a40000>$</span><span style=color:#0000cf;font-weight:700>1</span> 
+<span style=color:#0000cf;font-weight:700>4</span> <span style=color:#000>cmov</span><span style=color:#000;font-weight:700>,</span><span style=color:#000>eq</span> <span style=color:#000>r4</span><span style=color:#000;font-weight:700>,</span><span style=color:#a40000>$</span><span style=color:#0000cf;font-weight:700>2</span> 
+<span style=color:#0000cf;font-weight:700>5</span> <span style=color:#000>st</span> <span style=color:#000>r4</span><span style=color:#000;font-weight:700>,</span><span style=color:#000>y</span> 
+<span style=color:#0000cf;font-weight:700>6</span> <span style=color:#000>st</span> <span style=color:#a40000>$</span><span style=color:#0000cf;font-weight:700>1</span><span style=color:#000;font-weight:700>,</span><span style=color:#000>z</span>
+</code></pre></div><p>A weakly ordered CPU would have no dependency of any sort between the load from x and the store to z. The control dependencies would extend only to the pair of cmov instructions and the store depending on them. In short, control dependencies apply only to the stores in the “then” and “else” of the “if” in question (including functions invoked by those two clauses), not to code following that “if”.</p>
+<p>Finally, control dependencies do not provide cumulativity. 12 This is demonstrated by two related litmus tests, namely Listings 15.29 and 15.30 with the initial values of x and y both being zero.</p>
+<p>The exists clause in the two-thread example of Listing 15.29 (C-LB+o-cgt-o+ocgt-o.litmus) will never trigger. If control dependencies guaranteed cumulativity (which they do not), then adding a thread to the example as in Listing 15.30 (CWWC+o-cgt-o+o-cgt-o+o.litmus) would guarantee the related exists clause never to trigger.</p>
+<div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180923183422.png style=display:block;width:100% alt=NAME align=center>
+</div>
+<div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180923183452.png style=display:block;width:100% alt=NAME align=center>
+</div>
+<p>But because control dependencies do not provide cumulativity, the exists clause in the three-thread litmus test can trigger. If you need the three-thread example to provide ordering, you will need smp_mb() between the load and store in P0(), that is, just before or just after the “if” statements. Furthermore, the original two-thread example is very fragile and should be avoided.</p>
+<p>The following list of rules summarizes the lessons of this section:</p>
+<ol>
+<li>
+<p>Compilers do not understand control dependencies, so it is your job to make sure that the compiler cannot break your code.</p>
+</li>
+<li>
+<p>Control dependencies can order prior loads against later stores. However, they do not guarantee any other sort of ordering: Not prior loads against later loads, nor prior stores against later anything. If you need these other forms of ordering, use smp_rmb(), smp_wmb(), or, in the case of prior stores and later loads, smp_mb().</p>
+</li>
+<li>
+<p>If both legs of the “if” statement begin with identical stores to the same variable, then those stores must be ordered, either by preceding both of them with smp_ mb() or by using smp_store_release() to carry out the stores. Please note that it is not suﬃcient to use barrier() at beginning of each leg of the “if” statement because, as shown by the example above, optimizing compilers can destroy the control dependency while respecting the letter of the barrier() law.</p>
+</li>
+<li>
+<p>Control dependencies require at least one run-time conditional between the prior load and the subsequent store, and this conditional must involve the prior load. If the compiler is able to optimize the conditional away, it will have also optimized away the ordering. Careful use of READ_ONCE() and WRITE_ONCE() can help to preserve the needed conditional.</p>
+</li>
+<li>
+<p>Control dependencies require that the compiler avoid reordering the dependency into nonexistence. Careful use of READ_ONCE(), atomic_read(), or atomic64_read() can help to preserve your control dependency.</p>
+</li>
+<li>
+<p>Control dependencies apply only to the “then” and “else” of the “if” containing the control dependency, including any functions that these two clauses call. Control dependencies do not apply to code following the end of the “if” statement containing the control dependency.</p>
+</li>
+<li>
+<p>Control dependencies pair normally with other types of memory-ordering operations.</p>
+</li>
+<li>
+<p>Control dependencies do not provide cumulativity. If you need cumulativity, use smp_mb().</p>
+</li>
+</ol>
+<p>In short, many popular languages were designed primarily with single-threaded use in mind. Successfully using these languages to construct multi-threaded software requires that you pay special attention to your memory references and dependencies.</p>
+<h2 id=154-hardware-speciﬁcs>15.4 Hardware Speciﬁcs</h2>
+<p>略。</p>
+<h2 id=155-where-is-memory-ordering-needed>15.5. WHERE IS MEMORY ORDERING NEEDED?</h2>
+<p>Memory-ordering operations are only required where there is a possibility of interaction involving at least two variables between at least two threads. As always, if a single-threaded program will provide suﬃcient performance, why bother with parallelism? 15 After all, avoiding parallelism also avoids the added cost of memory-ordering operations.</p>
+<p>If all thread-to-thread communication in a given cycle use store-to-load links (that is, the next thread’s load returning the value that the previous thread stored), minimal ordering suﬃces, as illustrated by Listings 15.12 and 15.13. Minimal ordering includes dependencies, acquires, and all stronger ordering operations.</p>
+<p>If all but one of the links in a given cycle is a store-to-load link, it is suﬃcient to use release-acquire pairs for each of those store-to-load links, as illustrated by Listings 15.23 and 15.24. You can replace a given acquire with a a dependency in environments permitting this, keeping in mind that the C11 standard’s memory model does not permit this. Note also that a dependency leading to a load must be headed by a lockless_ dereference() or an rcu_dereference(): READ_ONCE() is not suﬃcient. Never forget to carefully review Sections 15.3.2 and 15.3.3, because a dependency broken by your compiler is no help at all! The two threads sharing the sole non-store-to-load link can usually substitute WRITE_ONCE() plus smp_wmb() for smp_store_release() on the one hand, and READ_ONCE() plus smp_rmb() for smp_load_acquire() on the other.</p>
+<p>If a given cycle contains two or more non-store-to-load links (that is, a total of two or more load-to-store and store-to-store links), you will need at least one full barrier between each pair of non-store-to-load links in that cycle, as illustrated by Listing 15.19 as well as in the answer to Quick Quiz 15.23. Full barriers include smp_mb(), successful full-strength non-void atomic RMW operations, and other atomic RMW operations in conjunction with either smp_mb__before_atomic() or smp_mb__after_atomic(). Any of RCU’s grace-period-wait primitives (synchronize_rcu() and friends) also act as full barriers, but at even greater expense than smp_mb(). With strength comes expense, though the overhead of full barriers usually hurts performance more than it hurts scalability.</p>
+<p>Note that these are the minimum guarantees. Diﬀerent architectures may give more substantial guarantees, as discussed in Section 15.4, but they may not be relied upon outside of code speciﬁcally designed to run only on the corresponding architecture.</p>
+<p>One ﬁnal word of advice: Again, use of raw memory-ordering primitives is a last resort. It is almost always better to use existing primitives, such as locking or RCU, that take care of memory ordering for you.</p>
+<style>.feedback--answer{display:inline-block}.feedback--answer-no{margin-left:1em}.feedback--response{display:none;margin-top:1em}.feedback--response__visible{display:block}</style>
+<div class=d-print-none>
+<h2 class=feedback--title>Feedback</h2>
+<p class=feedback--question>Was this page helpful?</p>
+<button class="btn btn-primary mb-4 feedback--answer feedback--answer-yes">Yes</button>
+<button class="btn btn-primary mb-4 feedback--answer feedback--answer-no">No</button>
+<p class="feedback--response feedback--response-yes">
+Glad to hear it! Please <a href=https://github.com/infilos/infilos.com/issues/new>tell us how we can improve</a>.
+</p>
+<p class="feedback--response feedback--response-no">
+Sorry to hear that. Please <a href=https://github.com/infilos/infilos.com/issues/new>tell us how we can improve</a>.
+</p>
+</div>
+<script>const yesButton=document.querySelector('.feedback--answer-yes'),noButton=document.querySelector('.feedback--answer-no'),yesResponse=document.querySelector('.feedback--response-yes'),noResponse=document.querySelector('.feedback--response-no'),disableButtons=()=>{yesButton.disabled=!0,noButton.disabled=!0},sendFeedback=b=>{if(typeof ga!='function')return;const a={command:'send',hitType:'event',category:'Helpful',action:'click',label:window.location.pathname,value:b};ga(a.command,a.hitType,a.category,a.action,a.label,a.value)};yesButton.addEventListener('click',()=>{yesResponse.classList.add('feedback--response__visible'),disableButtons(),sendFeedback(1)}),noButton.addEventListener('click',()=>{noResponse.classList.add('feedback--response__visible'),disableButtons(),sendFeedback(0)})</script>
+<br>
+</div>
+</main>
+</div>
+</div>
+<footer class="bg-dark py-5 row d-print-none">
+<div class="container-fluid mx-sm-5">
+<div class=row>
+<div class="col-6 col-sm-4 text-xs-center order-sm-2">
+</div>
+<div class="col-6 col-sm-4 text-right text-xs-center order-sm-3">
+<ul class="list-inline mb-0">
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Weibo aria-label=Weibo>
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://weibo.com/u/3848950217>
+<i class="fab fa-weibo"></i>
+</a>
+</li>
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Twitter aria-label=Twitter>
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://twitter.com/zhange_zzg>
+<i class="fab fa-twitter"></i>
+</a>
+</li>
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title="Stack Overflow" aria-label="Stack Overflow">
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://stackoverflow.com>
+<i class="fab fa-stack-overflow"></i>
+</a>
+</li>
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=GitHub aria-label=GitHub>
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://github.com/infilos/infilos.com>
+<i class="fab fa-github"></i>
+</a>
+</li>
+</ul>
+</div>
+<div class="col-12 col-sm-4 text-center py-2 order-sm-2">
+<small class=text-white>&copy; 2021 infilos.com All Rights Reserved</small>
+</div>
+</div>
+</div>
+</footer>
+</div>
+<script src=/js/popper.min.js integrity=sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49 crossorigin=anonymous></script>
+<script src=/js/bootstrap.min.js integrity=sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy crossorigin=anonymous></script>
+<script src=/js/main.min.5c74b870c6953931a705f390a49c7e4c0a842ec5c83b24354758dd674343ed0d.js integrity="sha256-XHS4cMaVOTGnBfOQpJx+TAqELsXIOyQ1R1jdZ0ND7Q0=" crossorigin=anonymous></script>
+<script src=https://cdn.jsdelivr.net/npm/docsearch.js@2.6.3/dist/cdn/docsearch.min.js></script>
+<script>docsearch({apiKey:'123',indexName:'infilos_com',inputSelector:'.td-search-input',debug:!1})</script>
+</body>
+</html>

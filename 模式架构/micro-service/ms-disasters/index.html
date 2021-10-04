@@ -1,0 +1,460 @@
+<!doctype html><html lang=zh class=no-js>
+<head>
+<meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no">
+<meta name=generator content="Hugo 0.88.1">
+<meta name=ROBOTS content="INDEX, FOLLOW">
+<link rel="shortcut icon" href=/favicons/favicon.ico>
+<link rel=apple-touch-icon href=/favicons/apple-touch-icon-180x180.png sizes=180x180>
+<link rel=icon type=image/png href=/favicons/favicon-16x16.png sizes=16x16>
+<link rel=icon type=image/png href=/favicons/favicon-32x32.png sizes=32x32>
+<link rel=icon type=image/png href=/favicons/android-36x36.png sizes=36x36>
+<link rel=icon type=image/png href=/favicons/android-48x48.png sizes=48x48>
+<link rel=icon type=image/png href=/favicons/android-72x72.png sizes=72x72>
+<link rel=icon type=image/png href=/favicons/android-96x96.png sizes=96x96>
+<link rel=icon type=image/png href=/favicons/android-144x144.png sizes=144x144>
+<link rel=icon type=image/png href=/favicons/android-192x192.png sizes=192x192>
+<title>微服务灾难 | infilos.com</title><meta property="og:title" content="微服务灾难">
+<meta property="og:description" content="2014 年 Martin Fowler 发表了一篇关于微服务的文章，当时，我所在的团队正在构建面向服务的架构。这篇文章以及随后的炒作几乎影响了世界上所有的软件团队。那时，“Netflix OSS 栈”是世界上最酷的东西，它可以让世界各地的工程师在分布式系统中使用 Netflix 的经验。六年多过去了，如果我们现在来看看软件工程的工作，就会发现，其中大部分都是关于微服务的架构的。
+ 炒作驱动开发 在 2010 年代的早期，很多组织都面临着软件开发周期的挑战。与其他 50、100 或 200 名工程师一起工作的人，他们在开发环境、QA 过程和程序部署方面都很困难。Martin Fowler 的《Continuous Delivery》（译注：尚无中译本）一书给许多团队带来了曙光，他们开始意识到，他们那“雄伟”的单体应用正给他们带来组织问题。所以，微服务对软件工程师很有吸引力。在一个大项目中引入持续交付或部署，而不是一开始就引入，更具有挑战性。
+于是，团队开始拆分三个、十个、一百个微服务。其中大部分都使用**“JSON over HTTP”**（其他人可能会称之为 RESTful）API 来在这些组件之间实现远程调用。人们对 HTTP 协议非常熟悉，这看起来是一种将单体应用转换成小程序块的简单方法。这时，团队在 15 分钟之内就开始将代码部署到生产环境中。再也没有“哦，团队 A 破坏了 CI 管道，我不能部署我的代码”这样的情况了，这种感觉棒极了！
+但是，大多数工程师都忘了，在解决软件架构层面的组织问题的同时，他们也引入了许多复杂性。分布式系统的谬误变得越来越明显，并很快让这些团队感到头疼。甚至那些已经在做客户机 / 服务器架构的公司，当他们的系统中有超过 10 个移动部分时，也会出现这种情况。
+现实的反击 做出重大的架构改变并非没有成本。团队开始认识到，共享数据库是一种单点故障。后来他们意识到，他们各自的领域创造了一个全新的世界：最终的一致性就是一件事。在你提取数据的服务失败后该怎么办？很多问题开始堆积如山。高速开发速度的承诺被寻找错误、事件和数据一致性问题等压得喘不过气。另外一个问题是，工程师需要一种集中的日志和可观察性解决方案，在几十个服务中发现并纠正这些缺陷。
+灾难：服务规模过小 随着开发人员创造力的爆发，每天都能创造出新的服务。一项新功能？咣当，让我们开始服务吧！突然之间，20 名工程师组成了维护 50 项服务的小组。一人负责一项服务还不够！一般而言，代码的问题在于它会“腐烂”。维护每一项服务都是要付出代价的。想象一下，在你的服务团队中传播一个库的升级。再想象一下，这些服务开始于不同的时间点，具有不同的架构、业务逻辑和所使用的框架之间的纠葛。那是多么可怕啊！解决这些问题的方法当然是有的。其中大部分都不能使用，而其他一些则需要花费很多 FTE 工作。
+另外一种感觉是，我被告知，在服务 A 中部署新功能，并且在服务 B 中同时部署，或者当人们开始编写服务以生成 CSV 时。为什么会有人引入网络跳转，以产生世界上已知的文件格式？这东西谁来维护？有些团队正在受服务之苦。更糟的是，它在开发过程中会产生许多摩擦。与仅仅在 IDE 中查看一个项目不同，人们需要一次打开多个项目才能了解所有这些混乱的情况。
+灾难：开发环境 我已经记不清有多少次有人走近我说：
+ “嘿，João。你有时间吗？我们需要改善开发环境了！大家都在抱怨这些事，可是都没用！”
+ 这一问题涉及各个层面。移动开发者不需要在开发环境中开发功能就可以实现，或者后端开发者想要尝试他们的服务而不会破坏任何业务流程。如果有人想在生产之前在移动应用中测试整个过程，这也是一个问题。
+跨分布式系统的开发环境存在一些问题，尤其是规模方面：
+ 在云供应商中启动 200 个服务需要花费多少钱？你能做到吗？你是否能够启动运行他们所需的基础设施呢？ 这需要多长时间呢？加入一个移动工程师开始开发一项功能，在给定的版本中有一组服务，当这些服务完成之后，有 10 个新版本被部署到生产中，那会怎样？ 测试数据怎么样？你是否拥有所有服务的测试数据？在整个 Fleet 中都保持一致，所以用户和其他实体相匹配？ 当你开发一个多租户、多区域的应用时，如何配置和功能标志？怎样跟上生产进度？若同时更改缺省值呢？  这些只是冰山一角而已。你可能会考虑将工程技术应用于这个问题。那也许行得通。但是，我怀疑大多数组织是否有足够大的规模来完成这项工作。这样做既麻烦又费钱。">
+<meta property="og:type" content="article">
+<meta property="og:url" content="/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/micro-service/ms-disasters/"><meta property="article:section" content="模式架构">
+<meta property="og:site_name" content="infilos.com">
+<meta itemprop=name content="微服务灾难">
+<meta itemprop=description content="2014 年 Martin Fowler 发表了一篇关于微服务的文章，当时，我所在的团队正在构建面向服务的架构。这篇文章以及随后的炒作几乎影响了世界上所有的软件团队。那时，“Netflix OSS 栈”是世界上最酷的东西，它可以让世界各地的工程师在分布式系统中使用 Netflix 的经验。六年多过去了，如果我们现在来看看软件工程的工作，就会发现，其中大部分都是关于微服务的架构的。
+ 炒作驱动开发 在 2010 年代的早期，很多组织都面临着软件开发周期的挑战。与其他 50、100 或 200 名工程师一起工作的人，他们在开发环境、QA 过程和程序部署方面都很困难。Martin Fowler 的《Continuous Delivery》（译注：尚无中译本）一书给许多团队带来了曙光，他们开始意识到，他们那“雄伟”的单体应用正给他们带来组织问题。所以，微服务对软件工程师很有吸引力。在一个大项目中引入持续交付或部署，而不是一开始就引入，更具有挑战性。
+于是，团队开始拆分三个、十个、一百个微服务。其中大部分都使用**“JSON over HTTP”**（其他人可能会称之为 RESTful）API 来在这些组件之间实现远程调用。人们对 HTTP 协议非常熟悉，这看起来是一种将单体应用转换成小程序块的简单方法。这时，团队在 15 分钟之内就开始将代码部署到生产环境中。再也没有“哦，团队 A 破坏了 CI 管道，我不能部署我的代码”这样的情况了，这种感觉棒极了！
+但是，大多数工程师都忘了，在解决软件架构层面的组织问题的同时，他们也引入了许多复杂性。分布式系统的谬误变得越来越明显，并很快让这些团队感到头疼。甚至那些已经在做客户机 / 服务器架构的公司，当他们的系统中有超过 10 个移动部分时，也会出现这种情况。
+现实的反击 做出重大的架构改变并非没有成本。团队开始认识到，共享数据库是一种单点故障。后来他们意识到，他们各自的领域创造了一个全新的世界：最终的一致性就是一件事。在你提取数据的服务失败后该怎么办？很多问题开始堆积如山。高速开发速度的承诺被寻找错误、事件和数据一致性问题等压得喘不过气。另外一个问题是，工程师需要一种集中的日志和可观察性解决方案，在几十个服务中发现并纠正这些缺陷。
+灾难：服务规模过小 随着开发人员创造力的爆发，每天都能创造出新的服务。一项新功能？咣当，让我们开始服务吧！突然之间，20 名工程师组成了维护 50 项服务的小组。一人负责一项服务还不够！一般而言，代码的问题在于它会“腐烂”。维护每一项服务都是要付出代价的。想象一下，在你的服务团队中传播一个库的升级。再想象一下，这些服务开始于不同的时间点，具有不同的架构、业务逻辑和所使用的框架之间的纠葛。那是多么可怕啊！解决这些问题的方法当然是有的。其中大部分都不能使用，而其他一些则需要花费很多 FTE 工作。
+另外一种感觉是，我被告知，在服务 A 中部署新功能，并且在服务 B 中同时部署，或者当人们开始编写服务以生成 CSV 时。为什么会有人引入网络跳转，以产生世界上已知的文件格式？这东西谁来维护？有些团队正在受服务之苦。更糟的是，它在开发过程中会产生许多摩擦。与仅仅在 IDE 中查看一个项目不同，人们需要一次打开多个项目才能了解所有这些混乱的情况。
+灾难：开发环境 我已经记不清有多少次有人走近我说：
+ “嘿，João。你有时间吗？我们需要改善开发环境了！大家都在抱怨这些事，可是都没用！”
+ 这一问题涉及各个层面。移动开发者不需要在开发环境中开发功能就可以实现，或者后端开发者想要尝试他们的服务而不会破坏任何业务流程。如果有人想在生产之前在移动应用中测试整个过程，这也是一个问题。
+跨分布式系统的开发环境存在一些问题，尤其是规模方面：
+ 在云供应商中启动 200 个服务需要花费多少钱？你能做到吗？你是否能够启动运行他们所需的基础设施呢？ 这需要多长时间呢？加入一个移动工程师开始开发一项功能，在给定的版本中有一组服务，当这些服务完成之后，有 10 个新版本被部署到生产中，那会怎样？ 测试数据怎么样？你是否拥有所有服务的测试数据？在整个 Fleet 中都保持一致，所以用户和其他实体相匹配？ 当你开发一个多租户、多区域的应用时，如何配置和功能标志？怎样跟上生产进度？若同时更改缺省值呢？  这些只是冰山一角而已。你可能会考虑将工程技术应用于这个问题。那也许行得通。但是，我怀疑大多数组织是否有足够大的规模来完成这项工作。这样做既麻烦又费钱。">
+<meta itemprop=wordCount content="134">
+<meta itemprop=keywords content><meta name=twitter:card content="summary">
+<meta name=twitter:title content="微服务灾难">
+<meta name=twitter:description content="2014 年 Martin Fowler 发表了一篇关于微服务的文章，当时，我所在的团队正在构建面向服务的架构。这篇文章以及随后的炒作几乎影响了世界上所有的软件团队。那时，“Netflix OSS 栈”是世界上最酷的东西，它可以让世界各地的工程师在分布式系统中使用 Netflix 的经验。六年多过去了，如果我们现在来看看软件工程的工作，就会发现，其中大部分都是关于微服务的架构的。
+ 炒作驱动开发 在 2010 年代的早期，很多组织都面临着软件开发周期的挑战。与其他 50、100 或 200 名工程师一起工作的人，他们在开发环境、QA 过程和程序部署方面都很困难。Martin Fowler 的《Continuous Delivery》（译注：尚无中译本）一书给许多团队带来了曙光，他们开始意识到，他们那“雄伟”的单体应用正给他们带来组织问题。所以，微服务对软件工程师很有吸引力。在一个大项目中引入持续交付或部署，而不是一开始就引入，更具有挑战性。
+于是，团队开始拆分三个、十个、一百个微服务。其中大部分都使用**“JSON over HTTP”**（其他人可能会称之为 RESTful）API 来在这些组件之间实现远程调用。人们对 HTTP 协议非常熟悉，这看起来是一种将单体应用转换成小程序块的简单方法。这时，团队在 15 分钟之内就开始将代码部署到生产环境中。再也没有“哦，团队 A 破坏了 CI 管道，我不能部署我的代码”这样的情况了，这种感觉棒极了！
+但是，大多数工程师都忘了，在解决软件架构层面的组织问题的同时，他们也引入了许多复杂性。分布式系统的谬误变得越来越明显，并很快让这些团队感到头疼。甚至那些已经在做客户机 / 服务器架构的公司，当他们的系统中有超过 10 个移动部分时，也会出现这种情况。
+现实的反击 做出重大的架构改变并非没有成本。团队开始认识到，共享数据库是一种单点故障。后来他们意识到，他们各自的领域创造了一个全新的世界：最终的一致性就是一件事。在你提取数据的服务失败后该怎么办？很多问题开始堆积如山。高速开发速度的承诺被寻找错误、事件和数据一致性问题等压得喘不过气。另外一个问题是，工程师需要一种集中的日志和可观察性解决方案，在几十个服务中发现并纠正这些缺陷。
+灾难：服务规模过小 随着开发人员创造力的爆发，每天都能创造出新的服务。一项新功能？咣当，让我们开始服务吧！突然之间，20 名工程师组成了维护 50 项服务的小组。一人负责一项服务还不够！一般而言，代码的问题在于它会“腐烂”。维护每一项服务都是要付出代价的。想象一下，在你的服务团队中传播一个库的升级。再想象一下，这些服务开始于不同的时间点，具有不同的架构、业务逻辑和所使用的框架之间的纠葛。那是多么可怕啊！解决这些问题的方法当然是有的。其中大部分都不能使用，而其他一些则需要花费很多 FTE 工作。
+另外一种感觉是，我被告知，在服务 A 中部署新功能，并且在服务 B 中同时部署，或者当人们开始编写服务以生成 CSV 时。为什么会有人引入网络跳转，以产生世界上已知的文件格式？这东西谁来维护？有些团队正在受服务之苦。更糟的是，它在开发过程中会产生许多摩擦。与仅仅在 IDE 中查看一个项目不同，人们需要一次打开多个项目才能了解所有这些混乱的情况。
+灾难：开发环境 我已经记不清有多少次有人走近我说：
+ “嘿，João。你有时间吗？我们需要改善开发环境了！大家都在抱怨这些事，可是都没用！”
+ 这一问题涉及各个层面。移动开发者不需要在开发环境中开发功能就可以实现，或者后端开发者想要尝试他们的服务而不会破坏任何业务流程。如果有人想在生产之前在移动应用中测试整个过程，这也是一个问题。
+跨分布式系统的开发环境存在一些问题，尤其是规模方面：
+ 在云供应商中启动 200 个服务需要花费多少钱？你能做到吗？你是否能够启动运行他们所需的基础设施呢？ 这需要多长时间呢？加入一个移动工程师开始开发一项功能，在给定的版本中有一组服务，当这些服务完成之后，有 10 个新版本被部署到生产中，那会怎样？ 测试数据怎么样？你是否拥有所有服务的测试数据？在整个 Fleet 中都保持一致，所以用户和其他实体相匹配？ 当你开发一个多租户、多区域的应用时，如何配置和功能标志？怎样跟上生产进度？若同时更改缺省值呢？  这些只是冰山一角而已。你可能会考虑将工程技术应用于这个问题。那也许行得通。但是，我怀疑大多数组织是否有足够大的规模来完成这项工作。这样做既麻烦又费钱。">
+<script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga('create','UA-123062585-1','auto'),ga('send','pageview'))</script>
+<script async src=https://www.google-analytics.com/analytics.js></script>
+<link rel=preload href=/scss/main.min.847464b684a6e89d7276700a5c500c17ab494dd1755b2654a7b27d8b59e3347e.css as=style>
+<link href=/scss/main.min.847464b684a6e89d7276700a5c500c17ab494dd1755b2654a7b27d8b59e3347e.css rel=stylesheet integrity>
+<script src=/js/jquery-3.5.1.min.js integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin=anonymous></script>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/docsearch.js@2/dist/cdn/docsearch.min.css>
+</head>
+<body class=td-page>
+<header>
+<nav class="js-navbar-scroll navbar navbar-expand navbar-dark flex-column flex-md-row td-navbar">
+<a class=navbar-brand href=/>
+<span class=navbar-logo><svg id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512" style="enable-background:new 0 0 512 512"><path style="fill:#ffc107" d="M432.384 143.616c-4.165-4.164-10.917-4.164-15.083.0l-60.352 60.352c-4.164 4.165-4.164 10.917.0 15.083 21.187 20.463 54.951 19.876 75.413-1.311 19.962-20.668 19.962-53.435.0-74.102L432.384 143.616z"/><path style="fill:#607d8b" d="M42.667 277.334c-5.891.003-10.669-4.771-10.672-10.662-.002-4.338 2.623-8.245 6.64-9.882l234.667-96c5.455-2.233 11.687.38 13.92 5.835s-.38 11.687-5.835 13.92l-234.667 96C45.433 277.069 44.056 277.337 42.667 277.334z"/><path style="fill:#546e7a" d="M391.552 56.448l-32-32C343.938 8.745 322.689-.059 300.544.0h-3.755c-46.082.024-83.432 37.374-83.456 83.456v3.755c-.053 22.138 8.75 43.377 24.448 58.987l32 32c4.165 4.164 10.917 4.164 15.083.0L391.531 71.531C395.701 67.372 395.71 60.62 391.552 56.448z"/><path style="fill:#607d8b" d="M160 469.334c-3.279.006-6.379-1.497-8.405-4.075L34.261 315.926c-3.635-4.636-2.823-11.341 1.813-14.976s11.341-2.823 14.976 1.813l117.333 149.333c3.629 4.641 2.809 11.344-1.832 14.973C164.681 468.533 162.375 469.329 160 469.334z"/><path style="fill:#455a64" d="M487.467 86.848l-3.669-3.648c-37.687-36.557-97.71-36.197-134.955.811l-51.413 51.413c-36.996 37.25-37.357 97.263-.811 134.955l3.584 3.669c1.7 2.457 4.671 3.706 7.616 3.2 2.831.005 5.548-1.115 7.552-3.115l172.181-172.181c4.189-4.143 4.226-10.896.083-15.085-.028-.028-.055-.056-.083-.083L487.467 86.848z"/><g><path style="fill:#ffc107" d="M501.333 192H480c-5.891.0-10.667-4.776-10.667-10.667s4.776-10.667 10.667-10.667h21.333c5.891.0 10.667 4.776 10.667 10.667S507.225 192 501.333 192z"/><path style="fill:#ffc107" d="M394.667 298.667c-5.891.0-10.667-4.776-10.667-10.667v-21.333c0-5.891 4.776-10.667 10.667-10.667 5.891.0 10.667 4.776 10.667 10.667V288C405.333 293.891 400.558 298.667 394.667 298.667z"/><path style="fill:#ffc107" d="M480 277.334c-2.831.005-5.548-1.115-7.552-3.115l-21.333-21.333c-4.093-4.237-3.975-10.99.262-15.083 4.134-3.993 10.687-3.993 14.821.0l21.333 21.333c4.159 4.172 4.148 10.926-.024 15.085C485.514 276.209 482.815 277.327 480 277.334z"/></g><g><path style="fill:#455a64" d="M266.667 448H96c-29.455.0-53.333 23.878-53.333 53.333.0 5.891 4.776 10.667 10.667 10.667h256c5.891.0 10.667-4.776 10.667-10.667C320 471.878 296.122 448 266.667 448z"/><circle style="fill:#455a64" cx="32" cy="288" r="32"/></g><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/></svg></span><span class=font-weight-bold>infilos.com</span>
+</a>
+<div class="collapse navbar-collapse" id=navbarSupportedContent>
+<ul class="navbar-nav mr-auto">
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+基础
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/%e6%93%8d%e4%bd%9c%e7%b3%bb%e7%bb%9f>操作系统</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/%e6%80%a7%e8%83%bd%e4%b9%8b%e6%ae%87>性能之殇</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/io%e6%a8%a1%e5%9e%8b>IO 模型</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/%e7%bd%91%e7%bb%9c%e5%9f%ba%e7%a1%80>网络基础</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/tcp-ip>TCP-IP</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/http>HTTP</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+语言
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/java>Java 编程</a>
+<a class=dropdown-item href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/jvm-core>JVM 核心</a>
+<a class=dropdown-item href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/jvm-concurrent>JVM 并发</a>
+<a class=dropdown-item href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/scala>Scala 编程</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+框架库
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93/spring>Spring</a>
+<a class=dropdown-item href=/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93/hikari>Hikari</a>
+<a class=dropdown-item href=/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93/parboiled>Parboiled</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+分布式
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%88%86%e5%b8%83%e5%bc%8f/base>基本构成</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+大数据
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%ad%98%e5%82%a8%e7%b3%bb%e7%bb%9f>存储系统</a>
+<a class=dropdown-item href=/%e6%9f%a5%e8%af%a2%e7%b3%bb%e7%bb%9f>查询系统</a>
+<a class=dropdown-item href=/%e6%b6%88%e6%81%af%e7%b3%bb%e7%bb%9f>消息系统</a>
+<a class=dropdown-item href=/%e5%a4%84%e7%90%86%e7%b3%bb%e7%bb%9f>处理系统</a>
+<a class=dropdown-item href=/%e7%ae%a1%e7%90%86%e7%b3%bb%e7%bb%9f>管理系统</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+中后台
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e8%ae%be%e6%96%bd>基础设施</a>
+<a class=dropdown-item href=/%e4%ba%a4%e4%ba%92%e7%95%8c%e9%9d%a2>交互界面</a>
+<a class=dropdown-item href=/%e4%b8%9a%e5%8a%a1%e7%b3%bb%e7%bb%9f>业务系统</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+模式架构
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e6%a8%a1%e5%bc%8f%e6%9e%b6%e6%9e%84/design-pattern>设计模式</a>
+<a class=dropdown-item href=/%e6%a8%a1%e5%bc%8f%e6%9e%b6%e6%9e%84/micro-service>微服务架构</a>
+</div>
+</li>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e9%9d%a2%e8%af%95%e9%97%ae%e7%ad%94>
+<span>面试</span>
+</a>
+</li>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e7%ae%a1%e7%90%86%e8%b7%af%e5%be%84>
+<span>管理</span>
+</a>
+</li>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e5%bc%80%e6%ba%90%e9%a1%b9%e7%9b%ae>
+<span>开源</span>
+</a>
+</li>
+</ul>
+<div class="form-inline my-2 my-lg-0">
+<div class="nav-item nav-search-item my-2 my-md-0">
+<input type=search class="form-control td-search-input" placeholder="&#xf002; 站内搜索…" aria-label=站内搜索… autocomplete=off>
+</div>
+</div>
+</div>
+</nav>
+</header>
+<div class="container-fluid td-outer">
+<div class=td-main>
+<div class="row flex-xl-nowrap">
+<aside class="col-12 col-md-3 col-xl-2 td-sidebar d-print-none">
+<div id=td-sidebar-menu class=td-sidebar__inner>
+<div id=content-mobile>
+<form class="td-sidebar__search d-flex align-items-center">
+<input type=search class="form-control td-search-input" placeholder="&#xf002; 站内搜索…" aria-label=站内搜索… autocomplete=off>
+<button class="btn btn-link td-sidebar__toggle d-md-none p-0 ml-3 fas fa-bars" type=button data-toggle=collapse data-target=#td-section-nav aria-controls=td-docs-nav aria-expanded=false aria-label="Toggle section navigation">
+</button>
+</form>
+</div>
+<div id=content-desktop></div>
+<nav class="collapse td-sidebar-nav" id=td-section-nav>
+<ul class="td-sidebar-nav__section pr-md-3 ul-0">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e6a8a1e5bc8fe69eb6e69e84-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section tree-root" id=m-e6a8a1e5bc8fe69eb6e69e84><span>架构模式</span></a>
+<ul class=ul-1>
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a8a1e5bc8fe69eb6e69e84design-pattern-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a8a1e5bc8fe69eb6e69e84design-pattern><span>设计模式</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-pattern-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-pattern><span>Java 模式</span></a>
+<ul class="ul-3 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch01-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch01/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch01><span>CH01-创建型-简单工厂</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch02-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch02/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch02><span>CH02-创建型-工厂方法</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch03-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch03/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch03><span>CH03-创建型-抽象工厂</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch04-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch04/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch04><span>CH04-创建型-建造者</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch05-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch05/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch05><span>CH05-创建型-单例</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch06-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch06/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch06><span>CH06-结构型-适配器</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch07-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch07/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch07><span>CH07-结构型-桥接</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch08-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch08/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch08><span>CH08-结构型-装饰器</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch09-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch09/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch09><span>CH09-结构型-外观</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch10-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch10/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch10><span>CH10-结构型-享元</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch11-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch11/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch11><span>CH11-结构型-代理</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch12-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch12/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch12><span>CH12-行为型-命令</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch13-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch13/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch13><span>CH13-行为型-中介者</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch14-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch14/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch14><span>CH14-行为型-观察者</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch15-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch15/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch15><span>CH15-行为型-状态</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch16-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch16/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch16><span>CH16-行为型-策略</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-pattern-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-pattern><span>Scala 模式</span></a>
+<ul class="ul-3 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch01-e6a8a1e5bc8fe58886e7b1bb-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch01-%E6%A8%A1%E5%BC%8F%E5%88%86%E7%B1%BB/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch01-e6a8a1e5bc8fe58886e7b1bb><span>CH01-模式分类</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch02-e789b9e8b4a8e4b88ee6b7b7e585a5e7bb84e59088-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch02-%E7%89%B9%E8%B4%A8%E4%B8%8E%E6%B7%B7%E5%85%A5%E7%BB%84%E5%90%88/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch02-e789b9e8b4a8e4b88ee6b7b7e585a5e7bb84e59088><span>CH02-特质与混入组合</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch03-e7bb9fe4b880e58c96-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch03-%E7%BB%9F%E4%B8%80%E5%8C%96/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch03-e7bb9fe4b880e58c96><span>CH03-统一化</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch04-e68abde8b1a1e4b88ee887aae7b1bbe59e8b-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch04-%E6%8A%BD%E8%B1%A1%E4%B8%8E%E8%87%AA%E7%B1%BB%E5%9E%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch04-e68abde8b1a1e4b88ee887aae7b1bbe59e8b><span>CH04-抽象与自类型</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch05-aop-e4b88ee7bb84e4bbb6-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch05-aop-%E4%B8%8E%E7%BB%84%E4%BB%B6/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch05-aop-e4b88ee7bb84e4bbb6><span>CH05-AOP 与组件</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch06-0-e5889be5bbbae59e8be6a8a1e5bc8f-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch06-0-%E5%88%9B%E5%BB%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch06-0-e5889be5bbbae59e8be6a8a1e5bc8f><span>CH06-创建型模式</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch06-1-e5b7a5e58e82e696b9e6b395-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch06-1-%E5%B7%A5%E5%8E%82%E6%96%B9%E6%B3%95/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch06-1-e5b7a5e58e82e696b9e6b395><span>CH06-1-工厂方法</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch06-2-e68abde8b1a1e5b7a5e58e82-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch06-2-%E6%8A%BD%E8%B1%A1%E5%B7%A5%E5%8E%82/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch06-2-e68abde8b1a1e5b7a5e58e82><span>CH06-2-抽象工厂</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch06-3-e585b6e4bb96e5b7a5e58e82e6a8a1e5bc8f-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch06-3-%E5%85%B6%E4%BB%96%E5%B7%A5%E5%8E%82%E6%A8%A1%E5%BC%8F/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch06-3-e585b6e4bb96e5b7a5e58e82e6a8a1e5bc8f><span>CH06-3-其他工厂模式</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch06-4-e68792e5889de5a78be58c96-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch06-4-%E6%87%92%E5%88%9D%E5%A7%8B%E5%8C%96/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch06-4-e68792e5889de5a78be58c96><span>CH06-4-懒初始化</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch06-5-e58d95e4be8be6a8a1e5bc8f-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch06-5-%E5%8D%95%E4%BE%8B%E6%A8%A1%E5%BC%8F/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch06-5-e58d95e4be8be6a8a1e5bc8f><span>CH06-5-单例模式</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch06-6-e69e84e5bbbae599a8e6a8a1e5bc8f-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch06-6-%E6%9E%84%E5%BB%BA%E5%99%A8%E6%A8%A1%E5%BC%8F/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch06-6-e69e84e5bbbae599a8e6a8a1e5bc8f><span>CH06-6-构建器模式</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch06-7-e58e9fe59e8be6a8a1e5bc8f-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch06-7-%E5%8E%9F%E5%9E%8B%E6%A8%A1%E5%BC%8F/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch06-7-e58e9fe59e8be6a8a1e5bc8f><span>CH06-7-原型模式</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch07-0-e7bb93e69e84e59e8be6a8a1e5bc8f-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch07-0-%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch07-0-e7bb93e69e84e59e8be6a8a1e5bc8f><span>CH07-结构型模式</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch07-1-e98082e9858de599a8e6a8a1e5bc8f-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch07-1-%E9%80%82%E9%85%8D%E5%99%A8%E6%A8%A1%E5%BC%8F/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch07-1-e98082e9858de599a8e6a8a1e5bc8f><span>CH07-1-适配器模式</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch07-2-e8a385e9a5b0e599a8e6a8a1e5bc8f-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch07-2-%E8%A3%85%E9%A5%B0%E5%99%A8%E6%A8%A1%E5%BC%8F/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch07-2-e8a385e9a5b0e599a8e6a8a1e5bc8f><span>CH07-2-装饰器模式</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch07-3-e6a1a5e68ea5e6a8a1e5bc8f-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch07-3-%E6%A1%A5%E6%8E%A5%E6%A8%A1%E5%BC%8F/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch07-3-e6a1a5e68ea5e6a8a1e5bc8f><span>CH07-3-桥接模式</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch07-4-e7bb84e59088e6a8a1e5bc8f-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch07-4-%E7%BB%84%E5%90%88%E6%A8%A1%E5%BC%8F/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch07-4-e7bb84e59088e6a8a1e5bc8f><span>CH07-4-组合模式</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch07-5-e5a496e8a782e6a8a1e5bc8f-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch07-5-%E5%A4%96%E8%A7%82%E6%A8%A1%E5%BC%8F/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch07-5-e5a496e8a782e6a8a1e5bc8f><span>CH07-5-外观模式</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch07-6-e4baabe58583e6a8a1e5bc8f-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch07-6-%E4%BA%AB%E5%85%83%E6%A8%A1%E5%BC%8F/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch07-6-e4baabe58583e6a8a1e5bc8f><span>CH07-6-享元模式</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch07-7-e4bba3e79086e6a8a1e5bc8f-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch07-7-%E4%BB%A3%E7%90%86%E6%A8%A1%E5%BC%8F/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch07-7-e4bba3e79086e6a8a1e5bc8f><span>CH07-7-代理模式</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch08-e8a18ce4b8bae59e8be6a8a1e5bc8f-1-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch08-%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F-1/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch08-e8a18ce4b8bae59e8be6a8a1e5bc8f-1><span>CH08-行为型模式-1</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch09-e8a18ce4b8bae59e8be6a8a1e5bc8f-2-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch09-%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F-2/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch09-e8a18ce4b8bae59e8be6a8a1e5bc8f-2><span>CH09-行为型模式-2</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch10-e587bde695b0e5bc8fe6a8a1e5bc8fe79086e8aeba-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch10-%E5%87%BD%E6%95%B0%E5%BC%8F%E6%A8%A1%E5%BC%8F%E7%90%86%E8%AE%BA/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch10-e587bde695b0e5bc8fe6a8a1e5bc8fe79086e8aeba><span>CH10-函数式模式理论</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch11-e587bde695b0e5bc8fe6a8a1e5bc8fe5ba94e794a8-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch11-%E5%87%BD%E6%95%B0%E5%BC%8F%E6%A8%A1%E5%BC%8F%E5%BA%94%E7%94%A8/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch11-e587bde695b0e5bc8fe6a8a1e5bc8fe5ba94e794a8><span>CH11-函数式模式应用</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch12-e5ae9ee99985e5ba94e794a8-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch12-%E5%AE%9E%E9%99%85%E5%BA%94%E7%94%A8/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch12-e5ae9ee99985e5ba94e794a8><span>CH12-实际应用</span></a>
+</li>
+</ul>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e6a8a1e5bc8fe69eb6e69e84micro-service-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/micro-service/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a8a1e5bc8fe69eb6e69e84micro-service><span>微服务架构</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84micro-servicepattern-overview-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/micro-service/pattern-overview/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84micro-servicepattern-overview><span>模式概览</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child active-path" id=m-e6a8a1e5bc8fe69eb6e69e84micro-servicems-disasters-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/micro-service/ms-disasters/ class="align-left pl-0 active td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84micro-servicems-disasters><span class=td-sidebar-nav-active-item>微服务灾难</span></a>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</div>
+</aside>
+<aside class="d-none d-xl-block col-xl-2 td-sidebar-toc d-print-none">
+<div class="td-page-meta ml-2 pb-1 pt-2 mb-0">
+<a href=https://github.com/infilos/infilos.com/edit/master/content/zh/%e6%a8%a1%e5%bc%8f%e6%9e%b6%e6%9e%84/micro-service/ms-disasters.md target=_blank><i class="fa fa-edit fa-fw"></i> 编辑此页</a>
+<a href="https://github.com/infilos/infilos.com/new/master/content/zh/%e6%a8%a1%e5%bc%8f%e6%9e%b6%e6%9e%84/micro-service/ms-disasters.md?filename=change-me.md&value=---%0Atitle%3A+%22Long+Page+Title%22%0AlinkTitle%3A+%22Short+Nav+Title%22%0Aweight%3A+100%0Adescription%3A+%3E-%0A+++++Page+description+for+heading+and+indexes.%0A---%0A%0A%23%23+Heading%0A%0AEdit+this+template+to+create+your+new+page.%0A%0A%2A+Give+it+a+good+name%2C+ending+in+%60.md%60+-+e.g.+%60getting-started.md%60%0A%2A+Edit+the+%22front+matter%22+section+at+the+top+of+the+page+%28weight+controls+how+its+ordered+amongst+other+pages+in+the+same+directory%3B+lowest+number+first%29.%0A%2A+Add+a+good+commit+message+at+the+bottom+of+the+page+%28%3C80+characters%3B+use+the+extended+description+field+for+more+detail%29.%0A%2A+Create+a+new+branch+so+you+can+preview+your+new+file+and+request+a+review+via+Pull+Request.%0A" target=_blank><i class="fa fa-edit fa-fw"></i> 添加子页面</a>
+<a href="https://github.com/infilos/infilos.com/issues/new?title=%e5%be%ae%e6%9c%8d%e5%8a%a1%e7%81%be%e9%9a%be" target=_blank><i class="fab fa-github fa-fw"></i> 提交文档问题</a>
+<a id=print href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/micro-service/_print/><i class="fa fa-print fa-fw"></i> 整节打印</a>
+</div>
+<div class=td-toc><nav id=TableOfContents>
+<ul>
+<li><a href=#炒作驱动开发>炒作驱动开发</a></li>
+<li><a href=#现实的反击>现实的反击</a></li>
+<li><a href=#灾难服务规模过小>灾难：服务规模过小</a></li>
+<li><a href=#灾难开发环境>灾难：开发环境</a></li>
+<li><a href=#灾难端到端测试>灾难：端到端测试</a></li>
+<li><a href=#灾难巨大的共享数据库>灾难：巨大的共享数据库</a></li>
+<li><a href=#灾难api-网关>灾难：API 网关</a></li>
+<li><a href=#灾难超时重试弹性>灾难：超时、重试、弹性</a></li>
+<li><a href=#看到所有这些灾难你还喜欢分布式系统吗>看到所有这些灾难，你还喜欢分布式系统吗？</a></li>
+</ul>
+</nav></div>
+</aside>
+<main class="col-12 col-md-9 col-xl-8 pl-md-5" role=main>
+<nav aria-label=breadcrumb class="d-none d-md-block d-print-none">
+<ol class="breadcrumb spb-1">
+<li class=breadcrumb-item>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/>架构模式</a>
+</li>
+<li class=breadcrumb-item>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/micro-service/>微服务架构</a>
+</li>
+<li class="breadcrumb-item active" aria-current=page>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/micro-service/ms-disasters/>微服务灾难</a>
+</li>
+</ol>
+</nav>
+<div class=td-content>
+<h1>微服务灾难</h1>
+<header class=article-meta>
+</header>
+<blockquote>
+<p>2014 年 Martin Fowler 发表了一篇关于微服务的文章，当时，我所在的团队正在构建面向服务的架构。这篇文章以及随后的炒作几乎影响了世界上所有的软件团队。那时，“Netflix OSS 栈”是世界上最酷的东西，它可以让世界各地的工程师在分布式系统中使用 Netflix 的经验。六年多过去了，如果我们现在来看看软件工程的工作，就会发现，其中大部分都是关于微服务的架构的。</p>
+</blockquote>
+<h2 id=炒作驱动开发>炒作驱动开发</h2>
+<p>在 2010 年代的早期，很多组织都面临着软件开发周期的挑战。与其他 50、100 或 200 名工程师一起工作的人，他们在开发环境、QA 过程和程序部署方面都很困难。Martin Fowler 的《Continuous Delivery》（译注：尚无中译本）一书给许多团队带来了曙光，他们开始意识到，他们那“雄伟”的单体应用正给他们带来组织问题。所以，微服务对软件工程师很有吸引力。在一个大项目中引入持续交付或部署，而不是一开始就引入，更具有挑战性。</p>
+<p>于是，团队开始拆分三个、十个、一百个微服务。其中大部分都使用**“JSON over HTTP”**（其他人可能会称之为 RESTful）API 来在这些组件之间实现远程调用。人们对 HTTP 协议非常熟悉，这看起来是一种将单体应用转换成小程序块的简单方法。这时，团队在 15 分钟之内就开始将代码部署到生产环境中。再也没有“哦，团队 A 破坏了 CI 管道，我不能部署我的代码”这样的情况了，这种感觉棒极了！</p>
+<p>但是，大多数工程师都忘了，在解决软件架构层面的组织问题的同时，他们也引入了许多复杂性。分布式系统的谬误变得越来越明显，并很快让这些团队感到头疼。甚至那些已经在做客户机 / 服务器架构的公司，当他们的系统中有超过 10 个移动部分时，也会出现这种情况。</p>
+<h2 id=现实的反击>现实的反击</h2>
+<p>做出重大的架构改变并非没有成本。团队开始认识到，<strong>共享数据库是一种单点故障</strong>。后来他们意识到，他们各自的领域创造了一个全新的世界：<strong>最终的一致性</strong>就是一件事。在你提取数据的服务失败后该怎么办？很多问题开始堆积如山。高速开发速度的承诺被寻找错误、事件和数据一致性问题等压得喘不过气。另外一个问题是，工程师需要一种集中的日志和可观察性解决方案，在几十个服务中发现并纠正这些缺陷。</p>
+<h2 id=灾难服务规模过小>灾难：服务规模过小</h2>
+<p>随着开发人员创造力的爆发，每天都能创造出新的服务。一项新功能？咣当，让我们开始服务吧！突然之间，20 名工程师组成了维护 50 项服务的小组。一人负责一项服务还不够！一般而言，代码的问题在于它会“腐烂”。维护每一项服务都是要付出代价的。想象一下，在你的服务团队中传播一个库的升级。再想象一下，这些服务开始于不同的时间点，具有不同的架构、业务逻辑和所使用的框架之间的纠葛。那是多么可怕啊！解决这些问题的方法当然是有的。其中大部分都不能使用，而其他一些则需要花费很多 FTE 工作。</p>
+<p>另外一种感觉是，我被告知，在服务 A 中部署新功能，并且在服务 B 中同时部署，或者当人们开始编写服务以生成 CSV 时。为什么会有人引入网络跳转，以产生世界上已知的文件格式？这东西谁来维护？有些团队正在受服务之苦。更糟的是，它在开发过程中会产生许多摩擦。与仅仅在 IDE 中查看一个项目不同，人们需要一次打开多个项目才能了解所有这些混乱的情况。</p>
+<h2 id=灾难开发环境>灾难：开发环境</h2>
+<p>我已经记不清有多少次有人走近我说：</p>
+<blockquote>
+<p>“嘿，João。你有时间吗？我们需要改善开发环境了！大家都在抱怨这些事，可是都没用！”</p>
+</blockquote>
+<p>这一问题涉及各个层面。移动开发者不需要在开发环境中开发功能就可以实现，或者后端开发者想要尝试他们的服务而不会破坏任何业务流程。如果有人想在生产之前在移动应用中测试整个过程，这也是一个问题。</p>
+<p>跨分布式系统的开发环境存在一些问题，尤其是规模方面：</p>
+<ol>
+<li>在云供应商中启动 200 个服务需要花费多少钱？你能做到吗？你是否能够启动运行他们所需的基础设施呢？</li>
+<li>这需要多长时间呢？加入一个移动工程师开始开发一项功能，在给定的版本中有一组服务，当这些服务完成之后，有 10 个新版本被部署到生产中，那会怎样？</li>
+<li>测试数据怎么样？你是否拥有所有服务的测试数据？在整个 Fleet 中都保持一致，所以用户和其他实体相匹配？</li>
+<li>当你开发一个多租户、多区域的应用时，如何配置和功能标志？怎样跟上生产进度？若同时更改缺省值呢？</li>
+</ol>
+<p>这些只是冰山一角而已。你可能会考虑将工程技术应用于这个问题。那也许行得通。但是，我怀疑大多数组织是否有足够大的规模来完成这项工作。这样做既麻烦又费钱。</p>
+<h2 id=灾难端到端测试>灾难：端到端测试</h2>
+<p>不难想象，端到端测试和开发环境有相似的问题。在此之前，使用虚拟机或容器创建新的开发环境相对简单。同样，使用 Selenium 创建测试套件非常简单，它可以在部署新版本之前通过业务流并判断它们是否在工作。有了微服务，即使我们能够解决以上关于构建环境的所有问题，我们也不能再次宣布系统正在运行。我们至多可以这样说，运行特定版本的服务和特定配置的系统可以在特定的时间点上正常工作。真是大不相同啊！</p>
+<p>要让人们相信我们只能进行几次这样的测试是非常困难的。而且在持续集成（Continuous Integration）流程中运行这些测试并不够。它们应该持续运行。它们应该针对生产运行情况发出相应的警报。我已经分享了无数次 Cindy Sridharan 的文章《在生产中测试，安全的方法》（Testing in production, the safe way），试图让人们理解我的观点。</p>
+<h2 id=灾难巨大的共享数据库>灾难：巨大的共享数据库</h2>
+<p>一种简单的方法就是继续使用共享数据库，这样就可以避免单体应用，同时保证数据的一致性。这种方法不会增加操作负荷，而且可以轻松地一步一步地切割单体应用。但它也有相当大的缺点。这不仅是一个明显的单点故障，而且违背了面向服务架构的一些原则。你是否为每项服务创建一个用户？你是否具有细粒度的权限，以便服务 A 只能读写特定的表？假如某人不小心删除了索引怎么办？怎样知道有多少服务使用了不同的表？那扩容呢？</p>
+<p>解决这些问题本身就变成了一个全新的难题。在技术上，这可能不是一个无关紧要的小问题，因为数据库经常比软件寿命长。用数据复制来解决问题——不管是 Kafaka、AWS DMS 还是其他什么——都需要你的工程团队理解数据库的细节，以及如何处理重复时间等等。</p>
+<h2 id=灾难api-网关>灾难：API 网关</h2>
+<p>在面向服务的架构中，API 网关是一种典型模式。它们帮助解耦后端与前端消费者。在实施端点聚合、速率限制或跨系统认证方面，它们也有用。近来，业界倾向于 backend-for-frontend（BFF，服务于前端的后端）的架构，将网关部署到前端的每个消费者群体（iOS、Android、Web 或桌面应用），从而解耦它们的进化。</p>
+<p>和世界上的任何东西一样，人们开始有了新的创造性用例。有时这只是一个小技巧，使移动应用能够向后兼容。突然间，你的 API 网关变成了一个单点故障，因为人们发现在一个地方进行认证更加容易，其中还包含一些出乎意料的业务逻辑。现在，你不再有一个获得所有流量的单体应用，而是有一个自己开发的 Spring Boot 服务来或许所有的流量！会出什么问题呢？工程人员很快意识到这是个错误，但是由于存在大量的定制，有时候他们不能用它来取代无状态的、可扩展的定制。</p>
+<p>当使用未分页的端点或返回大量响应时，就会导致 API 网关灾难。又或者，如果你在没有后备机制的情况下进行聚合，仅仅调用一次 API 就会“烧毁”你的网关。</p>
+<h2 id=灾难超时重试弹性>灾难：超时、重试、弹性</h2>
+<p>分布式系统经常处于局部故障模式。如果服务 A 不能与服务 B 取得联系，会发生什么？咱们可以再试一次，对吗？但是这很快让我们陷入了困惑之中。我见过有些团队使用断路器，然后对下游服务进行 HTTP 调用时会超时。尽管这可能是一种正常的反应，为我们争取了一些时间来解决问题，但是它会产生二阶效应。所有这些请求都将被断路器取消，因为它们太长，在断路器上的时间太长。随着流量的增加，会有越来越多的请求进入队列，结果会比你希望修复的更糟。工程师们都在努力理解队列理论，理解为什么会出现超时现象。同样的事情发生在团队开始讨论 HTTP 客户端的线程池等问题时。尽管对这些东西进行配置本身就是一种艺术，但基于直觉来设置数值会使你陷入严重的停机状态。</p>
+<p>在从失败中恢复的过程中，一个棘手的问题是并非所有的失败都一样。有些情况下，我们会希望我们的消费者是等幂的。但是这意味着我们应该积极的决定每一种失败情况下该怎么做。消费者是否等幂？能否重试这个调用？在认识到存在巨大的数据完整性问题之前，我已经看到许多工程师忽视了这些，因为它们只是“边缘情况”。</p>
+<p>即使你设置了后备机制，重试也比所有这些更加复杂。假设你的移动应用有 500 万用户，而更新用户首选项的消息总线暂时无法运行。你创建了一个支持这种情况的后备机制，该机制通过 HTTP API 调用用户的首选项服务。你应该知道我在说什么吧。如今，该服务突然出现了巨大的流量尖峰，可能无法应付所有的流量。更糟糕的是：你的服务可能接收到所有这些新请求，但是如果重试机制不能实现指数退避和抖动，那么你就可能遇到来自移动应用的分布式拒绝服务。</p>
+<h2 id=看到所有这些灾难你还喜欢分布式系统吗>看到所有这些灾难，你还喜欢分布式系统吗？</h2>
+<p>要是我告诉你，我只是写下了我所看到的灾难中的一小部分呢？分布式系统很难掌握，而且大多数软件工程师只是在最近才持续接触到它们。</p>
+<p>好消息是，对于我所说的很多灾难，我们都能找到解决方案，行业已经创造除了更好的工具，使得除了美国五大科技巨头（Facebook、苹果、亚马逊、Netflix、谷歌）之外的其他组织都能解决这些问题。</p>
+<p>我还是喜欢分布式系统，而且我还是觉得微服务是一个解决组织问题的好方法。但是，当我们把失败看作“边缘案例”或者我们认为不可能发生的事时，问题就出现了。在一定范围内，这些边缘案例成为新常态，我们应该加以应对。</p>
+<blockquote>
+<p>原文链接：https://world.hey.com/joaoqalves/disasters-i-ve-seen-in-a-microservices-world-a9137a51</p>
+</blockquote>
+<style>.feedback--answer{display:inline-block}.feedback--answer-no{margin-left:1em}.feedback--response{display:none;margin-top:1em}.feedback--response__visible{display:block}</style>
+<div class=d-print-none>
+<h2 class=feedback--title>Feedback</h2>
+<p class=feedback--question>Was this page helpful?</p>
+<button class="btn btn-primary mb-4 feedback--answer feedback--answer-yes">Yes</button>
+<button class="btn btn-primary mb-4 feedback--answer feedback--answer-no">No</button>
+<p class="feedback--response feedback--response-yes">
+Glad to hear it! Please <a href=https://github.com/infilos/infilos.com/issues/new>tell us how we can improve</a>.
+</p>
+<p class="feedback--response feedback--response-no">
+Sorry to hear that. Please <a href=https://github.com/infilos/infilos.com/issues/new>tell us how we can improve</a>.
+</p>
+</div>
+<script>const yesButton=document.querySelector('.feedback--answer-yes'),noButton=document.querySelector('.feedback--answer-no'),yesResponse=document.querySelector('.feedback--response-yes'),noResponse=document.querySelector('.feedback--response-no'),disableButtons=()=>{yesButton.disabled=!0,noButton.disabled=!0},sendFeedback=b=>{if(typeof ga!='function')return;const a={command:'send',hitType:'event',category:'Helpful',action:'click',label:window.location.pathname,value:b};ga(a.command,a.hitType,a.category,a.action,a.label,a.value)};yesButton.addEventListener('click',()=>{yesResponse.classList.add('feedback--response__visible'),disableButtons(),sendFeedback(1)}),noButton.addEventListener('click',()=>{noResponse.classList.add('feedback--response__visible'),disableButtons(),sendFeedback(0)})</script>
+<br>
+</div>
+</main>
+</div>
+</div>
+<footer class="bg-dark py-5 row d-print-none">
+<div class="container-fluid mx-sm-5">
+<div class=row>
+<div class="col-6 col-sm-4 text-xs-center order-sm-2">
+</div>
+<div class="col-6 col-sm-4 text-right text-xs-center order-sm-3">
+<ul class="list-inline mb-0">
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Weibo aria-label=Weibo>
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://weibo.com/u/3848950217>
+<i class="fab fa-weibo"></i>
+</a>
+</li>
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Twitter aria-label=Twitter>
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://twitter.com/zhange_zzg>
+<i class="fab fa-twitter"></i>
+</a>
+</li>
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title="Stack Overflow" aria-label="Stack Overflow">
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://stackoverflow.com>
+<i class="fab fa-stack-overflow"></i>
+</a>
+</li>
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=GitHub aria-label=GitHub>
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://github.com/infilos/infilos.com>
+<i class="fab fa-github"></i>
+</a>
+</li>
+</ul>
+</div>
+<div class="col-12 col-sm-4 text-center py-2 order-sm-2">
+<small class=text-white>&copy; 2021 infilos.com All Rights Reserved</small>
+</div>
+</div>
+</div>
+</footer>
+</div>
+<script src=/js/popper.min.js integrity=sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49 crossorigin=anonymous></script>
+<script src=/js/bootstrap.min.js integrity=sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy crossorigin=anonymous></script>
+<script src=/js/main.min.5c74b870c6953931a705f390a49c7e4c0a842ec5c83b24354758dd674343ed0d.js integrity="sha256-XHS4cMaVOTGnBfOQpJx+TAqELsXIOyQ1R1jdZ0ND7Q0=" crossorigin=anonymous></script>
+<script src=https://cdn.jsdelivr.net/npm/docsearch.js@2.6.3/dist/cdn/docsearch.min.js></script>
+<script>docsearch({apiKey:'123',indexName:'infilos_com',inputSelector:'.td-search-input',debug:!1})</script>
+</body>
+</html>

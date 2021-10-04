@@ -1,0 +1,865 @@
+<!doctype html><html lang=zh class=no-js>
+<head>
+<meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no">
+<meta name=generator content="Hugo 0.88.1">
+<meta name=ROBOTS content="INDEX, FOLLOW">
+<link rel="shortcut icon" href=/favicons/favicon.ico>
+<link rel=apple-touch-icon href=/favicons/apple-touch-icon-180x180.png sizes=180x180>
+<link rel=icon type=image/png href=/favicons/favicon-16x16.png sizes=16x16>
+<link rel=icon type=image/png href=/favicons/favicon-32x32.png sizes=32x32>
+<link rel=icon type=image/png href=/favicons/android-36x36.png sizes=36x36>
+<link rel=icon type=image/png href=/favicons/android-48x48.png sizes=48x48>
+<link rel=icon type=image/png href=/favicons/android-72x72.png sizes=72x72>
+<link rel=icon type=image/png href=/favicons/android-96x96.png sizes=96x96>
+<link rel=icon type=image/png href=/favicons/android-144x144.png sizes=144x144>
+<link rel=icon type=image/png href=/favicons/android-192x192.png sizes=192x192>
+<title>协议栈精要 | infilos.com</title><meta property="og:title" content="协议栈精要">
+<meta property="og:description" content="TCP/IP 精要 《TCP/IP详解学习笔记》系列文章的学习整理，点击标题查看原文。
+基本概念 为什么会有TCP/IP协议 为了可以在多个单机的计算机之间进行通信，可以使用电线将他们连接在一起。但是简单的连接在一起还不够，好比语言不同的两个人见面后并不能正确的交流信息。因此需要定义一些共通的东西来进行交流，TCP/IP就是为此而生。
+TCP/IP不是一个协议，而是一个协议簇的统称。里面包含了IP协议、IMCP协议、TCP协议，以及我们更加熟悉的HTTP、FTP、POP3协议等。计算机有了这些，就好像大家都统一使用英语来交流一样。
+TCP/IP协议分层 协议分层经常会提到IOS-OSI七层协议经典架构，但是TCP/IP协议族的结构稍有不同。如图：
+ TCP/IP协议族按照层次由上到下，层层包装。最上面是应用层，里面包含HTTP、FTP等我们熟悉的协议。第二层是传输层，著名的TCP和UDP协议就在这层。第三层是网络层，包含IP协议，负责对数据加上IP信息和其他数据以确定传输的目标。第四层叫做数据链路层，为待传送的数据加入一个以太网协议头，并进行CRC编码，为最后的数据传输做准备。再往下则是硬件层次了，负责网络的传输，这个层次的定义包括网线的制式，网卡的定义等。
+发送数据的主机从上自下将数据按照协议封装，而接收数据的主机则按照协议将得到的数据包解开，最后拿到需要的数据。
+基本常识 互联网地址 网络上每一个节点都必须有一个独立的internet地址(即IP地址)，现在常用的是IPV4地址，又被分为5类，常用的是B类地址。需要注意的是IP地址是网络号+主机号的组合，这非常重要。
+域名系统 域名系统是一个分布的数据库，它提供将主机名(即网址)转换成IP地址。
+RFC RFC就是TCP/IP协议栈的标准文档，文档中可以看到一个很长的定义列表，现在一共有4000多个协议的定义，然而我们要学习使用的也就10多个。
+端口号 这个号码是用在TCP和UDP上的一个逻辑号码，并不是一个硬件端口。平时所说的封掉某个端口，也只是在IP层次上把带有这个号码的IP包给过滤掉而已。
+应用编程接口 现在常用的编程接口有socket和TLI。
+数据链路层 数据链路层有三个目的：
+ 为IP模块发送和接收IP数据报 为ARP模块发送ARP请求和接收ARP应答 为RARP发送RARP请求和接收RARP应答  ARP叫做地址解析协议，是用IP地址换MAC地址的一种协议，而RARP叫做逆地址解析协议。
+数据链路层的协议还是很多的，有我们最常用的以太网(网卡)协议，也有不太常用的令牌环，还有FDDI，还有国内现在相当普及的PPP(adsl宽带)，以及一个loopback协议。
+在Linux终端中使用ifconfig -a命令，这个命令通常会得到如下结果：
+lo0: flags=8049<UP,LOOPBACK,RUNNING,MULTICAST> mtu 16384 options=3<RXCSUM,TXCSUM> inet6 ::1 prefixlen 128 inet 127.0.0.1 netmask 0xff000000 inet6 fe80::1%lo0 prefixlen 64 scopeid 0x1 nd6 options=1<PERFORMNUD> gif0: flags=8010<POINTOPOINT,MULTICAST> mtu 1280 stf0: flags=0<> mtu 1280 en0: flags=8863<UP,BROADCAST,SMART,RUNNING,SIMPLEX,MULTICAST> mtu 1500 ether ac:bc:32:8e:41:57 inet6 fe80::aebc:32ff:fe8e:4157%en0 prefixlen 64 scopeid 0x4 inet 192.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/tcp-ip/ch02-%E5%8D%8F%E8%AE%AE%E6%A0%88%E7%B2%BE%E8%A6%81/"><meta property="article:section" content="基础知识">
+<meta property="og:site_name" content="infilos.com">
+<meta itemprop=name content="协议栈精要">
+<meta itemprop=description content="TCP/IP 精要 《TCP/IP详解学习笔记》系列文章的学习整理，点击标题查看原文。
+基本概念 为什么会有TCP/IP协议 为了可以在多个单机的计算机之间进行通信，可以使用电线将他们连接在一起。但是简单的连接在一起还不够，好比语言不同的两个人见面后并不能正确的交流信息。因此需要定义一些共通的东西来进行交流，TCP/IP就是为此而生。
+TCP/IP不是一个协议，而是一个协议簇的统称。里面包含了IP协议、IMCP协议、TCP协议，以及我们更加熟悉的HTTP、FTP、POP3协议等。计算机有了这些，就好像大家都统一使用英语来交流一样。
+TCP/IP协议分层 协议分层经常会提到IOS-OSI七层协议经典架构，但是TCP/IP协议族的结构稍有不同。如图：
+ TCP/IP协议族按照层次由上到下，层层包装。最上面是应用层，里面包含HTTP、FTP等我们熟悉的协议。第二层是传输层，著名的TCP和UDP协议就在这层。第三层是网络层，包含IP协议，负责对数据加上IP信息和其他数据以确定传输的目标。第四层叫做数据链路层，为待传送的数据加入一个以太网协议头，并进行CRC编码，为最后的数据传输做准备。再往下则是硬件层次了，负责网络的传输，这个层次的定义包括网线的制式，网卡的定义等。
+发送数据的主机从上自下将数据按照协议封装，而接收数据的主机则按照协议将得到的数据包解开，最后拿到需要的数据。
+基本常识 互联网地址 网络上每一个节点都必须有一个独立的internet地址(即IP地址)，现在常用的是IPV4地址，又被分为5类，常用的是B类地址。需要注意的是IP地址是网络号+主机号的组合，这非常重要。
+域名系统 域名系统是一个分布的数据库，它提供将主机名(即网址)转换成IP地址。
+RFC RFC就是TCP/IP协议栈的标准文档，文档中可以看到一个很长的定义列表，现在一共有4000多个协议的定义，然而我们要学习使用的也就10多个。
+端口号 这个号码是用在TCP和UDP上的一个逻辑号码，并不是一个硬件端口。平时所说的封掉某个端口，也只是在IP层次上把带有这个号码的IP包给过滤掉而已。
+应用编程接口 现在常用的编程接口有socket和TLI。
+数据链路层 数据链路层有三个目的：
+ 为IP模块发送和接收IP数据报 为ARP模块发送ARP请求和接收ARP应答 为RARP发送RARP请求和接收RARP应答  ARP叫做地址解析协议，是用IP地址换MAC地址的一种协议，而RARP叫做逆地址解析协议。
+数据链路层的协议还是很多的，有我们最常用的以太网(网卡)协议，也有不太常用的令牌环，还有FDDI，还有国内现在相当普及的PPP(adsl宽带)，以及一个loopback协议。
+在Linux终端中使用ifconfig -a命令，这个命令通常会得到如下结果：
+lo0: flags=8049<UP,LOOPBACK,RUNNING,MULTICAST> mtu 16384 options=3<RXCSUM,TXCSUM> inet6 ::1 prefixlen 128 inet 127.0.0.1 netmask 0xff000000 inet6 fe80::1%lo0 prefixlen 64 scopeid 0x1 nd6 options=1<PERFORMNUD> gif0: flags=8010<POINTOPOINT,MULTICAST> mtu 1280 stf0: flags=0<> mtu 1280 en0: flags=8863<UP,BROADCAST,SMART,RUNNING,SIMPLEX,MULTICAST> mtu 1500 ether ac:bc:32:8e:41:57 inet6 fe80::aebc:32ff:fe8e:4157%en0 prefixlen 64 scopeid 0x4 inet 192.">
+<meta itemprop=wordCount content="432">
+<meta itemprop=keywords content><meta name=twitter:card content="summary">
+<meta name=twitter:title content="协议栈精要">
+<meta name=twitter:description content="TCP/IP 精要 《TCP/IP详解学习笔记》系列文章的学习整理，点击标题查看原文。
+基本概念 为什么会有TCP/IP协议 为了可以在多个单机的计算机之间进行通信，可以使用电线将他们连接在一起。但是简单的连接在一起还不够，好比语言不同的两个人见面后并不能正确的交流信息。因此需要定义一些共通的东西来进行交流，TCP/IP就是为此而生。
+TCP/IP不是一个协议，而是一个协议簇的统称。里面包含了IP协议、IMCP协议、TCP协议，以及我们更加熟悉的HTTP、FTP、POP3协议等。计算机有了这些，就好像大家都统一使用英语来交流一样。
+TCP/IP协议分层 协议分层经常会提到IOS-OSI七层协议经典架构，但是TCP/IP协议族的结构稍有不同。如图：
+ TCP/IP协议族按照层次由上到下，层层包装。最上面是应用层，里面包含HTTP、FTP等我们熟悉的协议。第二层是传输层，著名的TCP和UDP协议就在这层。第三层是网络层，包含IP协议，负责对数据加上IP信息和其他数据以确定传输的目标。第四层叫做数据链路层，为待传送的数据加入一个以太网协议头，并进行CRC编码，为最后的数据传输做准备。再往下则是硬件层次了，负责网络的传输，这个层次的定义包括网线的制式，网卡的定义等。
+发送数据的主机从上自下将数据按照协议封装，而接收数据的主机则按照协议将得到的数据包解开，最后拿到需要的数据。
+基本常识 互联网地址 网络上每一个节点都必须有一个独立的internet地址(即IP地址)，现在常用的是IPV4地址，又被分为5类，常用的是B类地址。需要注意的是IP地址是网络号+主机号的组合，这非常重要。
+域名系统 域名系统是一个分布的数据库，它提供将主机名(即网址)转换成IP地址。
+RFC RFC就是TCP/IP协议栈的标准文档，文档中可以看到一个很长的定义列表，现在一共有4000多个协议的定义，然而我们要学习使用的也就10多个。
+端口号 这个号码是用在TCP和UDP上的一个逻辑号码，并不是一个硬件端口。平时所说的封掉某个端口，也只是在IP层次上把带有这个号码的IP包给过滤掉而已。
+应用编程接口 现在常用的编程接口有socket和TLI。
+数据链路层 数据链路层有三个目的：
+ 为IP模块发送和接收IP数据报 为ARP模块发送ARP请求和接收ARP应答 为RARP发送RARP请求和接收RARP应答  ARP叫做地址解析协议，是用IP地址换MAC地址的一种协议，而RARP叫做逆地址解析协议。
+数据链路层的协议还是很多的，有我们最常用的以太网(网卡)协议，也有不太常用的令牌环，还有FDDI，还有国内现在相当普及的PPP(adsl宽带)，以及一个loopback协议。
+在Linux终端中使用ifconfig -a命令，这个命令通常会得到如下结果：
+lo0: flags=8049<UP,LOOPBACK,RUNNING,MULTICAST> mtu 16384 options=3<RXCSUM,TXCSUM> inet6 ::1 prefixlen 128 inet 127.0.0.1 netmask 0xff000000 inet6 fe80::1%lo0 prefixlen 64 scopeid 0x1 nd6 options=1<PERFORMNUD> gif0: flags=8010<POINTOPOINT,MULTICAST> mtu 1280 stf0: flags=0<> mtu 1280 en0: flags=8863<UP,BROADCAST,SMART,RUNNING,SIMPLEX,MULTICAST> mtu 1500 ether ac:bc:32:8e:41:57 inet6 fe80::aebc:32ff:fe8e:4157%en0 prefixlen 64 scopeid 0x4 inet 192.">
+<script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga('create','UA-123062585-1','auto'),ga('send','pageview'))</script>
+<script async src=https://www.google-analytics.com/analytics.js></script>
+<link rel=preload href=/scss/main.min.847464b684a6e89d7276700a5c500c17ab494dd1755b2654a7b27d8b59e3347e.css as=style>
+<link href=/scss/main.min.847464b684a6e89d7276700a5c500c17ab494dd1755b2654a7b27d8b59e3347e.css rel=stylesheet integrity>
+<script src=/js/jquery-3.5.1.min.js integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin=anonymous></script>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/docsearch.js@2/dist/cdn/docsearch.min.css>
+</head>
+<body class=td-page>
+<header>
+<nav class="js-navbar-scroll navbar navbar-expand navbar-dark flex-column flex-md-row td-navbar">
+<a class=navbar-brand href=/>
+<span class=navbar-logo><svg id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512" style="enable-background:new 0 0 512 512"><path style="fill:#ffc107" d="M432.384 143.616c-4.165-4.164-10.917-4.164-15.083.0l-60.352 60.352c-4.164 4.165-4.164 10.917.0 15.083 21.187 20.463 54.951 19.876 75.413-1.311 19.962-20.668 19.962-53.435.0-74.102L432.384 143.616z"/><path style="fill:#607d8b" d="M42.667 277.334c-5.891.003-10.669-4.771-10.672-10.662-.002-4.338 2.623-8.245 6.64-9.882l234.667-96c5.455-2.233 11.687.38 13.92 5.835s-.38 11.687-5.835 13.92l-234.667 96C45.433 277.069 44.056 277.337 42.667 277.334z"/><path style="fill:#546e7a" d="M391.552 56.448l-32-32C343.938 8.745 322.689-.059 300.544.0h-3.755c-46.082.024-83.432 37.374-83.456 83.456v3.755c-.053 22.138 8.75 43.377 24.448 58.987l32 32c4.165 4.164 10.917 4.164 15.083.0L391.531 71.531C395.701 67.372 395.71 60.62 391.552 56.448z"/><path style="fill:#607d8b" d="M160 469.334c-3.279.006-6.379-1.497-8.405-4.075L34.261 315.926c-3.635-4.636-2.823-11.341 1.813-14.976s11.341-2.823 14.976 1.813l117.333 149.333c3.629 4.641 2.809 11.344-1.832 14.973C164.681 468.533 162.375 469.329 160 469.334z"/><path style="fill:#455a64" d="M487.467 86.848l-3.669-3.648c-37.687-36.557-97.71-36.197-134.955.811l-51.413 51.413c-36.996 37.25-37.357 97.263-.811 134.955l3.584 3.669c1.7 2.457 4.671 3.706 7.616 3.2 2.831.005 5.548-1.115 7.552-3.115l172.181-172.181c4.189-4.143 4.226-10.896.083-15.085-.028-.028-.055-.056-.083-.083L487.467 86.848z"/><g><path style="fill:#ffc107" d="M501.333 192H480c-5.891.0-10.667-4.776-10.667-10.667s4.776-10.667 10.667-10.667h21.333c5.891.0 10.667 4.776 10.667 10.667S507.225 192 501.333 192z"/><path style="fill:#ffc107" d="M394.667 298.667c-5.891.0-10.667-4.776-10.667-10.667v-21.333c0-5.891 4.776-10.667 10.667-10.667 5.891.0 10.667 4.776 10.667 10.667V288C405.333 293.891 400.558 298.667 394.667 298.667z"/><path style="fill:#ffc107" d="M480 277.334c-2.831.005-5.548-1.115-7.552-3.115l-21.333-21.333c-4.093-4.237-3.975-10.99.262-15.083 4.134-3.993 10.687-3.993 14.821.0l21.333 21.333c4.159 4.172 4.148 10.926-.024 15.085C485.514 276.209 482.815 277.327 480 277.334z"/></g><g><path style="fill:#455a64" d="M266.667 448H96c-29.455.0-53.333 23.878-53.333 53.333.0 5.891 4.776 10.667 10.667 10.667h256c5.891.0 10.667-4.776 10.667-10.667C320 471.878 296.122 448 266.667 448z"/><circle style="fill:#455a64" cx="32" cy="288" r="32"/></g><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/></svg></span><span class=font-weight-bold>infilos.com</span>
+</a>
+<div class="collapse navbar-collapse" id=navbarSupportedContent>
+<ul class="navbar-nav mr-auto">
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+基础
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/%e6%93%8d%e4%bd%9c%e7%b3%bb%e7%bb%9f>操作系统</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/%e6%80%a7%e8%83%bd%e4%b9%8b%e6%ae%87>性能之殇</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/io%e6%a8%a1%e5%9e%8b>IO 模型</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/%e7%bd%91%e7%bb%9c%e5%9f%ba%e7%a1%80>网络基础</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/tcp-ip>TCP-IP</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/http>HTTP</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+语言
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/java>Java 编程</a>
+<a class=dropdown-item href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/jvm-core>JVM 核心</a>
+<a class=dropdown-item href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/jvm-concurrent>JVM 并发</a>
+<a class=dropdown-item href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/scala>Scala 编程</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+框架库
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93/spring>Spring</a>
+<a class=dropdown-item href=/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93/hikari>Hikari</a>
+<a class=dropdown-item href=/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93/parboiled>Parboiled</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+分布式
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%88%86%e5%b8%83%e5%bc%8f/base>基本构成</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+大数据
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%ad%98%e5%82%a8%e7%b3%bb%e7%bb%9f>存储系统</a>
+<a class=dropdown-item href=/%e6%9f%a5%e8%af%a2%e7%b3%bb%e7%bb%9f>查询系统</a>
+<a class=dropdown-item href=/%e6%b6%88%e6%81%af%e7%b3%bb%e7%bb%9f>消息系统</a>
+<a class=dropdown-item href=/%e5%a4%84%e7%90%86%e7%b3%bb%e7%bb%9f>处理系统</a>
+<a class=dropdown-item href=/%e7%ae%a1%e7%90%86%e7%b3%bb%e7%bb%9f>管理系统</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+中后台
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e8%ae%be%e6%96%bd>基础设施</a>
+<a class=dropdown-item href=/%e4%ba%a4%e4%ba%92%e7%95%8c%e9%9d%a2>交互界面</a>
+<a class=dropdown-item href=/%e4%b8%9a%e5%8a%a1%e7%b3%bb%e7%bb%9f>业务系统</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+模式架构
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e6%a8%a1%e5%bc%8f%e6%9e%b6%e6%9e%84/design-pattern>设计模式</a>
+<a class=dropdown-item href=/%e6%a8%a1%e5%bc%8f%e6%9e%b6%e6%9e%84/micro-service>微服务架构</a>
+</div>
+</li>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e9%9d%a2%e8%af%95%e9%97%ae%e7%ad%94>
+<span>面试</span>
+</a>
+</li>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e7%ae%a1%e7%90%86%e8%b7%af%e5%be%84>
+<span>管理</span>
+</a>
+</li>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e5%bc%80%e6%ba%90%e9%a1%b9%e7%9b%ae>
+<span>开源</span>
+</a>
+</li>
+</ul>
+<div class="form-inline my-2 my-lg-0">
+<div class="nav-item nav-search-item my-2 my-md-0">
+<input type=search class="form-control td-search-input" placeholder="&#xf002; 站内搜索…" aria-label=站内搜索… autocomplete=off>
+</div>
+</div>
+</div>
+</nav>
+</header>
+<div class="container-fluid td-outer">
+<div class=td-main>
+<div class="row flex-xl-nowrap">
+<aside class="col-12 col-md-3 col-xl-2 td-sidebar d-print-none">
+<div id=td-sidebar-menu class=td-sidebar__inner>
+<div id=content-mobile>
+<form class="td-sidebar__search d-flex align-items-center">
+<input type=search class="form-control td-search-input" placeholder="&#xf002; 站内搜索…" aria-label=站内搜索… autocomplete=off>
+<button class="btn btn-link td-sidebar__toggle d-md-none p-0 ml-3 fas fa-bars" type=button data-toggle=collapse data-target=#td-section-nav aria-controls=td-docs-nav aria-expanded=false aria-label="Toggle section navigation">
+</button>
+</form>
+</div>
+<div id=content-desktop></div>
+<nav class="collapse td-sidebar-nav" id=td-section-nav>
+<ul class="td-sidebar-nav__section pr-md-3 ul-0">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e59fbae7a180e79fa5e8af86-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section tree-root" id=m-e59fbae7a180e79fa5e8af86><span>基础知识</span></a>
+<ul class=ul-1>
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9f-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9f><span>操作系统</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch02-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/ch02/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch02><span>基本概念</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch04-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/ch04/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch04><span>抽象-进程</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch05-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/ch05/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch05><span>插叙-进程 API</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch06-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/ch06/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch06><span>机制-受限直接执行</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch07-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/ch07/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch07><span>进程调度</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch08-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/ch08/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch08><span>调度-多级反馈队列</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch09-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/ch09/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch09><span>调度-比例份额</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch10-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/ch10/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch10><span>多处理器调度</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch13-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/ch13/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch13><span>抽象-地址空间</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch14-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/ch14/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch14><span>内存接口</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch15-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/ch15/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch15><span>地址转换</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch16-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/ch16/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch16><span>分段</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e59fbae7a180e79fa5e8af86e680a7e883bde4b98be6ae87-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%80%A7%E8%83%BD%E4%B9%8B%E6%AE%87/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e59fbae7a180e79fa5e8af86e680a7e883bde4b98be6ae87><span>性能之殇</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e680a7e883bde4b98be6ae87ch01-e586afe8afbae4be9de69bbce793b6e9a288-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%80%A7%E8%83%BD%E4%B9%8B%E6%AE%87/ch01-%E5%86%AF%E8%AF%BA%E4%BE%9D%E6%9B%BC%E7%93%B6%E9%A2%88/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e680a7e883bde4b98be6ae87ch01-e586afe8afbae4be9de69bbce793b6e9a288><span>冯诺依曼瓶颈</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e680a7e883bde4b98be6ae87ch02-cpue5ae9ee78eb0-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%80%A7%E8%83%BD%E4%B9%8B%E6%AE%87/ch02-cpu%E5%AE%9E%E7%8E%B0/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e680a7e883bde4b98be6ae87ch02-cpue5ae9ee78eb0><span>CPU实现</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e680a7e883bde4b98be6ae87ch03-e4ba8be4bbb6e9a9b1e58aa8-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%80%A7%E8%83%BD%E4%B9%8B%E6%AE%87/ch03-%E4%BA%8B%E4%BB%B6%E9%A9%B1%E5%8A%A8/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e680a7e883bde4b98be6ae87ch03-e4ba8be4bbb6e9a9b1e58aa8><span>事件驱动</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e680a7e883bde4b98be6ae87ch04-unixe8bf9be7a88be6a8a1e59e8b-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%80%A7%E8%83%BD%E4%B9%8B%E6%AE%87/ch04-unix%E8%BF%9B%E7%A8%8B%E6%A8%A1%E5%9E%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e680a7e883bde4b98be6ae87ch04-unixe8bf9be7a88be6a8a1e59e8b><span>Unix进程模型</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e680a7e883bde4b98be6ae87ch05-dpdk-sdn-e5a4a7e9a1b5e58685e5ad98-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%80%A7%E8%83%BD%E4%B9%8B%E6%AE%87/ch05-dpdk-sdn-%E5%A4%A7%E9%A1%B5%E5%86%85%E5%AD%98/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e680a7e883bde4b98be6ae87ch05-dpdk-sdn-e5a4a7e9a1b5e58685e5ad98><span>DPDK-SDN-大页内存</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e680a7e883bde4b98be6ae87ch06-e5b180e983a8e680a7e4b88ee4b990e8a782-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%80%A7%E8%83%BD%E4%B9%8B%E6%AE%87/ch06-%E5%B1%80%E9%83%A8%E6%80%A7%E4%B8%8E%E4%B9%90%E8%A7%82/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e680a7e883bde4b98be6ae87ch06-e5b180e983a8e680a7e4b88ee4b990e8a782><span>局部性与乐观</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e680a7e883bde4b98be6ae87ch07-e585b1e5908ce79a84e793b6e9a288-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%80%A7%E8%83%BD%E4%B9%8B%E6%AE%87/ch07-%E5%85%B1%E5%90%8C%E7%9A%84%E7%93%B6%E9%A2%88/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e680a7e883bde4b98be6ae87ch07-e585b1e5908ce79a84e793b6e9a288><span>共同的瓶颈</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e59fbae7a180e79fa5e8af86ioe6a8a1e59e8b-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/io%E6%A8%A1%E5%9E%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e59fbae7a180e79fa5e8af86ioe6a8a1e59e8b><span>IO 模型</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86ioe6a8a1e59e8bch01-ioe6a8a1e59e8b-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/io%E6%A8%A1%E5%9E%8B/ch01-io%E6%A8%A1%E5%9E%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86ioe6a8a1e59e8bch01-ioe6a8a1e59e8b><span>Linux IO/线程 模型</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86ioe6a8a1e59e8bch02-ioe99bb6e68bb7e8b49d-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/io%E6%A8%A1%E5%9E%8B/ch02-io%E9%9B%B6%E6%8B%B7%E8%B4%9D/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86ioe6a8a1e59e8bch02-ioe99bb6e68bb7e8b49d><span>Linux IO 零拷贝</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86ioe6a8a1e59e8bch03-nettye6a8a1e59e8b-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/io%E6%A8%A1%E5%9E%8B/ch03-netty%E6%A8%A1%E5%9E%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86ioe6a8a1e59e8bch03-nettye6a8a1e59e8b><span>Netty IO 模型</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86ioe6a8a1e59e8bch04-redise6a8a1e59e8b-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/io%E6%A8%A1%E5%9E%8B/ch04-redis%E6%A8%A1%E5%9E%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86ioe6a8a1e59e8bch04-redise6a8a1e59e8b><span>Redis IO 模型</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86ioe6a8a1e59e8bch05-nginxe6a8a1e59e8b-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/io%E6%A8%A1%E5%9E%8B/ch05-nginx%E6%A8%A1%E5%9E%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86ioe6a8a1e59e8bch05-nginxe6a8a1e59e8b><span>Nginx IO 模型</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86ioe6a8a1e59e8bch06-mysqle6a8a1e59e8b-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/io%E6%A8%A1%E5%9E%8B/ch06-mysql%E6%A8%A1%E5%9E%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86ioe6a8a1e59e8bch06-mysqle6a8a1e59e8b><span>MySQL 模型</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180><span>网络基础</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch01-e7bd91e7bb9ce58886e5b182-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/ch01-%E7%BD%91%E7%BB%9C%E5%88%86%E5%B1%82/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch01-e7bd91e7bb9ce58886e5b182><span>网络分层</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch02-ipe58d8fe8aeae-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/ch02-ip%E5%8D%8F%E8%AE%AE/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch02-ipe58d8fe8aeae><span>IP 协议</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch03-tcpe58d8fe8aeae-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/ch03-tcp%E5%8D%8F%E8%AE%AE/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch03-tcpe58d8fe8aeae><span>TCP 协议</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch04-udpe58d8fe8aeae-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/ch04-udp%E5%8D%8F%E8%AE%AE/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch04-udpe58d8fe8aeae><span>UDP 协议</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch05-httpe58d8fe8aeae-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/ch05-http%E5%8D%8F%E8%AE%AE/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch05-httpe58d8fe8aeae><span>HTTP 协议</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch06-websocket-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/ch06-websocket/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch06-websocket><span>WebSocket</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch07-dnse69c8de58aa1-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/ch07-dns%E6%9C%8D%E5%8A%A1/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch07-dnse69c8de58aa1><span>DNS 服务</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch08-e6b58fe8a788e599a8e8bf87e7a88b-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/ch08-%E6%B5%8F%E8%A7%88%E5%99%A8%E8%BF%87%E7%A8%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch08-e6b58fe8a788e599a8e8bf87e7a88b><span>浏览器过程</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e59fbae7a180e79fa5e8af86tcp-ip-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/tcp-ip/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e59fbae7a180e79fa5e8af86tcp-ip><span>TCP-IP</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e59fbae7a180e79fa5e8af86tcp-ipch01-e68fa1e6898be69cbae588b6-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/tcp-ip/ch01-%E6%8F%A1%E6%89%8B%E6%9C%BA%E5%88%B6/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86tcp-ipch01-e68fa1e6898be69cbae588b6><span>握手机制</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child active-path" id=m-e59fbae7a180e79fa5e8af86tcp-ipch02-e58d8fe8aeaee6a088e7b2bee8a681-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/tcp-ip/ch02-%E5%8D%8F%E8%AE%AE%E6%A0%88%E7%B2%BE%E8%A6%81/ class="align-left pl-0 active td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86tcp-ipch02-e58d8fe8aeaee6a088e7b2bee8a681><span class=td-sidebar-nav-active-item>协议栈精要</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e59fbae7a180e79fa5e8af86tcp-ipch03-e8b083e4bc98e58f82e695b0-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/tcp-ip/ch03-%E8%B0%83%E4%BC%98%E5%8F%82%E6%95%B0/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86tcp-ipch03-e8b083e4bc98e58f82e695b0><span>调优参数</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e59fbae7a180e79fa5e8af86tcp-ipch04-e79086e8a7a3e7bd91e7bb9ce6a088-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/tcp-ip/ch04-%E7%90%86%E8%A7%A3%E7%BD%91%E7%BB%9C%E6%A0%88/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86tcp-ipch04-e79086e8a7a3e7bd91e7bb9ce6a088><span>理解网络栈</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e59fbae7a180e79fa5e8af86tcp-ipch05-rfc-1180-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/tcp-ip/ch05-rfc-1180/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86tcp-ipch05-rfc-1180><span>RFC-1180</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e59fbae7a180e79fa5e8af86tcp-ipch06-e58fafe99da0e680a7e79691e997ae-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/tcp-ip/ch06-%E5%8F%AF%E9%9D%A0%E6%80%A7%E7%96%91%E9%97%AE/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86tcp-ipch06-e58fafe99da0e680a7e79691e997ae><span>可靠性疑问</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e59fbae7a180e79fa5e8af86http-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/http/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e59fbae7a180e79fa5e8af86http><span>HTTP</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86httpch01-e6a682e8bfb0-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/http/ch01-%E6%A6%82%E8%BF%B0/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86httpch01-e6a682e8bfb0><span>HTTP 概述</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86httpch02-urle4b88ee8b584e6ba90-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/http/ch02-url%E4%B8%8E%E8%B5%84%E6%BA%90/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86httpch02-urle4b88ee8b584e6ba90><span>URL 与资源</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86httpch03-httpe68aa5e69687-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/http/ch03-http%E6%8A%A5%E6%96%87/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86httpch03-httpe68aa5e69687><span>HTTP 报文</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86httpch04-e8bf9ee68ea5e7aea1e79086-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/http/ch04-%E8%BF%9E%E6%8E%A5%E7%AE%A1%E7%90%86/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86httpch04-e8bf9ee68ea5e7aea1e79086><span>连接管理</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86httpch99-e680a7e883bde68ea2e7b4a2-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/http/ch99-%E6%80%A7%E8%83%BD%E6%8E%A2%E7%B4%A2/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86httpch99-e680a7e883bde68ea2e7b4a2><span>性能探索</span></a>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</div>
+</aside>
+<aside class="d-none d-xl-block col-xl-2 td-sidebar-toc d-print-none">
+<div class="td-page-meta ml-2 pb-1 pt-2 mb-0">
+<a href=https://github.com/infilos/infilos.com/edit/master/content/zh/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/tcp-ip/CH02-%e5%8d%8f%e8%ae%ae%e6%a0%88%e7%b2%be%e8%a6%81.md target=_blank><i class="fa fa-edit fa-fw"></i> 编辑此页</a>
+<a href="https://github.com/infilos/infilos.com/new/master/content/zh/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/tcp-ip/CH02-%e5%8d%8f%e8%ae%ae%e6%a0%88%e7%b2%be%e8%a6%81.md?filename=change-me.md&value=---%0Atitle%3A+%22Long+Page+Title%22%0AlinkTitle%3A+%22Short+Nav+Title%22%0Aweight%3A+100%0Adescription%3A+%3E-%0A+++++Page+description+for+heading+and+indexes.%0A---%0A%0A%23%23+Heading%0A%0AEdit+this+template+to+create+your+new+page.%0A%0A%2A+Give+it+a+good+name%2C+ending+in+%60.md%60+-+e.g.+%60getting-started.md%60%0A%2A+Edit+the+%22front+matter%22+section+at+the+top+of+the+page+%28weight+controls+how+its+ordered+amongst+other+pages+in+the+same+directory%3B+lowest+number+first%29.%0A%2A+Add+a+good+commit+message+at+the+bottom+of+the+page+%28%3C80+characters%3B+use+the+extended+description+field+for+more+detail%29.%0A%2A+Create+a+new+branch+so+you+can+preview+your+new+file+and+request+a+review+via+Pull+Request.%0A" target=_blank><i class="fa fa-edit fa-fw"></i> 添加子页面</a>
+<a href="https://github.com/infilos/infilos.com/issues/new?title=%e5%8d%8f%e8%ae%ae%e6%a0%88%e7%b2%be%e8%a6%81" target=_blank><i class="fab fa-github fa-fw"></i> 提交文档问题</a>
+<a id=print href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/tcp-ip/_print/><i class="fa fa-print fa-fw"></i> 整节打印</a>
+</div>
+<div class=td-toc><nav id=TableOfContents>
+<ul>
+<li><a href=#基本概念>基本概念</a>
+<ul>
+<li><a href=#为什么会有tcpip协议>为什么会有TCP/IP协议</a></li>
+<li><a href=#tcpip协议分层>TCP/IP协议分层</a></li>
+<li><a href=#基本常识>基本常识</a></li>
+</ul>
+</li>
+<li><a href=#数据链路层>数据链路层</a></li>
+<li><a href=#iparprarp>IP,ARP,RARP</a>
+<ul>
+<li><a href=#ip协议>IP协议</a></li>
+<li><a href=#arp协议>ARP协议</a></li>
+<li><a href=#icmp协议>ICMP协议</a></li>
+</ul>
+</li>
+<li><a href=#ip选路动态选路>IP选路、动态选路</a></li>
+<li><a href=#udp协议>UDP协议</a>
+<ul>
+<li><a href=#协议头>协议头</a></li>
+</ul>
+</li>
+<li><a href=#广播与多播igmp协议>广播与多播、IGMP协议</a>
+<ul>
+<li><a href=#单播多播组播>单播、多播、组播</a></li>
+<li><a href=#igmp协议>IGMP协议</a></li>
+</ul>
+</li>
+<li><a href=#tcp协议>TCP协议</a></li>
+<li><a href=#dns域名系统>DNS域名系统</a>
+<ul>
+<li><a href=#dns系统介绍>DNS系统介绍</a></li>
+<li><a href=#dns协议>DNS协议</a></li>
+<li><a href=#反向查询>反向查询</a></li>
+<li><a href=#dns服务器高速缓存>DNS服务器高速缓存</a></li>
+<li><a href=#用udp还是tcp>用UDP还是TCP</a></li>
+</ul>
+</li>
+<li><a href=#tcp数据包内容>TCP数据包内容</a></li>
+<li><a href=#tcp连接的建立与终止>TCP连接的建立与终止</a>
+<ul>
+<li><a href=#建立连接>建立连接</a></li>
+<li><a href=#结束连接>结束连接</a></li>
+<li><a href=#最大报文长度>最大报文长度</a></li>
+<li><a href=#tcp的状态迁移图>TCP的状态迁移图</a></li>
+</ul>
+</li>
+<li><a href=#tcp交互数据流成块数据流>TCP交互数据流、成块数据流</a>
+<ul>
+<li><a href=#tcp的交互流数据>TCP的交互流数据</a></li>
+<li><a href=#tcp的成块流数据>TCP的成块流数据</a></li>
+</ul>
+</li>
+<li><a href=#tcp的超时与重传>TCP的超时与重传</a>
+<ul>
+<li><a href=#超时>超时</a></li>
+<li><a href=#重传>重传</a></li>
+</ul>
+</li>
+<li><a href=#tcp坚持定时器tcp保活定时器>TCP坚持定时器、TCP保活定时器</a>
+<ul>
+<li><a href=#坚持定时器>坚持定时器</a></li>
+<li><a href=#保活定时器>保活定时器</a></li>
+</ul>
+</li>
+</ul>
+</nav></div>
+</aside>
+<main class="col-12 col-md-9 col-xl-8 pl-md-5" role=main>
+<nav aria-label=breadcrumb class="d-none d-md-block d-print-none">
+<ol class="breadcrumb spb-1">
+<li class=breadcrumb-item>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/>基础知识</a>
+</li>
+<li class=breadcrumb-item>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/tcp-ip/>TCP-IP</a>
+</li>
+<li class="breadcrumb-item active" aria-current=page>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/tcp-ip/ch02-%E5%8D%8F%E8%AE%AE%E6%A0%88%E7%B2%BE%E8%A6%81/>协议栈精要</a>
+</li>
+</ol>
+</nav>
+<div class=td-content>
+<h1>协议栈精要</h1>
+<header class=article-meta>
+</header>
+<h1 id=tcpip-精要>TCP/IP 精要</h1>
+<p><a href=http://blog.csdn.net/goodboy1881/article/details/665041>《TCP/IP详解学习笔记》</a>系列文章的学习整理，点击标题查看原文。</p>
+<h2 id=基本概念>基本概念</h2>
+<h3 id=为什么会有tcpip协议>为什么会有TCP/IP协议</h3>
+<p>为了可以在多个单机的计算机之间进行通信，可以使用电线将他们连接在一起。但是简单的连接在一起还不够，好比语言不同的两个人见面后并不能正确的交流信息。因此需要定义一些共通的东西来进行交流，TCP/IP就是为此而生。</p>
+<p>TCP/IP不是一个协议，而是一个协议簇的统称。里面包含了IP协议、IMCP协议、TCP协议，以及我们更加熟悉的HTTP、FTP、POP3协议等。计算机有了这些，就好像大家都统一使用英语来交流一样。</p>
+<h3 id=tcpip协议分层>TCP/IP协议分层</h3>
+<p>协议分层经常会提到IOS-OSI七层协议经典架构，但是TCP/IP协议族的结构稍有不同。如图：</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/OSI%E4%B8%8ETCPIP.jpg style=display:block;width:50% alt=NAME align=center> </div>
+<p>TCP/IP协议族按照层次由上到下，层层包装。最上面是应用层，里面包含HTTP、FTP等我们熟悉的协议。第二层是传输层，著名的TCP和UDP协议就在这层。第三层是网络层，包含IP协议，负责对数据加上IP信息和其他数据以确定传输的目标。第四层叫做数据链路层，为待传送的数据加入一个以太网协议头，并进行CRC编码，为最后的数据传输做准备。再往下则是硬件层次了，负责网络的传输，这个层次的定义包括网线的制式，网卡的定义等。</p>
+<p>发送数据的主机从上自下将数据按照协议封装，而接收数据的主机则按照协议将得到的数据包解开，最后拿到需要的数据。</p>
+<h3 id=基本常识>基本常识</h3>
+<h4 id=互联网地址>互联网地址</h4>
+<p>网络上每一个节点都必须有一个独立的internet地址(即IP地址)，现在常用的是IPV4地址，又被分为5类，常用的是B类地址。需要注意的是IP地址是网络号+主机号的组合，这非常重要。</p>
+<h4 id=域名系统>域名系统</h4>
+<p>域名系统是一个分布的数据库，它提供将主机名(即网址)转换成IP地址。</p>
+<h4 id=rfc>RFC</h4>
+<p>RFC就是TCP/IP协议栈的标准文档，文档中可以看到一个很长的定义列表，现在一共有4000多个协议的定义，然而我们要学习使用的也就10多个。</p>
+<h4 id=端口号>端口号</h4>
+<p>这个号码是用在TCP和UDP上的一个逻辑号码，并不是一个硬件端口。平时所说的封掉某个端口，也只是在IP层次上把带有这个号码的IP包给过滤掉而已。</p>
+<h4 id=应用编程接口>应用编程接口</h4>
+<p>现在常用的编程接口有socket和TLI。</p>
+<h2 id=数据链路层>数据链路层</h2>
+<p>数据链路层有三个目的：</p>
+<ol>
+<li>为IP模块发送和接收IP数据报</li>
+<li>为ARP模块发送ARP请求和接收ARP应答</li>
+<li>为RARP发送RARP请求和接收RARP应答</li>
+</ol>
+<p>ARP叫做地址解析协议，是用IP地址换MAC地址的一种协议，而RARP叫做逆地址解析协议。</p>
+<p>数据链路层的协议还是很多的，有我们最常用的以太网(网卡)协议，也有不太常用的令牌环，还有FDDI，还有国内现在相当普及的PPP(adsl宽带)，以及一个loopback协议。</p>
+<p>在Linux终端中使用<code>ifconfig -a</code>命令，这个命令通常会得到如下结果：</p>
+<pre><code>lo0: flags=8049&lt;UP,LOOPBACK,RUNNING,MULTICAST&gt; mtu 16384
+	options=3&lt;RXCSUM,TXCSUM&gt;
+	inet6 ::1 prefixlen 128
+	inet 127.0.0.1 netmask 0xff000000
+	inet6 fe80::1%lo0 prefixlen 64 scopeid 0x1
+	nd6 options=1&lt;PERFORMNUD&gt;
+gif0: flags=8010&lt;POINTOPOINT,MULTICAST&gt; mtu 1280
+stf0: flags=0&lt;&gt; mtu 1280
+en0: flags=8863&lt;UP,BROADCAST,SMART,RUNNING,SIMPLEX,MULTICAST&gt; mtu 1500
+	ether ac:bc:32:8e:41:57
+	inet6 fe80::aebc:32ff:fe8e:4157%en0 prefixlen 64 scopeid 0x4
+	inet 192.168.10.203 netmask 0xffffff00 broadcast 192.168.10.255
+	inet6 fd3d:5f4e:424b::aebc:32ff:fe8e:4157 prefixlen 64 autoconf
+	inet6 fd3d:5f4e:424b::806d:59f8:8422:b7ca prefixlen 64 autoconf temporary
+	nd6 options=1&lt;PERFORMNUD&gt;
+	media: autoselect
+	status: active
+</code></pre>
+<p>其中，eth0就是以太网接口，而lo则是lookback接口。这也说明这个主机在网络链路层上至少支持lookback协议和以太网协议。</p>
+<p>以太网的定义是指：数字设备公司、英特尔公司和Xerox公司在1982年联合公布的一个标准，这个标准里面使用了一种称作CSMA/CD的接入方法。而IEEE802提供的标准集802.3(还有一部分定义在802.2中)也提供了一个CSMA/CD的标准。这两个标准稍有不同，TCP/IP对这种情况的处理方式如下：</p>
+<ol>
+<li>以太网的IP数据报封装在RFC894中定义，而IEEE802网络的IP数据报封装在RFC1042中定义。</li>
+<li>一台主机一定要能发送和接收RFC894定义的数据报。</li>
+<li>一台主机可以接收RFC894和RFC1042的封装格式的混合数据报。</li>
+<li>一台主机也许能够发送RFC1042数据报。如果主机能够同时发送两种类型的分组数据，那么发送的分组必须是可以设置的，而且默认的情况下必须是RFC894分组。</li>
+</ol>
+<p>可见，RFC1042在TCP/IP里处于一个配角的地位。</p>
+<p>PPP(点对点协议)是SLIP的替代品。他们都提供了一种低速接入的解决方案。而每一种数据链路层协议，都有一个MTU(最大传输单元)定义，在这个定义下面，如果IP数据报过大，则要进行分片(fragmentation)，使得每片都小于MTU。注意PPP和MTU并不是一个物理定义，而是指一个逻辑定义(个人认为就是用程序控制)。可以用netstat打印MTU的结果，比如命令<code>netstat -in</code>，可以看到各协议的MTU值。</p>
+<p>环回接口(lookback)，平时我们用<code>127.0.0.1</code>测试本机服务器是否可以使用，走的就是这个环回接口。对于环回接口，有如下三点值得注意：</p>
+<ol>
+<li>传给换回地址(127.0.0.1)的任何数据均作为IP输入</li>
+<li>传给广播地址或多播地址的数据报复制一份传给环回接口，然后发送到以太网上。这是因为广播传送和多播传送的定义包含主机本身</li>
+<li>任何传给主机IP地址的数据均送到环回接口</li>
+</ol>
+<h2 id=iparprarp>IP,ARP,RARP</h2>
+<p>这三个协议均属于网络层。ARP协议用于找到目标主机的Ethernet网卡MAC地址，IP要承载发送的消息。数据链路层可以从ARP得到数据的传送信息，而从IP得到要传输的数据的信息。</p>
+<h3 id=ip协议>IP协议</h3>
+<p>IP协议用于将多个包交换网络连接起来，它在源地址可目标地址之间传送一种称为数据包的东西，并提供对数据包大小的重新组装功能，以适应不同网络对包大小的要求。</p>
+<p>IP协议实现两个基本功能：寻址和分段。IP可以根据数据包包头中包括的目的地址将数据报传送到目的地址，在此过程中IP负责选择传送的道路，称为路由。如果有些网络内只能传输小数据报，IP可以将数据报重新组装并在包头域内注明。</p>
+<p>IP协议是TCP/IP协议栈的核心，所有的TCP、UDP、IMCP、IGCP的数据都是以IP数据格式传输的。要注意的是，IP不是可靠的协议，就是说，IP协议没有提供一种数据未到达以后的处理机制，这被认为是上层协议&ndash;即TCP和UDP要做的事情。所以也就出现了TCP是一个可靠的协议，而UDP就没有那么可靠的区别。</p>
+<h4 id=ip协议头>IP协议头</h4>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/IP%E5%8D%8F%E8%AE%AE%E5%A4%B4.jpg style=display:block;width:50% alt=NAME align=center> </div>
+<p>其中8位的<code>TTL</code>字段规定该数据报在穿过多少个路由之后才被丢弃(即它不保证数据被送达)，某个IP数据包没穿过一个路由，该数据报的TTL值就会减少1，当该数据报的TTL值为0，它就会自动被丢弃。这个字段的值最大为255，也就是说一个协议包在路由里穿行255次就会被丢弃，根据系统的不同，这个值的大小也不一样，一般是32或64。Tracrouter这个工具就是用这个原理工作的，其<code>-m</code>选项要求最大值是255，也就是说这个TTL在IP协议里面只有8bit。</p>
+<p>先在的IP版本号是4，即成为IPV4，同时还有现在使用越来越广泛的IPV6。</p>
+<h4 id=ip路由选择>IP路由选择</h4>
+<p>当一个IP数据包准备好之后，IP数据包(或路由器)是如何将数据包送到目的地的呢？它是如何选择一个合适的路径来“送货”？</p>
+<p>最特殊的情况是主机和目的主机直连，这时主机根本不用寻找路由，直接将数据传送过去。至于是怎么直接传递的，会用到ARP协议。</p>
+<p>稍微一般一点的情况是，主机通过若干个路由器和目的主机连接。那么路由器要用IP包的信息来为IP包找到一个合适的目标进行传递，比如合适的主机，或者合适的路由。路由或主机将会用如下的方式来处理一个IP数据包：</p>
+<ol>
+<li>如果IP数据包的TTL值已经为0，则丢弃该IP数据包；</li>
+<li>搜索路由表，有限搜索匹配主机，如果能找到和IP地址完全一致的目标主机，则将该包发向目标主机；</li>
+<li>搜索路由表，如果匹配主机失败，则匹配同子网的路由器，这需要<code>子网掩码</code>(参考下面一节的子网寻址)的协助。如果找到路由器，则发送该数据包；</li>
+<li>搜索路由器，如果匹配相同子网路由器失败，则匹配同网号路哟器。如果找到，则发送该数据包；</li>
+<li>搜索路由表，如果以上都失败，就搜索默认路由，如果默认路由存在，则发包；</li>
+<li>如果都失败，丢弃该包。</li>
+</ol>
+<p>这在一起说明，IP包是不可靠的，因为它不保证送达。</p>
+<h4 id=子网寻址>子网寻址</h4>
+<p>IP地址的定义是网络号+主机号。但是现在所有的主机都要求子网编址，也就是说，把主机号再细分成子网号+主机号。最终一个IP地址就成为：网络号码+子网号+主机号。例如一个B类地址：<font color=#ff0000>210.30</font>.<font color=#0080ff>109</font>.<font color=#00ff00>134</font>。一般情况下，这个IP地址的红色部分就是网络号，蓝色部分就是子网号，绿色部分就是主机号。至于有多少位代表子网号这个问题，没有一个硬性的规定，取而代之的<strong>子网掩码</strong>，在校园网的设定里面有一个225.225.225.0的东西，就是子网掩码。</p>
+<h3 id=arp协议>ARP协议</h3>
+<p>在数据链路层的以太网协议中，每一个数据包都有一个MAC地址头。每一块以太网卡都有一个MAC地址，这个地址是唯一的，那么IP包是如何知道这个MAC地址呢，这就是ARP的工作。</p>
+<p>ARP(地址解析)协议是一种解析协议，本来主机是不知道这个IP对应的是哪个主机的哪个接口，当主机发送一个IP包的时候，首先会查一下自己的ARP告诉缓存(IP-MAC地址对应缓存)，如果查询的IP-MAC不存在，那么主机就发送一个ARP协议广播包，这个广播包中包含待查询的IP地址，而直接收到这个广播包的所有主机都会查询自己的IP地址，如果其中一个主机发现自己符合条件，那么就准备好一个包含自己MAC地址的ARP包传送给发送ARP广播的主机，然后广播主机拿到ARP包后会更新自己的ARP缓存。发送广播的主机就会用新的ARP缓存数据准备好数据链路层的数据包发送工作。</p>
+<p>一个典型的ARP缓存信息如下，在系统中使用<code>arp -a</code>命令。</p>
+<p>这个高速缓存的时限是20分钟。</p>
+<h3 id=icmp协议>ICMP协议</h3>
+<p>由于IP协议并不是一个可靠的协议，因此保证数据送达的工作就会由其他模块来完成，其中一个重要的模块就是IMCP(网络控制报文)协议。</p>
+<p>当IP数据包发生错误，比如主机不可达、路由不可达等，ICMP就会将错误信息封包，然后传送回给主机。给主机一个处理错误的机会，这也就是为什么说建立在IP层以上的协议是能够做到安全的原因。ICMP数据包由8bit的错误类型+8bit的代码+16bit的校验和组成。而前16bit就组成了ICMP要传递的信息。</p>
+<p>尽管在大多数情况下，错误的包传送应该给出ICMP报文，但是在特殊情况下，是不产生ICMP报文的：</p>
+<ol>
+<li>ICMP错误报文不会产生ICMP错误报文(出ICMP查询报文)，防止ICMP的无线产生和传送</li>
+<li>目的地址是广播地址或多播地址的IP数据包</li>
+<li>作为链路层广播的数据包</li>
+<li>不是IP分片的第一片</li>
+<li>原地址不是单个主机的数据包</li>
+</ol>
+<p>这里的一切规定，都是为了防止ICMP报文的无线传播而定义的。</p>
+<p>ICMP协议大致分两类，一种是查询报文，一种是错误报文。其中查询报文的用途：</p>
+<ol>
+<li>ping查询</li>
+<li>子网掩码查询</li>
+<li>时间戳查询</li>
+</ol>
+<h4 id=icmp的应用-ping>ICMP的应用-ping</h4>
+<p>ping可以说是ICMP的最注明应用，可以通过ping一个网址来查看其是否可用。</p>
+<p>原理是用类型码为0的ICMP发请求，收到请求的主机则用类型码为8的ICMP回应。ping程序来计算时间间隔，并计算有多少包被送达。用户就可以判断大致的网络情况。</p>
+<p>ping还给我们一个看到目的主机路由的机会，这是因为，ICMP的ping请求数据包在没经过一个路由的时候，路由器会把自己的IP放到该数据包中。而目的主机则会把这个IP列表复制到回应ICMP数据包中发回给主机。但是这个信息比较有限，如果想要查看更详细的路由，可以使用tracerouter。</p>
+<h4 id=icmp的应用-tracerouter>ICMP的应用-tracerouter</h4>
+<p>Tracerouter用来侦测主机到目的主机之间所经路由情况的重要工具，也是最便利的工具。</p>
+<p>它的原理是，它收到目的主机的IP后，首先给目的主机发送一个<code>TTL=1</code>的UDP数据包，而经过的第一个路由器收到这个包之后就自动把TTL减1，这时TTL为0，路由器就把这个包丢弃了，并同时产生一个主机不可达的ICMP数据包给主机。主机收到这个数据包以后再发一个<code>TTL=2</code>的UDP数据包给目的主机，然后刺激第二个路由器给主机发送ICMP数据包。如此往复直到到达目的主机，这样，tracerouter就拿到了所有路由IP，从而避免了IP头只能记录有限路由IP的问题。</p>
+<p>但是tracerouter是如何直到是否到达目的主机了呢。这就涉及到一个技巧问题，TCP和UDP协议有一个端口号定义，普通的网络程序只监控少数几个号码较小的端口，如80、23等。而tracerouter发送的端口号>30000，所以到达主机的时候，目的主机只能发送一个端口不可达的ICMP数据报给主机，主机接收到这个报告以后就知道主机到了。</p>
+<h2 id=ip选路动态选路>IP选路、动态选路</h2>
+<h2 id=udp协议>UDP协议</h2>
+<p>UDP是传输层协议，和TCP处于同一个分层中，但是于TCP不同，UDP不提供超时重传，出错重传等功能，也就是说它是不可靠协议。</p>
+<h3 id=协议头>协议头</h3>
+<h4 id=udp端口号>UDP端口号</h4>
+<p>由于很多软件要用到UDP协议，所以UDP协议必须通过某个标志用以区分不同的程序所需要的数据包，这就是端口号的功能。例如一个UDP程序在A系统中注册了3000端口，以后从外部传进来的端口号为3000的数据包就会交给该程序。</p>
+<h4 id=udp检验和>UDP检验和</h4>
+<p>这是一个可选的选项，并不是所有的系统都对UDP数据包加以检验和数据(相对TCP的必须来说)，但是RFC中标准要求，发送端应该计算校验和。</p>
+<p>UDP校验和覆盖UDP协议头和数据，这个IP的检验和是不同的，IP协议的检验和只是覆盖IP数据头，并不覆盖所有的数据。UDP和TCP都包含一个伪首部，这是为了计算校验和而设置的。伪首部甚至包含IP地址这样IP协议里面都有的数据，目的是让UDP两次检查数据是否正确到达目的地。如果发送端没有打开校验和选项，而接收端计算校验和有差错，那么UDP数据将会被悄悄的丢掉(不保证送达)，而不会产生任何错误报文。</p>
+<h4 id=udp长度>UDP长度</h4>
+<p>UDP可以很长，长达65535字节。但是一般网络在传输的时候，一次传输不了那么长的协议(MTU)，就只好对数据分片，当然，这些是对UDP上层协议透明的，UDP不需要关心IP层如何对数据分片。</p>
+<h4 id=ip分片>IP分片</h4>
+<p>IP是在从上层接到数据以后，根据IP地址来判断从哪个接口发送数据，并进行MTU查询，如果数据大小超过MTU就进行分片。数据的分片对上层和下层透明，而数据在到达目的地后会重新组装，IP层提供了足够的信息进行数据的再组装。</p>
+<h4 id=udp服务器设计>UDP服务器设计</h4>
+<p>UDP协议的特性将会影响我们的服务器程序设计，大致总结如下：</p>
+<ol>
+<li>关于客户IP和地址：服务器必须有根据客户IP地址和端口号判断数据包是否合法的能力；</li>
+<li>关于目的地址：服务器必须要有过滤广播地址的能力；</li>
+<li>关于数据输入：通常服务器系统的每一个端口都会和一块输入缓冲区对应，进来的数据根据先来后到的原则等待服务器的处理，所以难免会出现缓冲区溢出的问题，这种情况可能会出现UDP被丢弃，而应用服务器并不知道这个问题；</li>
+<li>服务器应该限制本地IP地址，就是说他应该可以把自己绑定到某一个网络接口的某一个端口上。</li>
+</ol>
+<h2 id=广播与多播igmp协议>广播与多播、IGMP协议</h2>
+<h3 id=单播多播组播>单播、多播、组播</h3>
+<h4 id=单播>单播</h4>
+<p>单播是对特定的主机进行数据的传送。例如给某一个主机发送IP数据包。这时，数据链路层给出的数据头里面是非常具体的目的地址，对于以太网来说就是MAC地址。现在的具有路由功能的主机应该可以将单播数据定向转发，而目的主机的网络接口则可以过滤掉和自己MAC地址不一致的数据。</p>
+<h4 id=广播>广播</h4>
+<p>广播是主机针对某一网络上的所有主机发送数据。这个网络可能是网络、子网，或所有子网。如果是网络，例如A类地址的广播就是<code>netid.255.255.255</code>，如果是子网，则是<code>netid.netid.subnetid.255</code>，如果是所有子网(B类IP)，则是<code>netid.netid.255.255</code>。广播所用的MAC地址是<code>FF-FF-FF-FF-FF-FF</code>，网络内所有的主机都会收到这个广播数据，网卡只要把MAC地址为<code>FF-FF-FF-FF-FF-FF</code>的数据交给内核就行了。一般来说，ARP或者路由协议RIP应该是广播的形式播发的。</p>
+<h4 id=多播>多播</h4>
+<p>可以说广播的多播的特例，多播就是给一组特定的主机(多播组)发送数据。这样，数据的播发范围会小一些，多播的MAC地址是最高字节的低位为1，例如：<code>01-00-00-00-00-00</code>，多播组的IP是D类IP，规定是<code>224.0.0.0-239.255.255.255</code>。</p>
+<h3 id=igmp协议>IGMP协议</h3>
+<p>IGMP协议的作用在于，让其他所有需要知道自己处于哪个多播组的主机和路由器知道自己的状态。一般多播路由器根本不需要知道某一个多播组里有多少个主机，而只需要知道自己的子网内还有没有处于某个多播组的主机就行了。只要某一个多播组还有一台主机，多播路由器就会把数据传输过去，这样，接受方就会通过网卡过滤功能来得到自己想要的数据。为了知道多播组的信息，多播路由器需要定时的发送IGMP查询，各个多播组里面的主机需要根据查询来回复自己的状态。路由器来决定有几个多播组，自己要对某一个多播组发送什么样的数据。</p>
+<h2 id=tcp协议>TCP协议</h2>
+<p>TCP和UDP同样处于运输层，但是TCP和UDP最不同的地方是，TCP提供了一种可靠的的数据传输服务，TCP是面向连接的，也就是说，利用TCP通信的两台主机首先要精力一个拨打电话的过程，等到通信准备就绪才开始传输数据，最后结束通话。所以TCP要比UDP可靠的多，UDP是直接把数据发过去，而不管对方是不是在收信，就算是UDP无法送达，也不会产生ICMP差错报文。</p>
+<p>TCP保证可靠性的工作原理：</p>
+<ol>
+<li>应用数据被分割成TCP认为最适合发送的数据块。</li>
+<li>当TCP发出一个段后，它启动一个定时器，等待目的端确认收到这个报文段，如果不能及时收到这个确认，将重发这个报文段。</li>
+<li>当TCP收到发自TCP另一端的数据，它将发送一个确认。这个确认不是立即发送的，通常推迟几分之一秒。</li>
+<li>TCP将保持它首部和数据的校验和。这是一个端到端的检验和，目的是检测数据在传输过程中的任何变化。如果收到段的检验和有差错，TCP将丢弃这个报文段和不确认收到此报文段。</li>
+<li>既然TCP报文段作为IP数据报来传输，而IP数据报的到达可能输失序，因此TCP报文段的到达也可能会失序。如果必要，TCP将对收到的数据进行重新排序，将收到数据以正确的顺序交给应用层。</li>
+<li>TCP还能提供流量控制。TCP连接的每一方都有固定大小的缓冲空间。TCP的接收端只允许另一端发送 接收端缓冲区所能接纳的数据。这将放置比较块的主机致使比较慢主机的缓冲区溢出。</li>
+</ol>
+<p>由此可见，TCP中保持可靠性的方式就是超时重发。<strong>最可靠的方式就是只要不得到确认，就重新发送数据报，直到得到对方的确认为止。</strong></p>
+<p>TCP和UDP的首部一样。都有发送端口号和接收端口号。显然TCP的首部信息会更多，提供了发送和确认所需要的所有必要的信息。可以想象一个TCP数据的发送过程：</p>
+<ol>
+<li>双方建立连接</li>
+<li>发送方给接收方TCP数据报，然后等待对方的确认TCP数据报，有则发送下一个，没有则等待重发</li>
+<li>接收方等待发送方的数据报，如果得到数据并检查无误，就发送ACK数据报，并等待下一个数据报</li>
+<li>终止连接</li>
+</ol>
+<h2 id=dns域名系统>DNS域名系统</h2>
+<h3 id=dns系统介绍>DNS系统介绍</h3>
+<p>DNS的全称是“Domain Name Syetem”。它负责把FQDN翻译成一个IP，最初是一个巨大的host.txt文件，最终发展到现在的分布式数据库。</p>
+<p>DNS是一个巨大的树，最上方是一个无名树根，下一层是“arpa,com,edu,gov,int,mil,us,cn”等。其中arpa是域名反解析树的顶端。</p>
+<p>一个独立管理的DNS子树叫做zone，最常见的区域就是二级域名，比如说.com.cn，还可以把这个二级域名划分成更小的区域，比如sina.com.cn。</p>
+<p>DNS系统是一个分布式数据库，当一个数据库发现并没有某查询所需要的数据时，它将把查询转发出去，而转发的目的地通常是根服务器，根服务器从上自下层层转发查询，直到找到目标为止。DNS的另一特点是使用高速缓存，DNS把查询过的数据缓存在某处，以便于下次查询时使用。</p>
+<h3 id=dns协议>DNS协议</h3>
+<p>DNS协议定义了一个既可以查询也可以响应的报文格式，各个字段的解释如下：</p>
+<ol>
+<li>最前面的16个bit唯一的标识了问题号码，用于查询端区别自己的查询</li>
+<li>紧接着的16歌bit又可以做进一步的细分，标示了报文的性质和一些细节，比如说是查询报文还是响应报文，需要递归查询与否</li>
+<li>查询问题后面有查询类型，包括“A,NS,CNAME,HINFO,MX”</li>
+<li>响应报文可以回复多个IP，也就是说，域名可以和多个IP地址对应，并且有很多CNAME</li>
+</ol>
+<h3 id=反向查询>反向查询</h3>
+<p>正向是指通过域名查询IP，反向是指通过IP查询域名。例如用host命令，<code>host ip</code>就可以得到服务器的域名，<code>host domainname</code>得到IP地址。</p>
+<h3 id=dns服务器高速缓存>DNS服务器高速缓存</h3>
+<p>BIND9默认作为一个高速缓存服务器，其将所有的查询都交到服务器上去，然后得到的结果放在本地的缓存区，以加速查询。</p>
+<h3 id=用udp还是tcp>用UDP还是TCP</h3>
+<p>DNS服务器同时支持UDP和TCP两种协议的查询方式，而且端口都是53，大多数都是UDP查询，需要TCP查询的一般有两种情况：</p>
+<ol>
+<li>当查询过大以至于产生了数据截断(TC标志为1)，这时，需要利用TCP的分片能力来进行数据传输</li>
+<li>当master和slave服务器之间通信，辅服务器要拿到主服务器的zone信息的时候。</li>
+</ol>
+<h2 id=tcp数据包内容>TCP数据包内容</h2>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/TCP%E5%86%85%E5%AE%B9.jpg style=display:block;width:50% alt=NAME align=center> </div>
+<p>TCP处于7层模型中的传输层，主要是用来建立可靠的连接。而建立连接的基础，就是其非常丰富的报文。首先，TCP3次握手用的报文就是绿色部分的<code>TCP Flags</code>内容。通过发送ACK、SYN包实现。具体涉及的Tag详见：</p>
+<ol>
+<li>Source Port/Destination Post：即客户端和服务端端口号，端口号用于区分主机中不同的进程，通过结合源IP和目的IP，得出唯一的TCP连接；</li>
+<li>Sequence Number(seqNumber)：一般由客户端发送，用来表示报文段中第一个数据字节在数据流中的序号，主要用来解决网络包乱序问题；</li>
+<li>Acknowledgment Number(ACK)：就是用来存放客户端发来的seqNumber的下一个信号(seqNumber+1)。只有当TCP flags中的ACK为1时才有效。主要用来解决不丢包的问题。</li>
+<li>TCP flags：TCP中有6个首部，用来控制TCP连接的状态，取值为0或1。分别是：URG、ACK、PSH、RST、SYN、FIN：
+<ol>
+<li>URG为1时，用来保证TCP连接不被中断。并且将该次TCP内容数据的紧急程度提升(即告诉计算机，首先处理该连接)</li>
+<li>ACK通常是服务端返回的。用来表示应答是否有效。</li>
+<li>PSH表示当数据包得到后，立马给应用程序使用(PUSH到最顶端)</li>
+<li>RST用来确保TCP连接的安全。该flag用来表示一个连接复位的请求。如果发生错误连接，则reset一次，重新连。同时可以用来拒绝非法数据包。</li>
+<li>SYN同步的意思，通常由客户端发出，用来建立连接。第一次握手时：SYN为1，ACK为0；第二次握手时：SYN为1，ACK为1。</li>
+<li>FIN用来表示是否结束该次TCP连接。通常当你的数据发送完后，会自动带上FIN然后断开连接。</li>
+</ol>
+</li>
+</ol>
+<h2 id=tcp连接的建立与终止>TCP连接的建立与终止</h2>
+<p>TCP是一个面向连接的协议，所以在连接双方发送数据前，都需要建立一条连接。TCP连接的建立需要3次握手，终止需要4次握手。</p>
+<h3 id=建立连接>建立连接</h3>
+<p>在建立连接时，客户端首先向服务器申请打开某一个端口(用SYN段等于1的TCP报文)，然后服务器返回一个ACK报文通知客户端请求报文收到，客户端收到确认报文以后再次发送一个确认报文确认刚才服务器发出的确认报文，至此，连接建立完成，被称为3次握手。如果打算让双发都做好准备的话，一定要发送三次报文，而且只需要三次报文就可以了。</p>
+<h3 id=结束连接>结束连接</h3>
+<p>TCP有一个特别的概念叫做half-close，TCP的连接是全双工(可以同时接收和发送)连接，因此在关闭连接的时候，必须关闭传个送两个方向上的连接。客户端给服务器一个FIN为1的TCP报文，然后服务器返回一个确认ACK报文，并且发送一个FIN报文，当客户机回复ACK报文后，连接就结束了。</p>
+<h3 id=最大报文长度>最大报文长度</h3>
+<p>在建立连接时，通信的双方要互相确认对方的最大报文长度(MSS)，以便通信，一般这个SYN长度是MTU长度减去固定IP首都和TCP首部长度。对于一个以太网，一般可以达到1460字节。当然如果对于非本地的IP，这个MSS可能只有536字节，而且，如果中间的传输网络的MSS更小的话，这个值会变得更小。</p>
+<h3 id=tcp的状态迁移图>TCP的状态迁移图</h3>
+<p>包含两个部分，服务器状态和客户端状态，如果从某一个角度会更加清晰，这里面的服务器和客户端都不是绝对的，发送数据的就是客户端，接收数据的就是服务器。</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/TCP%E7%8A%B6%E6%80%81%E5%9B%BE.jpg style=display:block;width:50% alt=NAME align=center> </div>
+<p>另一种描述方式：</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/TCP%E6%8F%A1%E6%89%8B.jpg style=display:block;width:50% alt=NAME align=center> </div>
+<h4 id=客户端路线>客户端路线</h4>
+<p>客户端状态可以用一下流程来表示：</p>
+<pre><code>CLOSER --&gt; SYN_SENT --&gt;ESTABLISHED --&gt; FIN_WAIT_1 --&gt; FIN_WAIT_2 --&gt; TIME_WAIT -- CLOSED
+</code></pre>
+<p>该流程是在程序正常时应该有的流程，在建立连接时，当客户端收到SYN的ACK报文以后，客户端就打开了数据交互的连接。而结束连接则通常是客户端主动结束的，客户端结束应用程序以后，需要经历<code>FIN_WAIT_1</code>、<code>FIN_WAIT_2</code>等状态，这些状态的迁移就是前面提到的结束连接的4次握手。</p>
+<h4 id=服务器路线>服务器路线</h4>
+<p>服务器状态的流程：</p>
+<pre><code>CLOSED --&gt; LISTEN --&gt; SYN收到 --&gt; ESTABLISHED --&gt; CLOSE_WAIT --&gt; LAST_ACK --&gt; CLOSED
+</code></pre>
+<p>在建立连接的时候，服务器端就是在三次握手之后才进入数据交互状态，而关闭连接则是在关闭连接的第二次握手之后，而不是第四次握手之后。关闭以后还要等待客户端给出最后的ACK才能进入初始状态。</p>
+<h4 id=建立连接的三次握手流程>建立连接的三次握手流程</h4>
+<ol>
+<li>第一次握手：客户端向服务端发送一个SYN包，并且添加上seqNumber(假设为x)，然后进入<code>SYN_SEND</code>状态，并且等待服务器的确认；</li>
+<li>第二次握手：服务器接收SYN包，并进行确认，如果该请求有效，则将TCP flags中的ACK标记为1，然后将AckNumber置为(seqNumber+1)，并且再添加上自己的seqNumber(y)，完成后，返回给客户端。服务器进入<code>SYN_RECV</code>状态(这里服务端是发送SYN+ACK包)；</li>
+<li>第三次握手：客户端接收ACK+SYN报文后，获取到服务器发送的AckNumber(y)，并且将新头部的AckNumber变为(y+1)，然后发送给服务端，完成TCP的三次握手，建立连接。此时服务器和客户端都进入<code>ESTABLISHED</code>状态。</li>
+</ol>
+<h4 id=关闭连接的四次挥手流程>关闭连接的四次挥手流程</h4>
+<ol>
+<li>第一次挥手：A机感觉此时如果keepalive比较浪费资源，则它提出了分手的请求。设置SeqNumber和AckNumber之后，向B机发送FIN包，表示我这已经没有数据给你了，然后A机进入<code>FIN_WAIT_1</code>状态；</li>
+<li>第二次挥手：B机收到了A机的FIN包，已经知道了A机没有数据再发送了。此时B会给A发送一个ACK包，并且将AckNumber变为A传输来的SeqNumber+1。当A接收到之后，则变为<code>FIN_WAIT_2</code>状态。表示已经得到B机的许可，可以进行关闭操作。不过此时，B机还是可以向A机发送请求的。</li>
+<li>第三次挥手：B机向A机发送FIN包，请求关闭，相当于告诉A机，我这里也没有你要的数据了。然后B进入<code>CLOSE_WAIT</code>状态(同时带上SeqNumber)；</li>
+<li>第四次挥手：A接收到B的FIN包之后，然后同样，发送一个ACK包给B。B接收到之后就断开了。而A会等待2MSL的时间之后，如果没有回复，确保服务端确实是关闭了。然后A机也可以关闭连接。A、B都进入<code>CLOSE</code>状态。</li>
+</ol>
+<p><code>2MSL</code>的意思是<code>2 x MSL</code>。MSL的其实是 ”Maximum Segment Lifetime“，报文最大生存时间。RFC793中规定为2分钟，实际应用中常用的是30秒、1分钟等。同样上面的<code>TIME_WAIT</code>状态其实也就是<code>2MSL</code>状态，如果超过该时间，则会将报文丢弃，直接进入<code>CLOSE</code>状态。</p>
+<h4 id=其他状态迁移>其他状态迁移</h4>
+<p>图中还有一些其他状态的迁移，针对服务端和客户端两方面总结如下：</p>
+<ol>
+<li><code>LISTEN --> SYN_SENT</code>：指服务器有时候也需要打开连接</li>
+<li><code>SYN --> SYN收到</code>：服务器和客户端在<code>SYN_SENT</code>状态下如果收到SYN数据报，则都需要发送SYN的ACK数据报并把自己的状态调整到SYN收到状态，准备进入<code>ESTABLISHED</code></li>
+<li><code>SYN_SENT --> CLOSED</code>：才发送超时的情况下，会返回到<code>CLOSED</code>状态</li>
+<li><code>SYN收到 --> LISTEN</code>：如果收到RST包，会返回到LISTEN状态</li>
+<li><code>SYN收到 --> FIN_WAIT_1</code>：这个迁移是说，可以不用到<code>ESTABLISHED</code>状态，可以直接跳转到<code>FIN_WAIT_1</code>状态并等待关闭</li>
+</ol>
+<h4 id=2msl等待状态>2MSL等待状态</h4>
+<p>图中有一个<code>TIME_WAIT</code>等待状态，又称为2MSL状态，说的是在<code>TIME_WAIT_2</code>发送了最后一个ACK数据报以后，要进入<code>TIME_WAIT</code>状态，这个状态是防止最后一次握手的数据报没有传送到对方那里准备的(注意这不是4次握手，这是第4次握手的保险状态)，这个状态在很大程度上都保证了双方都可以正常结束，但是也伴随着问题。</p>
+<p>由于插口的2MSL状态(插口是IP和端口对的意思，socket)，使得应用程序在2MSL时间内无法再次使用同一个插口对，对于客户端程序还好，但是对于服务器程序，例如httpd，他总是要使用同一个端口来进行服务，而在2MSL时间内，启动httpd就会出现错误(插口被使用)。为了避免这个错误，服务器给出了一个平静时间的概念，在2MSL时间内，虽然可以重新启动服务器，但是这个服务器还是要<strong>平静</strong>的等待2MSL时间的过去才能进行下一次连接。</p>
+<h4 id=fin_wait_2状态><code>FIN_WAIT_2</code>状态</h4>
+<p>这是著名的半关闭状态，在关闭连接时，客户端和服务器两次握手之后的状态。这个状态下，应用程序还有接收数据的能力，但是已经无法发送数据，但是也有一种可能，客户端一直处于<code>FIN_WAIT_2</code>状态，而服务器一直出去<code>WAIT_CLOSE</code>状态，而直到应用层来决定关闭这个状态。</p>
+<h4 id=rst同时打开和同时关闭>RST,同时打开和同时关闭</h4>
+<p>RST是另一种关闭连接的方式，应用程序可以判断RST包的真实性，即是否为异常终止。而同时开发和同时关闭时两种特殊的TCP状态，发生的概率很小。</p>
+<h4 id=tcp服务器设计>TCP服务器设计</h4>
+<p>在前面的UDP服务器设计中，完全不需要所谓的并发机制，它只需要建立一个数据输入队列就可以。但是TCP不同，TCP服务器对于每一个连接都需要建立一个独立的进程(或者轻量级的线程)，来宝成对话的独立性。所以TCP服务器是并发的。而TCP服务器还需要配备一个呼入连接请求队列，来为每一个连接请求建立对话进程，这也就是为什么各种TCP服务器都有一个最大连接数的限制。而根据源主机的IP和端口号，服务器可以很轻松的区别不同的会话，来进行数据的分发。</p>
+<h2 id=tcp交互数据流成块数据流>TCP交互数据流、成块数据流</h2>
+<p>目前建立在TCP协议上的网络协议很多，有telnet、ssh、ftp、http等。这些协议又可以根据数据吞吐量大致分为两类：</p>
+<ol>
+<li>交互数据类型：例如telnet、ssh，这种协议通常只做小流量的数据交换，比如按下键盘，回显文字等；</li>
+<li>数据成块类型：例如ftp。这种类型的协议要求TCP尽量的运载数据，把数据的吞吐量做到最大，并尽可能的提高效率。</li>
+</ol>
+<h3 id=tcp的交互流数据>TCP的交互流数据</h3>
+<p>对于交互性要求比较高的应用，TCP给出了两个策略来提高效率和减少网络负担：捎带ACK、Nagle算法(一次尽量多的发数据)。通常在网络速度很快的情况下，比如用lo接口进行telnet通信，当按下字母键并要求回显的时候，客户端和服务器将经历<code>发送按键数据 --> 服务器发送按键数据的ACK --> 服务器端发送回显数据 --> 客户端发送回显数据的ACK</code>的过程，而其中的数据流将是<code>40bit + 41bit + 41bit + 40bit = 162bit</code>，如果在广域网里面，这种小分组的TCP流量将会造成很大的网络负担。</p>
+<h4 id=捎带ack的发送方式>捎带ACK的发送方式</h4>
+<p>这个策略是说，当主机收到远程主机的TCP数据报的时候，通常不马上发送ACK数据报，而是登上一个短暂的时间，如果这段时间内主机还有发送到远程主机的TCP数据报，那么就把这个ACK数据报捎带着发过去，把原本两个数据报整合成一个发送。一般这个时间是200ms。可以很明显的看到这个策略把TCP的数据报的利用率提高很多。</p>
+<h4 id=nagle算法>Nagle算法</h4>
+<p>Nagle算法是指，当A给B发送了一个TCP数据报并进入等待B的ACK数据报的状态时，TCP的输出缓冲区中只能有一个TCP数据报，并且，这个数据报不断的收集后来的数据，整合成一个大的数据报，等到B的ACK包一到，就把这些数据一股脑的发送出去。</p>
+<p>在编写接口程序的时候，可以通过<code>TCP_NODELAY</code>来关闭这个算法。同时使用这个算法需要据情况而定，比如基于TCP的X窗口协议，如果处理鼠标事件还是用这个算法的话延迟就会非常大了。</p>
+<h3 id=tcp的成块流数据>TCP的成块流数据</h3>
+<p>对于FTP这样对数据吞吐量有较高的要求，将总是希望每次尽量多的发送数据到对方主机，就算是有点延迟也无所谓。TCP也提供了一整套的策略来支持这样的需求。TCP协议中有16个bit表示窗口的大小，这是这些策略的核心。</p>
+<h4 id=传输数据是ack的问题>传输数据是ACK的问题</h4>
+<p>在解释滑动窗口前，需要看看ACK的应答策略，一般来说，发送端发送一个TCP数据报，那么接收端就应该发送一个ACK数据报。但是事实上并不是这样，发送端将会连续发送数据尽量填满接收方的缓冲区，而接收方只要对这些数据发送一个ACK报文来回应就可以了，这就是ACK的累积特性，这个特性大大减少了发送端和接收端的负担。</p>
+<h4 id=滑动窗口>滑动窗口</h4>
+<p>滑动窗口本质上是描述接收方的TCP数据报缓冲区大小的数据，发送方根据这个数据来计算自己最多能发送多长的数据。如果发送方收到接收方的窗口大小为0的TCP数据报，那么发送方将停止发送数据，等到接收方发送窗口大小不为0的数据报的到来。</p>
+<p>关于滑动窗口协议，还有三个术语：</p>
+<ol>
+<li>框框合拢：当窗口从左边向右边靠近的时候，这种现象发生在数据报被发送和确认的时候；</li>
+<li>窗口张开：当窗口的右边沿向右边移动的时候，这种现象发生在接收端处理了数据以后；</li>
+<li>窗口收缩：当窗口的右边沿向左边移动的时候，这种现象不常发生。</li>
+</ol>
+<p>TCP就是利用这个窗口，慢慢的从数据的左边移动到右边，把处于窗口范围内的数据发送出去(但不是发送所有，只是处于窗口内的数据可以发送)。这就是窗口的意义。窗口的大小是可以通过socket来指定的，4096并不是最理想的窗口大小，而16384则可以使吞吐量大大的增加。</p>
+<h4 id=数据拥堵>数据拥堵</h4>
+<p>上面的策略用于局域网内传输还可以，但是用在广域网中就可能出现问题，最大的问题就是当传输时出现了瓶颈(比如一定要经过一个slip低速链路)所产生的大量数据拥堵问题，为了解决这个问题，TCP发送方需要确认连接双方的线路的数据最大吞吐量是多少。</p>
+<p>拥堵窗口的原理很简单，TCP发送方首先发送一个数据报，然后等待对方的回应，得到回应后就把这个窗口的大小加倍，然后连续发送两个数据报，等到对方回应以后，再把这个窗口加倍(先是2的指数倍，到了一定程度后变成线性增长，即慢启动)，发送更多的数据报，直到出现超时错误。这样，发送端就了解了通信双方的线路承载能力，也就确定了拥堵窗口的大小，发送方就用这个拥堵窗口的大小发送数据。比如下载的时候一开始很慢，慢慢加速后变成匀速。</p>
+<h2 id=tcp的超时与重传>TCP的超时与重传</h2>
+<p>超时重传是TCP保证数据可靠性的另一个重要机制。其原理是在发送某一个数据以后就开启一个计时器，在一定的时间内如果没有得到发出数据的ACK报文，就重新发送数据，直到发送成功。</p>
+<h3 id=超时>超时</h3>
+<p>超时时间的计算是超时的核心部分，TCP要求这个算法能大致估算出当前的网络状况，虽然这确实很困难。要求精确的原因有两个：1、定时长久会造成网络利用率不高；2、定时太短会造成多次重传，使得网络拥堵。所以书中(《TCP/IP详解：卷一》)给出了一套经验公式，和其他的保证计时器准确的措施。</p>
+<h4 id=递推公式概述>递推公式概述</h4>
+<p>最早的TCP计算网络状况的公式：</p>
+<pre><code>R&lt;-aR+(1-a)M
+RTP=Rb
+</code></pre>
+<p>其中a是一个经验系数0.1，b通常为2，注意这是经验，没有推导过程，这个数值是可以被修改的。这个公式是说用旧的RTT(R)和新的RTT(M)综合到一起考虑新的RTT(R)的大小。但是，这种估计在网络变化很大的情况下完全不能做出灵敏的反应，于是就有下面的修正公式：</p>
+<pre><code>Err=M-A
+A&lt;-A+gErr
+D&lt;-D+h(|Err|-D)
+RTO=A+4D
+</code></pre>
+<p>详细解释参考P228。这个递推公式甚至提到了方差这种统计概念，使得偏差更小。而且，必须要指出的是，这两组公司更新，都是在数据成功传输的情况下才进行，在发生数据重新传输的情况下，并不使用上面的公式进行网络国际，理由很简单，因为程序已经不再正常状态下了，估计出来的数据也是没有意义的。</p>
+<h4 id=rto的初始化>RTO的初始化</h4>
+<p>RTO的初始化是由公式决定的，例如最初的公式，初始的值应该是1。而修正公式，初始RTO应该是A+4D。</p>
+<h4 id=rto的更新>RTO的更新</h4>
+<p>当输出传输正常的情况下，我们就会用上面的公式来更新各个数据，并重开定时器，来保证下一个数据被顺利传输。要注意的是：**重传的情况下，RTO不用上面的公式计算，而是采用一种叫”指数退避“的方式。**例如：当RTO为1S的情况下，发生了数据重传，我们就用RTO=2S的定时器来重新传输数据，下一次用4S。一直增加到64S为止。</p>
+<h4 id=估计器的初始化>估计器的初始化</h4>
+<p>在这里，SYN用的估计器初始化似乎和传输用的估计器不一样???</p>
+<h4 id=估计器的更新>估计器的更新</h4>
+<h4 id=karn算法>Karn算法</h4>
+<p>应该称为一个策略，说的是更新RTO和估计器的时机选择问题。</p>
+<h4 id=计时器的使用>计时器的使用</h4>
+<ol>
+<li>一个连接中，有且仅有一个测量定时器被使用。也就是说，如果TCP连续发出三组数据，只有一组数据会被测量；</li>
+<li>ACK数据报不会被测量，原因很简单，没有ACK的ACK回应可以供结束定时器测量。</li>
+</ol>
+<h3 id=重传>重传</h3>
+<p>有了超时就有重传，但是会根据一定的策略重传，而不是将数据简单的发送。</p>
+<h4 id=重传时发送数据的大小>重传时发送数据的大小</h4>
+<p>前面曾经提到过，数据在传输时不能只是用一种窗口协议，我们还需要有一个拥堵窗口来控制数据的流量，使得数据不会一下子都跑到网络中引起拥堵。也提到过，拥堵窗口最初使用指数增长的速度来增加自身的窗口，直到发生超时重传，在进行一次微调。但是没有提到，如何进行微调，拥塞避免算法和慢启动门限就是为此而生。</p>
+<p>慢启动门限是说，当拥堵窗口超过这个门限的时候，就使用拥塞避免算法，而在门限以内就使用慢启动算法。所以这个标准才叫做门限，通常，拥塞窗口记做cwnd，慢启动门限记做ssthresh。</p>
+<p>算法概要：</p>
+<ol>
+<li>对一个给定的连接，初始化cwnd为1个报文段，ssthresh为65535字节；</li>
+<li>TCP输出历程的输出不能超过cwnd和接收方通告窗口的大小。拥塞避免是发送方使用的流量控制，而通告窗口则是接收方进行的流量控制。前者是发送发感受到网络拥堵的估计，而后者则与接收方在该连接上的可用缓存大小有关；</li>
+<li>当拥堵发生时(超时或收到重复确认)，sshthresh被设置为当前窗口大小的一半(cwnd和接收方通告窗口大小的最小值，但最少为2个报文段)。此外，如果是超时引起了阻塞，则cwnd被设置为一个报文段(这就是慢启动)。</li>
+<li>当心的数据被对方确认时，就增加cwnd，但增加的方法依赖于我们是否正在进行慢启动或拥塞避免。如果cwnd小于或等于ssthresh，则正在进行慢启动，否则正在进行拥塞避免。慢启动一直持续到我们回到拥发生时所处位置的半时候才停止(因为我们记录了在步骤2中给我们制造麻烦的窗口大小的一半)，然后转为执行拥塞避免。</li>
+</ol>
+<h4 id=快速重传和快速恢复算法>快速重传和快速恢复算法</h4>
+<p>这是数据丢包的情况下给出的一种修补机制。一般来说，重传发生在超时之后，但是如果发送端收到超过3个以上的重复ACK的情况下，就应该意识到，数据丢了，需要重新传递。这个机制是不需要等到重传计时器溢出的，所以叫做快速重传，而重新传递以后，因为走的不是慢启动而是拥塞避免算法，所以又被称为快速恢复算法。流程如下：</p>
+<ol>
+<li>当收到3个重复的ACK时，将ssthresh设置为当前拥堵窗口cwnd的一半，重传丢失的报文段。设置cwnd为ssthresh加上3倍的报文段大小；</li>
+<li>每次收到另一个重复的ACK时，cwnd增加1个报文段大小并发送一个分组(如果新的cwnd允许发送)；</li>
+<li>当下一个确认新数据的ACK到达时，设置cwnd为ssthresh(在第一步中设置的值)。这个ACK应该是在重传后的一个往返时间内对步骤1中重传的确认。另外，这个ACK应该是对丢失的分组和收到的第一个重复的ACK之间的所有中间报文段的确认。这一步采用的是拥塞避免，因为当分组丢失时我们将当前的速率减半。</li>
+</ol>
+<h4 id=icmp会引起重新传递吗>ICMP会引起重新传递吗</h4>
+<p>不会，TCP会坚持自己的定时器，但是TCP会保留下ICMP的错误并通知用户。</p>
+<h4 id=重新分组>重新分组</h4>
+<p>TCP为了提高自己的效率。允许再重新传输的时候，只要传输包含重传数据报文的报文就可以，而不用只重传需要传输的报文。</p>
+<h2 id=tcp坚持定时器tcp保活定时器>TCP坚持定时器、TCP保活定时器</h2>
+<p>TCP一共提供了四个主要的定时器，前面已经说过最复杂的<strong>超时定时器</strong>，另外的三个是：</p>
+<ol>
+<li>坚持定时器</li>
+<li>保活定时器</li>
+<li>2MSL定时器</li>
+</ol>
+<h3 id=坚持定时器>坚持定时器</h3>
+<p>当TCP服务器收到了客户端的0滑动窗口报文时，就启动一个定时器计时，并在定时器溢出的时候想客户端查询窗口是否已经增大，如果得到非0的窗口就重新开始发送数据，如果得到0窗口就再开一个新的定时器准备下一次查询。通过观察可知，TCP的坚持定时器使用1、2、4、8、16、&mldr;64秒这样的普通指数退避序列来作为每一次的溢出时间。</p>
+<h4 id=糊涂窗口综合征>糊涂窗口综合征</h4>
+<p>TCP的窗口协议，会引起一种叫做糊涂窗口综合征的问题，具体表现为，当客户端通告一个小的非0窗口时，服务器立即发送小数据给客户端并充满气缓冲区，一来二去就会让网络中充满小TCP数据报，从而影响网络利用率。对于发送方和接收端的这种糊涂行为，TCP给出了一些建议、规定：</p>
+<ol>
+<li>接收方不通告小窗口。通常的算法是接收方不通告一个比当前窗口大的窗口(可以为0)，除非窗口可以增加一个报文段大小(也就是将要接收的MSS)，或者可以增加接收方缓存空间的一半，不论实际有多少；</li>
+<li>发送方避免出现糊涂窗口综合症的措施是只有一下条件之一满足时才发送数据：
+<ul>
+<li>可以发送一个满长度的报文段</li>
+<li>可以发送至少是接收方通告窗口大小一半的报文段</li>
+<li>可以发送任何数据并且不希望接收ACK(也就是说，我们还没有未被确认的数据)或者该连接上不能使用Nagle算法</li>
+</ul>
+</li>
+</ol>
+<p>可以发现TCP的很多规定都是为了在一次发送中发送尽量多的数据，例如捎带ACK的策略，Nagle算法，重传时发送包含数据报文的策略，等等。</p>
+<h3 id=保活定时器>保活定时器</h3>
+<p>保活定时器更加简单，还记得FTP或者HTTP服务器都有Session Time机制吗？因为TCP是面向连接的，所以就会出现只连接不传数据的”半开放连接“，服务器当然要检测这种连接并且在某些情况下释放这些连接，这就是保活定时器的作用。其时限根据服务器的实现不同而不同。另外，当其中一端如果崩溃并重启的情况时，如果收到该端”前生“的保活探查，则要发送一个RST数据报文帮助另一端结束连接。</p>
+<style>.feedback--answer{display:inline-block}.feedback--answer-no{margin-left:1em}.feedback--response{display:none;margin-top:1em}.feedback--response__visible{display:block}</style>
+<div class=d-print-none>
+<h2 class=feedback--title>Feedback</h2>
+<p class=feedback--question>Was this page helpful?</p>
+<button class="btn btn-primary mb-4 feedback--answer feedback--answer-yes">Yes</button>
+<button class="btn btn-primary mb-4 feedback--answer feedback--answer-no">No</button>
+<p class="feedback--response feedback--response-yes">
+Glad to hear it! Please <a href=https://github.com/infilos/infilos.com/issues/new>tell us how we can improve</a>.
+</p>
+<p class="feedback--response feedback--response-no">
+Sorry to hear that. Please <a href=https://github.com/infilos/infilos.com/issues/new>tell us how we can improve</a>.
+</p>
+</div>
+<script>const yesButton=document.querySelector('.feedback--answer-yes'),noButton=document.querySelector('.feedback--answer-no'),yesResponse=document.querySelector('.feedback--response-yes'),noResponse=document.querySelector('.feedback--response-no'),disableButtons=()=>{yesButton.disabled=!0,noButton.disabled=!0},sendFeedback=b=>{if(typeof ga!='function')return;const a={command:'send',hitType:'event',category:'Helpful',action:'click',label:window.location.pathname,value:b};ga(a.command,a.hitType,a.category,a.action,a.label,a.value)};yesButton.addEventListener('click',()=>{yesResponse.classList.add('feedback--response__visible'),disableButtons(),sendFeedback(1)}),noButton.addEventListener('click',()=>{noResponse.classList.add('feedback--response__visible'),disableButtons(),sendFeedback(0)})</script>
+<br>
+</div>
+</main>
+</div>
+</div>
+<footer class="bg-dark py-5 row d-print-none">
+<div class="container-fluid mx-sm-5">
+<div class=row>
+<div class="col-6 col-sm-4 text-xs-center order-sm-2">
+</div>
+<div class="col-6 col-sm-4 text-right text-xs-center order-sm-3">
+<ul class="list-inline mb-0">
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Weibo aria-label=Weibo>
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://weibo.com/u/3848950217>
+<i class="fab fa-weibo"></i>
+</a>
+</li>
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Twitter aria-label=Twitter>
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://twitter.com/zhange_zzg>
+<i class="fab fa-twitter"></i>
+</a>
+</li>
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title="Stack Overflow" aria-label="Stack Overflow">
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://stackoverflow.com>
+<i class="fab fa-stack-overflow"></i>
+</a>
+</li>
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=GitHub aria-label=GitHub>
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://github.com/infilos/infilos.com>
+<i class="fab fa-github"></i>
+</a>
+</li>
+</ul>
+</div>
+<div class="col-12 col-sm-4 text-center py-2 order-sm-2">
+<small class=text-white>&copy; 2021 infilos.com All Rights Reserved</small>
+</div>
+</div>
+</div>
+</footer>
+</div>
+<script src=/js/popper.min.js integrity=sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49 crossorigin=anonymous></script>
+<script src=/js/bootstrap.min.js integrity=sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy crossorigin=anonymous></script>
+<script src=/js/main.min.5c74b870c6953931a705f390a49c7e4c0a842ec5c83b24354758dd674343ed0d.js integrity="sha256-XHS4cMaVOTGnBfOQpJx+TAqELsXIOyQ1R1jdZ0ND7Q0=" crossorigin=anonymous></script>
+<script src=https://cdn.jsdelivr.net/npm/docsearch.js@2.6.3/dist/cdn/docsearch.min.js></script>
+<script>docsearch({apiKey:'123',indexName:'infilos_com',inputSelector:'.td-search-input',debug:!1})</script>
+</body>
+</html>

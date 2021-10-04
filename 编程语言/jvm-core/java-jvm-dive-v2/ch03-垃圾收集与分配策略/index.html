@@ -1,0 +1,1294 @@
+<!doctype html><html lang=zh class=no-js>
+<head>
+<meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no">
+<meta name=generator content="Hugo 0.88.1">
+<meta name=ROBOTS content="INDEX, FOLLOW">
+<link rel="shortcut icon" href=/favicons/favicon.ico>
+<link rel=apple-touch-icon href=/favicons/apple-touch-icon-180x180.png sizes=180x180>
+<link rel=icon type=image/png href=/favicons/favicon-16x16.png sizes=16x16>
+<link rel=icon type=image/png href=/favicons/favicon-32x32.png sizes=32x32>
+<link rel=icon type=image/png href=/favicons/android-36x36.png sizes=36x36>
+<link rel=icon type=image/png href=/favicons/android-48x48.png sizes=48x48>
+<link rel=icon type=image/png href=/favicons/android-72x72.png sizes=72x72>
+<link rel=icon type=image/png href=/favicons/android-96x96.png sizes=96x96>
+<link rel=icon type=image/png href=/favicons/android-144x144.png sizes=144x144>
+<link rel=icon type=image/png href=/favicons/android-192x192.png sizes=192x192>
+<title>CH03-垃圾收集与分配策略 | infilos.com</title><meta property="og:title" content="CH03-垃圾收集与分配策略">
+<meta property="og:description" content="3.1 概述 当需要排查各种内存溢出、内存泄漏问题时，当垃圾收集成为系统达到更高并发量的瓶颈时，我们就需要对这些“自动化”的(动态内存分配与内存回收)技术实施必要的监控和调节。
+第 2 章介绍了 Java 内存运行时区域的各个部分，其中程序计数器、虚拟机栈、本地方法栈 3 个区域随线程而生，随线程而灭；栈中的栈帧随着方法的进入和退出而有条不紊地执行着出栈和入栈操作。每一个栈帧中分配多少内存基本上是在类结构确定下来时就已知的（尽管在运行期会由 JIT 编译器进行一些优化，但在本章基于概念模型的讨论中，大体上可以认为是编译期可知的），因此这几个区域的内存分配和回收都具备确定性，在这几个区域内就不需要过多考虑回收的问题，因为方法结束或者线程结束时，内存自然就跟随着回收了。
+而 Java 堆和方法区则不一样，一个接口中的多个实现类需要的内存可能不一样，一个方法中的多个分支需要的内存也可能不一样，我们只有在程序处于运行期间时才能知道会创建哪些对象，这部分内存的分配和回收都是动态的，垃圾收集器所关注的是这部分内存，本章后续讨论中的“内存”分配与回收也仅指这一部分内存。
+3.2 对象已死？ 在堆里面存放着 Java 世界中几乎所有的对象实例，垃圾收集器在对堆进行回收前，第一件事情就是要确定这些对象之中哪些还“存活”着，哪些已经“死去”（即不可能再被任何途径使用的对象）。
+引用技术法 很多教科书判断对象是否存活的算法是这样的：给对象中添加一个引用计数器，每当有一个地方引用它时，计数器值就加1；当引用失效时，计数器值就减1；任何时刻计数器为0的对象就是不可能再被使用的。作者面试过很多的应届生和一些有多年工作经验的开发人员，他们对于这个问题给予的都是这个答案。
+客观地说，引用计数算法（Reference Counting）的实现简单，判定效率也很高，在大部分情况下它都是一个不错的算法，也有一些比较著名的应用案例，例如微软公司的 COM（Component Object Model）技术、使用 ActionScript 3 的FlashPlayer、Python 语言和在游戏脚本领域被广泛应用的 Squirrel 中都使用了引用计数算法进行内存管理。但是，至少主流的Java虚拟机里面没有选用引用计数算法来管理内存，其中最主要的原因是它很难解决 对象之间相互循环引用 的问题。
+举个简单的例子，请看代码清单 3-1 中的 testGC() 方法：对象 objA 和 objB 都有字段 instance，赋值令 objA.instance=objB 及 objB.instance=objA，除此之外，这两个对象再无任何引用，实际上这两个对象已经不可能再被访问，但是它们因为互相引用着对方，导致它们的引用计数都不为 0，于是引用计数算法无法通知 GC 收集器回收它们。
+/** *testGC()方法执行后, objA和objB会不会被GC呢? *@author zzm */ public class ReferenceCountingGC{ public Object instance=null； private static final int_1MB=1024*1024； /** *这个成员属性的唯一意义就是占点内存, 以便能在GC日志中看清楚是否被回收过 */ private byte[]bigSize=new byte[2*_1MB]； public static void testGC(){ ReferenceCountingGC objA=new ReferenceCountingGC()； ReferenceCountingGC objB=new ReferenceCountingGC()； objA.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v2/ch03-%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E4%B8%8E%E5%88%86%E9%85%8D%E7%AD%96%E7%95%A5/"><meta property="article:section" content="编程语言">
+<meta property="og:site_name" content="infilos.com">
+<meta itemprop=name content="CH03-垃圾收集与分配策略">
+<meta itemprop=description content="3.1 概述 当需要排查各种内存溢出、内存泄漏问题时，当垃圾收集成为系统达到更高并发量的瓶颈时，我们就需要对这些“自动化”的(动态内存分配与内存回收)技术实施必要的监控和调节。
+第 2 章介绍了 Java 内存运行时区域的各个部分，其中程序计数器、虚拟机栈、本地方法栈 3 个区域随线程而生，随线程而灭；栈中的栈帧随着方法的进入和退出而有条不紊地执行着出栈和入栈操作。每一个栈帧中分配多少内存基本上是在类结构确定下来时就已知的（尽管在运行期会由 JIT 编译器进行一些优化，但在本章基于概念模型的讨论中，大体上可以认为是编译期可知的），因此这几个区域的内存分配和回收都具备确定性，在这几个区域内就不需要过多考虑回收的问题，因为方法结束或者线程结束时，内存自然就跟随着回收了。
+而 Java 堆和方法区则不一样，一个接口中的多个实现类需要的内存可能不一样，一个方法中的多个分支需要的内存也可能不一样，我们只有在程序处于运行期间时才能知道会创建哪些对象，这部分内存的分配和回收都是动态的，垃圾收集器所关注的是这部分内存，本章后续讨论中的“内存”分配与回收也仅指这一部分内存。
+3.2 对象已死？ 在堆里面存放着 Java 世界中几乎所有的对象实例，垃圾收集器在对堆进行回收前，第一件事情就是要确定这些对象之中哪些还“存活”着，哪些已经“死去”（即不可能再被任何途径使用的对象）。
+引用技术法 很多教科书判断对象是否存活的算法是这样的：给对象中添加一个引用计数器，每当有一个地方引用它时，计数器值就加1；当引用失效时，计数器值就减1；任何时刻计数器为0的对象就是不可能再被使用的。作者面试过很多的应届生和一些有多年工作经验的开发人员，他们对于这个问题给予的都是这个答案。
+客观地说，引用计数算法（Reference Counting）的实现简单，判定效率也很高，在大部分情况下它都是一个不错的算法，也有一些比较著名的应用案例，例如微软公司的 COM（Component Object Model）技术、使用 ActionScript 3 的FlashPlayer、Python 语言和在游戏脚本领域被广泛应用的 Squirrel 中都使用了引用计数算法进行内存管理。但是，至少主流的Java虚拟机里面没有选用引用计数算法来管理内存，其中最主要的原因是它很难解决 对象之间相互循环引用 的问题。
+举个简单的例子，请看代码清单 3-1 中的 testGC() 方法：对象 objA 和 objB 都有字段 instance，赋值令 objA.instance=objB 及 objB.instance=objA，除此之外，这两个对象再无任何引用，实际上这两个对象已经不可能再被访问，但是它们因为互相引用着对方，导致它们的引用计数都不为 0，于是引用计数算法无法通知 GC 收集器回收它们。
+/** *testGC()方法执行后, objA和objB会不会被GC呢? *@author zzm */ public class ReferenceCountingGC{ public Object instance=null； private static final int_1MB=1024*1024； /** *这个成员属性的唯一意义就是占点内存, 以便能在GC日志中看清楚是否被回收过 */ private byte[]bigSize=new byte[2*_1MB]； public static void testGC(){ ReferenceCountingGC objA=new ReferenceCountingGC()； ReferenceCountingGC objB=new ReferenceCountingGC()； objA.">
+<meta itemprop=wordCount content="2555">
+<meta itemprop=keywords content><meta name=twitter:card content="summary">
+<meta name=twitter:title content="CH03-垃圾收集与分配策略">
+<meta name=twitter:description content="3.1 概述 当需要排查各种内存溢出、内存泄漏问题时，当垃圾收集成为系统达到更高并发量的瓶颈时，我们就需要对这些“自动化”的(动态内存分配与内存回收)技术实施必要的监控和调节。
+第 2 章介绍了 Java 内存运行时区域的各个部分，其中程序计数器、虚拟机栈、本地方法栈 3 个区域随线程而生，随线程而灭；栈中的栈帧随着方法的进入和退出而有条不紊地执行着出栈和入栈操作。每一个栈帧中分配多少内存基本上是在类结构确定下来时就已知的（尽管在运行期会由 JIT 编译器进行一些优化，但在本章基于概念模型的讨论中，大体上可以认为是编译期可知的），因此这几个区域的内存分配和回收都具备确定性，在这几个区域内就不需要过多考虑回收的问题，因为方法结束或者线程结束时，内存自然就跟随着回收了。
+而 Java 堆和方法区则不一样，一个接口中的多个实现类需要的内存可能不一样，一个方法中的多个分支需要的内存也可能不一样，我们只有在程序处于运行期间时才能知道会创建哪些对象，这部分内存的分配和回收都是动态的，垃圾收集器所关注的是这部分内存，本章后续讨论中的“内存”分配与回收也仅指这一部分内存。
+3.2 对象已死？ 在堆里面存放着 Java 世界中几乎所有的对象实例，垃圾收集器在对堆进行回收前，第一件事情就是要确定这些对象之中哪些还“存活”着，哪些已经“死去”（即不可能再被任何途径使用的对象）。
+引用技术法 很多教科书判断对象是否存活的算法是这样的：给对象中添加一个引用计数器，每当有一个地方引用它时，计数器值就加1；当引用失效时，计数器值就减1；任何时刻计数器为0的对象就是不可能再被使用的。作者面试过很多的应届生和一些有多年工作经验的开发人员，他们对于这个问题给予的都是这个答案。
+客观地说，引用计数算法（Reference Counting）的实现简单，判定效率也很高，在大部分情况下它都是一个不错的算法，也有一些比较著名的应用案例，例如微软公司的 COM（Component Object Model）技术、使用 ActionScript 3 的FlashPlayer、Python 语言和在游戏脚本领域被广泛应用的 Squirrel 中都使用了引用计数算法进行内存管理。但是，至少主流的Java虚拟机里面没有选用引用计数算法来管理内存，其中最主要的原因是它很难解决 对象之间相互循环引用 的问题。
+举个简单的例子，请看代码清单 3-1 中的 testGC() 方法：对象 objA 和 objB 都有字段 instance，赋值令 objA.instance=objB 及 objB.instance=objA，除此之外，这两个对象再无任何引用，实际上这两个对象已经不可能再被访问，但是它们因为互相引用着对方，导致它们的引用计数都不为 0，于是引用计数算法无法通知 GC 收集器回收它们。
+/** *testGC()方法执行后, objA和objB会不会被GC呢? *@author zzm */ public class ReferenceCountingGC{ public Object instance=null； private static final int_1MB=1024*1024； /** *这个成员属性的唯一意义就是占点内存, 以便能在GC日志中看清楚是否被回收过 */ private byte[]bigSize=new byte[2*_1MB]； public static void testGC(){ ReferenceCountingGC objA=new ReferenceCountingGC()； ReferenceCountingGC objB=new ReferenceCountingGC()； objA.">
+<script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga('create','UA-123062585-1','auto'),ga('send','pageview'))</script>
+<script async src=https://www.google-analytics.com/analytics.js></script>
+<link rel=preload href=/scss/main.min.847464b684a6e89d7276700a5c500c17ab494dd1755b2654a7b27d8b59e3347e.css as=style>
+<link href=/scss/main.min.847464b684a6e89d7276700a5c500c17ab494dd1755b2654a7b27d8b59e3347e.css rel=stylesheet integrity>
+<script src=/js/jquery-3.5.1.min.js integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin=anonymous></script>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/docsearch.js@2/dist/cdn/docsearch.min.css>
+</head>
+<body class=td-page>
+<header>
+<nav class="js-navbar-scroll navbar navbar-expand navbar-dark flex-column flex-md-row td-navbar">
+<a class=navbar-brand href=/>
+<span class=navbar-logo><svg id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512" style="enable-background:new 0 0 512 512"><path style="fill:#ffc107" d="M432.384 143.616c-4.165-4.164-10.917-4.164-15.083.0l-60.352 60.352c-4.164 4.165-4.164 10.917.0 15.083 21.187 20.463 54.951 19.876 75.413-1.311 19.962-20.668 19.962-53.435.0-74.102L432.384 143.616z"/><path style="fill:#607d8b" d="M42.667 277.334c-5.891.003-10.669-4.771-10.672-10.662-.002-4.338 2.623-8.245 6.64-9.882l234.667-96c5.455-2.233 11.687.38 13.92 5.835s-.38 11.687-5.835 13.92l-234.667 96C45.433 277.069 44.056 277.337 42.667 277.334z"/><path style="fill:#546e7a" d="M391.552 56.448l-32-32C343.938 8.745 322.689-.059 300.544.0h-3.755c-46.082.024-83.432 37.374-83.456 83.456v3.755c-.053 22.138 8.75 43.377 24.448 58.987l32 32c4.165 4.164 10.917 4.164 15.083.0L391.531 71.531C395.701 67.372 395.71 60.62 391.552 56.448z"/><path style="fill:#607d8b" d="M160 469.334c-3.279.006-6.379-1.497-8.405-4.075L34.261 315.926c-3.635-4.636-2.823-11.341 1.813-14.976s11.341-2.823 14.976 1.813l117.333 149.333c3.629 4.641 2.809 11.344-1.832 14.973C164.681 468.533 162.375 469.329 160 469.334z"/><path style="fill:#455a64" d="M487.467 86.848l-3.669-3.648c-37.687-36.557-97.71-36.197-134.955.811l-51.413 51.413c-36.996 37.25-37.357 97.263-.811 134.955l3.584 3.669c1.7 2.457 4.671 3.706 7.616 3.2 2.831.005 5.548-1.115 7.552-3.115l172.181-172.181c4.189-4.143 4.226-10.896.083-15.085-.028-.028-.055-.056-.083-.083L487.467 86.848z"/><g><path style="fill:#ffc107" d="M501.333 192H480c-5.891.0-10.667-4.776-10.667-10.667s4.776-10.667 10.667-10.667h21.333c5.891.0 10.667 4.776 10.667 10.667S507.225 192 501.333 192z"/><path style="fill:#ffc107" d="M394.667 298.667c-5.891.0-10.667-4.776-10.667-10.667v-21.333c0-5.891 4.776-10.667 10.667-10.667 5.891.0 10.667 4.776 10.667 10.667V288C405.333 293.891 400.558 298.667 394.667 298.667z"/><path style="fill:#ffc107" d="M480 277.334c-2.831.005-5.548-1.115-7.552-3.115l-21.333-21.333c-4.093-4.237-3.975-10.99.262-15.083 4.134-3.993 10.687-3.993 14.821.0l21.333 21.333c4.159 4.172 4.148 10.926-.024 15.085C485.514 276.209 482.815 277.327 480 277.334z"/></g><g><path style="fill:#455a64" d="M266.667 448H96c-29.455.0-53.333 23.878-53.333 53.333.0 5.891 4.776 10.667 10.667 10.667h256c5.891.0 10.667-4.776 10.667-10.667C320 471.878 296.122 448 266.667 448z"/><circle style="fill:#455a64" cx="32" cy="288" r="32"/></g><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/></svg></span><span class=font-weight-bold>infilos.com</span>
+</a>
+<div class="collapse navbar-collapse" id=navbarSupportedContent>
+<ul class="navbar-nav mr-auto">
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+基础
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/%e6%93%8d%e4%bd%9c%e7%b3%bb%e7%bb%9f>操作系统</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/%e6%80%a7%e8%83%bd%e4%b9%8b%e6%ae%87>性能之殇</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/io%e6%a8%a1%e5%9e%8b>IO 模型</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/%e7%bd%91%e7%bb%9c%e5%9f%ba%e7%a1%80>网络基础</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/tcp-ip>TCP-IP</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/http>HTTP</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+语言
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/java>Java 编程</a>
+<a class=dropdown-item href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/jvm-core>JVM 核心</a>
+<a class=dropdown-item href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/jvm-concurrent>JVM 并发</a>
+<a class=dropdown-item href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/scala>Scala 编程</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+框架库
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93/spring>Spring</a>
+<a class=dropdown-item href=/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93/hikari>Hikari</a>
+<a class=dropdown-item href=/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93/parboiled>Parboiled</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+分布式
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%88%86%e5%b8%83%e5%bc%8f/base>基本构成</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+大数据
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%ad%98%e5%82%a8%e7%b3%bb%e7%bb%9f>存储系统</a>
+<a class=dropdown-item href=/%e6%9f%a5%e8%af%a2%e7%b3%bb%e7%bb%9f>查询系统</a>
+<a class=dropdown-item href=/%e6%b6%88%e6%81%af%e7%b3%bb%e7%bb%9f>消息系统</a>
+<a class=dropdown-item href=/%e5%a4%84%e7%90%86%e7%b3%bb%e7%bb%9f>处理系统</a>
+<a class=dropdown-item href=/%e7%ae%a1%e7%90%86%e7%b3%bb%e7%bb%9f>管理系统</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+中后台
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e8%ae%be%e6%96%bd>基础设施</a>
+<a class=dropdown-item href=/%e4%ba%a4%e4%ba%92%e7%95%8c%e9%9d%a2>交互界面</a>
+<a class=dropdown-item href=/%e4%b8%9a%e5%8a%a1%e7%b3%bb%e7%bb%9f>业务系统</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+模式架构
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e6%a8%a1%e5%bc%8f%e6%9e%b6%e6%9e%84/design-pattern>设计模式</a>
+<a class=dropdown-item href=/%e6%a8%a1%e5%bc%8f%e6%9e%b6%e6%9e%84/micro-service>微服务架构</a>
+</div>
+</li>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e9%9d%a2%e8%af%95%e9%97%ae%e7%ad%94>
+<span>面试</span>
+</a>
+</li>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e7%ae%a1%e7%90%86%e8%b7%af%e5%be%84>
+<span>管理</span>
+</a>
+</li>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e5%bc%80%e6%ba%90%e9%a1%b9%e7%9b%ae>
+<span>开源</span>
+</a>
+</li>
+</ul>
+<div class="form-inline my-2 my-lg-0">
+<div class="nav-item nav-search-item my-2 my-md-0">
+<input type=search class="form-control td-search-input" placeholder="&#xf002; 站内搜索…" aria-label=站内搜索… autocomplete=off>
+</div>
+</div>
+</div>
+</nav>
+</header>
+<div class="container-fluid td-outer">
+<div class=td-main>
+<div class="row flex-xl-nowrap">
+<aside class="col-12 col-md-3 col-xl-2 td-sidebar d-print-none">
+<div id=td-sidebar-menu class=td-sidebar__inner>
+<div id=content-mobile>
+<form class="td-sidebar__search d-flex align-items-center">
+<input type=search class="form-control td-search-input" placeholder="&#xf002; 站内搜索…" aria-label=站内搜索… autocomplete=off>
+<button class="btn btn-link td-sidebar__toggle d-md-none p-0 ml-3 fas fa-bars" type=button data-toggle=collapse data-target=#td-section-nav aria-controls=td-docs-nav aria-expanded=false aria-label="Toggle section navigation">
+</button>
+</form>
+</div>
+<div id=content-desktop></div>
+<nav class="collapse td-sidebar-nav" id=td-section-nav>
+<ul class="td-sidebar-nav__section pr-md-3 ul-0">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e7bc96e7a88be8afade8a880-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section tree-root" id=m-e7bc96e7a88be8afade8a880><span>编程语言</span></a>
+<ul class=ul-1>
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e7bc96e7a88be8afade8a880java-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880java><span>Java 编程</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-base-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-base/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880javajava-base><span>Java 基础</span></a>
+<ul class="ul-3 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-basech01-e99da2e59091e5afb9e8b1a1-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-base/ch01-%E9%9D%A2%E5%90%91%E5%AF%B9%E8%B1%A1/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-basech01-e99da2e59091e5afb9e8b1a1><span>CH01-面向对象</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-basech02-e59fbae69cace79fa5e8af86-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-base/ch02-%E5%9F%BA%E6%9C%AC%E7%9F%A5%E8%AF%86/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-basech02-e59fbae69cace79fa5e8af86><span>CH02-基本知识</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-basech03-e59fbae69cace59bbee8b0b1-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-base/ch03-%E5%9F%BA%E6%9C%AC%E5%9B%BE%E8%B0%B1/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-basech03-e59fbae69cace59bbee8b0b1><span>CH03-基本图谱</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-basech04-e6b39be59e8be69cbae588b6-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-base/ch04-%E6%B3%9B%E5%9E%8B%E6%9C%BA%E5%88%B6/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-basech04-e6b39be59e8be69cbae588b6><span>CH04-泛型机制</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-basech05-e6b3a8e8a7a3e69cbae588b6-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-base/ch05-%E6%B3%A8%E8%A7%A3%E6%9C%BA%E5%88%B6/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-basech05-e6b3a8e8a7a3e69cbae588b6><span>CH05-注解机制</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-basech06-e5bc82e5b8b8e69cbae588b6-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-base/ch06-%E5%BC%82%E5%B8%B8%E6%9C%BA%E5%88%B6/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-basech06-e5bc82e5b8b8e69cbae588b6><span>CH06-异常机制</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-basech07-e58f8de5b084e69cbae588b6-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-base/ch07-%E5%8F%8D%E5%B0%84%E6%9C%BA%E5%88%B6/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-basech07-e58f8de5b084e69cbae588b6><span>CH07-反射机制</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-basech08-spie69cbae588b6-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-base/ch08-spi%E6%9C%BA%E5%88%B6/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-basech08-spie69cbae588b6><span>CH08-SPI 机制</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-collection-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-collection/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880javajava-collection><span>Java 集合</span></a>
+<ul class="ul-3 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-collectionch01-e99b86e59088e7bb93e69e84-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-collection/ch01-%E9%9B%86%E5%90%88%E7%BB%93%E6%9E%84/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-collectionch01-e99b86e59088e7bb93e69e84><span>CH01-集合结构</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-collectionch02-arraylist-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-collection/ch02-arraylist/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-collectionch02-arraylist><span>CH02-ArrayList</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-collectionch03-linkedlist-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-collection/ch03-linkedlist/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-collectionch03-linkedlist><span>CH03-LinkedList</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-collectionch04-stack-queue-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-collection/ch04-stack-queue/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-collectionch04-stack-queue><span>CH04-Stack-Queue</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-collectionch05-priorityqueue-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-collection/ch05-priorityqueue/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-collectionch05-priorityqueue><span>CH05-PriorityQueue</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-collectionch06-hashset-map-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-collection/ch06-hashset-map/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-collectionch06-hashset-map><span>CH06-HashSet-Map</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-collectionch07-linkedhashset-map-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-collection/ch07-linkedhashset-map/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-collectionch07-linkedhashset-map><span>CH07-LinkedHashSet-Map</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-collectionch08-treeset-map-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-collection/ch08-treeset-map/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-collectionch08-treeset-map><span>CH08-TreeSet-Map</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-collectionch09-weakhashmap-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-collection/ch09-weakhashmap/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-collectionch09-weakhashmap><span>CH09-WeakHashMap</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrent-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880javajava-concurrent><span>Java 并发</span></a>
+<ul class="ul-3 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch01-e5b9b6e58f91e4bd93e7b3bb-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch01-%E5%B9%B6%E5%8F%91%E4%BD%93%E7%B3%BB/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch01-e5b9b6e58f91e4bd93e7b3bb><span>CH01-并发体系</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch02-e79086e8aebae59fbae7a180-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch02-%E7%90%86%E8%AE%BA%E5%9F%BA%E7%A1%80/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch02-e79086e8aebae59fbae7a180><span>CH02-理论基础</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch03-e7babfe7a88be59fbae7a180-1-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch03-%E7%BA%BF%E7%A8%8B%E5%9F%BA%E7%A1%80-1/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch03-e7babfe7a88be59fbae7a180-1><span>CH03-线程基础-1</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch04-e7babfe7a88be59fbae7a180-2-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch04-%E7%BA%BF%E7%A8%8B%E5%9F%BA%E7%A1%80-2/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch04-e7babfe7a88be59fbae7a180-2><span>CH04-线程基础-2</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch05-synchronized-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch05-synchronized/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch05-synchronized><span>CH05-Synchronized</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch06-volatile-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch06-volatile/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch06-volatile><span>CH06-Volatile</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch07-final-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch07-final/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch07-final><span>CH07-Final</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch08-e5b9b6e58f91e6a682e8a788-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch08-%E5%B9%B6%E5%8F%91%E6%A6%82%E8%A7%88/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch08-e5b9b6e58f91e6a682e8a788><span>CH08-并发概览</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch09-e5ba95e5b182e694afe69291-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch09-%E5%BA%95%E5%B1%82%E6%94%AF%E6%92%91/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch09-e5ba95e5b182e694afe69291><span>CH09-底层支撑</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch10-locksupport-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch10-locksupport/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch10-locksupport><span>CH10-LockSupport</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch11-aqs-1-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch11-aqs-1/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch11-aqs-1><span>CH11-AQS-1</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch12-aqs-2-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch12-aqs-2/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch12-aqs-2><span>CH12-AQS-2</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch13-aqs-3-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch13-aqs-3/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch13-aqs-3><span>CH13-AQS-3</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch14-aqs-4-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch14-aqs-4/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch14-aqs-4><span>CH14-AQS-4</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch15-reentrantlock-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch15-reentrantlock/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch15-reentrantlock><span>CH15-ReentrantLock</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch16-reentrantreadwritelock-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch16-reentrantreadwritelock/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch16-reentrantreadwritelock><span>CH16-ReentrantReadWriteLock</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch17-concurrenthashmap-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch17-concurrenthashmap/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch17-concurrenthashmap><span>CH17-ConcurrentHashMap</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch18-concurrentlinkedqueue-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch18-concurrentlinkedqueue/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch18-concurrentlinkedqueue><span>CH18-ConcurrentLinkedQueue</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch19-blockingqueue-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch19-blockingqueue/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch19-blockingqueue><span>CH19-BlockingQueue</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch20-futuretask-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch20-futuretask/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch20-futuretask><span>CH20-FutureTask</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch21-threadpoolexecutor-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch21-threadpoolexecutor/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch21-threadpoolexecutor><span>CH21-ThreadPoolExecutor</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch22-scheduledthreadpoolexecutor-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch22-scheduledthreadpoolexecutor/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch22-scheduledthreadpoolexecutor><span>CH22-ScheduledThreadPoolExecutor</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch23-forkjoin-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch23-forkjoin/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch23-forkjoin><span>CH23-ForkJoin.md</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch24-countdownlatch-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch24-countdownlatch/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch24-countdownlatch><span>CH24-CountDownLatch</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch25-cyclicbarrier-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch25-cyclicbarrier/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch25-cyclicbarrier><span>CH25-CyclicBarrier</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch26-semaphore-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch26-semaphore/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch26-semaphore><span>CH26-Semaphore</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch27-phaser-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch27-phaser/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch27-phaser><span>CH27-Phaser</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch28-exchanger-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch28-exchanger/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch28-exchanger><span>CH28-Exchanger</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch29-threadlocal-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch29-threadlocal/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch29-threadlocal><span>CH29-ThreadLocal</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch30-alllocks-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch30-alllocks/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch30-alllocks><span>CH30-AllLocks</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch31-allqueues-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch31-allqueues/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch31-allqueues><span>CH31-AllQueues</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch32-allpools-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch32-allpools/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch32-allpools><span>CH32-AllPools</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-io-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-io/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880javajava-io><span>Java I/0</span></a>
+<ul class="ul-3 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-ioch01-ioe58886e7b1bb-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-io/ch01-io%E5%88%86%E7%B1%BB/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-ioch01-ioe58886e7b1bb><span>CH01-IO分类</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-ioch02-e8a385e9a5b0e6a8a1e5bc8f-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-io/ch02-%E8%A3%85%E9%A5%B0%E6%A8%A1%E5%BC%8F/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-ioch02-e8a385e9a5b0e6a8a1e5bc8f><span>CH02-装饰模式</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-ioch03-inputstream-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-io/ch03-inputstream/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-ioch03-inputstream><span>CH03-InputStream</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-ioch04-outputstream-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-io/ch04-outputstream/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-ioch04-outputstream><span>CH04-OutputStream</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-ioch05-e5b8b8e794a8e6938de4bd9c-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-io/ch05-%E5%B8%B8%E7%94%A8%E6%93%8D%E4%BD%9C/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-ioch05-e5b8b8e794a8e6938de4bd9c><span>CH05-常用操作.md</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-ioch06-ioe5ae9ee78eb0-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-io/ch06-io%E5%AE%9E%E7%8E%B0/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-ioch06-ioe5ae9ee78eb0><span>CH06-IO实现</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-ioch07-ioe6a8a1e59e8b-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-io/ch07-io%E6%A8%A1%E5%9E%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-ioch07-ioe6a8a1e59e8b><span>CH07-IO模型</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-ioch08-bioe58e9fe79086-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-io/ch08-bio%E5%8E%9F%E7%90%86/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-ioch08-bioe58e9fe79086><span>CH08-BIO原理</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-ioch09-nioe59fbae7a180-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-io/ch09-nio%E5%9F%BA%E7%A1%80/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-ioch09-nioe59fbae7a180><span>CH09-NIO基础</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-ioch10-nioe58e9fe79086-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-io/ch10-nio%E5%8E%9F%E7%90%86/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-ioch10-nioe58e9fe79086><span>CH10-NIO原理</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-ioch11-aioe58e9fe79086-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-io/ch11-aio%E5%8E%9F%E7%90%86/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-ioch11-aioe58e9fe79086><span>CH11-AIO原理</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-ioch12-e99bb6e68bb7e8b49d-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-io/ch12-%E9%9B%B6%E6%8B%B7%E8%B4%9D/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-ioch12-e99bb6e68bb7e8b49d><span>CH12-零拷贝</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-ioch13-e58685e5ad98e698a0e5b084-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-io/ch13-%E5%86%85%E5%AD%98%E6%98%A0%E5%B0%84/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-ioch13-e58685e5ad98e698a0e5b084><span>CH13-内存映射</span></a>
+</li>
+</ul>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e7bc96e7a88be8afade8a880jvm-core-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-core><span>JVM 核心</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm><span>JVM Core</span></a>
+<ul class="ul-3 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch01-jvme6a682e8a788-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm/ch01-jvm%E6%A6%82%E8%A7%88/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch01-jvme6a682e8a788><span>CH01-JVM概览</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch02-jvme5ad97e88a82e7a081-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm/ch02-jvm%E5%AD%97%E8%8A%82%E7%A0%81/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch02-jvme5ad97e88a82e7a081><span>CH02-JVM字节码</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch03-jvme7b1bbe58aa0e8bdbd-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm/ch03-jvm%E7%B1%BB%E5%8A%A0%E8%BD%BD/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch03-jvme7b1bbe58aa0e8bdbd><span>CH03-JVM类加载</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch04-jvme58685e5ad98e7bb93e69e84-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm/ch04-jvm%E5%86%85%E5%AD%98%E7%BB%93%E6%9E%84/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch04-jvme58685e5ad98e7bb93e69e84><span>CH04-JVM内存结构</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch05-jvme58685e5ad98e6a8a1e59e8b-1-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm/ch05-jvm%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B-1/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch05-jvme58685e5ad98e6a8a1e59e8b-1><span>CH05-JVM内存模型-1</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch06-jvme58685e5ad98e6a8a1e59e8b-2-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm/ch06-jvm%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B-2/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch06-jvme58685e5ad98e6a8a1e59e8b-2><span>CH06-JVM内存模型-2</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch07-jvme59e83e59cbee59b9ee694b6-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm/ch07-jvm%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch07-jvme59e83e59cbee59b9ee694b6><span>CH07-JVM垃圾回收</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch08-jvm-g1-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm/ch08-jvm-g1/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch08-jvm-g1><span>CH08-JVM-G1.md</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch09-jvm-zgc-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm/ch09-jvm-zgc/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch09-jvm-zgc><span>CH09-JVM-ZGC</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch10-jvme8b083e4bc98e58f82e695b0-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm/ch10-jvm%E8%B0%83%E4%BC%98%E5%8F%82%E6%95%B0/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch10-jvme8b083e4bc98e58f82e695b0><span>CH10-JVM调优参数</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch11-jvm-oom-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm/ch11-jvm-oom/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch11-jvm-oom><span>CH11-JVM-OOM</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch12-jvme7babfe7a88bdump-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm/ch12-jvm%E7%BA%BF%E7%A8%8Bdump/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch12-jvme7babfe7a88bdump><span>CH12-JVM线程Dump</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch13-jvme8b083e8af95e591bde4bba4-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm/ch13-jvm%E8%B0%83%E8%AF%95%E5%91%BD%E4%BB%A4/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch13-jvme8b083e8af95e591bde4bba4><span>CH13-JVM调试命令</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch14-jvme8b083e8af95e5b7a5e585b7-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm/ch14-jvm%E8%B0%83%E8%AF%95%E5%B7%A5%E5%85%B7/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch14-jvme8b083e8af95e5b7a5e585b7><span>CH14-JVM调试工具</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch15-jvme58aa8e68081e8b083e8af95-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm/ch15-jvm%E5%8A%A8%E6%80%81%E8%B0%83%E8%AF%95/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch15-jvme58aa8e68081e8b083e8af95><span>CH15-JVM动态调试</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-133-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/jmm-133/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-133><span>JSR 133</span></a>
+<ul class="ul-3 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-133ch01-e68c87e4bba4e9878de68e92-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/jmm-133/ch01-%E6%8C%87%E4%BB%A4%E9%87%8D%E6%8E%92/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-133ch01-e68c87e4bba4e9878de68e92><span>CH01-指令重排</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-133ch02-e58685e5ad98e5b18fe99a9c-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/jmm-133/ch02-%E5%86%85%E5%AD%98%E5%B1%8F%E9%9A%9C/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-133ch02-e58685e5ad98e5b18fe99a9c><span>CH02-内存屏障</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-133ch03-e5a49ae5a484e79086e599a8-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/jmm-133/ch03-%E5%A4%9A%E5%A4%84%E7%90%86%E5%99%A8/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-133ch03-e5a49ae5a484e79086e599a8><span>CH03-多处理器</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-133ch04-e5bc80e58f91e68c87e58d97-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/jmm-133/ch04-%E5%BC%80%E5%8F%91%E6%8C%87%E5%8D%97/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-133ch04-e5bc80e58f91e68c87e58d97><span>CH04-开发指南</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-spec-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/jmm-spec/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-spec><span>JMM 规范</span></a>
+<ul class="ul-3 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-specch01-jmme8a784e88c83-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/jmm-spec/ch01-jmm%E8%A7%84%E8%8C%83/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-specch01-jmme8a784e88c83><span>CH01-JMM规范</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-specch02-jmme8a7a3e9878a-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/jmm-spec/ch02-jmm%E8%A7%A3%E9%87%8A/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-specch02-jmme8a7a3e9878a><span>CH02-JMM Explain</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-specch03-jmme58e9fe58899-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/jmm-spec/ch03-jmm%E5%8E%9F%E5%88%99/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-specch03-jmme58e9fe58899><span>CH03-JMM原则</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-specch04-jsr133-faq-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/jmm-spec/ch04-jsr133-faq/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-specch04-jsr133-faq><span>CH04-JSR133-FAQ</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-specch05-jsr133-cook-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/jmm-spec/ch05-jsr133-cook/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-specch05-jsr133-cook><span>CH05-JSR133-Cook</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v2/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2><span>JVM 深入理解 V2</span></a>
+<ul class="ul-3 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch01-e8b5b0e8bf9bjava-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v2/ch01-%E8%B5%B0%E8%BF%9Bjava/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch01-e8b5b0e8bf9bjava><span>CH01-走近 Java</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch02-e58685e5ad98e58cbae59f9fe4b88ee6baa2e587bae5bc82e5b8b8-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v2/ch02-%E5%86%85%E5%AD%98%E5%8C%BA%E5%9F%9F%E4%B8%8E%E6%BA%A2%E5%87%BA%E5%BC%82%E5%B8%B8/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch02-e58685e5ad98e58cbae59f9fe4b88ee6baa2e587bae5bc82e5b8b8><span>CH02-内存区域与溢出</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child active-path" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch03-e59e83e59cbee694b6e99b86e4b88ee58886e9858de7ad96e795a5-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v2/ch03-%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E4%B8%8E%E5%88%86%E9%85%8D%E7%AD%96%E7%95%A5/ class="align-left pl-0 active td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch03-e59e83e59cbee694b6e99b86e4b88ee58886e9858de7ad96e795a5><span class=td-sidebar-nav-active-item>CH03-垃圾收集与分配策略</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch04-e680a7e883bde79b91e68ea7e4b88ee69585e99a9ce5a484e79086-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v2/ch04-%E6%80%A7%E8%83%BD%E7%9B%91%E6%8E%A7%E4%B8%8E%E6%95%85%E9%9A%9C%E5%A4%84%E7%90%86/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch04-e680a7e883bde79b91e68ea7e4b88ee69585e99a9ce5a484e79086><span>CH04-性能监控与故障处理</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch05-e8b083e4bc98e6a188e4be8b-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v2/ch05-%E8%B0%83%E4%BC%98%E6%A1%88%E4%BE%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch05-e8b083e4bc98e6a188e4be8b><span>CH05-调优案例</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch06-e7b1bbe69687e4bbb6e7bb93e69e84-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v2/ch06-%E7%B1%BB%E6%96%87%E4%BB%B6%E7%BB%93%E6%9E%84/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch06-e7b1bbe69687e4bbb6e7bb93e69e84><span>CH06-类文件结构</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch07-e7b1bbe58aa0e8bdbde69cbae588b6-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v2/ch07-%E7%B1%BB%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch07-e7b1bbe58aa0e8bdbde69cbae588b6><span>CH07-类加载</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch08-e5ad97e88a82e7a081e689a7e8a18ce5bc95e6938e-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v2/ch08-%E5%AD%97%E8%8A%82%E7%A0%81%E6%89%A7%E8%A1%8C%E5%BC%95%E6%93%8E/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch08-e5ad97e88a82e7a081e689a7e8a18ce5bc95e6938e><span>CH08-字节码执行引擎</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch09-e6a188e4be8be4b88ee5ae9ee68898-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v2/ch09-%E6%A1%88%E4%BE%8B%E4%B8%8E%E5%AE%9E%E6%88%98/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch09-e6a188e4be8be4b88ee5ae9ee68898><span>CH09-案例与实战</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch10-e7bc96e8af91e69c9fe4bc98e58c96-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v2/ch10-%E7%BC%96%E8%AF%91%E6%9C%9F%E4%BC%98%E5%8C%96/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch10-e7bc96e8af91e69c9fe4bc98e58c96><span>CH10-编译期优化</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch11-e8bf90e8a18ce697b6e4bc98e58c96-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v2/ch11-%E8%BF%90%E8%A1%8C%E6%97%B6%E4%BC%98%E5%8C%96/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch11-e8bf90e8a18ce697b6e4bc98e58c96><span>CH11-运行时优化</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch12-e58685e5ad98e6a8a1e59e8be4b88ee7babfe7a88b-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v2/ch12-%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B%E4%B8%8E%E7%BA%BF%E7%A8%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch12-e58685e5ad98e6a8a1e59e8be4b88ee7babfe7a88b><span>CH12-内存模型与线程</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch13-e7babfe7a88be5ae89e585a8e4b88ee99481e4bc98e58c96-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v2/ch13-%E7%BA%BF%E7%A8%8B%E5%AE%89%E5%85%A8%E4%B8%8E%E9%94%81%E4%BC%98%E5%8C%96/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch13-e7babfe7a88be5ae89e585a8e4b88ee99481e4bc98e58c96><span>CH13-线程安全与锁优化</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2endix-b-e68c87e4bba4e8a1a8-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v2/endix-b-%E6%8C%87%E4%BB%A4%E8%A1%A8/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2endix-b-e68c87e4bba4e8a1a8><span>Endix-B-字节码指令</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2endix-c-e58f82e695b0e8a1a8-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v2/endix-c-%E5%8F%82%E6%95%B0%E8%A1%A8/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2endix-c-e58f82e695b0e8a1a8><span>Endix-C-虚拟机参数</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v3-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v3/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v3><span>JVM 深入理解 V3</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e7bc96e7a88be8afade8a880jvm-concurrent-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-concurrent><span>JVM 并发</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practice-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/java-con-practice/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practice><span>Java 并发实战</span></a>
+<ul class="ul-3 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech01-e7ae80e4bb8b-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/java-con-practice/ch01-%E7%AE%80%E4%BB%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech01-e7ae80e4bb8b><span>CH01-简介</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech02-e7babfe7a88be5ae89e585a8e680a7-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/java-con-practice/ch02-%E7%BA%BF%E7%A8%8B%E5%AE%89%E5%85%A8%E6%80%A7/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech02-e7babfe7a88be5ae89e585a8e680a7><span>CH02-线程安全性</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech03-e5afb9e8b1a1e585b1e4baab-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/java-con-practice/ch03-%E5%AF%B9%E8%B1%A1%E5%85%B1%E4%BA%AB/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech03-e5afb9e8b1a1e585b1e4baab><span>CH03-对象共享</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech04-e5afb9e8b1a1e7bb84e59088-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/java-con-practice/ch04-%E5%AF%B9%E8%B1%A1%E7%BB%84%E5%90%88/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech04-e5afb9e8b1a1e7bb84e59088><span>CH04-对象组合</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech05-e59fbae7a180e69e84e5bbbae59d97-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/java-con-practice/ch05-%E5%9F%BA%E7%A1%80%E6%9E%84%E5%BB%BA%E5%9D%97/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech05-e59fbae7a180e69e84e5bbbae59d97><span>CH05-基础构建块</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech06-e4bbbbe58aa1e689a7e8a18c-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/java-con-practice/ch06-%E4%BB%BB%E5%8A%A1%E6%89%A7%E8%A1%8C/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech06-e4bbbbe58aa1e689a7e8a18c><span>CH06-任务执行</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech07-e58f96e6b688e585b3e997ad-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/java-con-practice/ch07-%E5%8F%96%E6%B6%88%E5%85%B3%E9%97%AD/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech07-e58f96e6b688e585b3e997ad><span>CH07-取消关闭</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech08-e7babfe7a88be6b1a0-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/java-con-practice/ch08-%E7%BA%BF%E7%A8%8B%E6%B1%A0/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech08-e7babfe7a88be6b1a0><span>CH08-线程池</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech09-guie5ba94e794a8-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/java-con-practice/ch09-gui%E5%BA%94%E7%94%A8/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech09-guie5ba94e794a8><span>CH09-GUI应用</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech10-e6b4bbe8b783e680a7e58db1e999a9-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/java-con-practice/ch10-%E6%B4%BB%E8%B7%83%E6%80%A7%E5%8D%B1%E9%99%A9/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech10-e6b4bbe8b783e680a7e58db1e999a9><span>CH10-活跃性危险</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech11-e680a7e883bde4b88ee4bcb8e7bca9-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/java-con-practice/ch11-%E6%80%A7%E8%83%BD%E4%B8%8E%E4%BC%B8%E7%BC%A9/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech11-e680a7e883bde4b88ee4bcb8e7bca9><span>CH11-性能与伸缩</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech12-e6b58be8af95-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/java-con-practice/ch12-%E6%B5%8B%E8%AF%95/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech12-e6b58be8af95><span>CH12-测试</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech13-e698bee5bc8fe99481-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/java-con-practice/ch13-%E6%98%BE%E5%BC%8F%E9%94%81/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech13-e698bee5bc8fe99481><span>CH13-显式锁</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech14-e887aae5ae9ae4b989e689a9e5b195-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/java-con-practice/ch14-%E8%87%AA%E5%AE%9A%E4%B9%89%E6%89%A9%E5%B1%95/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech14-e887aae5ae9ae4b989e689a9e5b195><span>CH14-自定义扩展</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech15-e58e9fe5ad90e4b88ee99d9ee998bbe5a19ee5908ce6ada5-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/java-con-practice/ch15-%E5%8E%9F%E5%AD%90%E4%B8%8E%E9%9D%9E%E9%98%BB%E5%A1%9E%E5%90%8C%E6%AD%A5/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech15-e58e9fe5ad90e4b88ee99d9ee998bbe5a19ee5908ce6ada5><span>CH15-原子与非阻塞同步</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech16-e58685e5ad98e6a8a1e59e8b-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/java-con-practice/ch16-%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech16-e58685e5ad98e6a8a1e59e8b><span>CH16-内存模型</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-pattern-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/java-con-pattern/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-pattern><span>Java 并发模式</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallel-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/dive-parallel/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallel><span>深入理解并行</span></a>
+<ul class="ul-3 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch01-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/dive-parallel/ch01/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch01><span>CH01-关于本书</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch02-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/dive-parallel/ch02/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch02><span>CH02-简介</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch03-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/dive-parallel/ch03/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch03><span>CH03-硬件特性</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch04-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/dive-parallel/ch04/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch04><span>CH04-并行工具</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch05-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/dive-parallel/ch05/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch05><span>CH05-计数</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch06-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/dive-parallel/ch06/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch06><span>CH06-分割同步设计</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch07-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/dive-parallel/ch07/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch07><span>CH07-锁</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch08-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/dive-parallel/ch08/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch08><span>CH08-数据所有权</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch09-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/dive-parallel/ch09/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch09><span>CH09-延后处理</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch10-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/dive-parallel/ch10/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch10><span>CH10-数据结构</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch11-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/dive-parallel/ch11/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch11><span>CH11-验证</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch12-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/dive-parallel/ch12/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch12><span>CH12-形式验证</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch13-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/dive-parallel/ch13/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch13><span>CH13-综合应用</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch14-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/dive-parallel/ch14/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch14><span>CH14-高级同步</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch15-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/dive-parallel/ch15/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch15><span>CH15-高级同步-内存序</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelendix-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/dive-parallel/endix/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelendix><span>ENDIX-C-内存屏障</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-model-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/seven-con-model/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-model><span>七并发模型</span></a>
+<ul class="ul-3 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-modelch01-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/seven-con-model/ch01/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-modelch01><span>CH01-概述</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-modelch02-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/seven-con-model/ch02/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-modelch02><span>CH02-线程与锁</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-modelch03-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/seven-con-model/ch03/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-modelch03><span>CH03-函数式编程</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-modelch04-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/seven-con-model/ch04/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-modelch04><span>CH04-分离标识与状态</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-modelch05-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/seven-con-model/ch05/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-modelch05><span>CH05-Actor</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-modelch06-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/seven-con-model/ch06/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-modelch06><span>CH06-CSP</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-modelch07-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/seven-con-model/ch07/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-modelch07><span>CH07-数据并行</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-modelch08-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/seven-con-model/ch08/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-modelch08><span>CH08-Lambda 架构</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-modelch09-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/seven-con-model/ch09/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-modelch09><span>CH09-未来方向</span></a>
+</li>
+</ul>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e7bc96e7a88be8afade8a880scala-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880scala><span>Scala 编程</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-core-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880scalascala-core><span>Scala 精要</span></a>
+<ul class="ul-3 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-corecase-class-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/case-class/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-corecase-class><span>Case Class</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coretype-system-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/type-system/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coretype-system><span>类型系统</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-corefunctional-1-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/functional-1/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-corefunctional-1><span>函数式-基础</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-corefunctional-2-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/functional-2/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-corefunctional-2><span>函数式-用例</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-corefuture-1-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/future-1/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-corefuture-1><span>Future-基础</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-corefuture-2-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/future-2/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-corefuture-2><span>Future-用例</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-corefuture-3-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/future-3/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-corefuture-3><span>Future-集合</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-corefuture-4-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/future-4/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-corefuture-4><span>Future-Promise</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coreimplicits-1-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/implicits-1/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coreimplicits-1><span>Implicits-基础</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coreimplicits-2-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/implicits-2/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coreimplicits-2><span>Implicits-进阶</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coretrait-1-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/trait-1/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coretrait-1><span>Trait-基础</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coretrait-2-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/trait-2/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coretrait-2><span>Trait-用例</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coretry-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/try/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coretry><span>Try</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coretype-1-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/type-1/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coretype-1><span>Type-用例</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coretype-2-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/type-2/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coretype-2><span>Type-进阶</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coreprimitive-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/primitive/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coreprimitive><span>Primitive</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-corenumbers-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/numbers/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-corenumbers><span>Numbers</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-corestrings-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/strings/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-corestrings><span>String</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-corecontrol-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/control/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-corecontrol><span>Control</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-corepattern-match-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/pattern-match/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-corepattern-match><span>Pattern Match</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coreclass-object-1-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/class-object-1/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coreclass-object-1><span>Class Object: 基础</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coreclass-object-2-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/class-object-2/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coreclass-object-2><span>Class Object: 类</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coreclass-object-3-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/class-object-3/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coreclass-object-3><span>Class Object: 方法</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coreclass-object-4-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/class-object-4/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coreclass-object-4><span>Class Object: 对象</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coreclass-object-5-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/class-object-5/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coreclass-object-5><span>函数式对象</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coreclass-object-6-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/class-object-6/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coreclass-object-6><span>整体类层级</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coreclass-object-7-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/class-object-7/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coreclass-object-7><span>组合继承</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-corepackage-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/package/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-corepackage><span>Package</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coresbt-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/sbt/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coresbt><span>SBT</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-corepredef-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/predef/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-corepredef><span>Predef</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coreio-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/io/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coreio><span>I/O</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-corereserved-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/reserved/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-corereserved><span>保留字</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coreexception-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/exception/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coreexception><span>Exception</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coreannotation-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/annotation/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coreannotation><span>Inject Type</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coretype-class-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/type-class/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coretype-class><span>Type Class</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coremap-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/map/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coremap><span>Map Flatmap</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coregeneric-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/generic/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coregeneric><span>泛型型变</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-corecommon-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/common/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-corecommon><span>常见问题</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coreplaceholder-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/placeholder/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coreplaceholder><span>占位符</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coremulti-vars-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/multi-vars/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coremulti-vars><span>多变量赋值</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coreconstructor-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/constructor/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coreconstructor><span>构造器</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-corefunctional-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/functional/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-corefunctional><span>函数式入门</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coremonoid-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/monoid/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coremonoid><span>Monoid</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-corefunc-type-class-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/func-type-class/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-corefunc-type-class><span>函数式与类型类</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coreasync-programming-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/async-programming/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coreasync-programming><span>异步编程</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-corescala-style-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/scala-style/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-corescala-style><span>战略Scala风格</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-func-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-func/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880scalascala-func><span>Scala 函数式</span></a>
+<ul class="ul-3 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-funcch00-e7b2bee8a681-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-func/ch00-%E7%B2%BE%E8%A6%81/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-funcch00-e7b2bee8a681><span>CH00-精要</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-funcch01-e5ae9ae4b989-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-func/ch01-%E5%AE%9A%E4%B9%89/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-funcch01-e5ae9ae4b989><span>CH01-定义</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-funcch02-e587bde695b0-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-func/ch02-%E5%87%BD%E6%95%B0/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-funcch02-e587bde695b0><span>CH02-函数</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-funcch03-e695b0e68dae-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-func/ch03-%E6%95%B0%E6%8D%AE/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-funcch03-e695b0e68dae><span>CH03-数据</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-funcch04-e5bc82e5b8b8-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-func/ch04-%E5%BC%82%E5%B8%B8/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-funcch04-e5bc82e5b8b8><span>CH04-异常</span></a>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</div>
+</aside>
+<aside class="d-none d-xl-block col-xl-2 td-sidebar-toc d-print-none">
+<div class="td-page-meta ml-2 pb-1 pt-2 mb-0">
+<a href=https://github.com/infilos/infilos.com/edit/master/content/zh/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/jvm-core/java-jvm-dive-v2/CH03-%e5%9e%83%e5%9c%be%e6%94%b6%e9%9b%86%e4%b8%8e%e5%88%86%e9%85%8d%e7%ad%96%e7%95%a5.md target=_blank><i class="fa fa-edit fa-fw"></i> 编辑此页</a>
+<a href="https://github.com/infilos/infilos.com/new/master/content/zh/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/jvm-core/java-jvm-dive-v2/CH03-%e5%9e%83%e5%9c%be%e6%94%b6%e9%9b%86%e4%b8%8e%e5%88%86%e9%85%8d%e7%ad%96%e7%95%a5.md?filename=change-me.md&value=---%0Atitle%3A+%22Long+Page+Title%22%0AlinkTitle%3A+%22Short+Nav+Title%22%0Aweight%3A+100%0Adescription%3A+%3E-%0A+++++Page+description+for+heading+and+indexes.%0A---%0A%0A%23%23+Heading%0A%0AEdit+this+template+to+create+your+new+page.%0A%0A%2A+Give+it+a+good+name%2C+ending+in+%60.md%60+-+e.g.+%60getting-started.md%60%0A%2A+Edit+the+%22front+matter%22+section+at+the+top+of+the+page+%28weight+controls+how+its+ordered+amongst+other+pages+in+the+same+directory%3B+lowest+number+first%29.%0A%2A+Add+a+good+commit+message+at+the+bottom+of+the+page+%28%3C80+characters%3B+use+the+extended+description+field+for+more+detail%29.%0A%2A+Create+a+new+branch+so+you+can+preview+your+new+file+and+request+a+review+via+Pull+Request.%0A" target=_blank><i class="fa fa-edit fa-fw"></i> 添加子页面</a>
+<a href="https://github.com/infilos/infilos.com/issues/new?title=CH03-%e5%9e%83%e5%9c%be%e6%94%b6%e9%9b%86%e4%b8%8e%e5%88%86%e9%85%8d%e7%ad%96%e7%95%a5" target=_blank><i class="fab fa-github fa-fw"></i> 提交文档问题</a>
+<a id=print href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v2/_print/><i class="fa fa-print fa-fw"></i> 整节打印</a>
+</div>
+<div class=td-toc><nav id=TableOfContents>
+<ul>
+<li><a href=#31-概述>3.1 概述</a></li>
+<li><a href=#32-对象已死>3.2 对象已死？</a>
+<ul>
+<li><a href=#引用技术法>引用技术法</a></li>
+<li><a href=#322-可达性分析算法>3.2.2 可达性分析算法</a></li>
+<li><a href=#323-再谈引用>3.2.3 再谈引用</a></li>
+<li><a href=#324-生存还是死亡>3.2.4 生存还是死亡</a></li>
+<li><a href=#325-回收方法区>3.2.5 回收方法区</a></li>
+</ul>
+</li>
+<li><a href=#33-垃圾回收算法>3.3 垃圾回收算法</a>
+<ul>
+<li><a href=#331-标记-清除算法>3.3.1 标记-清除算法</a></li>
+<li><a href=#332-复制算法>3.3.2 复制算法</a></li>
+<li><a href=#333-标记-整理算法>3.3.3 标记-整理算法</a></li>
+<li><a href=#334-分代收集算法>3.3.4 分代收集算法</a></li>
+</ul>
+</li>
+<li><a href=#34-hotspot-算法实现>3.4 HotSpot 算法实现</a>
+<ul>
+<li><a href=#341-枚举根节点>3.4.1 枚举根节点</a></li>
+<li><a href=#342-安全点>3.4.2 安全点</a></li>
+<li><a href=#343-安全区域>3.4.3 安全区域</a></li>
+</ul>
+</li>
+<li><a href=#35-垃圾收集器>3.5 垃圾收集器</a>
+<ul>
+<li><a href=#351-serial-收集器>3.5.1 Serial 收集器</a></li>
+<li><a href=#352-parnew-收集器>3.5.2 ParNew 收集器</a></li>
+<li><a href=#353-parallel-scavenge-收集器>3.5.3 Parallel Scavenge 收集器</a></li>
+<li><a href=#354-serial-old-收集器>3.5.4 Serial Old 收集器</a></li>
+<li><a href=#355-parallel-old-收集器>3.5.5 Parallel Old 收集器</a></li>
+<li><a href=#356-cms-收集器>3.5.6 CMS 收集器</a></li>
+<li><a href=#357-g1-收集器>3.5.7 G1 收集器</a></li>
+<li><a href=#358-理解-gc-日志>3.5.8 理解 GC 日志</a></li>
+<li><a href=#359-垃圾收集器参数总结>3.5.9 垃圾收集器参数总结</a></li>
+</ul>
+</li>
+<li><a href=#36-内存分配与回收策略>3.6 内存分配与回收策略</a>
+<ul>
+<li><a href=#361-对象优先在-eden-分配>3.6.1 对象优先在 Eden 分配</a></li>
+<li><a href=#362-大对象直接进入老年代>3.6.2 大对象直接进入老年代</a></li>
+<li><a href=#363-长期存活的对象将进入老年代>3.6.3 长期存活的对象将进入老年代</a></li>
+<li><a href=#364-动态对象年龄判定>3.6.4 动态对象年龄判定</a></li>
+<li><a href=#空间分配担保>空间分配担保</a></li>
+</ul>
+</li>
+<li><a href=#37-本章小结>3.7 本章小结</a></li>
+</ul>
+</nav></div>
+</aside>
+<main class="col-12 col-md-9 col-xl-8 pl-md-5" role=main>
+<nav aria-label=breadcrumb class="d-none d-md-block d-print-none">
+<ol class="breadcrumb spb-1">
+<li class=breadcrumb-item>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/>编程语言</a>
+</li>
+<li class=breadcrumb-item>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/>JVM 核心</a>
+</li>
+<li class=breadcrumb-item>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v2/>JVM 深入理解 V2</a>
+</li>
+<li class="breadcrumb-item active" aria-current=page>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v2/ch03-%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E4%B8%8E%E5%88%86%E9%85%8D%E7%AD%96%E7%95%A5/>CH03-垃圾收集与分配策略</a>
+</li>
+</ol>
+</nav>
+<div class=td-content>
+<h1>CH03-垃圾收集与分配策略</h1>
+<header class=article-meta>
+</header>
+<h2 id=31-概述>3.1 概述</h2>
+<p>当需要排查各种内存溢出、内存泄漏问题时，当垃圾收集成为系统达到更高并发量的瓶颈时，我们就需要对这些“自动化”的(动态内存分配与内存回收)技术实施必要的监控和调节。</p>
+<p>第 2 章介绍了 Java 内存运行时区域的各个部分，其中程序计数器、虚拟机栈、本地方法栈 3 个区域随线程而生，随线程而灭；栈中的栈帧随着方法的进入和退出而有条不紊地执行着出栈和入栈操作。每一个栈帧中分配多少内存基本上是在类结构确定下来时就已知的（尽管在运行期会由 JIT 编译器进行一些优化，但在本章基于概念模型的讨论中，大体上可以认为是编译期可知的），因此这几个区域的内存分配和回收都具备确定性，在这几个区域内就不需要过多考虑回收的问题，因为方法结束或者线程结束时，内存自然就跟随着回收了。</p>
+<p>而 Java 堆和方法区则不一样，一个接口中的多个实现类需要的内存可能不一样，一个方法中的多个分支需要的内存也可能不一样，我们只有在程序处于运行期间时才能知道会创建哪些对象，这部分内存的分配和回收都是动态的，垃圾收集器所关注的是这部分内存，本章后续讨论中的“内存”分配与回收也仅指这一部分内存。</p>
+<h2 id=32-对象已死>3.2 对象已死？</h2>
+<p>在堆里面存放着 Java 世界中几乎所有的对象实例，垃圾收集器在对堆进行回收前，第一件事情就是要确定这些对象之中哪些还“存活”着，哪些已经“死去”（即不可能再被任何途径使用的对象）。</p>
+<h3 id=引用技术法>引用技术法</h3>
+<p>很多教科书判断对象是否存活的算法是这样的：给对象中添加一个引用计数器，每当有一个地方引用它时，计数器值就加1；当引用失效时，计数器值就减1；任何时刻计数器为0的对象就是不可能再被使用的。作者面试过很多的应届生和一些有多年工作经验的开发人员，他们对于这个问题给予的都是这个答案。</p>
+<p>客观地说，引用计数算法（Reference Counting）的实现简单，判定效率也很高，在大部分情况下它都是一个不错的算法，也有一些比较著名的应用案例，例如微软公司的 COM（Component Object Model）技术、使用 ActionScript 3 的FlashPlayer、Python 语言和在游戏脚本领域被广泛应用的 Squirrel 中都使用了引用计数算法进行内存管理。但是，至少主流的Java虚拟机里面没有选用引用计数算法来管理内存，其中最主要的原因是它很难解决 <strong>对象之间相互循环引用</strong> 的问题。</p>
+<p>举个简单的例子，请看代码清单 3-1 中的 testGC() 方法：对象 objA 和 objB 都有字段 instance，赋值令 objA.instance=objB 及 objB.instance=objA，除此之外，这两个对象再无任何引用，实际上这两个对象已经不可能再被访问，但是它们因为互相引用着对方，导致它们的引用计数都不为 0，于是引用计数算法无法通知 GC 收集器回收它们。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#8f5902;font-style:italic>/**
+</span><span style=color:#8f5902;font-style:italic>*testGC()方法执行后, objA和objB会不会被GC呢?
+</span><span style=color:#8f5902;font-style:italic>*@author zzm
+</span><span style=color:#8f5902;font-style:italic>*/</span>
+<span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>ReferenceCountingGC</span><span style=color:#ce5c00;font-weight:700>{</span>
+  <span style=color:#204a87;font-weight:700>public</span> <span style=color:#000>Object</span> <span style=color:#000>instance</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#204a87;font-weight:700>null</span><span style=color:#a40000>；</span>
+    <span style=color:#204a87;font-weight:700>private</span> <span style=color:#204a87;font-weight:700>static</span> <span style=color:#204a87;font-weight:700>final</span> <span style=color:#000>int_1MB</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#000>1024</span><span style=color:#ce5c00;font-weight:700>*</span><span style=color:#000>1024</span><span style=color:#a40000>；</span>
+    <span style=color:#8f5902;font-style:italic>/**
+</span><span style=color:#8f5902;font-style:italic>*这个成员属性的唯一意义就是占点内存, 以便能在GC日志中看清楚是否被回收过
+</span><span style=color:#8f5902;font-style:italic>*/</span>
+    <span style=color:#204a87;font-weight:700>private</span> <span style=color:#204a87;font-weight:700>byte</span><span style=color:#ce5c00;font-weight:700>[]</span><span style=color:#000>bigSize</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#204a87;font-weight:700>new</span> <span style=color:#204a87;font-weight:700>byte</span><span style=color:#ce5c00;font-weight:700>[</span><span style=color:#000>2</span><span style=color:#ce5c00;font-weight:700>*</span><span style=color:#000>_1MB</span><span style=color:#ce5c00;font-weight:700>]</span><span style=color:#a40000>；</span>
+    <span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>static</span> <span style=color:#204a87;font-weight:700>void</span> <span style=color:#000>testGC</span><span style=color:#ce5c00;font-weight:700>(){</span>
+    <span style=color:#000>ReferenceCountingGC</span> <span style=color:#000>objA</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>ReferenceCountingGC</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#a40000>；</span>
+      <span style=color:#000>ReferenceCountingGC</span> <span style=color:#000>objB</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>ReferenceCountingGC</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#a40000>；</span>
+      <span style=color:#000>objA</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>instance</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#000>objB</span><span style=color:#a40000>；</span>
+      <span style=color:#000>objB</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>instance</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#000>objA</span><span style=color:#a40000>；</span>
+      <span style=color:#000>objA</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#204a87;font-weight:700>null</span><span style=color:#a40000>；</span>
+      <span style=color:#000>objB</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#204a87;font-weight:700>null</span><span style=color:#a40000>；</span>
+      <span style=color:#8f5902;font-style:italic>//假设在这行发生GC,objA和objB是否能被回收?
+</span><span style=color:#8f5902;font-style:italic></span>      <span style=color:#000>System</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>gc</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#a40000>；</span>
+  <span style=color:#ce5c00;font-weight:700>}</span>
+<span style=color:#ce5c00;font-weight:700>}</span>
+</code></pre></div><p>从运行结果中可以清楚看到，GC 日志中包含"4603K-＞210K"，意味着虚拟机并没有因为这两个对象互相引用就不回收它们，这也从侧面说明虚拟机并不是通过引用计数算法来判断对象是否存活的。</p>
+<h3 id=322-可达性分析算法>3.2.2 可达性分析算法</h3>
+<p>在主流的商用程序语言（Java、C#，甚至包括前面提到的古老的Lisp）的主流实现中，都是称通过可达性分析（Reachability Analysis）来判定对象是否存活的。这个算法的基本思路就是通过一系列的称为"GC Roots"的对象作为起始点，从这些节点开始向下搜索，搜索所走过的路径称为引用链（Reference Chain），当一个对象到 GC Roots 没有任何引用链相连（用图论的话来说，就是从 GC Roots 到这个对象不可达）时，则证明此对象是不可用的。如图 3-1 所示，对象 object 5、object 6、object 7 虽然互相有关联，但是它们到 GC Roots 是不可达的，所以它们将会被判定为是可回收的对象。</p>
+<div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20181201180712.png style=display:block;width:70% alt=NAME align=center>
+</div>
+<p>在Java语言中，可作为 GC Roots 的对象包括下面几种：</p>
+<ul>
+<li>虚拟机栈（栈帧中的本地变量表）中引用的对象。</li>
+<li>方法区中类静态属性引用的对象。</li>
+<li>方法区中常量引用的对象。</li>
+<li>本地方法栈中 JNI（即一般说的Native方法）引用的对象。</li>
+</ul>
+<h3 id=323-再谈引用>3.2.3 再谈引用</h3>
+<p>无论是通过引用计数算法判断对象的引用数量，还是通过可达性分析算法判断对象的引用链是否可达，判定对象是否存活都与“引用”有关。在 JDK 1.2 以前，Java 中的引用的定义很传统：如果 reference 类型的数据中存储的数值代表的是另外一块内存的起始地址，就称这块内存代表着一个引用。这种定义很纯粹，但是太过狭隘，一个对象在这种定义下只有被引用或者没有被引用两种状态，对于如何描述一些“食之无味，弃之可惜”的对象就显得无能为力。我们希望能描述这样一类对象：当内存空间还足够时，则能保留在内存之中；如果内存空间在进行垃圾收集后还是非常紧张，则可以抛弃这些对象。很多系统的缓存功能都符合这样的应用场景。</p>
+<p>在 JDK 1.2 之后，Java 对引用的概念进行了扩充，将引用分为强引用（Strong Reference）、软引用（Soft Reference）、弱引用（Weak Reference）、虚引用（Phantom Reference）4种，这 4 种引用强度依次逐渐减弱。</p>
+<p>强引用就是指在程序代码之中普遍存在的，类似"Object obj=new Object()&ldquo;这类的引用，只要强引用还存在，垃圾收集器永远不会回收掉被引用的对象。</p>
+<p>软引用是用来描述一些还有用但并非必需的对象。对于软引用关联着的对象，在系统将要发生内存溢出异常之前，将会把这些对象列进回收范围之中进行第二次回收。如果这次回收还没有足够的内存，才会抛出内存溢出异常。在 JDK 1.2 之后，提供了 SoftReference 类来实现软引用。</p>
+<p>弱引用也是用来描述非必需对象的，但是它的强度比软引用更弱一些，被弱引用关联的对象只能生存到下一次垃圾收集发生之前。当垃圾收集器工作时，无论当前内存是否足够，都会回收掉只被弱引用关联的对象。在 JDK 1. 2之后，提供了 WeakReference 类来实现弱引用。</p>
+<p>虚引用也称为幽灵引用或者幻影引用，它是最弱的一种引用关系。一个对象是否有虚引用的存在，完全不会对其生存时间构成影响，也无法通过虚引用来取得一个对象实例。为一个对象设置虚引用关联的唯一目的就是能在这个对象被收集器回收时收到一个系统通知。在 JDK 1.2 之后，提供了 PhantomReference 类来实现虚引用。</p>
+<h3 id=324-生存还是死亡>3.2.4 生存还是死亡</h3>
+<p>即使在可达性分析算法中不可达的对象，也并非是“非死不可”的，这时候它们暂时处于“缓刑”阶段，要真正宣告一个对象死亡，至少要经历两次标记过程：如果对象在进行可达性分析后发现没有与 GC Roots 相连接的引用链，那它将会被第一次标记并且进行一次筛选，筛选的条件是此对象是否有必要执行 finalize() 方法。当对象没有覆盖 finalize() 方法，或者 finalize() 方法已经被虚拟机调用过，虚拟机将这两种情况都视为“没有必要执行”。</p>
+<p>如果这个对象被判定为有必要执行 finalize() 方法，那么这个对象将会放置在一个叫做 F-Queue 的队列之中，并在稍后由一个由虚拟机自动建立的、低优先级的 Finalizer 线程去执行它。这里所谓的“执行”是指虚拟机会触发这个方法，但并不承诺会等待它运行结束，这样做的原因是，如果一个对象在 finalize() 方法中执行缓慢，或者发生了死循环（更极端的情况），将很可能会导致 F-Queue 队列中其他对象永久处于等待，甚至导致整个内存回收系统崩溃。finalize() 方法是对象逃脱死亡命运的最后一次机会，稍后 GC 将对 F-Queue 中的对象进行第二次小规模的标记，如果对象要在 finalize() 中成功拯救自己——只要重新与引用链上的任何一个对象建立关联即可，譬如把自己（this关键字）赋值给某个类变量或者对象的成员变量，那在第二次标记时它将被移除出“即将回收”的集合；如果对象这时候还没有逃脱，那基本上它就真的被回收了。从代码清单 3-2 中我们可以看到一个对象的 finalize() 被执行，但是它仍然可以存活。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#8f5902;font-style:italic>/**
+</span><span style=color:#8f5902;font-style:italic>*此代码演示了两点：
+</span><span style=color:#8f5902;font-style:italic>*1.对象可以在被 GC 时自我拯救。
+</span><span style=color:#8f5902;font-style:italic>*2.这种自救的机会只有一次, 因为一个对象的 finalize() 方法最多只会被系统自动调用一次
+</span><span style=color:#8f5902;font-style:italic>*@author zzm
+</span><span style=color:#8f5902;font-style:italic>*/</span>
+<span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>FinalizeEscapeGC</span><span style=color:#ce5c00;font-weight:700>{</span>
+  <span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>static</span> <span style=color:#000>FinalizeEscapeGC</span> <span style=color:#000>SAVE_HOOK</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#204a87;font-weight:700>null</span><span style=color:#a40000>；</span>
+    <span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>void</span> <span style=color:#000>isAlive</span><span style=color:#ce5c00;font-weight:700>(){</span>
+    <span style=color:#000>System</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>out</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>println</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;yes,i am still alive:)&#34;</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#a40000>；</span>
+  <span style=color:#ce5c00;font-weight:700>}</span>
+  <span style=color:#5c35cc;font-weight:700>@Override</span>
+    <span style=color:#204a87;font-weight:700>protected</span> <span style=color:#204a87;font-weight:700>void</span> <span style=color:#000>finalize</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#204a87;font-weight:700>throws</span> <span style=color:#000>Throwable</span><span style=color:#ce5c00;font-weight:700>{</span>
+    <span style=color:#204a87;font-weight:700>super</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>finalize</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#a40000>；</span>
+      <span style=color:#000>System</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>out</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>println</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;finalize mehtod executed!&#34;</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#a40000>；</span>
+      <span style=color:#000>FinalizeEscapeGC</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>SAVE_HOOK</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#204a87;font-weight:700>this</span><span style=color:#a40000>；</span>
+  <span style=color:#ce5c00;font-weight:700>}</span>
+  <span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>static</span> <span style=color:#204a87;font-weight:700>void</span> <span style=color:#000>main</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>String</span><span style=color:#ce5c00;font-weight:700>[]</span><span style=color:#000>args</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#204a87;font-weight:700>throws</span> <span style=color:#000>Throwable</span><span style=color:#ce5c00;font-weight:700>{</span>
+    <span style=color:#000>SAVE_HOOK</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>FinalizeEscapeGC</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#a40000>；</span>
+      <span style=color:#8f5902;font-style:italic>//对象第一次成功拯救自己
+</span><span style=color:#8f5902;font-style:italic></span>      <span style=color:#000>SAVE_HOOK</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#204a87;font-weight:700>null</span><span style=color:#a40000>；</span>
+      <span style=color:#000>System</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>gc</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#a40000>；</span>
+      <span style=color:#8f5902;font-style:italic>//因为finalize方法优先级很低, 所以暂停0.5秒以等待它
+</span><span style=color:#8f5902;font-style:italic></span>      <span style=color:#000>Thread</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>sleep</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>500</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#a40000>；</span>
+      <span style=color:#204a87;font-weight:700>if</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>SAVE_HOOK</span><span style=color:#ce5c00;font-weight:700>!=</span><span style=color:#204a87;font-weight:700>null</span><span style=color:#ce5c00;font-weight:700>){</span>
+      <span style=color:#000>SAVE_HOOK</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>isAlive</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#a40000>；</span>
+    <span style=color:#ce5c00;font-weight:700>}</span><span style=color:#204a87;font-weight:700>else</span><span style=color:#ce5c00;font-weight:700>{</span>
+      <span style=color:#000>System</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>out</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>println</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;no,i am dead:(&#34;</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#a40000>；</span>
+    <span style=color:#ce5c00;font-weight:700>}</span>
+    <span style=color:#8f5902;font-style:italic>//下面这段代码与上面的完全相同, 但是这次自救却失败了
+</span><span style=color:#8f5902;font-style:italic></span>    <span style=color:#000>SAVE_HOOK</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#204a87;font-weight:700>null</span><span style=color:#a40000>；</span>
+      <span style=color:#000>System</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>gc</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#a40000>；</span>
+      <span style=color:#8f5902;font-style:italic>//因为finalize方法优先级很低, 所以暂停0.5秒以等待它
+</span><span style=color:#8f5902;font-style:italic></span>      <span style=color:#000>Thread</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>sleep</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>500</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#a40000>；</span>
+      <span style=color:#204a87;font-weight:700>if</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>SAVE_HOOK</span><span style=color:#ce5c00;font-weight:700>!=</span><span style=color:#204a87;font-weight:700>null</span><span style=color:#ce5c00;font-weight:700>){</span>
+      <span style=color:#000>SAVE_HOOK</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>isAlive</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#a40000>；</span>
+    <span style=color:#ce5c00;font-weight:700>}</span><span style=color:#204a87;font-weight:700>else</span><span style=color:#ce5c00;font-weight:700>{</span>
+      <span style=color:#000>System</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>out</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>println</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;no,i am dead:(&#34;</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#a40000>；</span>
+    <span style=color:#ce5c00;font-weight:700>}</span>
+  <span style=color:#ce5c00;font-weight:700>}</span>
+<span style=color:#ce5c00;font-weight:700>}</span>
+</code></pre></div><p>从代码清单3-2的运行结果可以看出，SAVE_HOOK 对象的 finalize() 方法确实被 GC 收集器触发过，并且在被收集前成功逃脱了。</p>
+<p>另外一个值得注意的地方是，代码中有两段完全一样的代码片段，执行结果却是一次逃脱成功，一次失败，这是因为任何一个对象的 finalize() 方法都只会被系统自动调用一次，如果对象面临下一次回收，它的 finalize() 方法不会被再次执行，因此第二段代码的自救行动失败了。</p>
+<p>需要特别说明的是，上面关于对象死亡时 finalize() 方法的描述可能带有悲情的艺术色彩，笔者并不鼓励大家使用这种方法来拯救对象。相反，笔者建议大家尽量避免使用它，因为它不是 C/C++ 中的析构函数，而是 Java 刚诞生时为了使 C/C++ 程序员更容易接受它所做出的一个妥协。它的运行代价高昂，不确定性大，无法保证各个对象的调用顺序。有些教材中描述它适合做“关闭外部资源”之类的工作，这完全是对这个方法用途的一种自我安慰。finalize() 能做的所有工作，使用 try-finally 或者其他方式都可以做得更好、更及时，所以笔者建议大家完全可以忘掉 Java 语言中有这个方法的存在。</p>
+<h3 id=325-回收方法区>3.2.5 回收方法区</h3>
+<p>很多人认为方法区（或者HotSpot虚拟机中的永久代）是没有垃圾收集的，Java 虚拟机规范中确实说过可以不要求虚拟机在方法区实现垃圾收集，而且在方法区中进行垃圾收集的“性价比”一般比较低：在堆中，尤其是在新生代中，常规应用进行一次垃圾收集一般可以回收 70%～95% 的空间，而永久代的垃圾收集效率远低于此。</p>
+<p>永久代的垃圾收集主要回收两部分内容：废弃常量和无用的类。回收废弃常量与回收 Java 堆中的对象非常类似。以常量池中字面量的回收为例，假如一个字符串"abc"已经进入了常量池中，但是当前系统没有任何一个 String 对象是叫做"abc"的，换句话说，就是没有任何 String 对象引用常量池中的"abc"常量，也没有其他地方引用了这个字面量，如果这时发生内存回收，而且必要的话，这个"abc"常量就会被系统清理出常量池。常量池中的其他类（接口）、方法、字段的符号引用也与此类似。</p>
+<p>判定一个常量是否是“废弃常量”比较简单，而要判定一个类是否是“无用的类”的条件则相对苛刻许多。类需要同时满足下面 3 个条件才能算是“无用的类”：</p>
+<ul>
+<li>该类所有的实例都已经被回收，也就是 Java 堆中不存在该类的任何实例。</li>
+<li>加载该类的 ClassLoader 已经被回收。</li>
+<li>该类对应的 java.lang.Class 对象没有在任何地方被引用，无法在任何地方通过反射访问该类的方法。</li>
+</ul>
+<p>虚拟机可以对满足上述 3 个条件的无用类进行回收，这里说的仅仅是“可以”，而并不是和对象一样，不使用了就必然会回收。是否对类进行回收，HotSpot 虚拟机提供了<code>-Xnoclassgc</code>参数进行控制，还可以使用<code>-verbose:class</code>以及<code>-XX:+TraceClassLoading</code>、<code>-XX:+TraceClassUnLoading</code>查看类加载和卸载信息，其中<code>-verbose:class</code>和<code>-XX:+TraceClassLoading</code>可以在 Product 版的虚拟机中使用，<code>-XX:+TraceClassUnLoading</code>参数需要 FastDebug 版的虚拟机支持。</p>
+<p>在大量使用反射、动态代理、CGLib 等 ByteCode 框架、动态生成 JSP 以及 OSGi 这类频繁自定义 ClassLoader 的场景都需要虚拟机具备类卸载的功能，以保证永久代不会溢出。</p>
+<h2 id=33-垃圾回收算法>3.3 垃圾回收算法</h2>
+<h3 id=331-标记-清除算法>3.3.1 标记-清除算法</h3>
+<p>最基础的收集算法是“标记-清除”（Mark-Sweep）算法，如同它的名字一样，算法分为“标记”和“清除”两个阶段：首先标记出所有需要回收的对象，在标记完成后统一回收所有被标记的对象，它的标记过程其实在前一节讲述对象标记判定时已经介绍过了。之所以说它是最基础的收集算法，是因为后续的收集算法都是基于这种思路并对其不足进行改进而得到的。它的主要不足有两个：一个是效率问题，标记和清除两个过程的效率都不高；另一个是空间问题，标记清除之后会产生大量不连续的内存碎片，空间碎片太多可能会导致以后在程序运行过程中需要分配较大对象时，无法找到足够的连续内存而不得不提前触发另一次垃圾收集动作。标记—清除算法的执行过程如图 3-2 所示。</p>
+<div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20181201201950.png style=display:block;width:70% alt=NAME align=center>
+</div>
+<h3 id=332-复制算法>3.3.2 复制算法</h3>
+<p>为了解决效率问题，一种称为“复制”（Copying）的收集算法出现了，它将可用内存按容量划分为大小相等的两块，每次只使用其中的一块。当这一块的内存用完了，就将还存活着的对象复制到另外一块上面，然后再把已使用过的内存空间一次清理掉。这样使得每次都是对整个半区进行内存回收，内存分配时也就不用考虑内存碎片等复杂情况，只要移动堆顶指针，按顺序分配内存即可，实现简单，运行高效。只是这种算法的代价是将内存缩小为了原来的一半，代价未免太高了一点。复制算法的执行过程如图3-3所示。</p>
+<div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20181201202200.png style=display:block;width:70% alt=NAME align=center>
+</div>
+<p>现在的商业虚拟机都采用这种收集算法来回收新生代，IBM 公司的专门研究表明，新生代中的对象 98% 是“朝生夕死”的，所以并不需要按照 1:1 的比例来划分内存空间，而是将内存分为一块较大的 Eden 空间和两块较小的 Survivor 空间，每次使用 Eden 和其中一块 Survivor。当回收时，将 Eden 和 Survivor 中还存活着的对象一次性地复制到另外一块 Survivor 空间上，最后清理掉Eden和刚才用过的 Survivor 空间。HotSpot 虚拟机默认 Eden 和 Survivor 的大小比例是 8:1，也就是每次新生代中可用内存空间为整个新生代容量的 90%（80%+10%），只有 10% 的内存会被“浪费”。当然，98% 的对象可回收只是一般场景下的数据，我们没有办法保证每次回收都只有不多于 10% 的对象存活，当 Survivo r空间不够用时，需要依赖其他内存（这里指老年代）进行分配担保（Handle Promotion）。</p>
+<p>内存的分配担保就好比我们去银行借款，如果我们信誉很好，在 98% 的情况下都能按时偿还，于是银行可能会默认我们下一次也能按时按量地偿还贷款，只需要有一个担保人能保证如果我不能还款时，可以从他的账户扣钱，那银行就认为没有风险了。内存的分配担保也一样，如果另外一块 Survivor 空间没有足够空间存放上一次新生代收集下来的存活对象时，这些对象将直接通过分配担保机制进入老年代。关于对新生代进行分配担保的内容，在本章稍后在讲解垃圾收集器执行规则时还会再详细讲解。</p>
+<h3 id=333-标记-整理算法>3.3.3 标记-整理算法</h3>
+<p>复制收集算法在对象存活率较高时就要进行较多的复制操作，效率将会变低。更关键的是，如果不想浪费 50% 的空间，就需要有额外的空间进行分配担保，以应对被使用的内存中所有对象都 100% 存活的极端情况，所以在老年代一般不能直接选用这种算法。</p>
+<p>根据老年代的特点，有人提出了另外一种“标记-整理”（Mark-Compact）算法，标记过程仍然与“标记-清除”算法一样，但后续步骤不是直接对可回收对象进行清理，而是让所有存活的对象都向一端移动，然后直接清理掉端边界以外的内存，“标记-整理”算法的示意图如图3-4所示。</p>
+<div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20181201202547.png style=display:block;width:70% alt=NAME align=center>
+</div>
+<h3 id=334-分代收集算法>3.3.4 分代收集算法</h3>
+<p>当前商业虚拟机的垃圾收集都采用“分代收集”（Generational Collection）算法，这种算法并没有什么新的思想，只是根据对象存活周期的不同将内存划分为几块。一般是把 Java 堆分为新生代和老年代，这样就可以根据各个年代的特点采用最适当的收集算法。在新生代中，每次垃圾收集时都发现有大批对象死去，只有少量存活，那就选用复制算法，只需要付出少量存活对象的复制成本就可以完成收集。而老年代中因为对象存活率高、没有额外空间对它进行分配担保，就必须使用“标记—清理”或者“标记—整理”算法来进行回收。</p>
+<h2 id=34-hotspot-算法实现>3.4 HotSpot 算法实现</h2>
+<p>3.2　节和 3.3 节从理论上介绍了对象存活判定算法和垃圾收集算法，而在 HotSpot 虚拟机上实现这些算法时，必须对算法的执行效率有严格的考量，才能保证虚拟机高效运行。</p>
+<h3 id=341-枚举根节点>3.4.1 枚举根节点</h3>
+<p>从可达性分析中从 GC Roots 节点找引用链这个操作为例，可作为 GC Roots 的节点主要在全局性的引用（例如常量或类静态属性）与执行上下文（例如栈帧中的本地变量表）中，现在很多应用仅仅方法区就有数百兆，如果要逐个检查这里面的引用，那么必然会消耗很多时间。</p>
+<p>另外，可达性分析对执行时间的敏感还体现在 GC 停顿上，因为这项分析工作必须在一个能确保一致性的快照中进行——这里“一致性”的意思是指在整个分析期间整个执行系统看起来就像被冻结在某个时间点上，不可以出现分析过程中对象引用关系还在不断变化的情况，该点不满足的话分析结果准确性就无法得到保证。这点是导致 GC 进行时必须停顿所有 Java 执行线程（Sun将这件事情称为"Stop The World&rdquo;）的其中一个重要原因，即使是在号称（几乎）不会发生停顿的 CMS 收集器中，枚举根节点时也是必须要停顿的。</p>
+<p>由于目前的主流 Java 虚拟机使用的都是准确式 GC（这个概念在第 1 章介绍Exact VM对 Classic VM 的改进时讲过），所以当执行系统停顿下来后，并不需要一个不漏地检查完所有执行上下文和全局的引用位置，虚拟机应当是有办法直接得知哪些地方存放着对象引用。在 HotSpot 的实现中，是使用一组称为 OopMap 的数据结构来达到这个目的的，在类加载完成的时候，HotSpot 就把对象内什么偏移量上是什么类型的数据计算出来，在 JIT 编译过程中，也会在特定的位置记录下栈和寄存器中哪些位置是引用。这样，GC 在扫描时就可以直接得知这些信息了。下面的代码清单 3-3 是 HotSpot Client VM 生成的一段 String.hashCode() 方法的本地代码，可以看到在 0x026eb7a9 处的 call 指令有 OopMap 记录，它指明了 EBX 寄存器和栈中偏移量为 16 的内存区域中各有一个普通对象指针（Ordinary Object Pointer）的引用，有效范围为从 call 指令开始直到 0x026eb730（指令流的起始位置）+142（OopMap记录的偏移量）=0x026eb7be，即 hlt 指令为止。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>[Verified Entry Point]
+0x026eb730:mov%eax, -0x8000(%esp)
+……
+；ImplicitNullCheckStub slow case
+0x026eb7a9:call 0x026e83e0
+；OopMap{ebx=Oop[16]=Oop off=142}
+；*caload
+；-java.lang.String:hashCode@48(line 1489)
+；{runtime_call}
+0x026eb7ae:push$0x83c5c18
+；{external_word}
+0x026eb7b3:call 0x026eb7b8
+0x026eb7b8:pusha
+0x026eb7b9:call 0x0822bec0；{runtime_call}
+0x026eb7be:hlt
+</code></pre></div><h3 id=342-安全点>3.4.2 安全点</h3>
+<p>在 OopMap 的协助下，HotSpot 可以快速且准确地完成 GC Roots 枚举，但一个很现实的问题随之而来：可能导致引用关系变化，或者说 OopMap 内容变化的指令非常多，如果为每一条指令都生成对应的 OopMap，那将会需要大量的额外空间，这样 GC 的空间成本将会变得很高。</p>
+<p>实际上，HotSpot 也的确没有为每条指令都生成 OopMap，前面已经提到，只是在“特定的位置”记录了这些信息，这些位置称为安全点（Safepoint），即程序执行时并非在所有地方都能停顿下来开始 GC，只有在到达安全点时才能暂停。Safepoint 的选定既不能太少以致于让 GC 等待时间太长，也不能过于频繁以致于过分增大运行时的负荷。所以，安全点的选定基本上是以程序“是否具有让程序长时间执行的特征”为标准进行选定的——因为每条指令执行的时间都非常短暂，程序不太可能因为指令流长度太长这个原因而过长时间运行，“长时间执行”的最明显特征就是指令序列复用，例如方法调用、循环跳转、异常跳转等，所以具有这些功能的指令才会产生 Safepoint。</p>
+<p>对于 Sefepoint，另一个需要考虑的问题是如何在 GC 发生时让所有线程（这里不包括执行 JNI 调用的线程）都“跑”到最近的安全点上再停顿下来。这里有两种方案可供选择：抢先式中断（Preemptive Suspension）和主动式中断（Voluntary Suspension），其中抢先式中断不需要线程的执行代码主动去配合，在 GC 发生时，首先把所有线程全部中断，如果发现有线程中断的地方不在安全点上，就恢复线程，让它“跑”到安全点上。现在几乎没有虚拟机实现采用抢先式中断来暂停线程从而响应 GC 事件。</p>
+<p>而主动式中断的思想是当 GC 需要中断线程的时候，不直接对线程操作，仅仅简单地设置一个标志，各个线程执行时主动去轮询这个标志，发现中断标志为真时就自己中断挂起。轮询标志的地方和安全点是重合的，另外再加上创建对象需要分配内存的地方。下面代码清单 3-4 中的 test 指令是 HotSpot 生成的轮询指令，当需要暂停线程时，虚拟机把 0x160100 的内存页设置为不可读，线程执行到 test 指令时就会产生一个自陷异常信号，在预先注册的异常处理器中暂停线程实现等待，这样一条汇编指令便完成安全点轮询和触发线程中断。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>0x01b6d627:call 0x01b2b210；OopMap{[60]=Oop off=460}
+；*invokeinterface size
+；-Client1:main@113(line 23)
+；{virtual_call}
+0x01b6d62c:nop
+；OopMap{[60]=Oop off=461}
+；*if_icmplt
+；-Client1:main@118(line 23)
+0x01b6d62d:test%eax, 0x160100；{poll}
+0x01b6d633:mov 0x50(%esp), %esi
+0x01b6d637:cmp%eax, %esi
+</code></pre></div><h3 id=343-安全区域>3.4.3 安全区域</h3>
+<p>使用 Safepoint 似乎已经完美地解决了如何进入 GC 的问题，但实际情况却并不一定。Safepoint 机制保证了程序执行时，在不太长的时间内就会遇到可进入 GC 的 Safepoint。但是，程序“不执行”的时候呢？所谓的程序不执行就是没有分配 CPU 时间，典型的例子就是线程处于 Sleep 状态或者 Blocked 状态，这时候线程无法响应 JVM 的中断请求，“走”到安全的地方去中断挂起，JVM 也显然不太可能等待线程重新被分配 CPU 时间。对于这种情况，就需要安全区域（Safe Region）来解决。</p>
+<p>安全区域是指在一段代码片段之中，引用关系不会发生变化。在这个区域中的任意地方开始 GC 都是安全的。我们也可以把 Safe Region 看做是被扩展了的 Safepoint。</p>
+<p>在线程执行到 Safe Region 中的代码时，首先标识自己已经进入了 Safe Region，那样，当在这段时间里 JVM 要发起 GC 时，就不用管标识自己为 Safe Region 状态的线程了。在线程要离开 Safe Region 时，它要检查系统是否已经完成了根节点枚举（或者是整个 GC 过程），如果完成了，那线程就继续执行，否则它就必须等待直到收到可以安全离开 Safe Region 的信号为止。</p>
+<p>到此，笔者简要地介绍了 HotSpot 虚拟机如何去发起内存回收的问题，但是虚拟机如何具体地进行内存回收动作仍然未涉及，因为内存回收如何进行是由虚拟机所采用的 GC 收集器决定的，而通常虚拟机中往往不止有一种 GC 收集器。下面继续来看 HotSpot 中有哪些 GC 收集器。</p>
+<h2 id=35-垃圾收集器>3.5 垃圾收集器</h2>
+<p>如果说收集算法是内存回收的方法论，那么垃圾收集器就是内存回收的具体实现。Java 虚拟机规范中对垃圾收集器应该如何实现并没有任何规定，因此不同的厂商、不同版本的虚拟机所提供的垃圾收集器都可能会有很大差别，并且一般都会提供参数供用户根据自己的应用特点和要求组合出各个年代所使用的收集器。这里讨论的收集器基于 JDK 1.7 Update 14 之后的 HotSpot 虚拟机（在这个版本中正式提供了商用的 G1 收集器，之前 G1 仍处于实验状态），这个虚拟机包含的所有收集器如图 3-5 所示。</p>
+<div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20181201203836.png style=display:block;width:70% alt=NAME align=center>
+</div>
+<p>图 3-5 展示了 7 种作用于不同分代的收集器，如果两个收集器之间存在连线，就说明它们可以搭配使用。虚拟机所处的区域，则表示它是属于新生代收集器还是老年代收集器。接下来笔者将逐一介绍这些收集器的特性、基本原理和使用场景，并重点分析 CMS 和 G1 这两款相对复杂的收集器，了解它们的部分运作细节。</p>
+<p>在介绍这些收集器各自的特性之前，我们先来明确一个观点：虽然我们是在对各个收集器进行比较，但并非为了挑选出一个最好的收集器。因为直到现在为止还没有最好的收集器出现，更加没有万能的收集器，所以我们选择的只是对具体应用最合适的收集器。这点不需要多加解释就能证明：如果有一种放之四海皆准、任何场景下都适用的完美收集器存在，那 HotSpot 虚拟机就没必要实现那么多不同的收集器了。</p>
+<h3 id=351-serial-收集器>3.5.1 Serial 收集器</h3>
+<p>Serial 收集器是最基本、发展历史最悠久的收集器，曾经（在 JDK 1.3.1 之前）是虚拟机新生代收集的唯一选择。大家看名字就会知道，这个收集器是一个单线程的收集器，但它的“单线程”的意义并不仅仅说明它只会使用一个 CPU 或一条收集线程去完成垃圾收集工作，更重要的是在它进行垃圾收集时，必须暂停其他所有的工作线程，直到它收集结束。&ldquo;Stop The World"这个名字也许听起来很酷，但这项工作实际上是由虚拟机在后台自动发起和自动完成的，在用户不可见的情况下把用户正常工作的线程全部停掉，这对很多应用来说都是难以接受的。读者不妨试想一下，要是你的计算机每运行一个小时就会暂停响应 5 分钟，你会有什么样的心情？图 3-6 示意了 Serial/Serial Old 收集器的运行过程。</p>
+<div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20181201204123.png style=display:block;width:70% alt=NAME align=center>
+</div>
+<p>对于"Stop The World"带给用户的不良体验，虚拟机的设计者们表示完全理解，但也表示非常委屈：“你妈妈在给你打扫房间的时候，肯定也会让你老老实实地在椅子上或者房间外待着，如果她一边打扫，你一边乱扔纸屑，这房间还能打扫完？”这确实是一个合情合理的矛盾，虽然垃圾收集这项工作听起来和打扫房间属于一个性质的，但实际上肯定还要比打扫房间复杂得多啊！</p>
+<p>从 JDK 1.3 开始，一直到现在最新的 JDK 1.7，HotSpot 虚拟机开发团队为消除或者减少工作线程因内存回收而导致停顿的努力一直在进行着，从 Serial 收集器到 Parallel 收集器，再到 Concurrent Mark Sweep（CMS）乃至 GC 收集器的最前沿成果 Garbage First（G1）收集器，我们看到了一个个越来越优秀（也越来越复杂）的收集器的出现，用户线程的停顿时间在不断缩短，但是仍然没有办法完全消除（这里暂不包括 RTSJ 中的收集器）。寻找更优秀的垃圾收集器的工作仍在继续！</p>
+<p>写到这里，笔者似乎已经把 Serial 收集器描述成一个“老而无用、食之无味弃之可惜”的鸡肋了，但实际上到现在为止，它依然是虚拟机运行在 Client 模式下的默认新生代收集器。它也有着优于其他收集器的地方：简单而高效（与其他收集器的单线程比），对于限定单个 CPU 的环境来说，Serial 收集器由于没有线程交互的开销，专心做垃圾收集自然可以获得最高的单线程收集效率。在用户的桌面应用场景中，分配给虚拟机管理的内存一般来说不会很大，收集几十兆甚至一两百兆的新生代（仅仅是新生代使用的内存，桌面应用基本上不会再大了），停顿时间完全可以控制在几十毫秒最多一百多毫秒以内，只要不是频繁发生，这点停顿是可以接受的。所以，Serial 收集器对于运行在 Client 模式下的虚拟机来说是一个很好的选择。</p>
+<h3 id=352-parnew-收集器>3.5.2 ParNew 收集器</h3>
+<p>ParNew 收集器其实就是 Serial 收集器的多线程版本，除了使用多条线程进行垃圾收集之外，其余行为包括 Serial 收集器可用的所有控制参数（例如：<code>-XX:SurvivorRatio</code>、<code>-XX:PretenureSizeThreshold</code>、<code>-XX:HandlePromotionFailure</code> 等）、收集算法、Stop The World、对象分配规则、回收策略等都与 Serial 收集器完全一样，在实现上，这两种收集器也共用了相当多的代码。ParNew 收集器的工作过程如图 3-7 所示。</p>
+<div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20181201204811.png style=display:block;width:70% alt=NAME align=center>
+</div>
+<p>ParNew 收集器除了多线程收集之外，其他与 Serial 收集器相比并没有太多创新之处，但它却是许多运行在 Server 模式下的虚拟机中首选的新生代收集器，其中有一个与性能无关但很重要的原因是，除了 Serial 收集器外，目前只有它能与 CMS 收集器配合工作。在 JDK 1.5 时期，HotSpot 推出了一款在强交互应用中几乎可认为有划时代意义的垃圾收集器——CMS 收集器（Concurrent Mark Sweep，本节稍后将详细介绍这款收集器），这款收集器是 HotSpot 虚拟机中第一款真正意义上的并发（Concurrent）收集器，它第一次实现了让垃圾收集线程与用户线程（基本上）同时工作，用前面那个例子的话来说，就是做到了在你的妈妈打扫房间的时候你还能一边往地上扔纸屑。</p>
+<p>不幸的是，CMS 作为老年代的收集器，却无法与 JDK 1.4.0 中已经存在的新生代收集器 Parallel Scavenge 配合工作，所以在 JDK 1.5 中使用 CMS 来收集老年代的时候，新生代只能选择 ParNew 或者 Serial 收集器中的一个。ParNew 收集器也是使用 <code>-XX:+UseConcMarkSweepGC</code> 选项后的默认新生代收集器，也可以使用 <code>-XX:+UseParNewGC</code> 选项来强制指定它。</p>
+<p>ParNew 收集器在单 CPU 的环境中绝对不会有比 Serial 收集器更好的效果，甚至由于存在线程交互的开销，该收集器在通过超线程技术实现的两个 CPU 的环境中都不能百分之百地保证可以超越 Serial 收集器。当然，随着可以使用的 CPU 的数量的增加，它对于 GC 时系统资源的有效利用还是很有好处的。它默认开启的收集线程数与 CPU 的数量相同，在 CPU 非常多（譬如32个，现在 CPU 动辄就4核加超线程，服务器超过 32 个逻辑 CPU 的情况越来越多了）的环境下，可以使用 <code>-XX:ParallelGCThreads</code> 参数来限制垃圾收集的线程数。</p>
+<p>注意　从 ParNew 收集器开始，后面还会接触到几款并发和并行的收集器。在大家可能产生疑惑之前，有必要先解释两个名词：并发和并行。这两个名词都是并发编程中的概念，在谈论垃圾收集器的上下文语境中，它们可以解释如下。</p>
+<ul>
+<li>并行（Parallel）：指多条垃圾收集线程并行工作，但此时用户线程仍然处于等待状态。</li>
+<li>并发（Concurrent）：指用户线程与垃圾收集线程同时执行（但不一定是并行的，可能会交替执行），用户程序在继续运行，而垃圾收集程序运行于另一个 CPU 上。</li>
+</ul>
+<h3 id=353-parallel-scavenge-收集器>3.5.3 Parallel Scavenge 收集器</h3>
+<p>Parallel Scavenge 收集器是一个新生代收集器，它也是使用复制算法的收集器，又是并行的多线程收集器……看上去和 ParNew 都一样，那它有什么特别之处呢？</p>
+<p>Parallel Scavenge 收集器的特点是它的关注点与其他收集器不同，CMS 等收集器的关注点是尽可能地缩短垃圾收集时用户线程的停顿时间，而 Parallel Scavenge 收集器的目标则是达到一个可控制的吞吐量（Throughput）。所谓吞吐量就是 CPU 用于运行用户代码的时间与 CPU 总消耗时间的比值，即吞吐量=运行用户代码时间/（运行用户代码时间+垃圾收集时间），虚拟机总共运行了 100 分钟，其中垃圾收集花掉 1 分钟，那吞吐量就是 99%。</p>
+<p>停顿时间越短就越适合需要与用户交互的程序，良好的响应速度能提升用户体验，而高吞吐量则可以高效率地利用 CPU 时间，尽快完成程序的运算任务，主要适合在后台运算而不需要太多交互的任务。</p>
+<p>Parallel Scavenge 收集器提供了两个参数用于精确控制吞吐量，分别是控制最大垃圾收集停顿时间的 <code>-XX:MaxGCPauseMillis</code> 参数以及直接设置吞吐量大小的 <code>-XX:GCTimeRatio</code> 参数。</p>
+<p>MaxGCPauseMillis 参数允许的值是一个大于 0 的毫秒数，收集器将尽可能地保证内存回收花费的时间不超过设定值。不过大家不要认为如果把这个参数的值设置得稍小一点就能使得系统的垃圾收集速度变得更快，GC 停顿时间缩短是以牺牲吞吐量和新生代空间来换取的：系统把新生代调小一些，收集 300MB 新生代肯定比收集 500MB 快吧，这也直接导致垃圾收集发生得更频繁一些，原来 10 秒收集一次、每次停顿 100 毫秒，现在变成 5 秒收集一次、每次停顿 70 毫秒。停顿时间的确在下降，但吞吐量也降下来了。</p>
+<p>GCTimeRatio 参数的值应当是一个大于 0 且小于 100 的整数，也就是垃圾收集时间占总时间的比率，相当于是吞吐量的倒数。如果把此参数设置为 19，那允许的最大GC时间就占总时间的 5%（即1/（1+19）），默认值为 99，就是允许最大 1%（即1/（1+99））的垃圾收集时间。</p>
+<p>由于与吞吐量关系密切，Parallel Scavenge 收集器也经常称为“吞吐量优先”收集器。除上述两个参数之外，Parallel Scavenge 收集器还有一个参数 <code>-XX:+UseAdaptiveSizePolicy</code> 值得关注。这是一个开关参数，当这个参数打开之后，就不需要手工指定新生代的大小（-Xmn）、Eden 与 Survivor 区的比例（<code>-XX:SurvivorRatio</code>）、晋升老年代对象年龄（<code>-XX:PretenureSizeThreshold</code>）等细节参数了，虚拟机会根据当前系统的运行情况收集性能监控信息，动态调整这些参数以提供最合适的停顿时间或者最大的吞吐量，这种调节方式称为 GC 自适应的调节策略（GC Ergonomics）。如果读者对于收集器运作原来不太了解，手工优化存在困难的时候，使用 Parallel Scavenge 收集器配合自适应调节策略，把内存管理的调优任务交给虚拟机去完成将是一个不错的选择。只需要把基本的内存数据设置好（如 -Xmx 设置最大堆），然后使用 MaxGCPauseMillis 参数（更关注最大停顿时间）或 GCTimeRatio（更关注吞吐量）参数给虚拟机设立一个优化目标，那具体细节参数的调节工作就由虚拟机完成了。自适应调节策略也是 Parallel Scavenge 收集器与 ParNew 收集器的一个重要区别。</p>
+<h3 id=354-serial-old-收集器>3.5.4 Serial Old 收集器</h3>
+<p>Serial Old 是 Serial 收集器的老年代版本，它同样是一个单线程收集器，使用“标记-整理”算法。这个收集器的主要意义也是在于给 Client 模式下的虚拟机使用。如果在 Server 模式下，那么它主要还有两大用途：一种用途是在 JDK 1.5 以及之前的版本中与 Parallel Scavenge 收集器搭配使用，另一种用途就是作为 CMS 收集器的后备预案，在并发收集发生 Concurrent Mode Failure 时使用。这两点都将在后面的内容中详细讲解。Serial Old 收集器的工作过程如图 3-8 所示。</p>
+<div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20181201205831.png style=display:block;width:70% alt=NAME align=center>
+</div>
+<h3 id=355-parallel-old-收集器>3.5.5 Parallel Old 收集器</h3>
+<p>Parallel Old 是 Parallel Scavenge 收集器的老年代版本，使用多线程和“标记-整理”算法。这个收集器是在 JDK 1.6 中才开始提供的，在此之前，新生代的 Parallel Scavenge 收集器一直处于比较尴尬的状态。原因是，如果新生代选择了 Parallel Scavenge 收集器，老年代除了 Serial Old（PS MarkSweep）收集器外别无选择（还记得上面说过 Parallel Scavenge 收集器无法与 CMS 收集器配合工作吗？）。由于老年代 Serial Old 收集器在服务端应用性能上的“拖累”，使用了 Parallel Scavenge 收集器也未必能在整体应用上使用了 Parallel Scavenge 收集器也未必能在整体应用上获得吞吐量最大化的效果，由于单线程的老年代收集中无法充分利用服务器多 CPU 的处理能力，在老年代很大而且硬件比较高级的环境中，这种组合的吞吐量甚至还不一定有 ParNew 加 CMS 的组合“给力”。</p>
+<p>直到 Parallel Old 收集器出现后，“吞吐量优先”收集器终于有了比较名副其实的应用组合，在注重吞吐量以及 CPU 资源敏感的场合，都可以优先考虑 Parallel Scavenge 加 Parallel Old 收集器。Parallel Old 收集器的工作过程如图3-9所示。</p>
+<div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20181201210034.png style=display:block;width:70% alt=NAME align=center>
+</div>
+<h3 id=356-cms-收集器>3.5.6 CMS 收集器</h3>
+<p>CMS（Concurrent Mark Sweep）收集器是一种以获取最短回收停顿时间为目标的收集器。目前很大一部分的 Java 应用集中在互联网站或者 B/S 系统的服务端上，这类应用尤其重视服务的响应速度，希望系统停顿时间最短，以给用户带来较好的体验。CMS 收集器就非常符合这类应用的需求。</p>
+<p>从名字（包含"Mark Sweep&rdquo;）上就可以看出，CMS 收集器是基于“标记—清除”算法实现的，它的运作过程相对于前面几种收集器来说更复杂一些，整个过程分为 4 个步骤，包括：</p>
+<ol>
+<li>初始标记（CMS initial mark）</li>
+<li>并发标记（CMS concurrent mark）</li>
+<li>重新标记（CMS remark）</li>
+<li>并发清除（CMS concurrent sweep）</li>
+</ol>
+<p>其中，初始标记、重新标记这两个步骤仍然需要"Stop The World"。初始标记仅仅只是标记一下 GC Roots 能直接关联到的对象，速度很快，并发标记阶段就是进行 GC Roots Tracing 的过程，而重新标记阶段则是为了修正并发标记期间因用户程序继续运作而导致标记产生变动的那一部分对象的标记记录，这个阶段的停顿时间一般会比初始标记阶段稍长一些，但远比并发标记的时间短。</p>
+<p>由于整个过程中耗时最长的并发标记和并发清除过程收集器线程都可以与用户线程一起工作，所以，从总体上来说，CMS 收集器的内存回收过程是与用户线程一起并发执行的。通过图 3-10 可以比较清楚地看到 CMS 收集器的运作步骤中并发和需要停顿的时间。</p>
+<div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20181201210320.png style=display:block;width:70% alt=NAME align=center>
+</div>
+<p>CMS 是一款优秀的收集器，它的主要优点在名字上已经体现出来了：并发收集、低停顿，Sun 公司的一些官方文档中也称之为并发低停顿收集器（Concurrent Low Pause Collector）。但是 CMS 还远达不到完美的程度，它有以下 3 个明显的缺点：</p>
+<p>CMS 收集器对 CPU 资源非常敏感。其实，面向并发设计的程序都对 CPU 资源比较敏感。在并发阶段，它虽然不会导致用户线程停顿，但是会因为占用了一部分线程（或者说 CPU 资源）而导致应用程序变慢，总吞吐量会降低。CMS 默认启动的回收线程数是（CPU数量+3）/4，也就是当 CPU 在 4 个以上时，并发回收时垃圾收集线程不少于 25% 的 CPU 资源，并且随着 CPU 数量的增加而下降。但是当 CPU 不足 4 个（譬如2个）时，CMS 对用户程序的影响就可能变得很大，如果本来 CPU 负载就比较大，还分出一半的运算能力去执行收集器线程，就可能导致用户程序的执行速度忽然降低了 50%，其实也让人无法接受。为了应付这种情况，虚拟机提供了一种称为“增量式并发收集器”（Incremental Concurrent Mark Sweep/i-CMS）的 CMS 收集器变种，所做的事情和单 CPU 年代 PC 机操作系统使用抢占式来模拟多任务机制的思想一样，就是在并发标记、清理的时候让 GC 线程、用户线程交替运行，尽量减少 GC 线程的独占资源的时间，这样整个垃圾收集的过程会更长，但对用户程序的影响就会显得少一些，也就是速度下降没有那么明显。实践证明，增量时的 CMS 收集器效果很一般，在目前版本中， i-CMS 已经被声明为 &ldquo;deprecated&rdquo;，即不再提倡用户使用。</p>
+<p>CMS 收集器无法处理浮动垃圾（Floating Garbage），可能出现"Concurrent Mode Failure"失败而导致另一次 Full GC 的产生。由于 CMS 并发清理阶段用户线程还在运行着，伴随程序运行自然就还会有新的垃圾不断产生，这一部分垃圾出现在标记过程之后，CMS 无法在当次收集中处理掉它们，只好留待下一次 GC 时再清理掉。这一部分垃圾就称为“浮动垃圾”。也是由于在垃圾收集阶段用户线程还需要运行，那也就还需要预留有足够的内存空间给用户线程使用，因此 CMS 收集器不能像其他收集器那样等到老年代几乎完全被填满了再进行收集，需要预留一部分空间提供并发收集时的程序运作使用。在 JDK 1.5 的默认设置下，CMS 收集器当老年代使用了 68% 的空间后就会被激活，这是一个偏保守的设置，如果在应用中老年代增长不是太快，可以适当调高参数 <code>-XX:CMSInitiatingOccupancyFraction</code> 的值来提高触发百分比，以便降低内存回收次数从而获取更好的性能，在 JDK 1.6 中，CMS 收集器的启动阈值已经提升至 92%。要是 CMS 运行期间预留的内存无法满足程序需要，就会出现一次"Concurrent Mode Failure"失败，这时虚拟机将启动后备预案：临时启用 Serial Old 收集器来重新进行老年代的垃圾收集，这样停顿时间就很长了。所以说参数 <code>-XX:CM SInitiatingOccupancyFraction</code> 设置得太高很容易导致大量"Concurrent Mode Failure"失败，性能反而降低。</p>
+<p>还有最后一个缺点，在本节开头说过，CMS 是一款基于“标记—清除”算法实现的收集器，如果读者对前面这种算法介绍还有印象的话，就可能想到这意味着收集结束时会有大量空间碎片产生。空间碎片过多时，将会给大对象分配带来很大麻烦，往往会出现老年代还有很大空间剩余，但是无法找到足够大的连续空间来分配当前对象，不得不提前触发一次 Full GC。为了解决这个问题，CMS 收集器提供了一个 <code>-XX:+UseCMSCompactAtFullCollection</code> 开关参数（默认就是开启的），用于在 CMS 收集器顶不住要进行 FullGC 时开启内存碎片的合并整理过程，内存整理的过程是无法并发的，空间碎片问题没有了，但停顿时间不得不变长。虚拟机设计者还提供了另外一个参数 <code>-XX:CMSFullGCsBeforeCompaction</code>，这个参数是用于设置执行多少次不压缩的 Full GC 后，跟着来一次带压缩的（默认值为 0，表示每次进入 Full GC 时都进行碎片整理）。</p>
+<h3 id=357-g1-收集器>3.5.7 G1 收集器</h3>
+<p>G1（Garbage-First）收集器是当今收集器技术发展的最前沿成果之一，早在 JDK 1.7 刚刚确立项目目标，Sun 公司给出的 JDK 1.7 RoadMap 里面，它就被视为 JDK 1.7 中 HotSpot 虚拟机的一个重要进化特征。从 JDK 6u14 中开始就有 Early Access 版本的 G1 收集器供开发人员实验、试用，由此开始 G1 收集器的"Experimental"状态持续了数年时间，直至 JDK 7u4，Sun 公司才认为它达到足够成熟的商用程度，移除了"Experimental"的标识。</p>
+<p>G1 是一款面向服务端应用的垃圾收集器。HotSpot 开发团队赋予它的使命是（在比较长期的）未来可以替换掉 JDK 1.5 中发布的 CMS 收集器。与其他 GC 收集器相比，G1 具备如下特点。</p>
+<p>并行与并发：G1 能充分利用多 CPU、多核环境下的硬件优势，使用多个 CPU（CPU 或者 CPU 核心）来缩短 Stop-The-World 停顿的时间，部分其他收集器原本需要停顿 Java 线程执行的 GC 动作，G1 收集器仍然可以通过并发的方式让 Java 程序继续执行。</p>
+<p>分代收集：与其他收集器一样，分代概念在 G1 中依然得以保留。虽然 G1 可以不需要其他收集器配合就能独立管理整个 GC 堆，但它能够采用不同的方式去处理新创建的对象和已经存活了一段时间、熬过多次 GC 的旧对象以获取更好的收集效果。</p>
+<p>空间整合：与 CMS 的“标记—清理”算法不同，G1 从整体来看是基于“标记—整理”算法实现的收集器，从局部（两个 Region 之间）上来看是基于“复制”算法实现的，但无论如何，这两种算法都意味着 G1 运作期间不会产生内存空间碎片，收集后能提供规整的可用内存。这种特性有利于程序长时间运行，分配大对象时不会因为无法找到连续内存空间而提前触发下一次 GC。</p>
+<p>可预测的停顿：这是 G1 相对于 CMS 的另一大优势，降低停顿时间是 G1 和 CMS 共同的关注点，但 G1 除了追求低停顿外，还能建立可预测的停顿时间模型，能让使用者明确指定在一个长度为 M 毫秒的时间片段内，消耗在垃圾收集上的时间不得超过 N 毫秒，这几乎已经是实时 Java（RTSJ）的垃圾收集器的特征了。</p>
+<p>在 G1 之前的其他收集器进行收集的范围都是整个新生代或者老年代，而 G1 不再是这样。使用 G1 收集器时，Java 堆的内存布局就与其他收集器有很大差别，它将整个 Java 堆划分为多个大小相等的独立区域（Region），虽然还保留有新生代和老年代的概念，但新生代和老年代不再是物理隔离的了，它们都是一部分 Region（不需要连续）的集合。</p>
+<p>G1 收集器之所以能建立可预测的停顿时间模型，是因为它可以有计划地避免在整个 Java 堆中进行全区域的垃圾收集。G1 跟踪各个 Region 里面的垃圾堆积的价值大小（回收所获得的空间大小以及回收所需时间的经验值），在后台维护一个优先列表，每次根据允许的收集时间，优先回收价值最大的 Region（这也就是 Garbage-First 名称的来由）。这种使用 Region 划分内存空间以及有优先级的区域回收方式，保证了 G1 收集器在有限的时间内可以获取尽可能高的收集效率。</p>
+<p>G1 把内存“化整为零”的思路，理解起来似乎很容易，但其中的实现细节却远远没有想象中那样简单，否则也不会从 2004 年 Sun 实验室发表第一篇 G1 的论文开始直到今天（将近10年时间）才开发出 G1 的商用版。笔者以一个细节为例：把 Java 堆分为多个 Region 后，垃圾收集是否就真的能以 Region 为单位进行了？听起来顺理成章，再仔细想想就很容易发现问题所在：Region 不可能是孤立的。一个对象分配在某个 Region 中，它并非只能被本 Region 中的其他对象引用，而是可以与整个 Java 堆任意的对象发生引用关系。那在做可达性判定确定对象是否存活的时候，岂不是还得扫描整个 Java 堆才能保证准确性？这个问题其实并非在 G1 中才有，只是在 G1 中更加突出而已。在以前的分代收集中，新生代的规模一般都比老年代要小许多，新生代的收集也比老年代要频繁许多，那回收新生代中的对象时也面临相同的问题，如果回收新生代时也不得不同时扫描老年代的话，那么 Minor GC 的效率可能下降不少。</p>
+<p>在 G1 收集器中，Region 之间的对象引用以及其他收集器中的新生代与老年代之间的对象引用，虚拟机都是使用 Remembered Set 来避免全堆扫描的。G1 中每个 Region 都有一个与之对应的 Remembered Set，虚拟机发现程序在对 Reference 类型的数据进行写操作时，会产生一个 Write Barrier 暂时中断写操作，检查 Reference 引用的对象是否处于不同的 Region 之中（在分代的例子中就是检查是否老年代中的对象引用了新生代中的对象），如果是，便通过 CardTable 把相关引用信息记录到被引用对象所属的 Region 的 Remembered Set 之中。当进行内存回收时，在 GC 根节点的枚举范围中加入 Remembered Set 即可保证不对全堆扫描也不会有遗漏。</p>
+<p>如果不计算维护 Remembered Set 的操作，G1 收集器的运作大致可划分为以下几个步骤：</p>
+<ol>
+<li>初始标记（Initial Marking）</li>
+<li>并发标记（Concurrent Marking）</li>
+<li>最终标记（Final Marking）</li>
+<li>筛选回收（Live Data Counting and Evacuation）</li>
+</ol>
+<p>对 CMS 收集器运作过程熟悉的读者，一定已经发现 G1 的前几个步骤的运作过程和 CMS 有很多相似之处。初始标记阶段仅仅只是标记一下 GC Roots 能直接关联到的对象，并且修改 TAMS（Next Top at Mark Start）的值，让下一阶段用户程序并发运行时，能在正确可用的 Region 中创建新对象，这阶段需要停顿线程，但耗时很短。并发标记阶段是从 GC Root 开始对堆中对象进行可达性分析，找出存活的对象，这阶段耗时较长，但可与用户程序并发执行。而最终标记阶段则是为了修正在并发标记期间因用户程序继续运作而导致标记产生变动的那一部分标记记录，虚拟机将这段时间对象变化记录在线程 Remembered Set Logs 里面，最终标记阶段需要把 Remembered Set Logs 的数据合并到 Remembered Set 中，这阶段需要停顿线程，但是可并行执行。最后在筛选回收阶段首先对各个 Region 的回收价值和成本进行排序，根据用户所期望的 GC 停顿时间来制定回收计划，从 Sun 公司透露出来的信息来看，这个阶段其实也可以做到与用户程序一起并发执行，但是因为只回收一部分 Region，时间是用户可控制的，而且停顿用户线程将大幅提高收集效率。通过图 3-11 可以比较清楚地看到 G1 收集器的运作步骤中并发和需要停顿的阶段。</p>
+<div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20181201212349.png style=display:block;width:70% alt=NAME align=center>
+</div>
+<p>由于目前 G1 成熟版本的发布时间还很短，G1 收集器几乎可以说还没有经过实际应用的考验，网络上关于 G1 收集器的性能测试也非常贫乏，到目前为止，笔者还没有搜索到有关的生产环境下的性能测试报告。强调“生产环境下的测试报告”是因为对于垃圾收集器来说，仅仅通过简单的 Java 代码写个 Microbenchmark 程序来创建、移除 Java 对象，再用 <code>-XX:+PrintGCDetails</code> 等参数来查看 GC 日志是很难做到准确衡量其性能的。因此，关于 G1 收集器的性能部分，笔者引用了 Sun 实验室的论文《Garbage-First Garbage Collection》中的一段测试数据。</p>
+<blockquote>
+<p>此处略去对 G1 的性能度量部分。</p>
+</blockquote>
+<h3 id=358-理解-gc-日志>3.5.8 理解 GC 日志</h3>
+<p>阅读 GC 日志是处理 Java 虚拟机内存问题的基础技能，它只是一些人为确定的规则，没有太多技术含量。在本书的第 1 版中没有专门讲解如何阅读分析 GC 日志，为此作者收到许多读者来信，反映对此感到困惑，因此专门增加本节内容来讲解如何理解 GC 日志。</p>
+<p>每一种收集器的日志形式都是由它们自身的实现所决定的，换而言之，每个收集器的日志格式都可以不一样。但虚拟机设计者为了方便用户阅读，将各个收集器的日志都维持一定的共性，例如以下两段典型的 GC 日志：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>33.125:[GC[DefNew:3324K-&gt;152K(3712K), 0.0025925 secs]3324K-&gt;152K(11904K), 0.0031680 secs]
+100.667:[Full GC[Tenured:0 K-&gt;210K(10240K), 0.0149142secs]4603K-&gt;210K(19456K), [Perm:2999K-&gt;2999K(21248K)], 0.0150007 secs][Times:user=0.01 sys=0.00, real=0.02 secs]
+</code></pre></div><p>最前面的数字“33.125：”和“100.667：”代表了 GC 发生的时间，这个数字的含义是从 Java 虚拟机启动以来经过的秒数。</p>
+<p>GC日志开头的 <code>[GC</code> 和 <code>[Full GC</code> 说明了这次垃圾收集的停顿类型，而不是用来区分新生代 GC 还是老年代 GC 的。如果有"Full"，说明这次 GC 是发生了 Stop-The-World 的，例如下面这段新生代收集器 ParNew 的日志也会出现 <code>[Full GC</code>（这一般是因为出现了分配担保失败之类的问题，所以才导致 STW）。如果是调用System.gc() 方法所触发的收集，那么在这里将显示 <code>[Full GC（System）</code>。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>[Full GC 283.736:[ParNew:261599K-&gt;261599K(261952K), 0.0000288 secs]
+</code></pre></div><p>接下来的 <code>[DefNew</code>、<code>[Tenured</code>、<code>[Perm</code> 表示 GC 发生的区域，这里显示的区域名称与使用的 GC 收集器是密切相关的，例如上面样例所使用的 Serial 收集器中的新生代名为"Default New Generation"，所以显示的是 <code>[DefNew</code>。如果是 ParNew 收集器，新生代名称就会变为 <code>[ParNew</code>，意为"Parallel New Generation"。如果采用 Parallel Scavenge 收集器，那它配套的新生代称为"PSYoungGen"，老年代和永久代同理，名称也是由收集器决定的。</p>
+<p>后面方括号内部的"3324K-＞152K（3712K）&ldquo;含义是“GC 前该内存区域已使用容量-＞GC 后该内存区域已使用容量（该内存区域总容量）”。而在方括号之外的"3324K-＞152K（11904K）&ldquo;表示“ GC 前 Java 堆已使用容量-＞GC 后 Java 堆已使用容量（Java 堆总容量）”。</p>
+<p>再往后，&ldquo;0.0025925 secs"表示该内存区域 GC 所占用的时间，单位是秒。有的收集器会给出更具体的时间数据，如 <code>[Times:user=0.01 sys=0.00，real=0.02 secs]</code>，这里面的 user、sys 和 real 与 Linux 的 time 命令所输出的时间含义一致，分别代表用户态消耗的 CPU 时间、内核态消耗的 CPU 时间和操作从开始到结束所经过的墙钟时间（Wall Clock Time）。CPU 时间与墙钟时间的区别是，墙钟时间包括各种非运算的等待耗时，例如等待磁盘 I/O、等待线程阻塞，而 CPU 时间不包括这些耗时，但当系统有多 CPU 或者多核的话，多线程操作会叠加这些 CPU 时间，所以读者看到 user 或 sys 时间超过 real 时间是完全正常的。</p>
+<h3 id=359-垃圾收集器参数总结>3.5.9 垃圾收集器参数总结</h3>
+<p>JDK 1.7 中的各种垃圾收集器到此已全部介绍完毕，在描述过程中提到了很多虚拟机非稳定的运行参数，在表 3-2 中整理了这些参数供读者实践时参考。</p>
+<div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20181201213527.png style=display:block;width:70% alt=NAME align=center>
+</div>
+<div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20181201213543.png style=display:block;width:70% alt=NAME align=center>
+</div>
+<h2 id=36-内存分配与回收策略>3.6 内存分配与回收策略</h2>
+<p>Java 技术体系中所提倡的自动内存管理最终可以归结为自动化地解决了两个问题：给对象分配内存以及回收分配给对象的内存。关于回收内存这一点，我们已经使用了大量篇幅去介绍虚拟机中的垃圾收集器体系以及运作原理，现在我们再一起来探讨一下给对象分配内存的那点事儿。</p>
+<p>对象的内存分配，往大方向讲，就是在堆上分配（但也可能经过 JIT 编译后被拆散为标量类型并间接地栈上分配），对象主要分配在新生代的 Eden 区上，如果启动了本地线程分配缓冲，将按线程优先在 TLAB 上分配。少数情况下也可能会直接分配在老年代中，分配的规则并不是百分之百固定的，其细节取决于当前使用的是哪一种垃圾收集器组合，还有虚拟机中与内存相关的参数的设置。</p>
+<p>接下来我们将会讲解几条最普遍的内存分配规则，并通过代码去验证这些规则。本节下面的代码在测试时使用 Client 模式虚拟机运行，没有手工指定收集器组合，换句话说，验证的是在使用 Serial/Serial Old 收集器下（ParNew/Serial Old 收集器组合的规则也基本一致）的内存分配和回收的策略。读者不妨根据自己项目中使用的收集器写一些程序去验证一下使用其他几种收集器的内存分配策略。</p>
+<h3 id=361-对象优先在-eden-分配>3.6.1 对象优先在 Eden 分配</h3>
+<p>大多数情况下，对象在新生代 Eden 区中分配。当 Eden 区没有足够空间进行分配时，虚拟机将发起一次 <code>Minor GC</code>。</p>
+<p>虚拟机提供了 <code>-XX:+PrintGCDetails</code> 这个收集器日志参数，告诉虚拟机在发生垃圾收集行为时打印内存回收日志，并且在进程退出的时候输出当前的内存各区域分配情况。在实际应用中，内存回收日志一般是打印到文件后通过日志工具进行分析，不过本实验的日志并不多，直接阅读就能看得很清楚。</p>
+<p>代码清单 3-5 的 testAllocation() 方法中，尝试分配 3 个 2MB 大小和 1 个 4MB 大小的对象，在运行时通过 -Xms20M、-Xmx20M、-Xmn10M 这 3 个参数限制了 Java 堆大小为 20MB，不可扩展，其中 10MB 分配给新生代，剩下的 10MB 分配给老年代。<code>-XX:SurvivorRatio=8</code> 决定了新生代中 Eden 区与一个 Survivor 区的空间比例是 8:1，从输出的结果也可以清晰地看到"eden space 8192K、from space 1024K、to space 1024K"的信息，新生代总可用空间为 9216KB（Eden 区+1个 Survivor 区的总容量）。</p>
+<p>执行 testAllocation() 中分配 allocation4 对象的语句时会发生一次 Minor GC，这次 GC 的结果是新生代 6651KB 变为 148KB，而总内存占用量则几乎没有减少（因为 allocation1、allocation2、allocation3 三个对象都是存活的，虚拟机几乎没有找到可回收的对象）。这次 GC 发生的原因是给 allocation4 分配内存的时候，发现 Eden 已经被占用了 6MB，剩余空间已不足以分配 allocation4 所需的 4MB 内存，因此发生 Minor GC。GC 期间虚拟机又发现已有的 3 个 2MB 大小的对象全部无法放入 Survivor 空间（Survivor 空间只有 1MB 大小），所以只好通过分配担保机制提前转移到老年代去。</p>
+<p>这次 GC 结束后，4MB 的 allocation4 对象顺利分配在 Eden 中，因此程序执行完的结果是 Eden 占用 4MB（被 allocation4 占用），Survivor 空闲，老年代被占用 6MB（被 allocation1、allocation2、allocation3 占用）。通过 GC 日志可以证实这一点。</p>
+<p>注意：作者多次提到的 Minor GC 和 Full GC 有什么不一样吗？</p>
+<ul>
+<li>新生代 GC（Minor GC）：指发生在新生代的垃圾收集动作，因为 Java 对象大多都具备朝生夕灭的特性，所以 Minor GC 非常频繁，一般回收速度也比较快。</li>
+<li>老年代 GC（Major GC/Full GC）：指发生在老年代的 GC，出现了 Major GC，经常会伴随至少一次的 Minor GC（但非绝对的，在 Parallel Scavenge 收集器的收集策略里就有直接进行 Major GC 的策略选择过程）。Major GC 的速度一般会比 Minor GC 慢 10 倍以上。</li>
+</ul>
+<p>代码清单3-5　新生代 Minor GC：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#204a87;font-weight:700>private</span> <span style=color:#204a87;font-weight:700>static</span> <span style=color:#204a87;font-weight:700>final</span> <span style=color:#000>int_1MB</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#000>1024</span><span style=color:#ce5c00;font-weight:700>*</span><span style=color:#000>1024</span><span style=color:#a40000>；</span>
+  <span style=color:#8f5902;font-style:italic>/**
+</span><span style=color:#8f5902;font-style:italic>*VM参数：-verbose:gc-Xms20M-Xmx20M-Xmn10M-XX:+PrintGCDetails
+</span><span style=color:#8f5902;font-style:italic>-XX:SurvivorRatio=8
+</span><span style=color:#8f5902;font-style:italic>*/</span>
+  <span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>static</span> <span style=color:#204a87;font-weight:700>void</span> <span style=color:#000>testAllocation</span><span style=color:#ce5c00;font-weight:700>(){</span>
+  <span style=color:#204a87;font-weight:700>byte</span><span style=color:#ce5c00;font-weight:700>[]</span><span style=color:#000>allocation1</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>allocation2</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>allocation3</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>allocation4</span><span style=color:#a40000>；</span>
+    <span style=color:#000>allocation1</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#204a87;font-weight:700>new</span> <span style=color:#204a87;font-weight:700>byte</span><span style=color:#ce5c00;font-weight:700>[</span><span style=color:#000>2</span><span style=color:#ce5c00;font-weight:700>*</span><span style=color:#000>_1MB</span><span style=color:#ce5c00;font-weight:700>]</span><span style=color:#a40000>；</span>
+    <span style=color:#000>allocation2</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#204a87;font-weight:700>new</span> <span style=color:#204a87;font-weight:700>byte</span><span style=color:#ce5c00;font-weight:700>[</span><span style=color:#000>2</span><span style=color:#ce5c00;font-weight:700>*</span><span style=color:#000>_1MB</span><span style=color:#ce5c00;font-weight:700>]</span><span style=color:#a40000>；</span>
+    <span style=color:#000>allocation3</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#204a87;font-weight:700>new</span> <span style=color:#204a87;font-weight:700>byte</span><span style=color:#ce5c00;font-weight:700>[</span><span style=color:#000>2</span><span style=color:#ce5c00;font-weight:700>*</span><span style=color:#000>_1MB</span><span style=color:#ce5c00;font-weight:700>]</span><span style=color:#a40000>；</span>
+    <span style=color:#000>allocation4</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#204a87;font-weight:700>new</span> <span style=color:#204a87;font-weight:700>byte</span><span style=color:#ce5c00;font-weight:700>[</span><span style=color:#000>4</span><span style=color:#ce5c00;font-weight:700>*</span><span style=color:#000>_1MB</span><span style=color:#ce5c00;font-weight:700>]</span><span style=color:#a40000>；</span><span style=color:#8f5902;font-style:italic>//出现一次Minor GC
+</span><span style=color:#8f5902;font-style:italic></span><span style=color:#ce5c00;font-weight:700>}</span>
+</code></pre></div><p>执行结果：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>[GC[DefNew:6651K-&gt;148K(9216K), 0.0070106 secs]6651K-&gt;6292K(19456K), 
+0.0070426 secs][Times:user=0.00 sys=0.00, real=0.00 secs]
+Heap
+def new generation total 9216K,used 4326K[0x029d0000, 0x033d0000, 0x033d0000)
+eden space 8192K, 51%used[0x029d0000, 0x02de4828, 0x031d0000)
+from space 1024K, 14%used[0x032d0000, 0x032f5370, 0x033d0000)
+to space 1024K, 0%used[0x031d0000, 0x031d0000, 0x032d0000)
+tenured generation total 10240K,used 6144K[0x033d0000, 0x03dd0000, 0x03dd0000)
+the space 10240K, 60%used[0x033d0000, 0x039d0030, 0x039d0200, 0x03dd0000)
+compacting perm gen total 12288K,used 2114K[0x03dd0000, 0x049d0000, 0x07dd0000)
+the space 12288K, 17%used[0x03dd0000, 0x03fe0998, 0x03fe0a00, 0x049d0000)
+No shared spaces configured.
+</code></pre></div><h3 id=362-大对象直接进入老年代>3.6.2 大对象直接进入老年代</h3>
+<p>所谓的大对象是指，需要大量连续内存空间的 Java 对象，最典型的大对象就是那种很长的字符串以及数组（笔者列出的例子中的 <code>byte[]</code> 数组就是典型的大对象）。大对象对虚拟机的内存分配来说就是一个坏消息（替 Java 虚拟机抱怨一句，比遇到一个大对象更加坏的消息就是遇到一群“朝生夕灭”的“短命大对象”，写程序的时候应当避免），经常出现大对象容易导致内存还有不少空间时就提前触发垃圾收集以获取足够的连续空间来“安置”它们。</p>
+<p>虚拟机提供了一个 <code>-XX:PretenureSizeThreshold</code> 参数，令大于这个设置值的对象直接在老年代分配。这样做的目的是避免在 Eden 区及两个 Survivor 区之间发生大量的内存复制（复习一下：新生代采用复制算法收集内存）。</p>
+<p>执行代码清单 3-6 中的 testPretenureSizeThreshold() 方法后，我们看到 Eden 空间几乎没有被使用，而老年代的 10MB 空间被使用了 40%，也就是 4MB 的 allocation 对象直接就分配在老年代中，这是因为 PretenureSizeThreshold 被设置为 3MB（就是 3145728，这个参数不能像 -Xmx 之类的参数一样直接写 3MB），因此超过 3MB 的对象都会直接在老年代进行分配。注意　PretenureSizeThreshold 参数只对 Serial 和 ParNew 两款收集器有效，Parallel Scavenge 收集器不认识这个参数，Parallel Scavenge 收集器一般并不需要设置。如果遇到必须使用此参数的场合，可以考虑 ParNew 加 CMS 的收集器组合。</p>
+<p>代码清单 3-6 大对象直接进入老年代：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#204a87;font-weight:700>private</span> <span style=color:#204a87;font-weight:700>static</span> <span style=color:#204a87;font-weight:700>final</span> <span style=color:#000>int_1MB</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#000>1024</span><span style=color:#ce5c00;font-weight:700>*</span><span style=color:#000>1024</span><span style=color:#a40000>；</span>
+  <span style=color:#8f5902;font-style:italic>/**
+</span><span style=color:#8f5902;font-style:italic>*VM参数：-verbose:gc-Xms20M-Xmx20M-Xmn10M-XX:+PrintGCDetails-XX:SurvivorRatio=8
+</span><span style=color:#8f5902;font-style:italic>*-XX:PretenureSizeThreshold=3145728
+</span><span style=color:#8f5902;font-style:italic>*/</span>
+  <span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>static</span> <span style=color:#204a87;font-weight:700>void</span> <span style=color:#000>testPretenureSizeThreshold</span><span style=color:#ce5c00;font-weight:700>(){</span>
+  <span style=color:#204a87;font-weight:700>byte</span><span style=color:#ce5c00;font-weight:700>[]</span><span style=color:#000>allocation</span><span style=color:#a40000>；</span>
+    <span style=color:#000>allocation</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#204a87;font-weight:700>new</span> <span style=color:#204a87;font-weight:700>byte</span><span style=color:#ce5c00;font-weight:700>[</span><span style=color:#000>4</span><span style=color:#ce5c00;font-weight:700>*</span><span style=color:#000>_1MB</span><span style=color:#ce5c00;font-weight:700>]</span><span style=color:#a40000>；</span><span style=color:#8f5902;font-style:italic>//直接分配在老年代中
+</span><span style=color:#8f5902;font-style:italic></span><span style=color:#ce5c00;font-weight:700>}</span>
+</code></pre></div><p>运行结果：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>Heap
+def new generation total 9216K,used 671K[0x029d0000, 0x033d0000, 0x033d0000)
+eden space 8192K, 8%used[0x029d0000, 0x02a77e98, 0x031d0000)
+from space 1024K, 0%used[0x031d0000, 0x031d0000, 0x032d0000)
+to space 1024K, 0%used[0x032d0000, 0x032d0000, 0x033d0000)
+tenured generation total 10240K,used 4096K[0x033d0000, 0x03dd0000, 0x03dd0000)
+the space 10240K, 40%used[0x033d0000, 0x037d0010, 0x037d0200, 0x03dd0000)
+compacting perm gen total 12288K,used 2107K[0x03dd0000, 0x049d0000, 0x07dd0000)
+the space 12288K, 17%used[0x03dd0000, 0x03fdefd0, 0x03fdf000, 0x049d0000)
+No shared spaces configured.
+</code></pre></div><h3 id=363-长期存活的对象将进入老年代>3.6.3 长期存活的对象将进入老年代</h3>
+<p>既然虚拟机采用了分代收集的思想来管理内存，那么内存回收时就必须能识别哪些对象应放在新生代，哪些对象应放在老年代中。为了做到这点，虚拟机给每个对象定义了一个对象年龄（Age）计数器。如果对象在 Eden 出生并经过第一次 Minor GC 后仍然存活，并且能被 Survivor 容纳的话，将被移动到 Survivor 空间中，并且对象年龄设为 1。对象在 Survivor 区中每“熬过”一次 Minor GC，年龄就增加 1 岁，当它的年龄增加到一定程度（默认为15岁），就将会被晋升到老年代中。对象晋升老年代的年龄阈值，可以通过参数 <code>-XX:MaxTenuringThreshold</code> 设置。</p>
+<p>读者可以试试分别以 <code>-XX:MaxTenuringThreshold=1</code> 和 <code>-XX:MaxTenuringThreshold=15</code> 两种设置来执行代码清单 3-7 中的 testTenuringThreshold() 方法，此方法中的 allocation1 对象需要 256KB 内存，Survivor 空间可以容纳。当 MaxTenuringThreshold=1 时，allocation1 对象在第二次 GC 发生时进入老年代，新生代已使用的内存 GC 后非常干净地变成 0KB。而 MaxTenuringThreshold=15 时，第二次 GC 发生后，allocation1 对象则还留在新生代 Survivor 空间，这时新生代仍然有 404KB 被占用。</p>
+<p>代码清单3-7　长期存活的对象进入老年代:</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#204a87;font-weight:700>private</span> <span style=color:#204a87;font-weight:700>static</span> <span style=color:#204a87;font-weight:700>final</span> <span style=color:#000>int_1MB</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#000>1024</span><span style=color:#ce5c00;font-weight:700>*</span><span style=color:#000>1024</span><span style=color:#a40000>；</span>
+  <span style=color:#8f5902;font-style:italic>/**
+</span><span style=color:#8f5902;font-style:italic>*VM参数：-verbose:gc-Xms20M-Xmx20M-Xmn10M-XX:+PrintGCDetails-XX:SurvivorRatio=8-XX:MaxTenuringThreshold=1
+</span><span style=color:#8f5902;font-style:italic>*-XX:+PrintTenuringDistribution
+</span><span style=color:#8f5902;font-style:italic>*/</span>
+  <span style=color:#5c35cc;font-weight:700>@SuppressWarnings</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;unused&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
+  <span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>static</span> <span style=color:#204a87;font-weight:700>void</span> <span style=color:#000>testTenuringThreshold</span><span style=color:#ce5c00;font-weight:700>(){</span>
+  <span style=color:#204a87;font-weight:700>byte</span><span style=color:#ce5c00;font-weight:700>[]</span><span style=color:#000>allocation1</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>allocation2</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>allocation3</span><span style=color:#a40000>；</span>
+    <span style=color:#000>allocation1</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#204a87;font-weight:700>new</span> <span style=color:#204a87;font-weight:700>byte</span><span style=color:#ce5c00;font-weight:700>[</span><span style=color:#000>_1MB</span><span style=color:#ce5c00;font-weight:700>/</span><span style=color:#000>4</span><span style=color:#ce5c00;font-weight:700>]</span><span style=color:#a40000>；</span>
+    <span style=color:#8f5902;font-style:italic>//什么时候进入老年代取决于XX:MaxTenuringThreshold设置
+</span><span style=color:#8f5902;font-style:italic></span>    <span style=color:#000>allocation2</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#204a87;font-weight:700>new</span> <span style=color:#204a87;font-weight:700>byte</span><span style=color:#ce5c00;font-weight:700>[</span><span style=color:#000>4</span><span style=color:#ce5c00;font-weight:700>*</span><span style=color:#000>_1MB</span><span style=color:#ce5c00;font-weight:700>]</span><span style=color:#a40000>；</span>
+    <span style=color:#000>allocation3</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#204a87;font-weight:700>new</span> <span style=color:#204a87;font-weight:700>byte</span><span style=color:#ce5c00;font-weight:700>[</span><span style=color:#000>4</span><span style=color:#ce5c00;font-weight:700>*</span><span style=color:#000>_1MB</span><span style=color:#ce5c00;font-weight:700>]</span><span style=color:#a40000>；</span>
+    <span style=color:#000>allocation3</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#204a87;font-weight:700>null</span><span style=color:#a40000>；</span>
+    <span style=color:#000>allocation3</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#204a87;font-weight:700>new</span> <span style=color:#204a87;font-weight:700>byte</span><span style=color:#ce5c00;font-weight:700>[</span><span style=color:#000>4</span><span style=color:#ce5c00;font-weight:700>*</span><span style=color:#000>_1MB</span><span style=color:#ce5c00;font-weight:700>]</span><span style=color:#a40000>；</span>
+<span style=color:#ce5c00;font-weight:700>}</span>
+</code></pre></div><p>以 MaxTenuringThreshold=1 参数来运行的结果：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>[GC[DefNew Desired Survivor size 524288 bytes,new threshold 1(max 1) -age 1:414664 bytes, 414664 total :4859K-&gt;404K(9216K), 0.0065012 secs]4859K-&gt;4500K(19456K), 0.0065283 secs [Times:user=0.02 sys=0.00, real=0.02 secs]
+
+[GC[DefNew Desired Survivor size 524288 bytes,new threshold 1(max 1):4500K-&gt;0K(9216K), 0.0009253 secs]8596K-&gt;4500K(19456K),0.0009458 secs][Times:user=0.00 sys=0.00,real=0.00 secs]
+
+Heap
+  def new generation total 9216K,used 4178K[0x029d0000,0x033d0000, 0x033d0000)
+  eden space 8192K, 51%used[0x029d0000, 0x02de4828, 0x031d0000)
+  from space 1024K, 0%used[0x031d0000, 0x031d0000, 0x032d0000)
+  to space 1024K, 0%used[0x032d0000, 0x032d0000, 0x033d0000)
+  tenured generation total 10240K,used 4500K[0x033d0000, 0x03dd0000, 0x03dd0000)
+  the space 10240K, 43%used[0x033d0000, 0x03835348, 0x03835400, 0x03dd0000)
+  compacting perm gen total 12288K,used 2114K[0x03dd0000, 0x049d0000, 0x07dd0000)
+  the space 12288K, 17%used[0x03dd0000, 0x03fe0998, 0x03fe0a00, 0x049d0000)
+
+No shared spaces configured.
+</code></pre></div><p>以MaxTenuringThreshold=15参数来运行的结果：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>[GC[DefNew Desired Survivor size 524288 bytes,new threshold 15(max 15) -age 1:414664 bytes, 414664 total:4859K-&gt;404K(9216K), 0.0049637 secs]4859K-&gt;4500K(19456K), 0.0049932 secs][Times:user=0.00 sys=0.00, real=0.00 secs]
+
+[GC[DefNew Desired Survivor size 524288 bytes,new threshold 15(max 15) -age 2:414520 bytes, 414520 total :4500K-&gt;404K(9216K), 0.0008091 secs]8596K-&gt;4500K(19456K), 0.0008305 secs][Times:user=0.00 sys=0.00, real=0.00 secs]
+
+Heap
+  def new generation total 9216K,used 4582K[0x029d0000, 0x033d0000, 0x033d0000)
+    eden space 8192K, 51%used[0x029d0000, 0x02de4828, 0x031d0000)
+from space 1024K, 39%used[0x031d0000, 0x03235338, 0x032d0000)
+  to space 1024K, 0%used[0x032d0000, 0x032d0000, 0x033d0000)
+  tenured generation total 10240K,used 4096K[0x033d0000, 0x03dd0000, 0x03dd0000)
+  the space 10240K, 40%used[0x033d0000, 0x037d0010, 0x037d0200, 0x03dd0000)
+  compacting perm gen total 12288K,used 2114K[0x03dd0000, 0x049d0000, 0x07dd0000)
+  the space 12288K, 17%used[0x03dd0000, 0x03fe0998, 0x03fe0a00, 0x049d0000)
+
+No shared spaces configured.
+</code></pre></div><h3 id=364-动态对象年龄判定>3.6.4 动态对象年龄判定</h3>
+<p>为了能更好地适应不同程序的内存状况，虚拟机并不是永远地要求对象的年龄必须达到了 MaxTenuringThreshold 才能晋升老年代，如果在 Survivor 空间中相同年龄所有对象大小的总和大于 Survivor 空间的一半，年龄大于或等于该年龄的对象就可以直接进入老年代，无须等到 MaxTenuringThreshold 中要求的年龄。</p>
+<p>执行代码清单 3-8 中的 testTenuringThreshold2() 方法，并设置 <code>-XX:MaxTenuringThreshold=15</code>，会发现运行结果中 Survivor 的空间占用仍然为 0%，而老年代比预期增加了 6%，也就是说，allocation1、allocation2 对象都直接进入了老年代，而没有等到 15 岁的临界年龄。因为这两个对象加起来已经到达了 512KB，并且它们是同年的，满足同年对象达到 Survivor 空间的一半规则。我们只要注释掉其中一个对象 new 操作，就会发现另外一个就不会晋升到老年代中去了。</p>
+<p>代码清单3-8　动态对象年龄判定:</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#204a87;font-weight:700>private</span> <span style=color:#204a87;font-weight:700>static</span> <span style=color:#204a87;font-weight:700>final</span> <span style=color:#000>int_1MB</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#000>1024</span><span style=color:#ce5c00;font-weight:700>*</span><span style=color:#000>1024</span><span style=color:#a40000>；</span>
+  <span style=color:#8f5902;font-style:italic>/**
+</span><span style=color:#8f5902;font-style:italic>*VM参数：-verbose:gc-Xms20M-Xmx20M-Xmn10M-XX:+PrintGCDetails-XX:SurvivorRatio=8-XX:MaxTenuringThreshold=15
+</span><span style=color:#8f5902;font-style:italic>*-XX:+PrintTenuringDistribution
+</span><span style=color:#8f5902;font-style:italic>*/</span>
+  <span style=color:#5c35cc;font-weight:700>@SuppressWarnings</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;unused&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
+  <span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>static</span> <span style=color:#204a87;font-weight:700>void</span> <span style=color:#000>testTenuringThreshold2</span><span style=color:#ce5c00;font-weight:700>(){</span>
+  <span style=color:#204a87;font-weight:700>byte</span><span style=color:#ce5c00;font-weight:700>[]</span><span style=color:#000>allocation1</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>allocation2</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>allocation3</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>allocation4</span><span style=color:#a40000>；</span>
+    <span style=color:#000>allocation1</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#204a87;font-weight:700>new</span> <span style=color:#204a87;font-weight:700>byte</span><span style=color:#ce5c00;font-weight:700>[</span><span style=color:#000>_1MB</span><span style=color:#ce5c00;font-weight:700>/</span><span style=color:#000>4</span><span style=color:#ce5c00;font-weight:700>]</span><span style=color:#a40000>；</span>
+    <span style=color:#8f5902;font-style:italic>//allocation1+allocation2大于survivo空间一半
+</span><span style=color:#8f5902;font-style:italic></span>    <span style=color:#000>allocation2</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#204a87;font-weight:700>new</span> <span style=color:#204a87;font-weight:700>byte</span><span style=color:#ce5c00;font-weight:700>[</span><span style=color:#000>_1MB</span><span style=color:#ce5c00;font-weight:700>/</span><span style=color:#000>4</span><span style=color:#ce5c00;font-weight:700>]</span><span style=color:#a40000>；</span>
+    <span style=color:#000>allocation3</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#204a87;font-weight:700>new</span> <span style=color:#204a87;font-weight:700>byte</span><span style=color:#ce5c00;font-weight:700>[</span><span style=color:#000>4</span><span style=color:#ce5c00;font-weight:700>*</span><span style=color:#000>_1MB</span><span style=color:#ce5c00;font-weight:700>]</span><span style=color:#a40000>；</span>
+    <span style=color:#000>allocation4</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#204a87;font-weight:700>new</span> <span style=color:#204a87;font-weight:700>byte</span><span style=color:#ce5c00;font-weight:700>[</span><span style=color:#000>4</span><span style=color:#ce5c00;font-weight:700>*</span><span style=color:#000>_1MB</span><span style=color:#ce5c00;font-weight:700>]</span><span style=color:#a40000>；</span>
+    <span style=color:#000>allocation4</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#204a87;font-weight:700>null</span><span style=color:#a40000>；</span>
+    <span style=color:#000>allocation4</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#204a87;font-weight:700>new</span> <span style=color:#204a87;font-weight:700>byte</span><span style=color:#ce5c00;font-weight:700>[</span><span style=color:#000>4</span><span style=color:#ce5c00;font-weight:700>*</span><span style=color:#000>_1MB</span><span style=color:#ce5c00;font-weight:700>]</span><span style=color:#a40000>；</span>
+<span style=color:#ce5c00;font-weight:700>}</span>
+</code></pre></div><p>运行结果：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>[GC[DefNew
+    Desired Survivor size 524288 bytes,new threshold 1(max 15)
+    -age 1:676824 bytes, 676824 total
+    :5115K-&gt;660K(9216K), 0.0050136 secs]5115K-&gt;4756K(19456K), 0.0050443 secs][Times:user=0.00 sys=0.01, real=0.01 secs]
+[GC[DefNew
+    Desired Survivor size 524288 bytes,new threshold 15(max 15)
+    :4756K-&gt;0K(9216K), 0.0010571 secs]8852K-&gt;4756K(19456K), 0.0011009 secs][Times:user=0.00 sys=0.00, real=0.00 secs]
+Heap
+def new generation total 9216K,used 4178K[0x029d0000, 0x033d0000, 0x033d0000) 
+  eden space 8192K, 51%used[0x029d0000, 0x02de4828, 0x031d0000)
+  from space 1024K, 0%used[0x031d0000, 0x031d0000, 0x032d0000)
+  to space 1024K, 0%used[0x032d0000, 0x032d0000, 0x033d0000)
+  tenured generation total 10240K,used 4756K[0x033d0000, 0x03dd0000, 0x03dd0000)
+  the space 10240K, 46%used[0x033d0000, 0x038753e8, 0x03875400, 0x03dd0000)
+  compacting perm gen total 12288K,used 2114K[0x03dd0000, 0x049d0000, 0x07dd0000)
+  the space 12288K, 17%used[0x03dd0000, 0x03fe09a0, 0x03fe0a00, 0x049d0000)
+  No shared spaces configured.
+</code></pre></div><h3 id=空间分配担保>空间分配担保</h3>
+<p>在发生 Minor GC 之前，虚拟机会先检查老年代最大可用的连续空间是否大于新生代所有对象总空间，如果这个条件成立，那么 Minor GC 可以确保是安全的。如果不成立，则虚拟机会查看 HandlePromotionFailure 设置值是否允许担保失败。如果允许，那么会继续检查老年代最大可用的连续空间是否大于历次晋升到老年代对象的平均大小，如果大于，将尝试着进行一次 Minor GC，尽管这次 Minor GC 是有风险的；如果小于，或者 HandlePromotionFailure 设置不允许冒险，那这时也要改为进行一次 Full GC。</p>
+<p>下面解释一下“冒险”是冒了什么风险，前面提到过，新生代使用复制收集算法，但为了内存利用率，只使用其中一个 Survivor 空间来作为轮换备份，因此当出现大量对象在 Minor GC 后仍然存活的情况（最极端的情况就是内存回收后新生代中所有对象都存活），就需要老年代进行分配担保，把 Survivor 无法容纳的对象直接进入老年代。与生活中的贷款担保类似，老年代要进行这样的担保，前提是老年代本身还有容纳这些对象的剩余空间，一共有多少对象会活下来在实际完成内存回收之前是无法明确知道的，所以只好取之前每一次回收晋升到老年代对象容量的平均大小值作为经验值，与老年代的剩余空间进行比较，决定是否进行 Full GC 来让老年代腾出更多空间。</p>
+<p>取平均值进行比较其实仍然是一种动态概率的手段，也就是说，如果某次 Minor GC 存活后的对象突增，远远高于平均值的话，依然会导致担保失败（Handle Promotion Failure）。如果出现了 HandlePromotionFailure 失败，那就只好在失败后重新发起一次 Full GC。虽然担保失败时绕的圈子是最大的，但大部分情况下都还是会将HandlePromotionFailure 开关打开，避免 Full GC 过于频繁，参见代码清单3-9，请读者在 JDK 6 Update 24 之前的版本中运行测试。</p>
+<p>代码清单3-9　空间分配担保：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#204a87;font-weight:700>private</span> <span style=color:#204a87;font-weight:700>static</span> <span style=color:#204a87;font-weight:700>final</span> <span style=color:#000>int_1MB</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#000>1024</span><span style=color:#ce5c00;font-weight:700>*</span><span style=color:#000>1024</span><span style=color:#a40000>；</span>
+  <span style=color:#8f5902;font-style:italic>/**
+</span><span style=color:#8f5902;font-style:italic>*VM参数：-Xms20M-Xmx20M-Xmn10M-XX:+PrintGCDetails-XX:SurvivorRatio=8-XX:-HandlePromotionFailure
+</span><span style=color:#8f5902;font-style:italic>*/</span>
+  <span style=color:#5c35cc;font-weight:700>@SuppressWarnings</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;unused&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
+  <span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>static</span> <span style=color:#204a87;font-weight:700>void</span> <span style=color:#000>testHandlePromotion</span><span style=color:#ce5c00;font-weight:700>(){</span>
+  <span style=color:#204a87;font-weight:700>byte</span><span style=color:#ce5c00;font-weight:700>[]</span><span style=color:#000>allocation1</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>allocation2</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>allocation3</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>allocation4</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>allocation5</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>allocation6</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>allocation7</span><span style=color:#a40000>；</span>
+    <span style=color:#000>allocation1</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#204a87;font-weight:700>new</span> <span style=color:#204a87;font-weight:700>byte</span><span style=color:#ce5c00;font-weight:700>[</span><span style=color:#000>2</span><span style=color:#ce5c00;font-weight:700>*</span><span style=color:#000>_1MB</span><span style=color:#ce5c00;font-weight:700>]</span><span style=color:#a40000>；</span>
+    <span style=color:#000>allocation2</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#204a87;font-weight:700>new</span> <span style=color:#204a87;font-weight:700>byte</span><span style=color:#ce5c00;font-weight:700>[</span><span style=color:#000>2</span><span style=color:#ce5c00;font-weight:700>*</span><span style=color:#000>_1MB</span><span style=color:#ce5c00;font-weight:700>]</span><span style=color:#a40000>；</span>
+    <span style=color:#000>allocation3</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#204a87;font-weight:700>new</span> <span style=color:#204a87;font-weight:700>byte</span><span style=color:#ce5c00;font-weight:700>[</span><span style=color:#000>2</span><span style=color:#ce5c00;font-weight:700>*</span><span style=color:#000>_1MB</span><span style=color:#ce5c00;font-weight:700>]</span><span style=color:#a40000>；</span>
+    <span style=color:#000>allocation1</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#204a87;font-weight:700>null</span><span style=color:#a40000>；</span>
+    <span style=color:#000>allocation4</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#204a87;font-weight:700>new</span> <span style=color:#204a87;font-weight:700>byte</span><span style=color:#ce5c00;font-weight:700>[</span><span style=color:#000>2</span><span style=color:#ce5c00;font-weight:700>*</span><span style=color:#000>_1MB</span><span style=color:#ce5c00;font-weight:700>]</span><span style=color:#a40000>；</span>
+    <span style=color:#000>allocation5</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#204a87;font-weight:700>new</span> <span style=color:#204a87;font-weight:700>byte</span><span style=color:#ce5c00;font-weight:700>[</span><span style=color:#000>2</span><span style=color:#ce5c00;font-weight:700>*</span><span style=color:#000>_1MB</span><span style=color:#ce5c00;font-weight:700>]</span><span style=color:#a40000>；</span>
+    <span style=color:#000>allocation6</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#204a87;font-weight:700>new</span> <span style=color:#204a87;font-weight:700>byte</span><span style=color:#ce5c00;font-weight:700>[</span><span style=color:#000>2</span><span style=color:#ce5c00;font-weight:700>*</span><span style=color:#000>_1MB</span><span style=color:#ce5c00;font-weight:700>]</span><span style=color:#a40000>；</span>
+    <span style=color:#000>allocation4</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#204a87;font-weight:700>null</span><span style=color:#a40000>；</span>
+    <span style=color:#000>allocation5</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#204a87;font-weight:700>null</span><span style=color:#a40000>；</span>
+    <span style=color:#000>allocation6</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#204a87;font-weight:700>null</span><span style=color:#a40000>；</span>
+    <span style=color:#000>allocation7</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#204a87;font-weight:700>new</span> <span style=color:#204a87;font-weight:700>byte</span><span style=color:#ce5c00;font-weight:700>[</span><span style=color:#000>2</span><span style=color:#ce5c00;font-weight:700>*</span><span style=color:#000>_1MB</span><span style=color:#ce5c00;font-weight:700>]</span><span style=color:#a40000>；</span>
+<span style=color:#ce5c00;font-weight:700>}</span>
+</code></pre></div><p>以HandlePromotionFailure=false参数来运行的结果：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>[GC[DefNew:6651K-&gt;148K(9216K), 0.0078936 secs]6651K-&gt;4244K(19456K), 0.0079192 secs][Times:user=0.00 sys=0.02, real=0.02 secs]
+[GC[DefNew:6378K-&gt;6378K(9216K), 0.0000206secs][Tenured:4096K-&gt;4244K(10240K), 0.0042901 secs]10474K-&gt;4244K(19456K), [Perm:2104K-&gt;2104K(12288K)], 0.0043613 secs][Times:user=0.00 sys=0.00, real=0.00 secs]
+</code></pre></div><p>以HandlePromotionFailure=true参数来运行的结果：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>[GC[DefNew:6651K-&gt;148K(9216K), 0.0054913 secs]6651K-&gt;4244K(19456K), 0.0055327 secs][Times:user=0.00 sys=0.00, real=0.00 secs]
+[GC[DefNew:6378K-&gt;148K(9216K), 0.0006584 secs]10474K-&gt;4244K(19456K), 0.0006857 secs][Times:user=0.00 sys=0.00, real=0.00 secs]
+</code></pre></div><p>在 JDK 6 Update 24 之后，这个测试结果会有差异，HandlePromotionFailure 参数不会再影响到虚拟机的空间分配担保策略，观察 OpenJDK 中的源码变化（见代码清单3-10），虽然源码中还定义了 HandlePromotionFailure 参数，但是在代码中已经不会再使用它。JDK 6 Update 24 之后的规则变为只要老年代的连续空间大于新生代对象总大小或者历次晋升的平均大小就会进行 Minor GC，否则将进行 Full GC。</p>
+<p>代码清单3-10　HotSpot中空间分配检查的代码片段:</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=color:#204a87;font-weight:700>bool</span> <span style=color:#f57900>TenuredGeneration</span><span style=color:#000;font-weight:700>:</span><span style=color:#000>promotion_attempt_is_safe</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>size_t</span>
+                                                 <span style=color:#000>max_promotion_in_bytes</span><span style=color:#000;font-weight:700>)</span><span style=color:#204a87;font-weight:700>const</span><span style=color:#000;font-weight:700>{</span>
+  <span style=color:#8f5902;font-style:italic>//老年代最大可用的连续空间
+</span><span style=color:#8f5902;font-style:italic></span>  <span style=color:#000>size_t</span> <span style=color:#000>available</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#000>max_contiguous_available</span><span style=color:#000;font-weight:700>()</span><span style=color:#a40000>；</span>
+  <span style=color:#8f5902;font-style:italic>//每次晋升到老年代的平均大小
+</span><span style=color:#8f5902;font-style:italic></span>  <span style=color:#000>size_t</span> <span style=color:#000>av_promo</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>size_t</span><span style=color:#000;font-weight:700>)</span><span style=color:#000>gc_stats</span><span style=color:#000;font-weight:700>()</span><span style=color:#ce5c00;font-weight:700>-&gt;</span><span style=color:#000>avg_promoted</span><span style=color:#000;font-weight:700>()</span><span style=color:#ce5c00;font-weight:700>-&gt;</span><span style=color:#000>padded_average</span><span style=color:#000;font-weight:700>()</span><span style=color:#a40000>；</span>
+  <span style=color:#8f5902;font-style:italic>//老年代可用空间是否大于平均晋升大小, 或者老年代可用空间是否大于当此GC时新生代所有对象容量
+</span><span style=color:#8f5902;font-style:italic></span>  <span style=color:#204a87;font-weight:700>bool</span> <span style=color:#000>res</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>available</span><span style=color:#ce5c00;font-weight:700>&gt;=</span><span style=color:#000>av_promo</span><span style=color:#000;font-weight:700>)</span><span style=color:#ce5c00;font-weight:700>||</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>available</span><span style=color:#ce5c00;font-weight:700>&gt;=</span>
+                                   <span style=color:#000>max_promotion_in_bytes</span><span style=color:#000;font-weight:700>)</span><span style=color:#a40000>；</span>
+  <span style=color:#204a87;font-weight:700>return</span> <span style=color:#000>res</span><span style=color:#a40000>；</span>
+<span style=color:#000;font-weight:700>}</span>
+</code></pre></div><h2 id=37-本章小结>3.7 本章小结</h2>
+<p>本章介绍了垃圾收集的算法、几款 JDK 1.7 中提供的垃圾收集器特点以及运作原理。通过代码实例验证了 Java 虚拟机中自动内存分配及回收的主要规则。</p>
+<p>内存回收与垃圾收集器在很多时候都是影响系统性能、并发能力的主要因素之一，虚拟机之所以提供多种不同的收集器以及提供大量的调节参数，是因为只有根据实际应用需求、实现方式选择最优的收集方式才能获取最高的性能。没有固定收集器、参数组合，也没有最优的调优方法，虚拟机也就没有什么必然的内存回收行为。因此，学习虚拟机内存知识，如果要到实践调优阶段，那么必须了解每个具体收集器的行为、优势和劣势、调节参数。在接下来的两章中，作者将会介绍内存分析的工具和调优的一些具体案例。</p>
+<style>.feedback--answer{display:inline-block}.feedback--answer-no{margin-left:1em}.feedback--response{display:none;margin-top:1em}.feedback--response__visible{display:block}</style>
+<div class=d-print-none>
+<h2 class=feedback--title>Feedback</h2>
+<p class=feedback--question>Was this page helpful?</p>
+<button class="btn btn-primary mb-4 feedback--answer feedback--answer-yes">Yes</button>
+<button class="btn btn-primary mb-4 feedback--answer feedback--answer-no">No</button>
+<p class="feedback--response feedback--response-yes">
+Glad to hear it! Please <a href=https://github.com/infilos/infilos.com/issues/new>tell us how we can improve</a>.
+</p>
+<p class="feedback--response feedback--response-no">
+Sorry to hear that. Please <a href=https://github.com/infilos/infilos.com/issues/new>tell us how we can improve</a>.
+</p>
+</div>
+<script>const yesButton=document.querySelector('.feedback--answer-yes'),noButton=document.querySelector('.feedback--answer-no'),yesResponse=document.querySelector('.feedback--response-yes'),noResponse=document.querySelector('.feedback--response-no'),disableButtons=()=>{yesButton.disabled=!0,noButton.disabled=!0},sendFeedback=b=>{if(typeof ga!='function')return;const a={command:'send',hitType:'event',category:'Helpful',action:'click',label:window.location.pathname,value:b};ga(a.command,a.hitType,a.category,a.action,a.label,a.value)};yesButton.addEventListener('click',()=>{yesResponse.classList.add('feedback--response__visible'),disableButtons(),sendFeedback(1)}),noButton.addEventListener('click',()=>{noResponse.classList.add('feedback--response__visible'),disableButtons(),sendFeedback(0)})</script>
+<br>
+</div>
+</main>
+</div>
+</div>
+<footer class="bg-dark py-5 row d-print-none">
+<div class="container-fluid mx-sm-5">
+<div class=row>
+<div class="col-6 col-sm-4 text-xs-center order-sm-2">
+</div>
+<div class="col-6 col-sm-4 text-right text-xs-center order-sm-3">
+<ul class="list-inline mb-0">
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Weibo aria-label=Weibo>
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://weibo.com/u/3848950217>
+<i class="fab fa-weibo"></i>
+</a>
+</li>
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Twitter aria-label=Twitter>
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://twitter.com/zhange_zzg>
+<i class="fab fa-twitter"></i>
+</a>
+</li>
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title="Stack Overflow" aria-label="Stack Overflow">
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://stackoverflow.com>
+<i class="fab fa-stack-overflow"></i>
+</a>
+</li>
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=GitHub aria-label=GitHub>
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://github.com/infilos/infilos.com>
+<i class="fab fa-github"></i>
+</a>
+</li>
+</ul>
+</div>
+<div class="col-12 col-sm-4 text-center py-2 order-sm-2">
+<small class=text-white>&copy; 2021 infilos.com All Rights Reserved</small>
+</div>
+</div>
+</div>
+</footer>
+</div>
+<script src=/js/popper.min.js integrity=sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49 crossorigin=anonymous></script>
+<script src=/js/bootstrap.min.js integrity=sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy crossorigin=anonymous></script>
+<script src=/js/main.min.5c74b870c6953931a705f390a49c7e4c0a842ec5c83b24354758dd674343ed0d.js integrity="sha256-XHS4cMaVOTGnBfOQpJx+TAqELsXIOyQ1R1jdZ0ND7Q0=" crossorigin=anonymous></script>
+<script src=https://cdn.jsdelivr.net/npm/docsearch.js@2.6.3/dist/cdn/docsearch.min.js></script>
+<script>docsearch({apiKey:'123',indexName:'infilos_com',inputSelector:'.td-search-input',debug:!1})</script>
+</body>
+</html>

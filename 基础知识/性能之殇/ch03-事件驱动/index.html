@@ -1,0 +1,478 @@
+<!doctype html><html lang=zh class=no-js>
+<head>
+<meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no">
+<meta name=generator content="Hugo 0.88.1">
+<meta name=ROBOTS content="INDEX, FOLLOW">
+<link rel="shortcut icon" href=/favicons/favicon.ico>
+<link rel=apple-touch-icon href=/favicons/apple-touch-icon-180x180.png sizes=180x180>
+<link rel=icon type=image/png href=/favicons/favicon-16x16.png sizes=16x16>
+<link rel=icon type=image/png href=/favicons/favicon-32x32.png sizes=32x32>
+<link rel=icon type=image/png href=/favicons/android-36x36.png sizes=36x36>
+<link rel=icon type=image/png href=/favicons/android-48x48.png sizes=48x48>
+<link rel=icon type=image/png href=/favicons/android-72x72.png sizes=72x72>
+<link rel=icon type=image/png href=/favicons/android-96x96.png sizes=96x96>
+<link rel=icon type=image/png href=/favicons/android-144x144.png sizes=144x144>
+<link rel=icon type=image/png href=/favicons/android-192x192.png sizes=192x192>
+<title>事件驱动 | infilos.com</title><meta property="og:title" content="事件驱动">
+<meta property="og:description" content="Event-Driven(事件驱动)这个词这几年随着 Node.js 的大热也成了一个热词，似乎已经成了“高性能”的代名词，殊不知事件驱动其实是通用计算机的胎记，是一种与生俱来的能力。本文我们就要一起了解一下事件驱动的价值和本质。
+通用计算机中的时间驱动 首先我们定义当下最火的 x86 PC 机为典型的通用电子计算机：可以写文章，可以打游戏，可以上网聊天，可以读U盘，可以打印，可以设计三维模型，可以编辑渲染视频，可以作路由器，还可以控制巨大的工业机器。那么，这种计算机的事件驱动能力就很容易理解了：
+ 假设 Chrome 正在播放 Youtube 视频，你按下了键盘上的空格键，视频暂停了。这个操作就是事件驱动：计算机获得了你单机空格的事件，于是把视频暂停了。 假设你正在跟人聊 QQ，别人发了一段文字给你，计算机获得了网络传输事件，于是将信息提取出来显示到了屏幕上，这也是事件驱动。  事件驱动的实现方式 事件驱动本质是由 CPU 提供的，因为 CPU 作为控制器+运算器，它需要随时响应意外事件，如上面例子中的键盘和网络。
+CPU 对于意外事件的响应是依靠 Execption Control Flow(异常控制流)来实现的。
+强大的异常控制流 异常控制流是 CPU 的核心功能，它是以下听起来高大上的功能的基础。
+时间片 CPU 时间片的分配也是利用异常控制流来实现的，它让多个进程在宏观上位于同一个 CPU 核心上同时运行，而我们知道在微观上任一个时刻，每个 CPU 核心都只能运行一条指令。
+虚拟内存  这里的虚拟内存不是 Windows 的虚拟内存，是 Linux 虚拟内存，即逻辑内存。
+ 逻辑内存是用一段内存和一段磁盘上的存储空间放在一起组成的一个逻辑内存空间，对外依然表现为“线性数组内存空间”。逻辑内存引出了现代计算机的一个重要性能观念：
+ 内存局部性天然的让相邻指令需要读写的内存空间也相邻，于是可以把一个进程的内存放到磁盘上，再把一小部分的“热数据”放到内存中，让其作为磁盘的缓存，这样可以在降低很少性能的情况下，大幅提升计算机能够同时运行的进程数量，从而大幅提升性能。
+ 虚拟内存的本质其实是使用缓存+乐观的手段来提升计算机的性能。
+系统调用 系统调用是进程向操作系统索取资源的通道，这也是利用异常控制流来实现的。
+硬件中断 键盘点击、鼠标移动、网络接收到数据、麦克风有声音输入、插入 U 盘这些操作全部需要 CPU 暂时停下手头的工作，来做出响应。
+进程、线程 进程的创建、管理和销毁全部都是基于异常控制流实现的，其生命周期的钩子函数也是操作系统依赖异常控制流实现的。在 Linux 上线程和进程没有功能上的区别。
+编程语言中的 try-catch C++ 编译成二进制程序，其异常控制语句是直接基于异常控制流实现的。Java 这种硬虚拟机语言，PHP 这种软虚拟机语言，其异常控制流的一部分也是基于最底层的异常控制流来实现的，另一部分可以用逻辑判断来实现。">
+<meta property="og:type" content="article">
+<meta property="og:url" content="/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%80%A7%E8%83%BD%E4%B9%8B%E6%AE%87/ch03-%E4%BA%8B%E4%BB%B6%E9%A9%B1%E5%8A%A8/"><meta property="article:section" content="基础知识">
+<meta property="og:site_name" content="infilos.com">
+<meta itemprop=name content="事件驱动">
+<meta itemprop=description content="Event-Driven(事件驱动)这个词这几年随着 Node.js 的大热也成了一个热词，似乎已经成了“高性能”的代名词，殊不知事件驱动其实是通用计算机的胎记，是一种与生俱来的能力。本文我们就要一起了解一下事件驱动的价值和本质。
+通用计算机中的时间驱动 首先我们定义当下最火的 x86 PC 机为典型的通用电子计算机：可以写文章，可以打游戏，可以上网聊天，可以读U盘，可以打印，可以设计三维模型，可以编辑渲染视频，可以作路由器，还可以控制巨大的工业机器。那么，这种计算机的事件驱动能力就很容易理解了：
+ 假设 Chrome 正在播放 Youtube 视频，你按下了键盘上的空格键，视频暂停了。这个操作就是事件驱动：计算机获得了你单机空格的事件，于是把视频暂停了。 假设你正在跟人聊 QQ，别人发了一段文字给你，计算机获得了网络传输事件，于是将信息提取出来显示到了屏幕上，这也是事件驱动。  事件驱动的实现方式 事件驱动本质是由 CPU 提供的，因为 CPU 作为控制器+运算器，它需要随时响应意外事件，如上面例子中的键盘和网络。
+CPU 对于意外事件的响应是依靠 Execption Control Flow(异常控制流)来实现的。
+强大的异常控制流 异常控制流是 CPU 的核心功能，它是以下听起来高大上的功能的基础。
+时间片 CPU 时间片的分配也是利用异常控制流来实现的，它让多个进程在宏观上位于同一个 CPU 核心上同时运行，而我们知道在微观上任一个时刻，每个 CPU 核心都只能运行一条指令。
+虚拟内存  这里的虚拟内存不是 Windows 的虚拟内存，是 Linux 虚拟内存，即逻辑内存。
+ 逻辑内存是用一段内存和一段磁盘上的存储空间放在一起组成的一个逻辑内存空间，对外依然表现为“线性数组内存空间”。逻辑内存引出了现代计算机的一个重要性能观念：
+ 内存局部性天然的让相邻指令需要读写的内存空间也相邻，于是可以把一个进程的内存放到磁盘上，再把一小部分的“热数据”放到内存中，让其作为磁盘的缓存，这样可以在降低很少性能的情况下，大幅提升计算机能够同时运行的进程数量，从而大幅提升性能。
+ 虚拟内存的本质其实是使用缓存+乐观的手段来提升计算机的性能。
+系统调用 系统调用是进程向操作系统索取资源的通道，这也是利用异常控制流来实现的。
+硬件中断 键盘点击、鼠标移动、网络接收到数据、麦克风有声音输入、插入 U 盘这些操作全部需要 CPU 暂时停下手头的工作，来做出响应。
+进程、线程 进程的创建、管理和销毁全部都是基于异常控制流实现的，其生命周期的钩子函数也是操作系统依赖异常控制流实现的。在 Linux 上线程和进程没有功能上的区别。
+编程语言中的 try-catch C++ 编译成二进制程序，其异常控制语句是直接基于异常控制流实现的。Java 这种硬虚拟机语言，PHP 这种软虚拟机语言，其异常控制流的一部分也是基于最底层的异常控制流来实现的，另一部分可以用逻辑判断来实现。">
+<meta itemprop=wordCount content="135">
+<meta itemprop=keywords content><meta name=twitter:card content="summary">
+<meta name=twitter:title content="事件驱动">
+<meta name=twitter:description content="Event-Driven(事件驱动)这个词这几年随着 Node.js 的大热也成了一个热词，似乎已经成了“高性能”的代名词，殊不知事件驱动其实是通用计算机的胎记，是一种与生俱来的能力。本文我们就要一起了解一下事件驱动的价值和本质。
+通用计算机中的时间驱动 首先我们定义当下最火的 x86 PC 机为典型的通用电子计算机：可以写文章，可以打游戏，可以上网聊天，可以读U盘，可以打印，可以设计三维模型，可以编辑渲染视频，可以作路由器，还可以控制巨大的工业机器。那么，这种计算机的事件驱动能力就很容易理解了：
+ 假设 Chrome 正在播放 Youtube 视频，你按下了键盘上的空格键，视频暂停了。这个操作就是事件驱动：计算机获得了你单机空格的事件，于是把视频暂停了。 假设你正在跟人聊 QQ，别人发了一段文字给你，计算机获得了网络传输事件，于是将信息提取出来显示到了屏幕上，这也是事件驱动。  事件驱动的实现方式 事件驱动本质是由 CPU 提供的，因为 CPU 作为控制器+运算器，它需要随时响应意外事件，如上面例子中的键盘和网络。
+CPU 对于意外事件的响应是依靠 Execption Control Flow(异常控制流)来实现的。
+强大的异常控制流 异常控制流是 CPU 的核心功能，它是以下听起来高大上的功能的基础。
+时间片 CPU 时间片的分配也是利用异常控制流来实现的，它让多个进程在宏观上位于同一个 CPU 核心上同时运行，而我们知道在微观上任一个时刻，每个 CPU 核心都只能运行一条指令。
+虚拟内存  这里的虚拟内存不是 Windows 的虚拟内存，是 Linux 虚拟内存，即逻辑内存。
+ 逻辑内存是用一段内存和一段磁盘上的存储空间放在一起组成的一个逻辑内存空间，对外依然表现为“线性数组内存空间”。逻辑内存引出了现代计算机的一个重要性能观念：
+ 内存局部性天然的让相邻指令需要读写的内存空间也相邻，于是可以把一个进程的内存放到磁盘上，再把一小部分的“热数据”放到内存中，让其作为磁盘的缓存，这样可以在降低很少性能的情况下，大幅提升计算机能够同时运行的进程数量，从而大幅提升性能。
+ 虚拟内存的本质其实是使用缓存+乐观的手段来提升计算机的性能。
+系统调用 系统调用是进程向操作系统索取资源的通道，这也是利用异常控制流来实现的。
+硬件中断 键盘点击、鼠标移动、网络接收到数据、麦克风有声音输入、插入 U 盘这些操作全部需要 CPU 暂时停下手头的工作，来做出响应。
+进程、线程 进程的创建、管理和销毁全部都是基于异常控制流实现的，其生命周期的钩子函数也是操作系统依赖异常控制流实现的。在 Linux 上线程和进程没有功能上的区别。
+编程语言中的 try-catch C++ 编译成二进制程序，其异常控制语句是直接基于异常控制流实现的。Java 这种硬虚拟机语言，PHP 这种软虚拟机语言，其异常控制流的一部分也是基于最底层的异常控制流来实现的，另一部分可以用逻辑判断来实现。">
+<script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga('create','UA-123062585-1','auto'),ga('send','pageview'))</script>
+<script async src=https://www.google-analytics.com/analytics.js></script>
+<link rel=preload href=/scss/main.min.847464b684a6e89d7276700a5c500c17ab494dd1755b2654a7b27d8b59e3347e.css as=style>
+<link href=/scss/main.min.847464b684a6e89d7276700a5c500c17ab494dd1755b2654a7b27d8b59e3347e.css rel=stylesheet integrity>
+<script src=/js/jquery-3.5.1.min.js integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin=anonymous></script>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/docsearch.js@2/dist/cdn/docsearch.min.css>
+</head>
+<body class=td-page>
+<header>
+<nav class="js-navbar-scroll navbar navbar-expand navbar-dark flex-column flex-md-row td-navbar">
+<a class=navbar-brand href=/>
+<span class=navbar-logo><svg id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512" style="enable-background:new 0 0 512 512"><path style="fill:#ffc107" d="M432.384 143.616c-4.165-4.164-10.917-4.164-15.083.0l-60.352 60.352c-4.164 4.165-4.164 10.917.0 15.083 21.187 20.463 54.951 19.876 75.413-1.311 19.962-20.668 19.962-53.435.0-74.102L432.384 143.616z"/><path style="fill:#607d8b" d="M42.667 277.334c-5.891.003-10.669-4.771-10.672-10.662-.002-4.338 2.623-8.245 6.64-9.882l234.667-96c5.455-2.233 11.687.38 13.92 5.835s-.38 11.687-5.835 13.92l-234.667 96C45.433 277.069 44.056 277.337 42.667 277.334z"/><path style="fill:#546e7a" d="M391.552 56.448l-32-32C343.938 8.745 322.689-.059 300.544.0h-3.755c-46.082.024-83.432 37.374-83.456 83.456v3.755c-.053 22.138 8.75 43.377 24.448 58.987l32 32c4.165 4.164 10.917 4.164 15.083.0L391.531 71.531C395.701 67.372 395.71 60.62 391.552 56.448z"/><path style="fill:#607d8b" d="M160 469.334c-3.279.006-6.379-1.497-8.405-4.075L34.261 315.926c-3.635-4.636-2.823-11.341 1.813-14.976s11.341-2.823 14.976 1.813l117.333 149.333c3.629 4.641 2.809 11.344-1.832 14.973C164.681 468.533 162.375 469.329 160 469.334z"/><path style="fill:#455a64" d="M487.467 86.848l-3.669-3.648c-37.687-36.557-97.71-36.197-134.955.811l-51.413 51.413c-36.996 37.25-37.357 97.263-.811 134.955l3.584 3.669c1.7 2.457 4.671 3.706 7.616 3.2 2.831.005 5.548-1.115 7.552-3.115l172.181-172.181c4.189-4.143 4.226-10.896.083-15.085-.028-.028-.055-.056-.083-.083L487.467 86.848z"/><g><path style="fill:#ffc107" d="M501.333 192H480c-5.891.0-10.667-4.776-10.667-10.667s4.776-10.667 10.667-10.667h21.333c5.891.0 10.667 4.776 10.667 10.667S507.225 192 501.333 192z"/><path style="fill:#ffc107" d="M394.667 298.667c-5.891.0-10.667-4.776-10.667-10.667v-21.333c0-5.891 4.776-10.667 10.667-10.667 5.891.0 10.667 4.776 10.667 10.667V288C405.333 293.891 400.558 298.667 394.667 298.667z"/><path style="fill:#ffc107" d="M480 277.334c-2.831.005-5.548-1.115-7.552-3.115l-21.333-21.333c-4.093-4.237-3.975-10.99.262-15.083 4.134-3.993 10.687-3.993 14.821.0l21.333 21.333c4.159 4.172 4.148 10.926-.024 15.085C485.514 276.209 482.815 277.327 480 277.334z"/></g><g><path style="fill:#455a64" d="M266.667 448H96c-29.455.0-53.333 23.878-53.333 53.333.0 5.891 4.776 10.667 10.667 10.667h256c5.891.0 10.667-4.776 10.667-10.667C320 471.878 296.122 448 266.667 448z"/><circle style="fill:#455a64" cx="32" cy="288" r="32"/></g><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/></svg></span><span class=font-weight-bold>infilos.com</span>
+</a>
+<div class="collapse navbar-collapse" id=navbarSupportedContent>
+<ul class="navbar-nav mr-auto">
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+基础
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/%e6%93%8d%e4%bd%9c%e7%b3%bb%e7%bb%9f>操作系统</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/%e6%80%a7%e8%83%bd%e4%b9%8b%e6%ae%87>性能之殇</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/io%e6%a8%a1%e5%9e%8b>IO 模型</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/%e7%bd%91%e7%bb%9c%e5%9f%ba%e7%a1%80>网络基础</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/tcp-ip>TCP-IP</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/http>HTTP</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+语言
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/java>Java 编程</a>
+<a class=dropdown-item href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/jvm-core>JVM 核心</a>
+<a class=dropdown-item href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/jvm-concurrent>JVM 并发</a>
+<a class=dropdown-item href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/scala>Scala 编程</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+框架库
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93/spring>Spring</a>
+<a class=dropdown-item href=/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93/hikari>Hikari</a>
+<a class=dropdown-item href=/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93/parboiled>Parboiled</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+分布式
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%88%86%e5%b8%83%e5%bc%8f/base>基本构成</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+大数据
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%ad%98%e5%82%a8%e7%b3%bb%e7%bb%9f>存储系统</a>
+<a class=dropdown-item href=/%e6%9f%a5%e8%af%a2%e7%b3%bb%e7%bb%9f>查询系统</a>
+<a class=dropdown-item href=/%e6%b6%88%e6%81%af%e7%b3%bb%e7%bb%9f>消息系统</a>
+<a class=dropdown-item href=/%e5%a4%84%e7%90%86%e7%b3%bb%e7%bb%9f>处理系统</a>
+<a class=dropdown-item href=/%e7%ae%a1%e7%90%86%e7%b3%bb%e7%bb%9f>管理系统</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+中后台
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e8%ae%be%e6%96%bd>基础设施</a>
+<a class=dropdown-item href=/%e4%ba%a4%e4%ba%92%e7%95%8c%e9%9d%a2>交互界面</a>
+<a class=dropdown-item href=/%e4%b8%9a%e5%8a%a1%e7%b3%bb%e7%bb%9f>业务系统</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+模式架构
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e6%a8%a1%e5%bc%8f%e6%9e%b6%e6%9e%84/design-pattern>设计模式</a>
+<a class=dropdown-item href=/%e6%a8%a1%e5%bc%8f%e6%9e%b6%e6%9e%84/micro-service>微服务架构</a>
+</div>
+</li>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e9%9d%a2%e8%af%95%e9%97%ae%e7%ad%94>
+<span>面试</span>
+</a>
+</li>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e7%ae%a1%e7%90%86%e8%b7%af%e5%be%84>
+<span>管理</span>
+</a>
+</li>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e5%bc%80%e6%ba%90%e9%a1%b9%e7%9b%ae>
+<span>开源</span>
+</a>
+</li>
+</ul>
+<div class="form-inline my-2 my-lg-0">
+<div class="nav-item nav-search-item my-2 my-md-0">
+<input type=search class="form-control td-search-input" placeholder="&#xf002; 站内搜索…" aria-label=站内搜索… autocomplete=off>
+</div>
+</div>
+</div>
+</nav>
+</header>
+<div class="container-fluid td-outer">
+<div class=td-main>
+<div class="row flex-xl-nowrap">
+<aside class="col-12 col-md-3 col-xl-2 td-sidebar d-print-none">
+<div id=td-sidebar-menu class=td-sidebar__inner>
+<div id=content-mobile>
+<form class="td-sidebar__search d-flex align-items-center">
+<input type=search class="form-control td-search-input" placeholder="&#xf002; 站内搜索…" aria-label=站内搜索… autocomplete=off>
+<button class="btn btn-link td-sidebar__toggle d-md-none p-0 ml-3 fas fa-bars" type=button data-toggle=collapse data-target=#td-section-nav aria-controls=td-docs-nav aria-expanded=false aria-label="Toggle section navigation">
+</button>
+</form>
+</div>
+<div id=content-desktop></div>
+<nav class="collapse td-sidebar-nav" id=td-section-nav>
+<ul class="td-sidebar-nav__section pr-md-3 ul-0">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e59fbae7a180e79fa5e8af86-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section tree-root" id=m-e59fbae7a180e79fa5e8af86><span>基础知识</span></a>
+<ul class=ul-1>
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9f-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9f><span>操作系统</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch02-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/ch02/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch02><span>基本概念</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch04-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/ch04/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch04><span>抽象-进程</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch05-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/ch05/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch05><span>插叙-进程 API</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch06-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/ch06/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch06><span>机制-受限直接执行</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch07-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/ch07/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch07><span>进程调度</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch08-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/ch08/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch08><span>调度-多级反馈队列</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch09-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/ch09/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch09><span>调度-比例份额</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch10-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/ch10/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch10><span>多处理器调度</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch13-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/ch13/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch13><span>抽象-地址空间</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch14-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/ch14/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch14><span>内存接口</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch15-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/ch15/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch15><span>地址转换</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch16-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/ch16/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch16><span>分段</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e59fbae7a180e79fa5e8af86e680a7e883bde4b98be6ae87-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%80%A7%E8%83%BD%E4%B9%8B%E6%AE%87/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e59fbae7a180e79fa5e8af86e680a7e883bde4b98be6ae87><span>性能之殇</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e59fbae7a180e79fa5e8af86e680a7e883bde4b98be6ae87ch01-e586afe8afbae4be9de69bbce793b6e9a288-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%80%A7%E8%83%BD%E4%B9%8B%E6%AE%87/ch01-%E5%86%AF%E8%AF%BA%E4%BE%9D%E6%9B%BC%E7%93%B6%E9%A2%88/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e680a7e883bde4b98be6ae87ch01-e586afe8afbae4be9de69bbce793b6e9a288><span>冯诺依曼瓶颈</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e59fbae7a180e79fa5e8af86e680a7e883bde4b98be6ae87ch02-cpue5ae9ee78eb0-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%80%A7%E8%83%BD%E4%B9%8B%E6%AE%87/ch02-cpu%E5%AE%9E%E7%8E%B0/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e680a7e883bde4b98be6ae87ch02-cpue5ae9ee78eb0><span>CPU实现</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child active-path" id=m-e59fbae7a180e79fa5e8af86e680a7e883bde4b98be6ae87ch03-e4ba8be4bbb6e9a9b1e58aa8-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%80%A7%E8%83%BD%E4%B9%8B%E6%AE%87/ch03-%E4%BA%8B%E4%BB%B6%E9%A9%B1%E5%8A%A8/ class="align-left pl-0 active td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e680a7e883bde4b98be6ae87ch03-e4ba8be4bbb6e9a9b1e58aa8><span class=td-sidebar-nav-active-item>事件驱动</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e59fbae7a180e79fa5e8af86e680a7e883bde4b98be6ae87ch04-unixe8bf9be7a88be6a8a1e59e8b-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%80%A7%E8%83%BD%E4%B9%8B%E6%AE%87/ch04-unix%E8%BF%9B%E7%A8%8B%E6%A8%A1%E5%9E%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e680a7e883bde4b98be6ae87ch04-unixe8bf9be7a88be6a8a1e59e8b><span>Unix进程模型</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e59fbae7a180e79fa5e8af86e680a7e883bde4b98be6ae87ch05-dpdk-sdn-e5a4a7e9a1b5e58685e5ad98-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%80%A7%E8%83%BD%E4%B9%8B%E6%AE%87/ch05-dpdk-sdn-%E5%A4%A7%E9%A1%B5%E5%86%85%E5%AD%98/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e680a7e883bde4b98be6ae87ch05-dpdk-sdn-e5a4a7e9a1b5e58685e5ad98><span>DPDK-SDN-大页内存</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e59fbae7a180e79fa5e8af86e680a7e883bde4b98be6ae87ch06-e5b180e983a8e680a7e4b88ee4b990e8a782-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%80%A7%E8%83%BD%E4%B9%8B%E6%AE%87/ch06-%E5%B1%80%E9%83%A8%E6%80%A7%E4%B8%8E%E4%B9%90%E8%A7%82/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e680a7e883bde4b98be6ae87ch06-e5b180e983a8e680a7e4b88ee4b990e8a782><span>局部性与乐观</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e59fbae7a180e79fa5e8af86e680a7e883bde4b98be6ae87ch07-e585b1e5908ce79a84e793b6e9a288-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%80%A7%E8%83%BD%E4%B9%8B%E6%AE%87/ch07-%E5%85%B1%E5%90%8C%E7%9A%84%E7%93%B6%E9%A2%88/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e680a7e883bde4b98be6ae87ch07-e585b1e5908ce79a84e793b6e9a288><span>共同的瓶颈</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e59fbae7a180e79fa5e8af86ioe6a8a1e59e8b-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/io%E6%A8%A1%E5%9E%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e59fbae7a180e79fa5e8af86ioe6a8a1e59e8b><span>IO 模型</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86ioe6a8a1e59e8bch01-ioe6a8a1e59e8b-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/io%E6%A8%A1%E5%9E%8B/ch01-io%E6%A8%A1%E5%9E%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86ioe6a8a1e59e8bch01-ioe6a8a1e59e8b><span>Linux IO/线程 模型</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86ioe6a8a1e59e8bch02-ioe99bb6e68bb7e8b49d-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/io%E6%A8%A1%E5%9E%8B/ch02-io%E9%9B%B6%E6%8B%B7%E8%B4%9D/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86ioe6a8a1e59e8bch02-ioe99bb6e68bb7e8b49d><span>Linux IO 零拷贝</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86ioe6a8a1e59e8bch03-nettye6a8a1e59e8b-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/io%E6%A8%A1%E5%9E%8B/ch03-netty%E6%A8%A1%E5%9E%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86ioe6a8a1e59e8bch03-nettye6a8a1e59e8b><span>Netty IO 模型</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86ioe6a8a1e59e8bch04-redise6a8a1e59e8b-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/io%E6%A8%A1%E5%9E%8B/ch04-redis%E6%A8%A1%E5%9E%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86ioe6a8a1e59e8bch04-redise6a8a1e59e8b><span>Redis IO 模型</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86ioe6a8a1e59e8bch05-nginxe6a8a1e59e8b-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/io%E6%A8%A1%E5%9E%8B/ch05-nginx%E6%A8%A1%E5%9E%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86ioe6a8a1e59e8bch05-nginxe6a8a1e59e8b><span>Nginx IO 模型</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86ioe6a8a1e59e8bch06-mysqle6a8a1e59e8b-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/io%E6%A8%A1%E5%9E%8B/ch06-mysql%E6%A8%A1%E5%9E%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86ioe6a8a1e59e8bch06-mysqle6a8a1e59e8b><span>MySQL 模型</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180><span>网络基础</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch01-e7bd91e7bb9ce58886e5b182-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/ch01-%E7%BD%91%E7%BB%9C%E5%88%86%E5%B1%82/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch01-e7bd91e7bb9ce58886e5b182><span>网络分层</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch02-ipe58d8fe8aeae-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/ch02-ip%E5%8D%8F%E8%AE%AE/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch02-ipe58d8fe8aeae><span>IP 协议</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch03-tcpe58d8fe8aeae-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/ch03-tcp%E5%8D%8F%E8%AE%AE/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch03-tcpe58d8fe8aeae><span>TCP 协议</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch04-udpe58d8fe8aeae-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/ch04-udp%E5%8D%8F%E8%AE%AE/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch04-udpe58d8fe8aeae><span>UDP 协议</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch05-httpe58d8fe8aeae-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/ch05-http%E5%8D%8F%E8%AE%AE/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch05-httpe58d8fe8aeae><span>HTTP 协议</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch06-websocket-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/ch06-websocket/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch06-websocket><span>WebSocket</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch07-dnse69c8de58aa1-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/ch07-dns%E6%9C%8D%E5%8A%A1/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch07-dnse69c8de58aa1><span>DNS 服务</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch08-e6b58fe8a788e599a8e8bf87e7a88b-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/ch08-%E6%B5%8F%E8%A7%88%E5%99%A8%E8%BF%87%E7%A8%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch08-e6b58fe8a788e599a8e8bf87e7a88b><span>浏览器过程</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e59fbae7a180e79fa5e8af86tcp-ip-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/tcp-ip/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e59fbae7a180e79fa5e8af86tcp-ip><span>TCP-IP</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86tcp-ipch01-e68fa1e6898be69cbae588b6-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/tcp-ip/ch01-%E6%8F%A1%E6%89%8B%E6%9C%BA%E5%88%B6/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86tcp-ipch01-e68fa1e6898be69cbae588b6><span>握手机制</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86tcp-ipch02-e58d8fe8aeaee6a088e7b2bee8a681-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/tcp-ip/ch02-%E5%8D%8F%E8%AE%AE%E6%A0%88%E7%B2%BE%E8%A6%81/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86tcp-ipch02-e58d8fe8aeaee6a088e7b2bee8a681><span>协议栈精要</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86tcp-ipch03-e8b083e4bc98e58f82e695b0-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/tcp-ip/ch03-%E8%B0%83%E4%BC%98%E5%8F%82%E6%95%B0/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86tcp-ipch03-e8b083e4bc98e58f82e695b0><span>调优参数</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86tcp-ipch04-e79086e8a7a3e7bd91e7bb9ce6a088-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/tcp-ip/ch04-%E7%90%86%E8%A7%A3%E7%BD%91%E7%BB%9C%E6%A0%88/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86tcp-ipch04-e79086e8a7a3e7bd91e7bb9ce6a088><span>理解网络栈</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86tcp-ipch05-rfc-1180-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/tcp-ip/ch05-rfc-1180/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86tcp-ipch05-rfc-1180><span>RFC-1180</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86tcp-ipch06-e58fafe99da0e680a7e79691e997ae-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/tcp-ip/ch06-%E5%8F%AF%E9%9D%A0%E6%80%A7%E7%96%91%E9%97%AE/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86tcp-ipch06-e58fafe99da0e680a7e79691e997ae><span>可靠性疑问</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e59fbae7a180e79fa5e8af86http-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/http/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e59fbae7a180e79fa5e8af86http><span>HTTP</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86httpch01-e6a682e8bfb0-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/http/ch01-%E6%A6%82%E8%BF%B0/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86httpch01-e6a682e8bfb0><span>HTTP 概述</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86httpch02-urle4b88ee8b584e6ba90-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/http/ch02-url%E4%B8%8E%E8%B5%84%E6%BA%90/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86httpch02-urle4b88ee8b584e6ba90><span>URL 与资源</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86httpch03-httpe68aa5e69687-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/http/ch03-http%E6%8A%A5%E6%96%87/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86httpch03-httpe68aa5e69687><span>HTTP 报文</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86httpch04-e8bf9ee68ea5e7aea1e79086-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/http/ch04-%E8%BF%9E%E6%8E%A5%E7%AE%A1%E7%90%86/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86httpch04-e8bf9ee68ea5e7aea1e79086><span>连接管理</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86httpch99-e680a7e883bde68ea2e7b4a2-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/http/ch99-%E6%80%A7%E8%83%BD%E6%8E%A2%E7%B4%A2/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86httpch99-e680a7e883bde68ea2e7b4a2><span>性能探索</span></a>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</div>
+</aside>
+<aside class="d-none d-xl-block col-xl-2 td-sidebar-toc d-print-none">
+<div class="td-page-meta ml-2 pb-1 pt-2 mb-0">
+<a href=https://github.com/infilos/infilos.com/edit/master/content/zh/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/%e6%80%a7%e8%83%bd%e4%b9%8b%e6%ae%87/CH03-%e4%ba%8b%e4%bb%b6%e9%a9%b1%e5%8a%a8.md target=_blank><i class="fa fa-edit fa-fw"></i> 编辑此页</a>
+<a href="https://github.com/infilos/infilos.com/new/master/content/zh/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/%e6%80%a7%e8%83%bd%e4%b9%8b%e6%ae%87/CH03-%e4%ba%8b%e4%bb%b6%e9%a9%b1%e5%8a%a8.md?filename=change-me.md&value=---%0Atitle%3A+%22Long+Page+Title%22%0AlinkTitle%3A+%22Short+Nav+Title%22%0Aweight%3A+100%0Adescription%3A+%3E-%0A+++++Page+description+for+heading+and+indexes.%0A---%0A%0A%23%23+Heading%0A%0AEdit+this+template+to+create+your+new+page.%0A%0A%2A+Give+it+a+good+name%2C+ending+in+%60.md%60+-+e.g.+%60getting-started.md%60%0A%2A+Edit+the+%22front+matter%22+section+at+the+top+of+the+page+%28weight+controls+how+its+ordered+amongst+other+pages+in+the+same+directory%3B+lowest+number+first%29.%0A%2A+Add+a+good+commit+message+at+the+bottom+of+the+page+%28%3C80+characters%3B+use+the+extended+description+field+for+more+detail%29.%0A%2A+Create+a+new+branch+so+you+can+preview+your+new+file+and+request+a+review+via+Pull+Request.%0A" target=_blank><i class="fa fa-edit fa-fw"></i> 添加子页面</a>
+<a href="https://github.com/infilos/infilos.com/issues/new?title=%e4%ba%8b%e4%bb%b6%e9%a9%b1%e5%8a%a8" target=_blank><i class="fab fa-github fa-fw"></i> 提交文档问题</a>
+<a id=print href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%80%A7%E8%83%BD%E4%B9%8B%E6%AE%87/_print/><i class="fa fa-print fa-fw"></i> 整节打印</a>
+</div>
+<div class=td-toc><nav id=TableOfContents>
+<ul>
+<li><a href=#通用计算机中的时间驱动>通用计算机中的时间驱动</a></li>
+<li><a href=#事件驱动的实现方式>事件驱动的实现方式</a></li>
+<li><a href=#强大的异常控制流>强大的异常控制流</a>
+<ul>
+<li><a href=#时间片>时间片</a></li>
+<li><a href=#虚拟内存>虚拟内存</a></li>
+<li><a href=#系统调用>系统调用</a></li>
+<li><a href=#硬件中断>硬件中断</a></li>
+<li><a href=#进程线程>进程、线程</a></li>
+<li><a href=#编程语言中的-try-catch>编程语言中的 try-catch</a></li>
+</ul>
+</li>
+<li><a href=#基于异常控制流的事件驱动>基于异常控制流的事件驱动</a>
+<ul>
+<li><a href=#kqueue>Kqueue</a></li>
+<li><a href=#epoll-是什么>epoll 是什么</a></li>
+<li><a href=#epoll-做了什么>epoll 做了什么</a></li>
+</ul>
+</li>
+</ul>
+</nav></div>
+</aside>
+<main class="col-12 col-md-9 col-xl-8 pl-md-5" role=main>
+<nav aria-label=breadcrumb class="d-none d-md-block d-print-none">
+<ol class="breadcrumb spb-1">
+<li class=breadcrumb-item>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/>基础知识</a>
+</li>
+<li class=breadcrumb-item>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%80%A7%E8%83%BD%E4%B9%8B%E6%AE%87/>性能之殇</a>
+</li>
+<li class="breadcrumb-item active" aria-current=page>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%80%A7%E8%83%BD%E4%B9%8B%E6%AE%87/ch03-%E4%BA%8B%E4%BB%B6%E9%A9%B1%E5%8A%A8/>事件驱动</a>
+</li>
+</ol>
+</nav>
+<div class=td-content>
+<h1>事件驱动</h1>
+<header class=article-meta>
+</header>
+<p>Event-Driven(事件驱动)这个词这几年随着 Node.js 的大热也成了一个热词，似乎已经成了“高性能”的代名词，殊不知事件驱动其实是通用计算机的胎记，是一种与生俱来的能力。本文我们就要一起了解一下事件驱动的价值和本质。</p>
+<h2 id=通用计算机中的时间驱动>通用计算机中的时间驱动</h2>
+<p>首先我们定义当下最火的 x86 PC 机为典型的通用电子计算机：可以写文章，可以打游戏，可以上网聊天，可以读U盘，可以打印，可以设计三维模型，可以编辑渲染视频，可以作路由器，还可以控制巨大的工业机器。那么，这种计算机的事件驱动能力就很容易理解了：</p>
+<ol>
+<li>假设 Chrome 正在播放 Youtube 视频，你按下了键盘上的空格键，视频暂停了。这个操作就是事件驱动：计算机获得了你单机空格的事件，于是把视频暂停了。</li>
+<li>假设你正在跟人聊 QQ，别人发了一段文字给你，计算机获得了网络传输事件，于是将信息提取出来显示到了屏幕上，这也是事件驱动。</li>
+</ol>
+<h2 id=事件驱动的实现方式>事件驱动的实现方式</h2>
+<p>事件驱动本质是由 CPU 提供的，因为 CPU 作为控制器+运算器，它需要随时响应意外事件，如上面例子中的键盘和网络。</p>
+<p>CPU 对于意外事件的响应是依靠 Execption Control Flow(异常控制流)来实现的。</p>
+<h2 id=强大的异常控制流>强大的异常控制流</h2>
+<p>异常控制流是 CPU 的核心功能，它是以下听起来高大上的功能的基础。</p>
+<h3 id=时间片>时间片</h3>
+<p>CPU 时间片的分配也是利用异常控制流来实现的，它让多个进程在宏观上位于同一个 CPU 核心上同时运行，而我们知道在微观上任一个时刻，每个 CPU 核心都只能运行一条指令。</p>
+<h3 id=虚拟内存>虚拟内存</h3>
+<blockquote>
+<p>这里的虚拟内存不是 Windows 的虚拟内存，是 Linux 虚拟内存，即逻辑内存。</p>
+</blockquote>
+<p>逻辑内存是用一段内存和一段磁盘上的存储空间放在一起组成的一个逻辑内存空间，对外依然表现为“线性数组内存空间”。逻辑内存引出了现代计算机的一个重要性能观念：</p>
+<blockquote>
+<p>内存局部性天然的让相邻指令需要读写的内存空间也相邻，于是可以把一个进程的内存放到磁盘上，再把一小部分的“热数据”放到内存中，让其作为磁盘的缓存，这样可以在降低很少性能的情况下，大幅提升计算机能够同时运行的进程数量，从而大幅提升性能。</p>
+</blockquote>
+<p>虚拟内存的本质其实是使用缓存+乐观的手段来提升计算机的性能。</p>
+<h3 id=系统调用>系统调用</h3>
+<p>系统调用是进程向操作系统索取资源的通道，这也是利用异常控制流来实现的。</p>
+<h3 id=硬件中断>硬件中断</h3>
+<p>键盘点击、鼠标移动、网络接收到数据、麦克风有声音输入、插入 U 盘这些操作全部需要 CPU 暂时停下手头的工作，来做出响应。</p>
+<h3 id=进程线程>进程、线程</h3>
+<p>进程的创建、管理和销毁全部都是基于异常控制流实现的，其生命周期的钩子函数也是操作系统依赖异常控制流实现的。在 Linux 上线程和进程没有功能上的区别。</p>
+<h3 id=编程语言中的-try-catch>编程语言中的 try-catch</h3>
+<p>C++ 编译成二进制程序，其异常控制语句是直接基于异常控制流实现的。Java 这种硬虚拟机语言，PHP 这种软虚拟机语言，其异常控制流的一部分也是基于最底层的异常控制流来实现的，另一部分可以用逻辑判断来实现。</p>
+<h2 id=基于异常控制流的事件驱动>基于异常控制流的事件驱动</h2>
+<p>其实现在人们讨论的事件驱动，是由 Linux 内核提供的 epoll，是 2002年10月18日伴随着 kernel 2.5.44 发布的，是 Linux 首次将操作系统中的 IO 事件和异常控制流暴露给了进程，实现了本文开头提的事件驱动。</p>
+<h3 id=kqueue>Kqueue</h3>
+<p>FreeBSD 4.1 版本于 2000 年发布，一起携带的 Kqueue 是 BSD 系统中事件驱动的 API 提供者。BSD 系统如今已遍地开花，从 macOS 到 iOS，从 watchOS 到 PS4 游戏机，都受到了 Kqueue 的蒙荫。</p>
+<h3 id=epoll-是什么>epoll 是什么</h3>
+<p>操作系统本身就是事件驱动的，所以 epoll 并不是什么新发明，而只是把本来不给用户空间的 API 暴露给了用户空间而已。</p>
+<h3 id=epoll-做了什么>epoll 做了什么</h3>
+<p>网络 IO 是一种纯异步的 IO 模型，所以 Nginx 和 Node.js 都基于 epoll 实现了完全的事件驱动，活得好了相比于 select/epoll 巨量的性能提升。而磁盘 IO 就没有这么幸运的，因此磁盘本身也是单体阻塞资源：即，有进程在写磁盘的时候，其他写入请求只能等待，就是天王老子来了也不行，磁盘做不到呀。所以磁盘 IO 是基于 epoll 实现的非阻塞 IO，但是其底层依旧是异步阻塞，即便这样，性能也已经爆棚了。Node 的磁盘 IO 性能远超其他解释型语言，过去几年在 web 后端霸占了一些对磁盘 IO 要求较高的领域。</p>
+<style>.feedback--answer{display:inline-block}.feedback--answer-no{margin-left:1em}.feedback--response{display:none;margin-top:1em}.feedback--response__visible{display:block}</style>
+<div class=d-print-none>
+<h2 class=feedback--title>Feedback</h2>
+<p class=feedback--question>Was this page helpful?</p>
+<button class="btn btn-primary mb-4 feedback--answer feedback--answer-yes">Yes</button>
+<button class="btn btn-primary mb-4 feedback--answer feedback--answer-no">No</button>
+<p class="feedback--response feedback--response-yes">
+Glad to hear it! Please <a href=https://github.com/infilos/infilos.com/issues/new>tell us how we can improve</a>.
+</p>
+<p class="feedback--response feedback--response-no">
+Sorry to hear that. Please <a href=https://github.com/infilos/infilos.com/issues/new>tell us how we can improve</a>.
+</p>
+</div>
+<script>const yesButton=document.querySelector('.feedback--answer-yes'),noButton=document.querySelector('.feedback--answer-no'),yesResponse=document.querySelector('.feedback--response-yes'),noResponse=document.querySelector('.feedback--response-no'),disableButtons=()=>{yesButton.disabled=!0,noButton.disabled=!0},sendFeedback=b=>{if(typeof ga!='function')return;const a={command:'send',hitType:'event',category:'Helpful',action:'click',label:window.location.pathname,value:b};ga(a.command,a.hitType,a.category,a.action,a.label,a.value)};yesButton.addEventListener('click',()=>{yesResponse.classList.add('feedback--response__visible'),disableButtons(),sendFeedback(1)}),noButton.addEventListener('click',()=>{noResponse.classList.add('feedback--response__visible'),disableButtons(),sendFeedback(0)})</script>
+<br>
+</div>
+</main>
+</div>
+</div>
+<footer class="bg-dark py-5 row d-print-none">
+<div class="container-fluid mx-sm-5">
+<div class=row>
+<div class="col-6 col-sm-4 text-xs-center order-sm-2">
+</div>
+<div class="col-6 col-sm-4 text-right text-xs-center order-sm-3">
+<ul class="list-inline mb-0">
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Weibo aria-label=Weibo>
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://weibo.com/u/3848950217>
+<i class="fab fa-weibo"></i>
+</a>
+</li>
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Twitter aria-label=Twitter>
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://twitter.com/zhange_zzg>
+<i class="fab fa-twitter"></i>
+</a>
+</li>
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title="Stack Overflow" aria-label="Stack Overflow">
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://stackoverflow.com>
+<i class="fab fa-stack-overflow"></i>
+</a>
+</li>
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=GitHub aria-label=GitHub>
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://github.com/infilos/infilos.com>
+<i class="fab fa-github"></i>
+</a>
+</li>
+</ul>
+</div>
+<div class="col-12 col-sm-4 text-center py-2 order-sm-2">
+<small class=text-white>&copy; 2021 infilos.com All Rights Reserved</small>
+</div>
+</div>
+</div>
+</footer>
+</div>
+<script src=/js/popper.min.js integrity=sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49 crossorigin=anonymous></script>
+<script src=/js/bootstrap.min.js integrity=sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy crossorigin=anonymous></script>
+<script src=/js/main.min.5c74b870c6953931a705f390a49c7e4c0a842ec5c83b24354758dd674343ed0d.js integrity="sha256-XHS4cMaVOTGnBfOQpJx+TAqELsXIOyQ1R1jdZ0ND7Q0=" crossorigin=anonymous></script>
+<script src=https://cdn.jsdelivr.net/npm/docsearch.js@2.6.3/dist/cdn/docsearch.min.js></script>
+<script>docsearch({apiKey:'123',indexName:'infilos_com',inputSelector:'.td-search-input',debug:!1})</script>
+</body>
+</html>

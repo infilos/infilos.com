@@ -1,0 +1,452 @@
+<!doctype html><html lang=zh class=no-js>
+<head>
+<meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no">
+<meta name=generator content="Hugo 0.88.1">
+<meta name=ROBOTS content="INDEX, FOLLOW">
+<link rel="shortcut icon" href=/favicons/favicon.ico>
+<link rel=apple-touch-icon href=/favicons/apple-touch-icon-180x180.png sizes=180x180>
+<link rel=icon type=image/png href=/favicons/favicon-16x16.png sizes=16x16>
+<link rel=icon type=image/png href=/favicons/favicon-32x32.png sizes=32x32>
+<link rel=icon type=image/png href=/favicons/android-36x36.png sizes=36x36>
+<link rel=icon type=image/png href=/favicons/android-48x48.png sizes=48x48>
+<link rel=icon type=image/png href=/favicons/android-72x72.png sizes=72x72>
+<link rel=icon type=image/png href=/favicons/android-96x96.png sizes=96x96>
+<link rel=icon type=image/png href=/favicons/android-144x144.png sizes=144x144>
+<link rel=icon type=image/png href=/favicons/android-192x192.png sizes=192x192>
+<title>CH05-创建型-单例 | infilos.com</title><meta property="og:title" content="CH05-创建型-单例">
+<meta property="og:description" content="模式动机 对于系统中的某些类来说，只有一个实例很重要。比如，系统中可以有多个打印任务，但是只能有一个正在工作的任务；一个系统只能有一个窗口管理器和文件系统；一个系统只能有一个计时器或 ID 生成器。
+方式是让类自身负责保存它的唯一实例，保证没有其他实例被创建，并且提供一个访问该实例的方法。
+模式定义 单例模式(Singleton Pattern)，确保某个类只有一个实例，而且自行实例化并向整个系统提供这个实例，这个类称为单例类，它提供全局访问的方法。
+单例模式的要点有三个：类只能有一个实例；必须自行创建这个实例；必须向整个系统提供这个实例。
+模式结构 单例模式仅有一个角色：Singleton
+类图  时序图  代码实例 模式分析 单例模式的目的是保证一个类仅有一个实例，并提供一个访问该实例的全局访问点。单例模式的角色只有一个，就是单例类-Singleton。单例类拥有一个私有构造函数，确保用户无法通过new关键字直接实例化它。该模式中包含一个静态私有成员变量与静态公共工厂方法，工厂方法负责检验实例是否存在并实例化自己，然后存储在静态成员变量中，以确保只有一个实例被创建。
+在单例模式的实现过程中，需要注意一下要点：
+ 单例类的构造函数为私有； 提供一个自身的静态私有成员变量； 提供一个共有的静态工厂方法。  优点  提供了对唯一实例的受控访问。因为单例类封装了它唯一的实例，所以他可以严格控制客户端怎样以及何时访问它，并为设计及开发团队提供了共享的概念。 由于在系统内存中只存在一个对象，因此可以节约系统资源，对于一些需要频繁创建和销毁的对象，该模式可以提高系统性能。 允许可变数目的实例。可以基于单例模式进行扩展，使用与单例控制相似的方法来获得指定个数的对象实例。  缺点  由于单例模式中没有抽象层，因此单例类的扩展有很大的困难。 单例类的职责过重，在一定程度上违背了单一职责原则。因为单例类既充当了工厂角色，提供了工厂方法，同时又充当产品角色，包含一些业务方法，将产品的创建和产品本身的功能融合到了一起。 滥用单例将带来一些负面问题，比如，为了节省资源将数据库连接池对象设计成单例类，可能会导致共享该连接池对象的程序过多而出现连接池溢出；如果该对象长期不使用将被 GC 回收，导致对象状态丢失。  适用场景  系统中只需要一个实例对象，如提供一个序列号生成器，或资源消耗太大而只能创建一个实例。 客户端调用类的单个实例只允许适用一个公共访问点，不能通过其他途径访问该实例。 系统中要求一个类只能有一个实例时才应当使用单例模式。  ">
+<meta property="og:type" content="article">
+<meta property="og:url" content="/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch05/"><meta property="article:section" content="模式架构">
+<meta property="og:site_name" content="infilos.com">
+<meta itemprop=name content="CH05-创建型-单例">
+<meta itemprop=description content="模式动机 对于系统中的某些类来说，只有一个实例很重要。比如，系统中可以有多个打印任务，但是只能有一个正在工作的任务；一个系统只能有一个窗口管理器和文件系统；一个系统只能有一个计时器或 ID 生成器。
+方式是让类自身负责保存它的唯一实例，保证没有其他实例被创建，并且提供一个访问该实例的方法。
+模式定义 单例模式(Singleton Pattern)，确保某个类只有一个实例，而且自行实例化并向整个系统提供这个实例，这个类称为单例类，它提供全局访问的方法。
+单例模式的要点有三个：类只能有一个实例；必须自行创建这个实例；必须向整个系统提供这个实例。
+模式结构 单例模式仅有一个角色：Singleton
+类图  时序图  代码实例 模式分析 单例模式的目的是保证一个类仅有一个实例，并提供一个访问该实例的全局访问点。单例模式的角色只有一个，就是单例类-Singleton。单例类拥有一个私有构造函数，确保用户无法通过new关键字直接实例化它。该模式中包含一个静态私有成员变量与静态公共工厂方法，工厂方法负责检验实例是否存在并实例化自己，然后存储在静态成员变量中，以确保只有一个实例被创建。
+在单例模式的实现过程中，需要注意一下要点：
+ 单例类的构造函数为私有； 提供一个自身的静态私有成员变量； 提供一个共有的静态工厂方法。  优点  提供了对唯一实例的受控访问。因为单例类封装了它唯一的实例，所以他可以严格控制客户端怎样以及何时访问它，并为设计及开发团队提供了共享的概念。 由于在系统内存中只存在一个对象，因此可以节约系统资源，对于一些需要频繁创建和销毁的对象，该模式可以提高系统性能。 允许可变数目的实例。可以基于单例模式进行扩展，使用与单例控制相似的方法来获得指定个数的对象实例。  缺点  由于单例模式中没有抽象层，因此单例类的扩展有很大的困难。 单例类的职责过重，在一定程度上违背了单一职责原则。因为单例类既充当了工厂角色，提供了工厂方法，同时又充当产品角色，包含一些业务方法，将产品的创建和产品本身的功能融合到了一起。 滥用单例将带来一些负面问题，比如，为了节省资源将数据库连接池对象设计成单例类，可能会导致共享该连接池对象的程序过多而出现连接池溢出；如果该对象长期不使用将被 GC 回收，导致对象状态丢失。  适用场景  系统中只需要一个实例对象，如提供一个序列号生成器，或资源消耗太大而只能创建一个实例。 客户端调用类的单个实例只允许适用一个公共访问点，不能通过其他途径访问该实例。 系统中要求一个类只能有一个实例时才应当使用单例模式。  ">
+<meta itemprop=wordCount content="34">
+<meta itemprop=keywords content><meta name=twitter:card content="summary">
+<meta name=twitter:title content="CH05-创建型-单例">
+<meta name=twitter:description content="模式动机 对于系统中的某些类来说，只有一个实例很重要。比如，系统中可以有多个打印任务，但是只能有一个正在工作的任务；一个系统只能有一个窗口管理器和文件系统；一个系统只能有一个计时器或 ID 生成器。
+方式是让类自身负责保存它的唯一实例，保证没有其他实例被创建，并且提供一个访问该实例的方法。
+模式定义 单例模式(Singleton Pattern)，确保某个类只有一个实例，而且自行实例化并向整个系统提供这个实例，这个类称为单例类，它提供全局访问的方法。
+单例模式的要点有三个：类只能有一个实例；必须自行创建这个实例；必须向整个系统提供这个实例。
+模式结构 单例模式仅有一个角色：Singleton
+类图  时序图  代码实例 模式分析 单例模式的目的是保证一个类仅有一个实例，并提供一个访问该实例的全局访问点。单例模式的角色只有一个，就是单例类-Singleton。单例类拥有一个私有构造函数，确保用户无法通过new关键字直接实例化它。该模式中包含一个静态私有成员变量与静态公共工厂方法，工厂方法负责检验实例是否存在并实例化自己，然后存储在静态成员变量中，以确保只有一个实例被创建。
+在单例模式的实现过程中，需要注意一下要点：
+ 单例类的构造函数为私有； 提供一个自身的静态私有成员变量； 提供一个共有的静态工厂方法。  优点  提供了对唯一实例的受控访问。因为单例类封装了它唯一的实例，所以他可以严格控制客户端怎样以及何时访问它，并为设计及开发团队提供了共享的概念。 由于在系统内存中只存在一个对象，因此可以节约系统资源，对于一些需要频繁创建和销毁的对象，该模式可以提高系统性能。 允许可变数目的实例。可以基于单例模式进行扩展，使用与单例控制相似的方法来获得指定个数的对象实例。  缺点  由于单例模式中没有抽象层，因此单例类的扩展有很大的困难。 单例类的职责过重，在一定程度上违背了单一职责原则。因为单例类既充当了工厂角色，提供了工厂方法，同时又充当产品角色，包含一些业务方法，将产品的创建和产品本身的功能融合到了一起。 滥用单例将带来一些负面问题，比如，为了节省资源将数据库连接池对象设计成单例类，可能会导致共享该连接池对象的程序过多而出现连接池溢出；如果该对象长期不使用将被 GC 回收，导致对象状态丢失。  适用场景  系统中只需要一个实例对象，如提供一个序列号生成器，或资源消耗太大而只能创建一个实例。 客户端调用类的单个实例只允许适用一个公共访问点，不能通过其他途径访问该实例。 系统中要求一个类只能有一个实例时才应当使用单例模式。  ">
+<script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga('create','UA-123062585-1','auto'),ga('send','pageview'))</script>
+<script async src=https://www.google-analytics.com/analytics.js></script>
+<link rel=preload href=/scss/main.min.847464b684a6e89d7276700a5c500c17ab494dd1755b2654a7b27d8b59e3347e.css as=style>
+<link href=/scss/main.min.847464b684a6e89d7276700a5c500c17ab494dd1755b2654a7b27d8b59e3347e.css rel=stylesheet integrity>
+<script src=/js/jquery-3.5.1.min.js integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin=anonymous></script>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/docsearch.js@2/dist/cdn/docsearch.min.css>
+</head>
+<body class=td-page>
+<header>
+<nav class="js-navbar-scroll navbar navbar-expand navbar-dark flex-column flex-md-row td-navbar">
+<a class=navbar-brand href=/>
+<span class=navbar-logo><svg id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512" style="enable-background:new 0 0 512 512"><path style="fill:#ffc107" d="M432.384 143.616c-4.165-4.164-10.917-4.164-15.083.0l-60.352 60.352c-4.164 4.165-4.164 10.917.0 15.083 21.187 20.463 54.951 19.876 75.413-1.311 19.962-20.668 19.962-53.435.0-74.102L432.384 143.616z"/><path style="fill:#607d8b" d="M42.667 277.334c-5.891.003-10.669-4.771-10.672-10.662-.002-4.338 2.623-8.245 6.64-9.882l234.667-96c5.455-2.233 11.687.38 13.92 5.835s-.38 11.687-5.835 13.92l-234.667 96C45.433 277.069 44.056 277.337 42.667 277.334z"/><path style="fill:#546e7a" d="M391.552 56.448l-32-32C343.938 8.745 322.689-.059 300.544.0h-3.755c-46.082.024-83.432 37.374-83.456 83.456v3.755c-.053 22.138 8.75 43.377 24.448 58.987l32 32c4.165 4.164 10.917 4.164 15.083.0L391.531 71.531C395.701 67.372 395.71 60.62 391.552 56.448z"/><path style="fill:#607d8b" d="M160 469.334c-3.279.006-6.379-1.497-8.405-4.075L34.261 315.926c-3.635-4.636-2.823-11.341 1.813-14.976s11.341-2.823 14.976 1.813l117.333 149.333c3.629 4.641 2.809 11.344-1.832 14.973C164.681 468.533 162.375 469.329 160 469.334z"/><path style="fill:#455a64" d="M487.467 86.848l-3.669-3.648c-37.687-36.557-97.71-36.197-134.955.811l-51.413 51.413c-36.996 37.25-37.357 97.263-.811 134.955l3.584 3.669c1.7 2.457 4.671 3.706 7.616 3.2 2.831.005 5.548-1.115 7.552-3.115l172.181-172.181c4.189-4.143 4.226-10.896.083-15.085-.028-.028-.055-.056-.083-.083L487.467 86.848z"/><g><path style="fill:#ffc107" d="M501.333 192H480c-5.891.0-10.667-4.776-10.667-10.667s4.776-10.667 10.667-10.667h21.333c5.891.0 10.667 4.776 10.667 10.667S507.225 192 501.333 192z"/><path style="fill:#ffc107" d="M394.667 298.667c-5.891.0-10.667-4.776-10.667-10.667v-21.333c0-5.891 4.776-10.667 10.667-10.667 5.891.0 10.667 4.776 10.667 10.667V288C405.333 293.891 400.558 298.667 394.667 298.667z"/><path style="fill:#ffc107" d="M480 277.334c-2.831.005-5.548-1.115-7.552-3.115l-21.333-21.333c-4.093-4.237-3.975-10.99.262-15.083 4.134-3.993 10.687-3.993 14.821.0l21.333 21.333c4.159 4.172 4.148 10.926-.024 15.085C485.514 276.209 482.815 277.327 480 277.334z"/></g><g><path style="fill:#455a64" d="M266.667 448H96c-29.455.0-53.333 23.878-53.333 53.333.0 5.891 4.776 10.667 10.667 10.667h256c5.891.0 10.667-4.776 10.667-10.667C320 471.878 296.122 448 266.667 448z"/><circle style="fill:#455a64" cx="32" cy="288" r="32"/></g><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/></svg></span><span class=font-weight-bold>infilos.com</span>
+</a>
+<div class="collapse navbar-collapse" id=navbarSupportedContent>
+<ul class="navbar-nav mr-auto">
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+基础
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/%e6%93%8d%e4%bd%9c%e7%b3%bb%e7%bb%9f>操作系统</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/%e6%80%a7%e8%83%bd%e4%b9%8b%e6%ae%87>性能之殇</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/io%e6%a8%a1%e5%9e%8b>IO 模型</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/%e7%bd%91%e7%bb%9c%e5%9f%ba%e7%a1%80>网络基础</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/tcp-ip>TCP-IP</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/http>HTTP</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+语言
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/java>Java 编程</a>
+<a class=dropdown-item href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/jvm-core>JVM 核心</a>
+<a class=dropdown-item href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/jvm-concurrent>JVM 并发</a>
+<a class=dropdown-item href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/scala>Scala 编程</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+框架库
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93/spring>Spring</a>
+<a class=dropdown-item href=/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93/hikari>Hikari</a>
+<a class=dropdown-item href=/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93/parboiled>Parboiled</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+分布式
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%88%86%e5%b8%83%e5%bc%8f/base>基本构成</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+大数据
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%ad%98%e5%82%a8%e7%b3%bb%e7%bb%9f>存储系统</a>
+<a class=dropdown-item href=/%e6%9f%a5%e8%af%a2%e7%b3%bb%e7%bb%9f>查询系统</a>
+<a class=dropdown-item href=/%e6%b6%88%e6%81%af%e7%b3%bb%e7%bb%9f>消息系统</a>
+<a class=dropdown-item href=/%e5%a4%84%e7%90%86%e7%b3%bb%e7%bb%9f>处理系统</a>
+<a class=dropdown-item href=/%e7%ae%a1%e7%90%86%e7%b3%bb%e7%bb%9f>管理系统</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+中后台
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e8%ae%be%e6%96%bd>基础设施</a>
+<a class=dropdown-item href=/%e4%ba%a4%e4%ba%92%e7%95%8c%e9%9d%a2>交互界面</a>
+<a class=dropdown-item href=/%e4%b8%9a%e5%8a%a1%e7%b3%bb%e7%bb%9f>业务系统</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+模式架构
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e6%a8%a1%e5%bc%8f%e6%9e%b6%e6%9e%84/design-pattern>设计模式</a>
+<a class=dropdown-item href=/%e6%a8%a1%e5%bc%8f%e6%9e%b6%e6%9e%84/micro-service>微服务架构</a>
+</div>
+</li>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e9%9d%a2%e8%af%95%e9%97%ae%e7%ad%94>
+<span>面试</span>
+</a>
+</li>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e7%ae%a1%e7%90%86%e8%b7%af%e5%be%84>
+<span>管理</span>
+</a>
+</li>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e5%bc%80%e6%ba%90%e9%a1%b9%e7%9b%ae>
+<span>开源</span>
+</a>
+</li>
+</ul>
+<div class="form-inline my-2 my-lg-0">
+<div class="nav-item nav-search-item my-2 my-md-0">
+<input type=search class="form-control td-search-input" placeholder="&#xf002; 站内搜索…" aria-label=站内搜索… autocomplete=off>
+</div>
+</div>
+</div>
+</nav>
+</header>
+<div class="container-fluid td-outer">
+<div class=td-main>
+<div class="row flex-xl-nowrap">
+<aside class="col-12 col-md-3 col-xl-2 td-sidebar d-print-none">
+<div id=td-sidebar-menu class=td-sidebar__inner>
+<div id=content-mobile>
+<form class="td-sidebar__search d-flex align-items-center">
+<input type=search class="form-control td-search-input" placeholder="&#xf002; 站内搜索…" aria-label=站内搜索… autocomplete=off>
+<button class="btn btn-link td-sidebar__toggle d-md-none p-0 ml-3 fas fa-bars" type=button data-toggle=collapse data-target=#td-section-nav aria-controls=td-docs-nav aria-expanded=false aria-label="Toggle section navigation">
+</button>
+</form>
+</div>
+<div id=content-desktop></div>
+<nav class="collapse td-sidebar-nav" id=td-section-nav>
+<ul class="td-sidebar-nav__section pr-md-3 ul-0">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e6a8a1e5bc8fe69eb6e69e84-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section tree-root" id=m-e6a8a1e5bc8fe69eb6e69e84><span>架构模式</span></a>
+<ul class=ul-1>
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e6a8a1e5bc8fe69eb6e69e84design-pattern-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a8a1e5bc8fe69eb6e69e84design-pattern><span>设计模式</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-pattern-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-pattern><span>Java 模式</span></a>
+<ul class="ul-3 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch01-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch01/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch01><span>CH01-创建型-简单工厂</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch02-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch02/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch02><span>CH02-创建型-工厂方法</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch03-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch03/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch03><span>CH03-创建型-抽象工厂</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch04-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch04/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch04><span>CH04-创建型-建造者</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child active-path" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch05-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch05/ class="align-left pl-0 active td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch05><span class=td-sidebar-nav-active-item>CH05-创建型-单例</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch06-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch06/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch06><span>CH06-结构型-适配器</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch07-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch07/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch07><span>CH07-结构型-桥接</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch08-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch08/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch08><span>CH08-结构型-装饰器</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch09-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch09/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch09><span>CH09-结构型-外观</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch10-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch10/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch10><span>CH10-结构型-享元</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch11-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch11/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch11><span>CH11-结构型-代理</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch12-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch12/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch12><span>CH12-行为型-命令</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch13-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch13/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch13><span>CH13-行为型-中介者</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch14-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch14/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch14><span>CH14-行为型-观察者</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch15-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch15/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch15><span>CH15-行为型-状态</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch16-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch16/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch16><span>CH16-行为型-策略</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-pattern-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-pattern><span>Scala 模式</span></a>
+<ul class="ul-3 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch01-e6a8a1e5bc8fe58886e7b1bb-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch01-%E6%A8%A1%E5%BC%8F%E5%88%86%E7%B1%BB/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch01-e6a8a1e5bc8fe58886e7b1bb><span>CH01-模式分类</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch02-e789b9e8b4a8e4b88ee6b7b7e585a5e7bb84e59088-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch02-%E7%89%B9%E8%B4%A8%E4%B8%8E%E6%B7%B7%E5%85%A5%E7%BB%84%E5%90%88/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch02-e789b9e8b4a8e4b88ee6b7b7e585a5e7bb84e59088><span>CH02-特质与混入组合</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch03-e7bb9fe4b880e58c96-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch03-%E7%BB%9F%E4%B8%80%E5%8C%96/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch03-e7bb9fe4b880e58c96><span>CH03-统一化</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch04-e68abde8b1a1e4b88ee887aae7b1bbe59e8b-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch04-%E6%8A%BD%E8%B1%A1%E4%B8%8E%E8%87%AA%E7%B1%BB%E5%9E%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch04-e68abde8b1a1e4b88ee887aae7b1bbe59e8b><span>CH04-抽象与自类型</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch05-aop-e4b88ee7bb84e4bbb6-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch05-aop-%E4%B8%8E%E7%BB%84%E4%BB%B6/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch05-aop-e4b88ee7bb84e4bbb6><span>CH05-AOP 与组件</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch06-0-e5889be5bbbae59e8be6a8a1e5bc8f-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch06-0-%E5%88%9B%E5%BB%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch06-0-e5889be5bbbae59e8be6a8a1e5bc8f><span>CH06-创建型模式</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch06-1-e5b7a5e58e82e696b9e6b395-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch06-1-%E5%B7%A5%E5%8E%82%E6%96%B9%E6%B3%95/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch06-1-e5b7a5e58e82e696b9e6b395><span>CH06-1-工厂方法</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch06-2-e68abde8b1a1e5b7a5e58e82-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch06-2-%E6%8A%BD%E8%B1%A1%E5%B7%A5%E5%8E%82/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch06-2-e68abde8b1a1e5b7a5e58e82><span>CH06-2-抽象工厂</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch06-3-e585b6e4bb96e5b7a5e58e82e6a8a1e5bc8f-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch06-3-%E5%85%B6%E4%BB%96%E5%B7%A5%E5%8E%82%E6%A8%A1%E5%BC%8F/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch06-3-e585b6e4bb96e5b7a5e58e82e6a8a1e5bc8f><span>CH06-3-其他工厂模式</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch06-4-e68792e5889de5a78be58c96-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch06-4-%E6%87%92%E5%88%9D%E5%A7%8B%E5%8C%96/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch06-4-e68792e5889de5a78be58c96><span>CH06-4-懒初始化</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch06-5-e58d95e4be8be6a8a1e5bc8f-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch06-5-%E5%8D%95%E4%BE%8B%E6%A8%A1%E5%BC%8F/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch06-5-e58d95e4be8be6a8a1e5bc8f><span>CH06-5-单例模式</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch06-6-e69e84e5bbbae599a8e6a8a1e5bc8f-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch06-6-%E6%9E%84%E5%BB%BA%E5%99%A8%E6%A8%A1%E5%BC%8F/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch06-6-e69e84e5bbbae599a8e6a8a1e5bc8f><span>CH06-6-构建器模式</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch06-7-e58e9fe59e8be6a8a1e5bc8f-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch06-7-%E5%8E%9F%E5%9E%8B%E6%A8%A1%E5%BC%8F/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch06-7-e58e9fe59e8be6a8a1e5bc8f><span>CH06-7-原型模式</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch07-0-e7bb93e69e84e59e8be6a8a1e5bc8f-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch07-0-%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch07-0-e7bb93e69e84e59e8be6a8a1e5bc8f><span>CH07-结构型模式</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch07-1-e98082e9858de599a8e6a8a1e5bc8f-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch07-1-%E9%80%82%E9%85%8D%E5%99%A8%E6%A8%A1%E5%BC%8F/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch07-1-e98082e9858de599a8e6a8a1e5bc8f><span>CH07-1-适配器模式</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch07-2-e8a385e9a5b0e599a8e6a8a1e5bc8f-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch07-2-%E8%A3%85%E9%A5%B0%E5%99%A8%E6%A8%A1%E5%BC%8F/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch07-2-e8a385e9a5b0e599a8e6a8a1e5bc8f><span>CH07-2-装饰器模式</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch07-3-e6a1a5e68ea5e6a8a1e5bc8f-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch07-3-%E6%A1%A5%E6%8E%A5%E6%A8%A1%E5%BC%8F/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch07-3-e6a1a5e68ea5e6a8a1e5bc8f><span>CH07-3-桥接模式</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch07-4-e7bb84e59088e6a8a1e5bc8f-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch07-4-%E7%BB%84%E5%90%88%E6%A8%A1%E5%BC%8F/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch07-4-e7bb84e59088e6a8a1e5bc8f><span>CH07-4-组合模式</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch07-5-e5a496e8a782e6a8a1e5bc8f-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch07-5-%E5%A4%96%E8%A7%82%E6%A8%A1%E5%BC%8F/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch07-5-e5a496e8a782e6a8a1e5bc8f><span>CH07-5-外观模式</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch07-6-e4baabe58583e6a8a1e5bc8f-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch07-6-%E4%BA%AB%E5%85%83%E6%A8%A1%E5%BC%8F/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch07-6-e4baabe58583e6a8a1e5bc8f><span>CH07-6-享元模式</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch07-7-e4bba3e79086e6a8a1e5bc8f-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch07-7-%E4%BB%A3%E7%90%86%E6%A8%A1%E5%BC%8F/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch07-7-e4bba3e79086e6a8a1e5bc8f><span>CH07-7-代理模式</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch08-e8a18ce4b8bae59e8be6a8a1e5bc8f-1-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch08-%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F-1/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch08-e8a18ce4b8bae59e8be6a8a1e5bc8f-1><span>CH08-行为型模式-1</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch09-e8a18ce4b8bae59e8be6a8a1e5bc8f-2-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch09-%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F-2/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch09-e8a18ce4b8bae59e8be6a8a1e5bc8f-2><span>CH09-行为型模式-2</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch10-e587bde695b0e5bc8fe6a8a1e5bc8fe79086e8aeba-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch10-%E5%87%BD%E6%95%B0%E5%BC%8F%E6%A8%A1%E5%BC%8F%E7%90%86%E8%AE%BA/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch10-e587bde695b0e5bc8fe6a8a1e5bc8fe79086e8aeba><span>CH10-函数式模式理论</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch11-e587bde695b0e5bc8fe6a8a1e5bc8fe5ba94e794a8-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch11-%E5%87%BD%E6%95%B0%E5%BC%8F%E6%A8%A1%E5%BC%8F%E5%BA%94%E7%94%A8/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch11-e587bde695b0e5bc8fe6a8a1e5bc8fe5ba94e794a8><span>CH11-函数式模式应用</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch12-e5ae9ee99985e5ba94e794a8-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch12-%E5%AE%9E%E9%99%85%E5%BA%94%E7%94%A8/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch12-e5ae9ee99985e5ba94e794a8><span>CH12-实际应用</span></a>
+</li>
+</ul>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a8a1e5bc8fe69eb6e69e84micro-service-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/micro-service/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a8a1e5bc8fe69eb6e69e84micro-service><span>微服务架构</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84micro-servicepattern-overview-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/micro-service/pattern-overview/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84micro-servicepattern-overview><span>模式概览</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84micro-servicems-disasters-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/micro-service/ms-disasters/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84micro-servicems-disasters><span>微服务灾难</span></a>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</div>
+</aside>
+<aside class="d-none d-xl-block col-xl-2 td-sidebar-toc d-print-none">
+<div class="td-page-meta ml-2 pb-1 pt-2 mb-0">
+<a href=https://github.com/infilos/infilos.com/edit/master/content/zh/%e6%a8%a1%e5%bc%8f%e6%9e%b6%e6%9e%84/design-pattern/java-pattern/CH05.md target=_blank><i class="fa fa-edit fa-fw"></i> 编辑此页</a>
+<a href="https://github.com/infilos/infilos.com/new/master/content/zh/%e6%a8%a1%e5%bc%8f%e6%9e%b6%e6%9e%84/design-pattern/java-pattern/CH05.md?filename=change-me.md&value=---%0Atitle%3A+%22Long+Page+Title%22%0AlinkTitle%3A+%22Short+Nav+Title%22%0Aweight%3A+100%0Adescription%3A+%3E-%0A+++++Page+description+for+heading+and+indexes.%0A---%0A%0A%23%23+Heading%0A%0AEdit+this+template+to+create+your+new+page.%0A%0A%2A+Give+it+a+good+name%2C+ending+in+%60.md%60+-+e.g.+%60getting-started.md%60%0A%2A+Edit+the+%22front+matter%22+section+at+the+top+of+the+page+%28weight+controls+how+its+ordered+amongst+other+pages+in+the+same+directory%3B+lowest+number+first%29.%0A%2A+Add+a+good+commit+message+at+the+bottom+of+the+page+%28%3C80+characters%3B+use+the+extended+description+field+for+more+detail%29.%0A%2A+Create+a+new+branch+so+you+can+preview+your+new+file+and+request+a+review+via+Pull+Request.%0A" target=_blank><i class="fa fa-edit fa-fw"></i> 添加子页面</a>
+<a href="https://github.com/infilos/infilos.com/issues/new?title=CH05-%e5%88%9b%e5%bb%ba%e5%9e%8b-%e5%8d%95%e4%be%8b" target=_blank><i class="fab fa-github fa-fw"></i> 提交文档问题</a>
+<a id=print href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/_print/><i class="fa fa-print fa-fw"></i> 整节打印</a>
+</div>
+<div class=td-toc><nav id=TableOfContents>
+<ul>
+<li>
+<ul>
+<li><a href=#模式动机>模式动机</a></li>
+<li><a href=#模式定义>模式定义</a></li>
+<li><a href=#模式结构>模式结构</a></li>
+<li><a href=#类图>类图</a></li>
+<li><a href=#时序图>时序图</a></li>
+<li><a href=#代码实例>代码实例</a></li>
+<li><a href=#模式分析>模式分析</a></li>
+<li><a href=#优点>优点</a></li>
+<li><a href=#缺点>缺点</a></li>
+<li><a href=#适用场景>适用场景</a></li>
+</ul>
+</li>
+</ul>
+</nav></div>
+</aside>
+<main class="col-12 col-md-9 col-xl-8 pl-md-5" role=main>
+<nav aria-label=breadcrumb class="d-none d-md-block d-print-none">
+<ol class="breadcrumb spb-1">
+<li class=breadcrumb-item>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/>架构模式</a>
+</li>
+<li class=breadcrumb-item>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/>设计模式</a>
+</li>
+<li class=breadcrumb-item>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/>Java 模式</a>
+</li>
+<li class="breadcrumb-item active" aria-current=page>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch05/>CH05-创建型-单例</a>
+</li>
+</ol>
+</nav>
+<div class=td-content>
+<h1>CH05-创建型-单例</h1>
+<header class=article-meta>
+</header>
+<h3 id=模式动机>模式动机</h3>
+<p>对于系统中的某些类来说，<strong>只有一个实例</strong>很重要。比如，系统中可以有多个打印任务，但是只能有一个正在工作的任务；一个系统只能有一个窗口管理器和文件系统；一个系统只能有一个计时器或 ID 生成器。</p>
+<p>方式是让类自身负责保存它的唯一实例，保证没有其他实例被创建，并且提供一个访问该实例的方法。</p>
+<h3 id=模式定义>模式定义</h3>
+<p><strong>单例模式(Singleton Pattern)</strong>，确保某个类只有一个实例，而且自行实例化并向整个系统提供这个实例，这个类称为单例类，它提供全局访问的方法。</p>
+<p>单例模式的要点有三个：类只能有一个实例；必须自行创建这个实例；必须向整个系统提供这个实例。</p>
+<h3 id=模式结构>模式结构</h3>
+<p>单例模式仅有一个角色：Singleton</p>
+<h3 id=类图>类图</h3>
+<div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20190220134417.png style=display:block;width:70% alt=NAME align=center>
+</div>
+<h3 id=时序图>时序图</h3>
+<div align=center>
+<img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20190220134428.png style=display:block;width:70% alt=NAME align=center>
+</div>
+<h3 id=代码实例>代码实例</h3>
+<h3 id=模式分析>模式分析</h3>
+<p>单例模式的目的是<strong>保证一个类仅有一个实例，并提供一个访问该实例的全局访问点</strong>。单例模式的角色只有一个，就是单例类-Singleton。单例类拥有一个私有构造函数，确保用户无法通过<code>new</code>关键字直接实例化它。该模式中<strong>包含一个静态私有成员变量与静态公共工厂方法</strong>，工厂方法负责检验实例是否存在并实例化自己，然后存储在静态成员变量中，以确保只有一个实例被创建。</p>
+<p>在单例模式的实现过程中，需要注意一下要点：</p>
+<ul>
+<li>单例类的构造函数为私有；</li>
+<li>提供一个自身的静态私有成员变量；</li>
+<li>提供一个共有的静态工厂方法。</li>
+</ul>
+<h3 id=优点>优点</h3>
+<ul>
+<li>提供了对唯一实例的受控访问。因为单例类封装了它唯一的实例，所以他可以严格控制客户端怎样以及何时访问它，并为设计及开发团队提供了共享的概念。</li>
+<li>由于在系统内存中只存在一个对象，因此可以节约系统资源，对于一些需要频繁创建和销毁的对象，该模式可以提高系统性能。</li>
+<li>允许可变数目的实例。可以基于单例模式进行扩展，使用与单例控制相似的方法来获得指定个数的对象实例。</li>
+</ul>
+<h3 id=缺点>缺点</h3>
+<ul>
+<li>由于单例模式中没有抽象层，因此单例类的扩展有很大的困难。</li>
+<li>单例类的职责过重，在一定程度上违背了<strong>单一职责原则</strong>。因为单例类既充当了工厂角色，提供了工厂方法，同时又充当产品角色，包含一些业务方法，将产品的创建和产品本身的功能融合到了一起。</li>
+<li>滥用单例将带来一些负面问题，比如，为了节省资源将数据库连接池对象设计成单例类，可能会导致共享该连接池对象的程序过多而出现连接池溢出；如果该对象长期不使用将被 GC 回收，导致对象状态丢失。</li>
+</ul>
+<h3 id=适用场景>适用场景</h3>
+<ul>
+<li>系统中只需要一个实例对象，如提供一个序列号生成器，或资源消耗太大而只能创建一个实例。</li>
+<li>客户端调用类的单个实例只允许适用一个公共访问点，不能通过其他途径访问该实例。</li>
+<li>系统中要求一个类只能有一个实例时才应当使用单例模式。</li>
+</ul>
+<style>.feedback--answer{display:inline-block}.feedback--answer-no{margin-left:1em}.feedback--response{display:none;margin-top:1em}.feedback--response__visible{display:block}</style>
+<div class=d-print-none>
+<h2 class=feedback--title>Feedback</h2>
+<p class=feedback--question>Was this page helpful?</p>
+<button class="btn btn-primary mb-4 feedback--answer feedback--answer-yes">Yes</button>
+<button class="btn btn-primary mb-4 feedback--answer feedback--answer-no">No</button>
+<p class="feedback--response feedback--response-yes">
+Glad to hear it! Please <a href=https://github.com/infilos/infilos.com/issues/new>tell us how we can improve</a>.
+</p>
+<p class="feedback--response feedback--response-no">
+Sorry to hear that. Please <a href=https://github.com/infilos/infilos.com/issues/new>tell us how we can improve</a>.
+</p>
+</div>
+<script>const yesButton=document.querySelector('.feedback--answer-yes'),noButton=document.querySelector('.feedback--answer-no'),yesResponse=document.querySelector('.feedback--response-yes'),noResponse=document.querySelector('.feedback--response-no'),disableButtons=()=>{yesButton.disabled=!0,noButton.disabled=!0},sendFeedback=b=>{if(typeof ga!='function')return;const a={command:'send',hitType:'event',category:'Helpful',action:'click',label:window.location.pathname,value:b};ga(a.command,a.hitType,a.category,a.action,a.label,a.value)};yesButton.addEventListener('click',()=>{yesResponse.classList.add('feedback--response__visible'),disableButtons(),sendFeedback(1)}),noButton.addEventListener('click',()=>{noResponse.classList.add('feedback--response__visible'),disableButtons(),sendFeedback(0)})</script>
+<br>
+</div>
+</main>
+</div>
+</div>
+<footer class="bg-dark py-5 row d-print-none">
+<div class="container-fluid mx-sm-5">
+<div class=row>
+<div class="col-6 col-sm-4 text-xs-center order-sm-2">
+</div>
+<div class="col-6 col-sm-4 text-right text-xs-center order-sm-3">
+<ul class="list-inline mb-0">
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Weibo aria-label=Weibo>
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://weibo.com/u/3848950217>
+<i class="fab fa-weibo"></i>
+</a>
+</li>
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Twitter aria-label=Twitter>
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://twitter.com/zhange_zzg>
+<i class="fab fa-twitter"></i>
+</a>
+</li>
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title="Stack Overflow" aria-label="Stack Overflow">
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://stackoverflow.com>
+<i class="fab fa-stack-overflow"></i>
+</a>
+</li>
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=GitHub aria-label=GitHub>
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://github.com/infilos/infilos.com>
+<i class="fab fa-github"></i>
+</a>
+</li>
+</ul>
+</div>
+<div class="col-12 col-sm-4 text-center py-2 order-sm-2">
+<small class=text-white>&copy; 2021 infilos.com All Rights Reserved</small>
+</div>
+</div>
+</div>
+</footer>
+</div>
+<script src=/js/popper.min.js integrity=sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49 crossorigin=anonymous></script>
+<script src=/js/bootstrap.min.js integrity=sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy crossorigin=anonymous></script>
+<script src=/js/main.min.5c74b870c6953931a705f390a49c7e4c0a842ec5c83b24354758dd674343ed0d.js integrity="sha256-XHS4cMaVOTGnBfOQpJx+TAqELsXIOyQ1R1jdZ0ND7Q0=" crossorigin=anonymous></script>
+<script src=https://cdn.jsdelivr.net/npm/docsearch.js@2.6.3/dist/cdn/docsearch.min.js></script>
+<script>docsearch({apiKey:'123',indexName:'infilos_com',inputSelector:'.td-search-input',debug:!1})</script>
+</body>
+</html>

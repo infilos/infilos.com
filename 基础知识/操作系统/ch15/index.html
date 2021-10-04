@@ -1,0 +1,513 @@
+<!doctype html><html lang=zh class=no-js>
+<head>
+<meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no">
+<meta name=generator content="Hugo 0.88.1">
+<meta name=ROBOTS content="INDEX, FOLLOW">
+<link rel="shortcut icon" href=/favicons/favicon.ico>
+<link rel=apple-touch-icon href=/favicons/apple-touch-icon-180x180.png sizes=180x180>
+<link rel=icon type=image/png href=/favicons/favicon-16x16.png sizes=16x16>
+<link rel=icon type=image/png href=/favicons/favicon-32x32.png sizes=32x32>
+<link rel=icon type=image/png href=/favicons/android-36x36.png sizes=36x36>
+<link rel=icon type=image/png href=/favicons/android-48x48.png sizes=48x48>
+<link rel=icon type=image/png href=/favicons/android-72x72.png sizes=72x72>
+<link rel=icon type=image/png href=/favicons/android-96x96.png sizes=96x96>
+<link rel=icon type=image/png href=/favicons/android-144x144.png sizes=144x144>
+<link rel=icon type=image/png href=/favicons/android-192x192.png sizes=192x192>
+<title>地址转换 | infilos.com</title><meta property="og:title" content="地址转换">
+<meta property="og:description" content="在实现 CPU 虚拟化时，我们遵循的一般准则被称为受限直接访问(LDE)。LDE 背后的想法很简单：让程序运行的大部分指令直接访问硬件，只在一些关键点由操作系统介入，以确保“在正确的时间地点，做正确的事情”。为了实现高效的虚拟化，操作系统应该尽量让程序自己运行，同时通过在关键点的及时介入，来保持对硬件的控制。高效和控制是现代操作系统的两个主要目标。
+在实现虚拟内存时，我们将追求类似的战略，在实现高效和控制的同时，提供期望的虚拟化。高效决定了我们要利用硬件的支持，这在开始的时候非常初级，但会逐渐变得相当复杂。控制意味着操作系统要确保应用程序只能访问它自己的内存空间。因此，要保护应用程序不会互相影响且不影响操作系统本身，我们还是需要硬件的帮助。最后，我们对虚拟内存还有一点要求，即灵活性。具体来说，我们希望程序能够以任何方式访问它自己的地址空间，从而让操作系统更易编程。所以关键问题在于：
+ 关键问题：如何高效、灵活的虚拟化内存
+ 我们利用了一种通用技术，有时被称为硬件的地址转换，简称地址转换。它可以被看做是受限执行这种一般方法的补充。利用地址转换，硬件对每次的内存访问都进行处理，将指令中的虚拟地址转换为实际存储数据的物理地址。因此，在每次内存引用时，硬件都会进行地址转换，将应用程序的内存引用重定位到内存中实际的位置。
+当然，仅仅依靠硬件不足以实现虚拟内存，因为它只提供了底层机制来提供效率。操作系统必须在关键的位置介入，设置好硬件，以便完成正确的地址转换。因此它必须管理内存，记录被占用和空闲的内存位置，并明智而谨慎的介入，保持对内存使用的控制。
+同样，所有这些工作都是为了创造一种美丽的假象：每个程序都拥有私有的内存，那里存放着它自己的代码和数据。虚拟现实的背后是丑陋的物理现实：许多程序其实是在同一时间共享着内存，就像 CPU 在不同的程序之间切换运行。通过虚拟化，操作系统将丑陋的机器现实转换为一种有用的、强大的、且易于使用的抽象。
+假设 我们先假设用户的地址空间必须连续的存放在物理内存中。同时为了简单，我们假设地址空间不是很大，小于物理内存的大小。最后，假设每个地址空间的大小完全一样。
+实例 为了更好的理解地址转换的实现，我们先来看一个例子。设想一个进程的地址空间如下图所示。这里我们需要检查一小段代码，它从内存加载一个值，对其加 3，让后再放回内存。
+ void func() { int x; x = x + 3; } 编译器将这段代码转换为类似如下汇编代码：
+128: movl 0x0(%ebx), %eax ;load 0+ebx into eax 132: addl $0x03, %eax ;add 3 to eax register 135: movl %eax, 0x0(%ebx) ;store eax back to mem 这段代码相对简单，它假定 x 的地址已经存入寄存去 ebx，之后通过 movl 指令将该地址的值加载到通用寄存器 eax。下一条指令对 eax 的值加 3。最后一条指令将 eax 中的值写回到内存的同一位置。
+ 提示：介入很强大 介入是一种很常见又很强大的技术，计算机系统中使用介入常常能带来很好的效果。在虚拟内存中，硬件可以介入到每次内存访问中，将进程提供的虚拟地址转换为数据实际存储的物理地址。但是，一般化的介入技术有更加广阔的应用空间，实际上几乎所有良好定义的接口都应该提供介入机制，以便增加功能或在其他方面提升系统。这种方式最基本的特点是透明，介入完成时通常不需要改动接口的客户端，因此客户端不需要任何改动。">
+<meta property="og:type" content="article">
+<meta property="og:url" content="/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/ch15/"><meta property="article:section" content="基础知识">
+<meta property="og:site_name" content="infilos.com">
+<meta itemprop=name content="地址转换">
+<meta itemprop=description content="在实现 CPU 虚拟化时，我们遵循的一般准则被称为受限直接访问(LDE)。LDE 背后的想法很简单：让程序运行的大部分指令直接访问硬件，只在一些关键点由操作系统介入，以确保“在正确的时间地点，做正确的事情”。为了实现高效的虚拟化，操作系统应该尽量让程序自己运行，同时通过在关键点的及时介入，来保持对硬件的控制。高效和控制是现代操作系统的两个主要目标。
+在实现虚拟内存时，我们将追求类似的战略，在实现高效和控制的同时，提供期望的虚拟化。高效决定了我们要利用硬件的支持，这在开始的时候非常初级，但会逐渐变得相当复杂。控制意味着操作系统要确保应用程序只能访问它自己的内存空间。因此，要保护应用程序不会互相影响且不影响操作系统本身，我们还是需要硬件的帮助。最后，我们对虚拟内存还有一点要求，即灵活性。具体来说，我们希望程序能够以任何方式访问它自己的地址空间，从而让操作系统更易编程。所以关键问题在于：
+ 关键问题：如何高效、灵活的虚拟化内存
+ 我们利用了一种通用技术，有时被称为硬件的地址转换，简称地址转换。它可以被看做是受限执行这种一般方法的补充。利用地址转换，硬件对每次的内存访问都进行处理，将指令中的虚拟地址转换为实际存储数据的物理地址。因此，在每次内存引用时，硬件都会进行地址转换，将应用程序的内存引用重定位到内存中实际的位置。
+当然，仅仅依靠硬件不足以实现虚拟内存，因为它只提供了底层机制来提供效率。操作系统必须在关键的位置介入，设置好硬件，以便完成正确的地址转换。因此它必须管理内存，记录被占用和空闲的内存位置，并明智而谨慎的介入，保持对内存使用的控制。
+同样，所有这些工作都是为了创造一种美丽的假象：每个程序都拥有私有的内存，那里存放着它自己的代码和数据。虚拟现实的背后是丑陋的物理现实：许多程序其实是在同一时间共享着内存，就像 CPU 在不同的程序之间切换运行。通过虚拟化，操作系统将丑陋的机器现实转换为一种有用的、强大的、且易于使用的抽象。
+假设 我们先假设用户的地址空间必须连续的存放在物理内存中。同时为了简单，我们假设地址空间不是很大，小于物理内存的大小。最后，假设每个地址空间的大小完全一样。
+实例 为了更好的理解地址转换的实现，我们先来看一个例子。设想一个进程的地址空间如下图所示。这里我们需要检查一小段代码，它从内存加载一个值，对其加 3，让后再放回内存。
+ void func() { int x; x = x + 3; } 编译器将这段代码转换为类似如下汇编代码：
+128: movl 0x0(%ebx), %eax ;load 0+ebx into eax 132: addl $0x03, %eax ;add 3 to eax register 135: movl %eax, 0x0(%ebx) ;store eax back to mem 这段代码相对简单，它假定 x 的地址已经存入寄存去 ebx，之后通过 movl 指令将该地址的值加载到通用寄存器 eax。下一条指令对 eax 的值加 3。最后一条指令将 eax 中的值写回到内存的同一位置。
+ 提示：介入很强大 介入是一种很常见又很强大的技术，计算机系统中使用介入常常能带来很好的效果。在虚拟内存中，硬件可以介入到每次内存访问中，将进程提供的虚拟地址转换为数据实际存储的物理地址。但是，一般化的介入技术有更加广阔的应用空间，实际上几乎所有良好定义的接口都应该提供介入机制，以便增加功能或在其他方面提升系统。这种方式最基本的特点是透明，介入完成时通常不需要改动接口的客户端，因此客户端不需要任何改动。">
+<meta itemprop=wordCount content="213">
+<meta itemprop=keywords content><meta name=twitter:card content="summary">
+<meta name=twitter:title content="地址转换">
+<meta name=twitter:description content="在实现 CPU 虚拟化时，我们遵循的一般准则被称为受限直接访问(LDE)。LDE 背后的想法很简单：让程序运行的大部分指令直接访问硬件，只在一些关键点由操作系统介入，以确保“在正确的时间地点，做正确的事情”。为了实现高效的虚拟化，操作系统应该尽量让程序自己运行，同时通过在关键点的及时介入，来保持对硬件的控制。高效和控制是现代操作系统的两个主要目标。
+在实现虚拟内存时，我们将追求类似的战略，在实现高效和控制的同时，提供期望的虚拟化。高效决定了我们要利用硬件的支持，这在开始的时候非常初级，但会逐渐变得相当复杂。控制意味着操作系统要确保应用程序只能访问它自己的内存空间。因此，要保护应用程序不会互相影响且不影响操作系统本身，我们还是需要硬件的帮助。最后，我们对虚拟内存还有一点要求，即灵活性。具体来说，我们希望程序能够以任何方式访问它自己的地址空间，从而让操作系统更易编程。所以关键问题在于：
+ 关键问题：如何高效、灵活的虚拟化内存
+ 我们利用了一种通用技术，有时被称为硬件的地址转换，简称地址转换。它可以被看做是受限执行这种一般方法的补充。利用地址转换，硬件对每次的内存访问都进行处理，将指令中的虚拟地址转换为实际存储数据的物理地址。因此，在每次内存引用时，硬件都会进行地址转换，将应用程序的内存引用重定位到内存中实际的位置。
+当然，仅仅依靠硬件不足以实现虚拟内存，因为它只提供了底层机制来提供效率。操作系统必须在关键的位置介入，设置好硬件，以便完成正确的地址转换。因此它必须管理内存，记录被占用和空闲的内存位置，并明智而谨慎的介入，保持对内存使用的控制。
+同样，所有这些工作都是为了创造一种美丽的假象：每个程序都拥有私有的内存，那里存放着它自己的代码和数据。虚拟现实的背后是丑陋的物理现实：许多程序其实是在同一时间共享着内存，就像 CPU 在不同的程序之间切换运行。通过虚拟化，操作系统将丑陋的机器现实转换为一种有用的、强大的、且易于使用的抽象。
+假设 我们先假设用户的地址空间必须连续的存放在物理内存中。同时为了简单，我们假设地址空间不是很大，小于物理内存的大小。最后，假设每个地址空间的大小完全一样。
+实例 为了更好的理解地址转换的实现，我们先来看一个例子。设想一个进程的地址空间如下图所示。这里我们需要检查一小段代码，它从内存加载一个值，对其加 3，让后再放回内存。
+ void func() { int x; x = x + 3; } 编译器将这段代码转换为类似如下汇编代码：
+128: movl 0x0(%ebx), %eax ;load 0+ebx into eax 132: addl $0x03, %eax ;add 3 to eax register 135: movl %eax, 0x0(%ebx) ;store eax back to mem 这段代码相对简单，它假定 x 的地址已经存入寄存去 ebx，之后通过 movl 指令将该地址的值加载到通用寄存器 eax。下一条指令对 eax 的值加 3。最后一条指令将 eax 中的值写回到内存的同一位置。
+ 提示：介入很强大 介入是一种很常见又很强大的技术，计算机系统中使用介入常常能带来很好的效果。在虚拟内存中，硬件可以介入到每次内存访问中，将进程提供的虚拟地址转换为数据实际存储的物理地址。但是，一般化的介入技术有更加广阔的应用空间，实际上几乎所有良好定义的接口都应该提供介入机制，以便增加功能或在其他方面提升系统。这种方式最基本的特点是透明，介入完成时通常不需要改动接口的客户端，因此客户端不需要任何改动。">
+<script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga('create','UA-123062585-1','auto'),ga('send','pageview'))</script>
+<script async src=https://www.google-analytics.com/analytics.js></script>
+<link rel=preload href=/scss/main.min.847464b684a6e89d7276700a5c500c17ab494dd1755b2654a7b27d8b59e3347e.css as=style>
+<link href=/scss/main.min.847464b684a6e89d7276700a5c500c17ab494dd1755b2654a7b27d8b59e3347e.css rel=stylesheet integrity>
+<script src=/js/jquery-3.5.1.min.js integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin=anonymous></script>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/docsearch.js@2/dist/cdn/docsearch.min.css>
+</head>
+<body class=td-page>
+<header>
+<nav class="js-navbar-scroll navbar navbar-expand navbar-dark flex-column flex-md-row td-navbar">
+<a class=navbar-brand href=/>
+<span class=navbar-logo><svg id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512" style="enable-background:new 0 0 512 512"><path style="fill:#ffc107" d="M432.384 143.616c-4.165-4.164-10.917-4.164-15.083.0l-60.352 60.352c-4.164 4.165-4.164 10.917.0 15.083 21.187 20.463 54.951 19.876 75.413-1.311 19.962-20.668 19.962-53.435.0-74.102L432.384 143.616z"/><path style="fill:#607d8b" d="M42.667 277.334c-5.891.003-10.669-4.771-10.672-10.662-.002-4.338 2.623-8.245 6.64-9.882l234.667-96c5.455-2.233 11.687.38 13.92 5.835s-.38 11.687-5.835 13.92l-234.667 96C45.433 277.069 44.056 277.337 42.667 277.334z"/><path style="fill:#546e7a" d="M391.552 56.448l-32-32C343.938 8.745 322.689-.059 300.544.0h-3.755c-46.082.024-83.432 37.374-83.456 83.456v3.755c-.053 22.138 8.75 43.377 24.448 58.987l32 32c4.165 4.164 10.917 4.164 15.083.0L391.531 71.531C395.701 67.372 395.71 60.62 391.552 56.448z"/><path style="fill:#607d8b" d="M160 469.334c-3.279.006-6.379-1.497-8.405-4.075L34.261 315.926c-3.635-4.636-2.823-11.341 1.813-14.976s11.341-2.823 14.976 1.813l117.333 149.333c3.629 4.641 2.809 11.344-1.832 14.973C164.681 468.533 162.375 469.329 160 469.334z"/><path style="fill:#455a64" d="M487.467 86.848l-3.669-3.648c-37.687-36.557-97.71-36.197-134.955.811l-51.413 51.413c-36.996 37.25-37.357 97.263-.811 134.955l3.584 3.669c1.7 2.457 4.671 3.706 7.616 3.2 2.831.005 5.548-1.115 7.552-3.115l172.181-172.181c4.189-4.143 4.226-10.896.083-15.085-.028-.028-.055-.056-.083-.083L487.467 86.848z"/><g><path style="fill:#ffc107" d="M501.333 192H480c-5.891.0-10.667-4.776-10.667-10.667s4.776-10.667 10.667-10.667h21.333c5.891.0 10.667 4.776 10.667 10.667S507.225 192 501.333 192z"/><path style="fill:#ffc107" d="M394.667 298.667c-5.891.0-10.667-4.776-10.667-10.667v-21.333c0-5.891 4.776-10.667 10.667-10.667 5.891.0 10.667 4.776 10.667 10.667V288C405.333 293.891 400.558 298.667 394.667 298.667z"/><path style="fill:#ffc107" d="M480 277.334c-2.831.005-5.548-1.115-7.552-3.115l-21.333-21.333c-4.093-4.237-3.975-10.99.262-15.083 4.134-3.993 10.687-3.993 14.821.0l21.333 21.333c4.159 4.172 4.148 10.926-.024 15.085C485.514 276.209 482.815 277.327 480 277.334z"/></g><g><path style="fill:#455a64" d="M266.667 448H96c-29.455.0-53.333 23.878-53.333 53.333.0 5.891 4.776 10.667 10.667 10.667h256c5.891.0 10.667-4.776 10.667-10.667C320 471.878 296.122 448 266.667 448z"/><circle style="fill:#455a64" cx="32" cy="288" r="32"/></g><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/></svg></span><span class=font-weight-bold>infilos.com</span>
+</a>
+<div class="collapse navbar-collapse" id=navbarSupportedContent>
+<ul class="navbar-nav mr-auto">
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+基础
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/%e6%93%8d%e4%bd%9c%e7%b3%bb%e7%bb%9f>操作系统</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/%e6%80%a7%e8%83%bd%e4%b9%8b%e6%ae%87>性能之殇</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/io%e6%a8%a1%e5%9e%8b>IO 模型</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/%e7%bd%91%e7%bb%9c%e5%9f%ba%e7%a1%80>网络基础</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/tcp-ip>TCP-IP</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/http>HTTP</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+语言
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/java>Java 编程</a>
+<a class=dropdown-item href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/jvm-core>JVM 核心</a>
+<a class=dropdown-item href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/jvm-concurrent>JVM 并发</a>
+<a class=dropdown-item href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/scala>Scala 编程</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+框架库
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93/spring>Spring</a>
+<a class=dropdown-item href=/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93/hikari>Hikari</a>
+<a class=dropdown-item href=/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93/parboiled>Parboiled</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+分布式
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%88%86%e5%b8%83%e5%bc%8f/base>基本构成</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+大数据
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%ad%98%e5%82%a8%e7%b3%bb%e7%bb%9f>存储系统</a>
+<a class=dropdown-item href=/%e6%9f%a5%e8%af%a2%e7%b3%bb%e7%bb%9f>查询系统</a>
+<a class=dropdown-item href=/%e6%b6%88%e6%81%af%e7%b3%bb%e7%bb%9f>消息系统</a>
+<a class=dropdown-item href=/%e5%a4%84%e7%90%86%e7%b3%bb%e7%bb%9f>处理系统</a>
+<a class=dropdown-item href=/%e7%ae%a1%e7%90%86%e7%b3%bb%e7%bb%9f>管理系统</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+中后台
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e8%ae%be%e6%96%bd>基础设施</a>
+<a class=dropdown-item href=/%e4%ba%a4%e4%ba%92%e7%95%8c%e9%9d%a2>交互界面</a>
+<a class=dropdown-item href=/%e4%b8%9a%e5%8a%a1%e7%b3%bb%e7%bb%9f>业务系统</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+模式架构
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e6%a8%a1%e5%bc%8f%e6%9e%b6%e6%9e%84/design-pattern>设计模式</a>
+<a class=dropdown-item href=/%e6%a8%a1%e5%bc%8f%e6%9e%b6%e6%9e%84/micro-service>微服务架构</a>
+</div>
+</li>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e9%9d%a2%e8%af%95%e9%97%ae%e7%ad%94>
+<span>面试</span>
+</a>
+</li>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e7%ae%a1%e7%90%86%e8%b7%af%e5%be%84>
+<span>管理</span>
+</a>
+</li>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e5%bc%80%e6%ba%90%e9%a1%b9%e7%9b%ae>
+<span>开源</span>
+</a>
+</li>
+</ul>
+<div class="form-inline my-2 my-lg-0">
+<div class="nav-item nav-search-item my-2 my-md-0">
+<input type=search class="form-control td-search-input" placeholder="&#xf002; 站内搜索…" aria-label=站内搜索… autocomplete=off>
+</div>
+</div>
+</div>
+</nav>
+</header>
+<div class="container-fluid td-outer">
+<div class=td-main>
+<div class="row flex-xl-nowrap">
+<aside class="col-12 col-md-3 col-xl-2 td-sidebar d-print-none">
+<div id=td-sidebar-menu class=td-sidebar__inner>
+<div id=content-mobile>
+<form class="td-sidebar__search d-flex align-items-center">
+<input type=search class="form-control td-search-input" placeholder="&#xf002; 站内搜索…" aria-label=站内搜索… autocomplete=off>
+<button class="btn btn-link td-sidebar__toggle d-md-none p-0 ml-3 fas fa-bars" type=button data-toggle=collapse data-target=#td-section-nav aria-controls=td-docs-nav aria-expanded=false aria-label="Toggle section navigation">
+</button>
+</form>
+</div>
+<div id=content-desktop></div>
+<nav class="collapse td-sidebar-nav" id=td-section-nav>
+<ul class="td-sidebar-nav__section pr-md-3 ul-0">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e59fbae7a180e79fa5e8af86-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section tree-root" id=m-e59fbae7a180e79fa5e8af86><span>基础知识</span></a>
+<ul class=ul-1>
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9f-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9f><span>操作系统</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch02-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/ch02/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch02><span>基本概念</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch04-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/ch04/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch04><span>抽象-进程</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch05-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/ch05/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch05><span>插叙-进程 API</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch06-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/ch06/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch06><span>机制-受限直接执行</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch07-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/ch07/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch07><span>进程调度</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch08-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/ch08/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch08><span>调度-多级反馈队列</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch09-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/ch09/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch09><span>调度-比例份额</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch10-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/ch10/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch10><span>多处理器调度</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch13-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/ch13/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch13><span>抽象-地址空间</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch14-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/ch14/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch14><span>内存接口</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child active-path" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch15-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/ch15/ class="align-left pl-0 active td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch15><span class=td-sidebar-nav-active-item>地址转换</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch16-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/ch16/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch16><span>分段</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e59fbae7a180e79fa5e8af86e680a7e883bde4b98be6ae87-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%80%A7%E8%83%BD%E4%B9%8B%E6%AE%87/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e59fbae7a180e79fa5e8af86e680a7e883bde4b98be6ae87><span>性能之殇</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e680a7e883bde4b98be6ae87ch01-e586afe8afbae4be9de69bbce793b6e9a288-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%80%A7%E8%83%BD%E4%B9%8B%E6%AE%87/ch01-%E5%86%AF%E8%AF%BA%E4%BE%9D%E6%9B%BC%E7%93%B6%E9%A2%88/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e680a7e883bde4b98be6ae87ch01-e586afe8afbae4be9de69bbce793b6e9a288><span>冯诺依曼瓶颈</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e680a7e883bde4b98be6ae87ch02-cpue5ae9ee78eb0-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%80%A7%E8%83%BD%E4%B9%8B%E6%AE%87/ch02-cpu%E5%AE%9E%E7%8E%B0/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e680a7e883bde4b98be6ae87ch02-cpue5ae9ee78eb0><span>CPU实现</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e680a7e883bde4b98be6ae87ch03-e4ba8be4bbb6e9a9b1e58aa8-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%80%A7%E8%83%BD%E4%B9%8B%E6%AE%87/ch03-%E4%BA%8B%E4%BB%B6%E9%A9%B1%E5%8A%A8/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e680a7e883bde4b98be6ae87ch03-e4ba8be4bbb6e9a9b1e58aa8><span>事件驱动</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e680a7e883bde4b98be6ae87ch04-unixe8bf9be7a88be6a8a1e59e8b-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%80%A7%E8%83%BD%E4%B9%8B%E6%AE%87/ch04-unix%E8%BF%9B%E7%A8%8B%E6%A8%A1%E5%9E%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e680a7e883bde4b98be6ae87ch04-unixe8bf9be7a88be6a8a1e59e8b><span>Unix进程模型</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e680a7e883bde4b98be6ae87ch05-dpdk-sdn-e5a4a7e9a1b5e58685e5ad98-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%80%A7%E8%83%BD%E4%B9%8B%E6%AE%87/ch05-dpdk-sdn-%E5%A4%A7%E9%A1%B5%E5%86%85%E5%AD%98/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e680a7e883bde4b98be6ae87ch05-dpdk-sdn-e5a4a7e9a1b5e58685e5ad98><span>DPDK-SDN-大页内存</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e680a7e883bde4b98be6ae87ch06-e5b180e983a8e680a7e4b88ee4b990e8a782-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%80%A7%E8%83%BD%E4%B9%8B%E6%AE%87/ch06-%E5%B1%80%E9%83%A8%E6%80%A7%E4%B8%8E%E4%B9%90%E8%A7%82/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e680a7e883bde4b98be6ae87ch06-e5b180e983a8e680a7e4b88ee4b990e8a782><span>局部性与乐观</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e680a7e883bde4b98be6ae87ch07-e585b1e5908ce79a84e793b6e9a288-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%80%A7%E8%83%BD%E4%B9%8B%E6%AE%87/ch07-%E5%85%B1%E5%90%8C%E7%9A%84%E7%93%B6%E9%A2%88/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e680a7e883bde4b98be6ae87ch07-e585b1e5908ce79a84e793b6e9a288><span>共同的瓶颈</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e59fbae7a180e79fa5e8af86ioe6a8a1e59e8b-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/io%E6%A8%A1%E5%9E%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e59fbae7a180e79fa5e8af86ioe6a8a1e59e8b><span>IO 模型</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86ioe6a8a1e59e8bch01-ioe6a8a1e59e8b-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/io%E6%A8%A1%E5%9E%8B/ch01-io%E6%A8%A1%E5%9E%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86ioe6a8a1e59e8bch01-ioe6a8a1e59e8b><span>Linux IO/线程 模型</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86ioe6a8a1e59e8bch02-ioe99bb6e68bb7e8b49d-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/io%E6%A8%A1%E5%9E%8B/ch02-io%E9%9B%B6%E6%8B%B7%E8%B4%9D/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86ioe6a8a1e59e8bch02-ioe99bb6e68bb7e8b49d><span>Linux IO 零拷贝</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86ioe6a8a1e59e8bch03-nettye6a8a1e59e8b-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/io%E6%A8%A1%E5%9E%8B/ch03-netty%E6%A8%A1%E5%9E%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86ioe6a8a1e59e8bch03-nettye6a8a1e59e8b><span>Netty IO 模型</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86ioe6a8a1e59e8bch04-redise6a8a1e59e8b-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/io%E6%A8%A1%E5%9E%8B/ch04-redis%E6%A8%A1%E5%9E%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86ioe6a8a1e59e8bch04-redise6a8a1e59e8b><span>Redis IO 模型</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86ioe6a8a1e59e8bch05-nginxe6a8a1e59e8b-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/io%E6%A8%A1%E5%9E%8B/ch05-nginx%E6%A8%A1%E5%9E%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86ioe6a8a1e59e8bch05-nginxe6a8a1e59e8b><span>Nginx IO 模型</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86ioe6a8a1e59e8bch06-mysqle6a8a1e59e8b-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/io%E6%A8%A1%E5%9E%8B/ch06-mysql%E6%A8%A1%E5%9E%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86ioe6a8a1e59e8bch06-mysqle6a8a1e59e8b><span>MySQL 模型</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180><span>网络基础</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch01-e7bd91e7bb9ce58886e5b182-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/ch01-%E7%BD%91%E7%BB%9C%E5%88%86%E5%B1%82/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch01-e7bd91e7bb9ce58886e5b182><span>网络分层</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch02-ipe58d8fe8aeae-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/ch02-ip%E5%8D%8F%E8%AE%AE/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch02-ipe58d8fe8aeae><span>IP 协议</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch03-tcpe58d8fe8aeae-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/ch03-tcp%E5%8D%8F%E8%AE%AE/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch03-tcpe58d8fe8aeae><span>TCP 协议</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch04-udpe58d8fe8aeae-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/ch04-udp%E5%8D%8F%E8%AE%AE/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch04-udpe58d8fe8aeae><span>UDP 协议</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch05-httpe58d8fe8aeae-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/ch05-http%E5%8D%8F%E8%AE%AE/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch05-httpe58d8fe8aeae><span>HTTP 协议</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch06-websocket-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/ch06-websocket/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch06-websocket><span>WebSocket</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch07-dnse69c8de58aa1-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/ch07-dns%E6%9C%8D%E5%8A%A1/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch07-dnse69c8de58aa1><span>DNS 服务</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch08-e6b58fe8a788e599a8e8bf87e7a88b-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/ch08-%E6%B5%8F%E8%A7%88%E5%99%A8%E8%BF%87%E7%A8%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch08-e6b58fe8a788e599a8e8bf87e7a88b><span>浏览器过程</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e59fbae7a180e79fa5e8af86tcp-ip-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/tcp-ip/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e59fbae7a180e79fa5e8af86tcp-ip><span>TCP-IP</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86tcp-ipch01-e68fa1e6898be69cbae588b6-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/tcp-ip/ch01-%E6%8F%A1%E6%89%8B%E6%9C%BA%E5%88%B6/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86tcp-ipch01-e68fa1e6898be69cbae588b6><span>握手机制</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86tcp-ipch02-e58d8fe8aeaee6a088e7b2bee8a681-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/tcp-ip/ch02-%E5%8D%8F%E8%AE%AE%E6%A0%88%E7%B2%BE%E8%A6%81/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86tcp-ipch02-e58d8fe8aeaee6a088e7b2bee8a681><span>协议栈精要</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86tcp-ipch03-e8b083e4bc98e58f82e695b0-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/tcp-ip/ch03-%E8%B0%83%E4%BC%98%E5%8F%82%E6%95%B0/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86tcp-ipch03-e8b083e4bc98e58f82e695b0><span>调优参数</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86tcp-ipch04-e79086e8a7a3e7bd91e7bb9ce6a088-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/tcp-ip/ch04-%E7%90%86%E8%A7%A3%E7%BD%91%E7%BB%9C%E6%A0%88/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86tcp-ipch04-e79086e8a7a3e7bd91e7bb9ce6a088><span>理解网络栈</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86tcp-ipch05-rfc-1180-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/tcp-ip/ch05-rfc-1180/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86tcp-ipch05-rfc-1180><span>RFC-1180</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86tcp-ipch06-e58fafe99da0e680a7e79691e997ae-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/tcp-ip/ch06-%E5%8F%AF%E9%9D%A0%E6%80%A7%E7%96%91%E9%97%AE/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86tcp-ipch06-e58fafe99da0e680a7e79691e997ae><span>可靠性疑问</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e59fbae7a180e79fa5e8af86http-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/http/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e59fbae7a180e79fa5e8af86http><span>HTTP</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86httpch01-e6a682e8bfb0-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/http/ch01-%E6%A6%82%E8%BF%B0/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86httpch01-e6a682e8bfb0><span>HTTP 概述</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86httpch02-urle4b88ee8b584e6ba90-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/http/ch02-url%E4%B8%8E%E8%B5%84%E6%BA%90/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86httpch02-urle4b88ee8b584e6ba90><span>URL 与资源</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86httpch03-httpe68aa5e69687-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/http/ch03-http%E6%8A%A5%E6%96%87/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86httpch03-httpe68aa5e69687><span>HTTP 报文</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86httpch04-e8bf9ee68ea5e7aea1e79086-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/http/ch04-%E8%BF%9E%E6%8E%A5%E7%AE%A1%E7%90%86/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86httpch04-e8bf9ee68ea5e7aea1e79086><span>连接管理</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86httpch99-e680a7e883bde68ea2e7b4a2-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/http/ch99-%E6%80%A7%E8%83%BD%E6%8E%A2%E7%B4%A2/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86httpch99-e680a7e883bde68ea2e7b4a2><span>性能探索</span></a>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</div>
+</aside>
+<aside class="d-none d-xl-block col-xl-2 td-sidebar-toc d-print-none">
+<div class="td-page-meta ml-2 pb-1 pt-2 mb-0">
+<a href=https://github.com/infilos/infilos.com/edit/master/content/zh/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/%e6%93%8d%e4%bd%9c%e7%b3%bb%e7%bb%9f/CH15.md target=_blank><i class="fa fa-edit fa-fw"></i> 编辑此页</a>
+<a href="https://github.com/infilos/infilos.com/new/master/content/zh/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/%e6%93%8d%e4%bd%9c%e7%b3%bb%e7%bb%9f/CH15.md?filename=change-me.md&value=---%0Atitle%3A+%22Long+Page+Title%22%0AlinkTitle%3A+%22Short+Nav+Title%22%0Aweight%3A+100%0Adescription%3A+%3E-%0A+++++Page+description+for+heading+and+indexes.%0A---%0A%0A%23%23+Heading%0A%0AEdit+this+template+to+create+your+new+page.%0A%0A%2A+Give+it+a+good+name%2C+ending+in+%60.md%60+-+e.g.+%60getting-started.md%60%0A%2A+Edit+the+%22front+matter%22+section+at+the+top+of+the+page+%28weight+controls+how+its+ordered+amongst+other+pages+in+the+same+directory%3B+lowest+number+first%29.%0A%2A+Add+a+good+commit+message+at+the+bottom+of+the+page+%28%3C80+characters%3B+use+the+extended+description+field+for+more+detail%29.%0A%2A+Create+a+new+branch+so+you+can+preview+your+new+file+and+request+a+review+via+Pull+Request.%0A" target=_blank><i class="fa fa-edit fa-fw"></i> 添加子页面</a>
+<a href="https://github.com/infilos/infilos.com/issues/new?title=%e5%9c%b0%e5%9d%80%e8%bd%ac%e6%8d%a2" target=_blank><i class="fab fa-github fa-fw"></i> 提交文档问题</a>
+<a id=print href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/_print/><i class="fa fa-print fa-fw"></i> 整节打印</a>
+</div>
+<div class=td-toc><nav id=TableOfContents>
+<ul>
+<li><a href=#假设>假设</a></li>
+<li><a href=#实例>实例</a></li>
+<li><a href=#硬件动态重定位>硬件动态重定位</a>
+<ul>
+<li><a href=#转换示例>转换示例</a></li>
+</ul>
+</li>
+<li><a href=#硬件支持总结>硬件支持总结</a></li>
+<li><a href=#操作系统的问题>操作系统的问题</a></li>
+<li><a href=#小结>小结</a></li>
+</ul>
+</nav></div>
+</aside>
+<main class="col-12 col-md-9 col-xl-8 pl-md-5" role=main>
+<nav aria-label=breadcrumb class="d-none d-md-block d-print-none">
+<ol class="breadcrumb spb-1">
+<li class=breadcrumb-item>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/>基础知识</a>
+</li>
+<li class=breadcrumb-item>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/>操作系统</a>
+</li>
+<li class="breadcrumb-item active" aria-current=page>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/ch15/>地址转换</a>
+</li>
+</ol>
+</nav>
+<div class=td-content>
+<h1>地址转换</h1>
+<header class=article-meta>
+</header>
+<p>在实现 CPU 虚拟化时，我们遵循的一般准则被称为受限直接访问(LDE)。LDE 背后的想法很简单：让程序运行的大部分指令直接访问硬件，只在一些关键点由操作系统介入，以确保“在正确的时间地点，做正确的事情”。为了实现高效的虚拟化，操作系统应该尽量让程序自己运行，同时通过在关键点的及时介入，来保持对硬件的控制。高效和控制是现代操作系统的两个主要目标。</p>
+<p>在实现虚拟内存时，我们将追求类似的战略，在实现高效和控制的同时，提供期望的虚拟化。高效决定了我们要利用硬件的支持，这在开始的时候非常初级，但会逐渐变得相当复杂。控制意味着操作系统要确保应用程序只能访问它自己的内存空间。因此，要保护应用程序不会互相影响且不影响操作系统本身，我们还是需要硬件的帮助。最后，我们对虚拟内存还有一点要求，即灵活性。具体来说，我们希望程序能够以任何方式访问它自己的地址空间，从而让操作系统更易编程。所以关键问题在于：</p>
+<blockquote>
+<p><strong>关键问题：如何高效、灵活的虚拟化内存</strong></p>
+</blockquote>
+<p>我们利用了一种通用技术，有时被称为硬件的地址转换，简称地址转换。它可以被看做是受限执行这种一般方法的补充。利用地址转换，硬件对每次的内存访问都进行处理，将指令中的虚拟地址转换为实际存储数据的物理地址。因此，在每次内存引用时，硬件都会进行地址转换，将应用程序的内存引用重定位到内存中实际的位置。</p>
+<p>当然，仅仅依靠硬件不足以实现虚拟内存，因为它只提供了底层机制来提供效率。操作系统必须在关键的位置介入，设置好硬件，以便完成正确的地址转换。因此它必须管理内存，记录被占用和空闲的内存位置，并明智而谨慎的介入，保持对内存使用的控制。</p>
+<p>同样，所有这些工作都是为了创造一种美丽的假象：每个程序都拥有私有的内存，那里存放着它自己的代码和数据。虚拟现实的背后是丑陋的物理现实：许多程序其实是在同一时间共享着内存，就像 CPU 在不同的程序之间切换运行。通过虚拟化，操作系统将丑陋的机器现实转换为一种有用的、强大的、且易于使用的抽象。</p>
+<h2 id=假设>假设</h2>
+<p>我们先假设用户的地址空间必须连续的存放在物理内存中。同时为了简单，我们假设地址空间不是很大，小于物理内存的大小。最后，假设每个地址空间的大小完全一样。</p>
+<h2 id=实例>实例</h2>
+<p>为了更好的理解地址转换的实现，我们先来看一个例子。设想一个进程的地址空间如下图所示。这里我们需要检查一小段代码，它从内存加载一个值，对其加 3，让后再放回内存。</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20190913185743.png style=display:block;width:50% alt=NAME align=center> </div>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=color:#204a87;font-weight:700>void</span> <span style=color:#000>func</span><span style=color:#000;font-weight:700>()</span> <span style=color:#000;font-weight:700>{</span>
+	<span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>x</span><span style=color:#000;font-weight:700>;</span>
+	<span style=color:#000>x</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>x</span> <span style=color:#ce5c00;font-weight:700>+</span> <span style=color:#0000cf;font-weight:700>3</span><span style=color:#000;font-weight:700>;</span>
+<span style=color:#000;font-weight:700>}</span>
+</code></pre></div><p>编译器将这段代码转换为类似如下汇编代码：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>128: movl 0x0(%ebx), %eax   ;load 0+ebx into eax
+132: addl $0x03, %eax       ;add 3 to eax register
+135: movl %eax, 0x0(%ebx)   ;store eax back to mem
+</code></pre></div><p>这段代码相对简单，它假定 x 的地址已经存入寄存去 ebx，之后通过 movl 指令将该地址的值加载到通用寄存器 eax。下一条指令对 eax 的值加 3。最后一条指令将 eax 中的值写回到内存的同一位置。</p>
+<blockquote>
+<p><strong>提示：介入很强大</strong>
+介入是一种很常见又很强大的技术，计算机系统中使用介入常常能带来很好的效果。在虚拟内存中，硬件可以介入到每次内存访问中，将进程提供的虚拟地址转换为数据实际存储的物理地址。但是，一般化的介入技术有更加广阔的应用空间，实际上几乎所有良好定义的接口都应该提供介入机制，以便增加功能或在其他方面提升系统。这种方式最基本的特点是透明，介入完成时通常不需要改动接口的客户端，因此客户端不需要任何改动。</p>
+</blockquote>
+<p>在前面的图中，可以看到代码和数据都位于进程的地址空间，3 条指令序列位于地址 128，变量 x 的值位于地址 15KB。如前图所示，x 的初始值为 3000。</p>
+<p>如果这 3 条指令执行，从进程的角度来看，发生了以下几次内存访问：</p>
+<ul>
+<li>从内存 128 获得指令。</li>
+<li>执行指令(从地址 15KB 加载数据)。</li>
+<li>从地址 132 获得命令。</li>
+<li>执行命令(没有内存访问)。</li>
+<li>从地址 135 获得指令。</li>
+<li>执行指令(新值存入地址 15KB)。</li>
+</ul>
+<p>从程序的角度来看，它的地址空间从 0 开始到 16KB 结束。它包含的所有内存引用都应该在该范围呢。然而，对虚拟内存来说，操作系统希望将该进程地址空间放在物理内存的其他位置，并不一定从地址 0 开始。因此我们遇到如下问题：怎样在内存中重定位该进程，同时对该进程透明？怎样提供一种虚拟地址空间从 0 开始的假象，而实际上地址空间位于另外某个物理地址？</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20190913201759.png style=display:block;width:50% alt=NAME align=center> </div>
+<p>上图展示了一个例子，说明该进程的地址空间被放入物理内存后可能的样子。从上图可以看到，操作系统将第一块物理内存留给了自己，并将上述例子中的进程地址空间重定位到从 32KB 开始的物理内存地址。剩下的两块内存空闲。</p>
+<h2 id=硬件动态重定位>硬件动态重定位</h2>
+<p>为了更好的理解基于硬件的地址转换，我们先来讨论他的第一次应用。在 20 世纪 50 年代后期，它首次出现在分时系统中，那时只是一个简单的思想，称为地址加界限机制，有时又称为动态重定位，我们将交叉使用这两个术语。</p>
+<p>具体来说，每个 CPU 需要两个硬件寄存器：基址寄存器和界限寄存器，或称为限制寄存器。这两个寄存器能够支持我们将地址空间放在屋里内存的任何位置，同时又能确保进程只能访问自己的地址空间。</p>
+<p>采用这种方式，在编写和编译程序时假设地址空间从 0 开始。但是，当程序真正执行时，操作系统会决定其在物理内存中的实际加载地址，并将其实地址记录在基址寄存器中。在上面的例子中，操作系统决定加载在物理地址 32KB 的进程，因此将基址寄存器设置为这个值。</p>
+<p>当进程运行时，有趣的事情发生了。现在，该进程产生的所有内存引用，都会被处理器通过以下方式转换为物理地址：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>physical address = virtual address + base
+</code></pre></div><blockquote>
+<p><strong>补充：基于软件的重定位</strong>
+在早期，在硬件支持重定位之前，一些系统曾经采用基于软件的重定位方式。基本技术被称为静态重定位，其中一个名为加载程序的软件接收将要运行的可执行程序，将它的地址重写到物理内存中期望的便宜位置。
+然而，静态重定位存在很多问题，首先也是最重要的是不提供访问保护，进程中的错误地址可能导致对其他进程或操作系统内存的非法访问，一般来说，需要硬件支持来实现真正的访问保护。静态重定位的另一个缺点是一旦完成，稍后很难将内存空间重定位到其他位置。</p>
+</blockquote>
+<p>进程中使用的内存引用都是虚拟地址，硬件接下来将虚拟地址加上基址寄存器中的内容，得到物理地址，再发给内存系统。</p>
+<p>为了更好的理解，我们来追踪一条指令执行的过程。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>128: movl 0x0(%ebx), %eax
+</code></pre></div><p>程序计数器首先被设置为 128.当硬件需要获取该指令时，它先将该值加上基址寄存器中的 32KB(32768)，得到实际的物理地址为 32896，然后硬件从该地址获取指令。接下来，处理器开始执行该指令。这时，进程发起从虚拟地址 15KB 的加载，处理器同样将虚拟地址加上基址寄存器的内容(32KB)，得到最终的物理地址为 47KB，从而获得需要的数据。</p>
+<p>将虚拟地址转换为物理地址，这正是所谓的地址转换技术。也就是说，硬件取得进程认为要访问的地址，将它转换成数据实际位于的物理地址。由于这种重定位是在运行时发生的，而且我们甚至可以在进程开始运行后改变其地址空间，这种技术一般被称为动态重定位。</p>
+<blockquote>
+<p><strong>提示：基于硬件的动态重定位</strong>
+在动态定位的过程中，只有很少的硬件参与，但获得了很好的效果。一个基址寄存器将虚拟地址转换为物理地址，一个界限寄存器将确保这个地址在进程地址空间的范围内。它们一起提供了简单高效的虚拟内存机制。</p>
+</blockquote>
+<p>现在你可能会问，界限寄存器去哪了？不是基址加上界限机制吗？正如你猜测的那样，界限寄存器提供了访问保护。在上面的例子中，界限寄存器被设置为 16KB。如果进程需要访问超过了该界限或者为负数的虚拟地址，CPU 将触发异常，进程可能被终止。界限寄存器的用处在于，它确保了进程产生的所有地址都在进程地址的界限内。</p>
+<p>这种基址寄存器配合界限寄存器的硬件结构位于芯片内，每个 CPU 一对。有时我们将 CPU 的这个负责地址转换的部分统称为内存管理单元(MMU)。随着我们开发更加复杂的内存管理技术，MMU 也将拥有更为复杂的电路和功能。</p>
+<p>关于界限寄存器再补充一点，它通常有两种使用方式。像上面这种方式中，它记录地址空间的大小，硬件在将虚拟地址与基址寄存器内容求和前，就检查这个界限。另一种方式是界限寄存器中记录地址空间结束的物理地址，硬件在转化虚拟地址到物理地址之后采取检查该界限。这两种方式在逻辑上是等价的。简单起见，我们这里假设采用第一种方式。</p>
+<h3 id=转换示例>转换示例</h3>
+<p>为了更好的理解基址加界限的地址转换机制，我们来看一个例子。设想一个进程拥有 4KB 大小的地址空间，它被加载到从 16KB 开始的物理内存中。一些转换过程如下：</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20190914151809.png style=display:block;width:50% alt=NAME align=center> </div>
+<p>从例子可以看出，通过基址加虚拟地址(可以看做是地址空间的偏移量)的方式，很容易得到物理地址。虚拟地址过大或为负数，均会导致异常。</p>
+<blockquote>
+<p><strong>补充：数据结构——空闲列表</strong>
+操心系统必须记录哪些空闲内存没有被使用，以便能够为进程分配内存。很多不同的数据结构可以用于这项任务，其中最简单的是空闲列表。它实际上是一个列表，记录了当前没有被使用的物理内存的范围。</p>
+</blockquote>
+<h2 id=硬件支持总结>硬件支持总结</h2>
+<p>首先，正如在 CPU 虚拟化中提到的，我们需要两种 CPU 模式。操作系统在特权模式运行，可以访问整个机器资源。应用程序在用户模式，只能执行有限的操作。只要一个位，也许保存在处理器状态字中，就能说明当前 CPU 的运行模式。在一些特殊的时刻，CPU 会切换状态，如系统调用、中断、异常。下图则是动态重定位的硬件要求：</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20190914152253.png style=display:block;width:50% alt=NAME align=center> </div>
+<p>硬件还必须提供基址和界限寄存器，因此每个 CPU 的内存管理单元都需要这两个额外的寄存器。用户程序运行时，硬件会转换每个地址，即将用户程序产生的虚拟地址加上基址寄存器的内容。硬件也必须能够检查地址是否有效，通过界限寄存器和 CPU 内的一些电路来实现。</p>
+<p>硬件应该提供一些特殊指令，用于修改基址寄存器和界限寄存器，允许操作系统在切换进程时改变它们。这些指令是特权指令，只有在内核模式下才能修改这些寄存器。</p>
+<p>最后，在用户程序尝试非法访问内存时，CPU 必须能够产生异常。在这种情况下，CPU 应该阻止用户程序的执行，并安排操作系统的越界异常处理程序来处理。操作系统的处理程序会做出正确的响应，比如在这种情况下终止进程。类似的，如果用户程序尝试修改基址或者界限寄存器，CPU 也应该产生异常，并调用“用户模式尝试执行特权指令”的异常处理程序。CPU 还必须提供一种方法，来通知它这些处理程序的位置，因此又需要一些特权指令。</p>
+<h2 id=操作系统的问题>操作系统的问题</h2>
+<p>为了支持动态重定位，硬件添加了新的功能，使得操作系统有了一些必须处理的新问题。硬件支持和操作系统管理结合在了一起，实现了一个简单的虚拟内存。具体来说，在一些关键时刻需要操作系统的接入，以实现基址和界限方式的虚拟内存。如下表。</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20190916212416.png style=display:block;width:50% alt=NAME align=center> </div>
+<p>第一，在进程创建时，操作系统必须采取行动，为进程的地址空间找到内存空间。由于我们假设每个进程的地址空间小于物理内存的大小，并且大小相同，这对操作系统来说很容易实现。它可以把整个物理内存看做一组槽块，并标记为空闲或已用。当新进程创建时，操作系统加锁这个数据结构，为新的地址空间找到位置，并将其标记与已用。如果地址空间可变，那么就会变得复杂，我们将在后续章节中讨论。</p>
+<p>我们来看一个例子，在前一节的图中，操作系统将物理内存的第一个槽块分配给自己，然后将例子中的进程重定位到物理内存地址 32KB。另两个槽块空闲，因此空闲列表中就包含了这两个空闲槽块。</p>
+<p>第二，在进程终止时，操作系统也必须做一些工作，回收进程的所有内存，以便给其他进程或操作系统使用。在进程终止时，操作系统会将这些内存放回到空闲列表，并根据需要清除相关的数据结构。</p>
+<p>第三，在上下文切换时，操作系统也必须执行一些操作。每个 CPU 毕竟只有一个基址寄存器和一个界限寄存器，但对于每个运行的程序，它们的值都不同，因为每个程序被加载到内存中不同的物理地址。因此，在切换进程时，操作系统必须保存和恢复基址和界限寄存器。具体来说，当操作系统决定中止当前进程时，它必须将当前基址寄存器和界限寄存器中的内存保存在内存中，放在每个进程都拥有的结果中，如进程结构或进程控制块中。类似的，当操作系统恢复执行某个进程时，也必须给基址寄存器和界限寄存器恢复正确的值。</p>
+<p>需要注意，当进程停止时，操作系统可以改变其地址空间的物理位置，这很容易。要移动进程的地址空间，操作系统首先让进程停止运行，然后将地址空间拷贝到新的位置，最后更新保存的基址寄存器，指向新的位置。当进程恢复执行时，它的新基址寄存器会被恢复，它再次开始运行，显然它的指令和数据都在新的内存位置了。</p>
+<p>第四，操作系统必须提供异常处理程序，或需要一些调用的函数。操作系统在启动时加载这些处理程序。比如，当一个进程视图越界访问内存时，CPU 会触发异常。在这种异常产生时，操作系统必须准备采取行动。通常操作系统会做出充满敌意的反应：终止错误进程。操作系统应该尽力保护它运行的机器，因此它不会对那些企图访问非法地址或执行非法指令的进程客气。</p>
+<p>下表展按时间线展示了大多数硬件与操作系统的交互。可以看出，操作系统在启动时做了什么，为我们准备好机器，然后在进程开始运行时发生了什么。请注意，地址转换过程完全由硬件处理，没有操作系统的介入。在这个时候，发生时钟中断，操作系统切换到进程 B 运行，它执行了“错误的加载”，这时操作系统必须介入，终止该进程，清理并释放进程 B 占用的内存，将它从进程表中移除。从表中可以看出，我们仍然遵循受限直接访问的基本方法，大多数情况下，操作系统正确设置硬件后，就任凭进程直接运行在 CPU 上，只有进程行为不端时才介入。</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20190916213906.png style=display:block;width:50% alt=NAME align=center> </div>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20190916213922.png style=display:block;width:50% alt=NAME align=center> </div>
+<h2 id=小结>小结</h2>
+<p>本章通过虚拟内存使用的一种特殊机制，即地址转换，扩展了受限直接访问的概念。利用地址转换，操作系统可以控制进程的所有内存访问，确保访问在地址空间的界限内。该技术高效的关键在于硬件支持，硬件快速的将所有内存访问操作中的虚拟地址转换为物理地址。所有的这一切对进程来说是透明的，进程并不知道自己使用的内存引用已经被重定位。</p>
+<p>我们还看到了一种特殊的虚拟化方式，称为基址界限的动态重定位。基址界限的虚拟化方式非常高效，因为只需要非常少的硬件逻辑，就可以将虚拟地址和寄存器地址相加，并检查进程产生的地址是否越界。基址界限也提供了保护，操作系统和硬件的协作，确保没有进程能够访问到其他地址空间的内容。保护肯定是操作系统最重要的目标之一。没有保护，操作系统也就无法控制机器。</p>
+<p>遗憾的是，这个简单动态重定位技术有效率低下的问题。比如前面的例子中，重定位的进程使用了从 32KB 到 48KB 的物理内存，但由于该进程的栈区和堆区并不是很大，导致这块内存区域中大量的空间被浪费。这种浪费通常称为内部碎片，指的是已经分配的内存单元内部未有使用的空间，造成了浪费。在我们当前的方式中，即使有足够的内存容纳更多进程，但我们目前要求将地址空间放在固定的槽块中，因此会出现内存碎片。所以我们还需要一些复杂的机制，以便更好的利用物理内存，避免内部碎片。第一次尝试是将基址界限的概念稍微泛化，得到分段(segmentation)的概念。</p>
+<style>.feedback--answer{display:inline-block}.feedback--answer-no{margin-left:1em}.feedback--response{display:none;margin-top:1em}.feedback--response__visible{display:block}</style>
+<div class=d-print-none>
+<h2 class=feedback--title>Feedback</h2>
+<p class=feedback--question>Was this page helpful?</p>
+<button class="btn btn-primary mb-4 feedback--answer feedback--answer-yes">Yes</button>
+<button class="btn btn-primary mb-4 feedback--answer feedback--answer-no">No</button>
+<p class="feedback--response feedback--response-yes">
+Glad to hear it! Please <a href=https://github.com/infilos/infilos.com/issues/new>tell us how we can improve</a>.
+</p>
+<p class="feedback--response feedback--response-no">
+Sorry to hear that. Please <a href=https://github.com/infilos/infilos.com/issues/new>tell us how we can improve</a>.
+</p>
+</div>
+<script>const yesButton=document.querySelector('.feedback--answer-yes'),noButton=document.querySelector('.feedback--answer-no'),yesResponse=document.querySelector('.feedback--response-yes'),noResponse=document.querySelector('.feedback--response-no'),disableButtons=()=>{yesButton.disabled=!0,noButton.disabled=!0},sendFeedback=b=>{if(typeof ga!='function')return;const a={command:'send',hitType:'event',category:'Helpful',action:'click',label:window.location.pathname,value:b};ga(a.command,a.hitType,a.category,a.action,a.label,a.value)};yesButton.addEventListener('click',()=>{yesResponse.classList.add('feedback--response__visible'),disableButtons(),sendFeedback(1)}),noButton.addEventListener('click',()=>{noResponse.classList.add('feedback--response__visible'),disableButtons(),sendFeedback(0)})</script>
+<br>
+</div>
+</main>
+</div>
+</div>
+<footer class="bg-dark py-5 row d-print-none">
+<div class="container-fluid mx-sm-5">
+<div class=row>
+<div class="col-6 col-sm-4 text-xs-center order-sm-2">
+</div>
+<div class="col-6 col-sm-4 text-right text-xs-center order-sm-3">
+<ul class="list-inline mb-0">
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Weibo aria-label=Weibo>
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://weibo.com/u/3848950217>
+<i class="fab fa-weibo"></i>
+</a>
+</li>
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Twitter aria-label=Twitter>
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://twitter.com/zhange_zzg>
+<i class="fab fa-twitter"></i>
+</a>
+</li>
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title="Stack Overflow" aria-label="Stack Overflow">
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://stackoverflow.com>
+<i class="fab fa-stack-overflow"></i>
+</a>
+</li>
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=GitHub aria-label=GitHub>
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://github.com/infilos/infilos.com>
+<i class="fab fa-github"></i>
+</a>
+</li>
+</ul>
+</div>
+<div class="col-12 col-sm-4 text-center py-2 order-sm-2">
+<small class=text-white>&copy; 2021 infilos.com All Rights Reserved</small>
+</div>
+</div>
+</div>
+</footer>
+</div>
+<script src=/js/popper.min.js integrity=sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49 crossorigin=anonymous></script>
+<script src=/js/bootstrap.min.js integrity=sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy crossorigin=anonymous></script>
+<script src=/js/main.min.5c74b870c6953931a705f390a49c7e4c0a842ec5c83b24354758dd674343ed0d.js integrity="sha256-XHS4cMaVOTGnBfOQpJx+TAqELsXIOyQ1R1jdZ0ND7Q0=" crossorigin=anonymous></script>
+<script src=https://cdn.jsdelivr.net/npm/docsearch.js@2.6.3/dist/cdn/docsearch.min.js></script>
+<script>docsearch({apiKey:'123',indexName:'infilos_com',inputSelector:'.td-search-input',debug:!1})</script>
+</body>
+</html>

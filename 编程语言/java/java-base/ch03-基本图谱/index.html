@@ -1,0 +1,1105 @@
+<!doctype html><html lang=zh class=no-js>
+<head>
+<meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no">
+<meta name=generator content="Hugo 0.88.1">
+<meta name=ROBOTS content="INDEX, FOLLOW">
+<link rel="shortcut icon" href=/favicons/favicon.ico>
+<link rel=apple-touch-icon href=/favicons/apple-touch-icon-180x180.png sizes=180x180>
+<link rel=icon type=image/png href=/favicons/favicon-16x16.png sizes=16x16>
+<link rel=icon type=image/png href=/favicons/favicon-32x32.png sizes=32x32>
+<link rel=icon type=image/png href=/favicons/android-36x36.png sizes=36x36>
+<link rel=icon type=image/png href=/favicons/android-48x48.png sizes=48x48>
+<link rel=icon type=image/png href=/favicons/android-72x72.png sizes=72x72>
+<link rel=icon type=image/png href=/favicons/android-96x96.png sizes=96x96>
+<link rel=icon type=image/png href=/favicons/android-144x144.png sizes=144x144>
+<link rel=icon type=image/png href=/favicons/android-192x192.png sizes=192x192>
+<title>CH03-基本图谱 | infilos.com</title><meta property="og:title" content="CH03-基本图谱">
+<meta property="og:description" content="概述  术语  JDK：Java 开发者工具，Java Developer&rsquo;s Kit JRE：Java 运行时环境，Java Runtime Environment JVM：Java 虚拟机，Java Vitual Machine API：应用程序编程接口，Application Programming Interface   IDE  Eclipse Intellij IDEA   程序构造块  package import class main 大括号 语句 注释   工作方式  先编译后执行  Java 扩平台的根本 编译生成中间代码 JVM 加载执行中间代码      语言核心 语言元素  关键字：有特殊含义的单词  48 个可用 2 个保留：goto，const   标识符  字符、数字、下划线、$ 不能以数字开头 不能有!等特殊字符 不能是关键字 大小写敏感 驼峰风格   运算符  赋值：= 算术：+,-,*,/,% 关系：>,<,>=,<=,!">
+<meta property="og:type" content="article">
+<meta property="og:url" content="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-base/ch03-%E5%9F%BA%E6%9C%AC%E5%9B%BE%E8%B0%B1/"><meta property="article:section" content="编程语言">
+<meta property="og:site_name" content="infilos.com">
+<meta itemprop=name content="CH03-基本图谱">
+<meta itemprop=description content="概述  术语  JDK：Java 开发者工具，Java Developer&rsquo;s Kit JRE：Java 运行时环境，Java Runtime Environment JVM：Java 虚拟机，Java Vitual Machine API：应用程序编程接口，Application Programming Interface   IDE  Eclipse Intellij IDEA   程序构造块  package import class main 大括号 语句 注释   工作方式  先编译后执行  Java 扩平台的根本 编译生成中间代码 JVM 加载执行中间代码      语言核心 语言元素  关键字：有特殊含义的单词  48 个可用 2 个保留：goto，const   标识符  字符、数字、下划线、$ 不能以数字开头 不能有!等特殊字符 不能是关键字 大小写敏感 驼峰风格   运算符  赋值：= 算术：+,-,*,/,% 关系：>,<,>=,<=,!">
+<meta itemprop=wordCount content="636">
+<meta itemprop=keywords content><meta name=twitter:card content="summary">
+<meta name=twitter:title content="CH03-基本图谱">
+<meta name=twitter:description content="概述  术语  JDK：Java 开发者工具，Java Developer&rsquo;s Kit JRE：Java 运行时环境，Java Runtime Environment JVM：Java 虚拟机，Java Vitual Machine API：应用程序编程接口，Application Programming Interface   IDE  Eclipse Intellij IDEA   程序构造块  package import class main 大括号 语句 注释   工作方式  先编译后执行  Java 扩平台的根本 编译生成中间代码 JVM 加载执行中间代码      语言核心 语言元素  关键字：有特殊含义的单词  48 个可用 2 个保留：goto，const   标识符  字符、数字、下划线、$ 不能以数字开头 不能有!等特殊字符 不能是关键字 大小写敏感 驼峰风格   运算符  赋值：= 算术：+,-,*,/,% 关系：>,<,>=,<=,!">
+<script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga('create','UA-123062585-1','auto'),ga('send','pageview'))</script>
+<script async src=https://www.google-analytics.com/analytics.js></script>
+<link rel=preload href=/scss/main.min.847464b684a6e89d7276700a5c500c17ab494dd1755b2654a7b27d8b59e3347e.css as=style>
+<link href=/scss/main.min.847464b684a6e89d7276700a5c500c17ab494dd1755b2654a7b27d8b59e3347e.css rel=stylesheet integrity>
+<script src=/js/jquery-3.5.1.min.js integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin=anonymous></script>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/docsearch.js@2/dist/cdn/docsearch.min.css>
+</head>
+<body class=td-page>
+<header>
+<nav class="js-navbar-scroll navbar navbar-expand navbar-dark flex-column flex-md-row td-navbar">
+<a class=navbar-brand href=/>
+<span class=navbar-logo><svg id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512" style="enable-background:new 0 0 512 512"><path style="fill:#ffc107" d="M432.384 143.616c-4.165-4.164-10.917-4.164-15.083.0l-60.352 60.352c-4.164 4.165-4.164 10.917.0 15.083 21.187 20.463 54.951 19.876 75.413-1.311 19.962-20.668 19.962-53.435.0-74.102L432.384 143.616z"/><path style="fill:#607d8b" d="M42.667 277.334c-5.891.003-10.669-4.771-10.672-10.662-.002-4.338 2.623-8.245 6.64-9.882l234.667-96c5.455-2.233 11.687.38 13.92 5.835s-.38 11.687-5.835 13.92l-234.667 96C45.433 277.069 44.056 277.337 42.667 277.334z"/><path style="fill:#546e7a" d="M391.552 56.448l-32-32C343.938 8.745 322.689-.059 300.544.0h-3.755c-46.082.024-83.432 37.374-83.456 83.456v3.755c-.053 22.138 8.75 43.377 24.448 58.987l32 32c4.165 4.164 10.917 4.164 15.083.0L391.531 71.531C395.701 67.372 395.71 60.62 391.552 56.448z"/><path style="fill:#607d8b" d="M160 469.334c-3.279.006-6.379-1.497-8.405-4.075L34.261 315.926c-3.635-4.636-2.823-11.341 1.813-14.976s11.341-2.823 14.976 1.813l117.333 149.333c3.629 4.641 2.809 11.344-1.832 14.973C164.681 468.533 162.375 469.329 160 469.334z"/><path style="fill:#455a64" d="M487.467 86.848l-3.669-3.648c-37.687-36.557-97.71-36.197-134.955.811l-51.413 51.413c-36.996 37.25-37.357 97.263-.811 134.955l3.584 3.669c1.7 2.457 4.671 3.706 7.616 3.2 2.831.005 5.548-1.115 7.552-3.115l172.181-172.181c4.189-4.143 4.226-10.896.083-15.085-.028-.028-.055-.056-.083-.083L487.467 86.848z"/><g><path style="fill:#ffc107" d="M501.333 192H480c-5.891.0-10.667-4.776-10.667-10.667s4.776-10.667 10.667-10.667h21.333c5.891.0 10.667 4.776 10.667 10.667S507.225 192 501.333 192z"/><path style="fill:#ffc107" d="M394.667 298.667c-5.891.0-10.667-4.776-10.667-10.667v-21.333c0-5.891 4.776-10.667 10.667-10.667 5.891.0 10.667 4.776 10.667 10.667V288C405.333 293.891 400.558 298.667 394.667 298.667z"/><path style="fill:#ffc107" d="M480 277.334c-2.831.005-5.548-1.115-7.552-3.115l-21.333-21.333c-4.093-4.237-3.975-10.99.262-15.083 4.134-3.993 10.687-3.993 14.821.0l21.333 21.333c4.159 4.172 4.148 10.926-.024 15.085C485.514 276.209 482.815 277.327 480 277.334z"/></g><g><path style="fill:#455a64" d="M266.667 448H96c-29.455.0-53.333 23.878-53.333 53.333.0 5.891 4.776 10.667 10.667 10.667h256c5.891.0 10.667-4.776 10.667-10.667C320 471.878 296.122 448 266.667 448z"/><circle style="fill:#455a64" cx="32" cy="288" r="32"/></g><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/></svg></span><span class=font-weight-bold>infilos.com</span>
+</a>
+<div class="collapse navbar-collapse" id=navbarSupportedContent>
+<ul class="navbar-nav mr-auto">
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+基础
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/%e6%93%8d%e4%bd%9c%e7%b3%bb%e7%bb%9f>操作系统</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/%e6%80%a7%e8%83%bd%e4%b9%8b%e6%ae%87>性能之殇</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/io%e6%a8%a1%e5%9e%8b>IO 模型</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/%e7%bd%91%e7%bb%9c%e5%9f%ba%e7%a1%80>网络基础</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/tcp-ip>TCP-IP</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/http>HTTP</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+语言
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/java>Java 编程</a>
+<a class=dropdown-item href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/jvm-core>JVM 核心</a>
+<a class=dropdown-item href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/jvm-concurrent>JVM 并发</a>
+<a class=dropdown-item href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/scala>Scala 编程</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+框架库
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93/spring>Spring</a>
+<a class=dropdown-item href=/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93/hikari>Hikari</a>
+<a class=dropdown-item href=/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93/parboiled>Parboiled</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+分布式
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%88%86%e5%b8%83%e5%bc%8f/base>基本构成</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+大数据
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%ad%98%e5%82%a8%e7%b3%bb%e7%bb%9f>存储系统</a>
+<a class=dropdown-item href=/%e6%9f%a5%e8%af%a2%e7%b3%bb%e7%bb%9f>查询系统</a>
+<a class=dropdown-item href=/%e6%b6%88%e6%81%af%e7%b3%bb%e7%bb%9f>消息系统</a>
+<a class=dropdown-item href=/%e5%a4%84%e7%90%86%e7%b3%bb%e7%bb%9f>处理系统</a>
+<a class=dropdown-item href=/%e7%ae%a1%e7%90%86%e7%b3%bb%e7%bb%9f>管理系统</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+中后台
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e8%ae%be%e6%96%bd>基础设施</a>
+<a class=dropdown-item href=/%e4%ba%a4%e4%ba%92%e7%95%8c%e9%9d%a2>交互界面</a>
+<a class=dropdown-item href=/%e4%b8%9a%e5%8a%a1%e7%b3%bb%e7%bb%9f>业务系统</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+模式架构
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e6%a8%a1%e5%bc%8f%e6%9e%b6%e6%9e%84/design-pattern>设计模式</a>
+<a class=dropdown-item href=/%e6%a8%a1%e5%bc%8f%e6%9e%b6%e6%9e%84/micro-service>微服务架构</a>
+</div>
+</li>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e9%9d%a2%e8%af%95%e9%97%ae%e7%ad%94>
+<span>面试</span>
+</a>
+</li>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e7%ae%a1%e7%90%86%e8%b7%af%e5%be%84>
+<span>管理</span>
+</a>
+</li>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e5%bc%80%e6%ba%90%e9%a1%b9%e7%9b%ae>
+<span>开源</span>
+</a>
+</li>
+</ul>
+<div class="form-inline my-2 my-lg-0">
+<div class="nav-item nav-search-item my-2 my-md-0">
+<input type=search class="form-control td-search-input" placeholder="&#xf002; 站内搜索…" aria-label=站内搜索… autocomplete=off>
+</div>
+</div>
+</div>
+</nav>
+</header>
+<div class="container-fluid td-outer">
+<div class=td-main>
+<div class="row flex-xl-nowrap">
+<aside class="col-12 col-md-3 col-xl-2 td-sidebar d-print-none">
+<div id=td-sidebar-menu class=td-sidebar__inner>
+<div id=content-mobile>
+<form class="td-sidebar__search d-flex align-items-center">
+<input type=search class="form-control td-search-input" placeholder="&#xf002; 站内搜索…" aria-label=站内搜索… autocomplete=off>
+<button class="btn btn-link td-sidebar__toggle d-md-none p-0 ml-3 fas fa-bars" type=button data-toggle=collapse data-target=#td-section-nav aria-controls=td-docs-nav aria-expanded=false aria-label="Toggle section navigation">
+</button>
+</form>
+</div>
+<div id=content-desktop></div>
+<nav class="collapse td-sidebar-nav" id=td-section-nav>
+<ul class="td-sidebar-nav__section pr-md-3 ul-0">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e7bc96e7a88be8afade8a880-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section tree-root" id=m-e7bc96e7a88be8afade8a880><span>编程语言</span></a>
+<ul class=ul-1>
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e7bc96e7a88be8afade8a880java-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880java><span>Java 编程</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e7bc96e7a88be8afade8a880javajava-base-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-base/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880javajava-base><span>Java 基础</span></a>
+<ul class="ul-3 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e7bc96e7a88be8afade8a880javajava-basech01-e99da2e59091e5afb9e8b1a1-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-base/ch01-%E9%9D%A2%E5%90%91%E5%AF%B9%E8%B1%A1/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-basech01-e99da2e59091e5afb9e8b1a1><span>CH01-面向对象</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e7bc96e7a88be8afade8a880javajava-basech02-e59fbae69cace79fa5e8af86-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-base/ch02-%E5%9F%BA%E6%9C%AC%E7%9F%A5%E8%AF%86/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-basech02-e59fbae69cace79fa5e8af86><span>CH02-基本知识</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child active-path" id=m-e7bc96e7a88be8afade8a880javajava-basech03-e59fbae69cace59bbee8b0b1-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-base/ch03-%E5%9F%BA%E6%9C%AC%E5%9B%BE%E8%B0%B1/ class="align-left pl-0 active td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-basech03-e59fbae69cace59bbee8b0b1><span class=td-sidebar-nav-active-item>CH03-基本图谱</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e7bc96e7a88be8afade8a880javajava-basech04-e6b39be59e8be69cbae588b6-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-base/ch04-%E6%B3%9B%E5%9E%8B%E6%9C%BA%E5%88%B6/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-basech04-e6b39be59e8be69cbae588b6><span>CH04-泛型机制</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e7bc96e7a88be8afade8a880javajava-basech05-e6b3a8e8a7a3e69cbae588b6-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-base/ch05-%E6%B3%A8%E8%A7%A3%E6%9C%BA%E5%88%B6/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-basech05-e6b3a8e8a7a3e69cbae588b6><span>CH05-注解机制</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e7bc96e7a88be8afade8a880javajava-basech06-e5bc82e5b8b8e69cbae588b6-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-base/ch06-%E5%BC%82%E5%B8%B8%E6%9C%BA%E5%88%B6/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-basech06-e5bc82e5b8b8e69cbae588b6><span>CH06-异常机制</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e7bc96e7a88be8afade8a880javajava-basech07-e58f8de5b084e69cbae588b6-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-base/ch07-%E5%8F%8D%E5%B0%84%E6%9C%BA%E5%88%B6/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-basech07-e58f8de5b084e69cbae588b6><span>CH07-反射机制</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e7bc96e7a88be8afade8a880javajava-basech08-spie69cbae588b6-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-base/ch08-spi%E6%9C%BA%E5%88%B6/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-basech08-spie69cbae588b6><span>CH08-SPI 机制</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e7bc96e7a88be8afade8a880javajava-collection-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-collection/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880javajava-collection><span>Java 集合</span></a>
+<ul class="ul-3 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-collectionch01-e99b86e59088e7bb93e69e84-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-collection/ch01-%E9%9B%86%E5%90%88%E7%BB%93%E6%9E%84/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-collectionch01-e99b86e59088e7bb93e69e84><span>CH01-集合结构</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-collectionch02-arraylist-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-collection/ch02-arraylist/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-collectionch02-arraylist><span>CH02-ArrayList</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-collectionch03-linkedlist-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-collection/ch03-linkedlist/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-collectionch03-linkedlist><span>CH03-LinkedList</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-collectionch04-stack-queue-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-collection/ch04-stack-queue/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-collectionch04-stack-queue><span>CH04-Stack-Queue</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-collectionch05-priorityqueue-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-collection/ch05-priorityqueue/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-collectionch05-priorityqueue><span>CH05-PriorityQueue</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-collectionch06-hashset-map-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-collection/ch06-hashset-map/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-collectionch06-hashset-map><span>CH06-HashSet-Map</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-collectionch07-linkedhashset-map-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-collection/ch07-linkedhashset-map/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-collectionch07-linkedhashset-map><span>CH07-LinkedHashSet-Map</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-collectionch08-treeset-map-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-collection/ch08-treeset-map/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-collectionch08-treeset-map><span>CH08-TreeSet-Map</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-collectionch09-weakhashmap-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-collection/ch09-weakhashmap/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-collectionch09-weakhashmap><span>CH09-WeakHashMap</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e7bc96e7a88be8afade8a880javajava-concurrent-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880javajava-concurrent><span>Java 并发</span></a>
+<ul class="ul-3 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch01-e5b9b6e58f91e4bd93e7b3bb-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch01-%E5%B9%B6%E5%8F%91%E4%BD%93%E7%B3%BB/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch01-e5b9b6e58f91e4bd93e7b3bb><span>CH01-并发体系</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch02-e79086e8aebae59fbae7a180-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch02-%E7%90%86%E8%AE%BA%E5%9F%BA%E7%A1%80/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch02-e79086e8aebae59fbae7a180><span>CH02-理论基础</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch03-e7babfe7a88be59fbae7a180-1-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch03-%E7%BA%BF%E7%A8%8B%E5%9F%BA%E7%A1%80-1/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch03-e7babfe7a88be59fbae7a180-1><span>CH03-线程基础-1</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch04-e7babfe7a88be59fbae7a180-2-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch04-%E7%BA%BF%E7%A8%8B%E5%9F%BA%E7%A1%80-2/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch04-e7babfe7a88be59fbae7a180-2><span>CH04-线程基础-2</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch05-synchronized-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch05-synchronized/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch05-synchronized><span>CH05-Synchronized</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch06-volatile-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch06-volatile/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch06-volatile><span>CH06-Volatile</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch07-final-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch07-final/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch07-final><span>CH07-Final</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch08-e5b9b6e58f91e6a682e8a788-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch08-%E5%B9%B6%E5%8F%91%E6%A6%82%E8%A7%88/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch08-e5b9b6e58f91e6a682e8a788><span>CH08-并发概览</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch09-e5ba95e5b182e694afe69291-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch09-%E5%BA%95%E5%B1%82%E6%94%AF%E6%92%91/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch09-e5ba95e5b182e694afe69291><span>CH09-底层支撑</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch10-locksupport-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch10-locksupport/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch10-locksupport><span>CH10-LockSupport</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch11-aqs-1-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch11-aqs-1/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch11-aqs-1><span>CH11-AQS-1</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch12-aqs-2-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch12-aqs-2/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch12-aqs-2><span>CH12-AQS-2</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch13-aqs-3-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch13-aqs-3/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch13-aqs-3><span>CH13-AQS-3</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch14-aqs-4-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch14-aqs-4/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch14-aqs-4><span>CH14-AQS-4</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch15-reentrantlock-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch15-reentrantlock/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch15-reentrantlock><span>CH15-ReentrantLock</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch16-reentrantreadwritelock-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch16-reentrantreadwritelock/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch16-reentrantreadwritelock><span>CH16-ReentrantReadWriteLock</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch17-concurrenthashmap-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch17-concurrenthashmap/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch17-concurrenthashmap><span>CH17-ConcurrentHashMap</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch18-concurrentlinkedqueue-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch18-concurrentlinkedqueue/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch18-concurrentlinkedqueue><span>CH18-ConcurrentLinkedQueue</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch19-blockingqueue-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch19-blockingqueue/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch19-blockingqueue><span>CH19-BlockingQueue</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch20-futuretask-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch20-futuretask/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch20-futuretask><span>CH20-FutureTask</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch21-threadpoolexecutor-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch21-threadpoolexecutor/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch21-threadpoolexecutor><span>CH21-ThreadPoolExecutor</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch22-scheduledthreadpoolexecutor-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch22-scheduledthreadpoolexecutor/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch22-scheduledthreadpoolexecutor><span>CH22-ScheduledThreadPoolExecutor</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch23-forkjoin-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch23-forkjoin/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch23-forkjoin><span>CH23-ForkJoin.md</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch24-countdownlatch-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch24-countdownlatch/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch24-countdownlatch><span>CH24-CountDownLatch</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch25-cyclicbarrier-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch25-cyclicbarrier/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch25-cyclicbarrier><span>CH25-CyclicBarrier</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch26-semaphore-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch26-semaphore/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch26-semaphore><span>CH26-Semaphore</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch27-phaser-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch27-phaser/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch27-phaser><span>CH27-Phaser</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch28-exchanger-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch28-exchanger/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch28-exchanger><span>CH28-Exchanger</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch29-threadlocal-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch29-threadlocal/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch29-threadlocal><span>CH29-ThreadLocal</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch30-alllocks-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch30-alllocks/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch30-alllocks><span>CH30-AllLocks</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch31-allqueues-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch31-allqueues/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch31-allqueues><span>CH31-AllQueues</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch32-allpools-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch32-allpools/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch32-allpools><span>CH32-AllPools</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e7bc96e7a88be8afade8a880javajava-io-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-io/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880javajava-io><span>Java I/0</span></a>
+<ul class="ul-3 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-ioch01-ioe58886e7b1bb-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-io/ch01-io%E5%88%86%E7%B1%BB/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-ioch01-ioe58886e7b1bb><span>CH01-IO分类</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-ioch02-e8a385e9a5b0e6a8a1e5bc8f-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-io/ch02-%E8%A3%85%E9%A5%B0%E6%A8%A1%E5%BC%8F/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-ioch02-e8a385e9a5b0e6a8a1e5bc8f><span>CH02-装饰模式</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-ioch03-inputstream-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-io/ch03-inputstream/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-ioch03-inputstream><span>CH03-InputStream</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-ioch04-outputstream-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-io/ch04-outputstream/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-ioch04-outputstream><span>CH04-OutputStream</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-ioch05-e5b8b8e794a8e6938de4bd9c-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-io/ch05-%E5%B8%B8%E7%94%A8%E6%93%8D%E4%BD%9C/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-ioch05-e5b8b8e794a8e6938de4bd9c><span>CH05-常用操作.md</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-ioch06-ioe5ae9ee78eb0-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-io/ch06-io%E5%AE%9E%E7%8E%B0/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-ioch06-ioe5ae9ee78eb0><span>CH06-IO实现</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-ioch07-ioe6a8a1e59e8b-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-io/ch07-io%E6%A8%A1%E5%9E%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-ioch07-ioe6a8a1e59e8b><span>CH07-IO模型</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-ioch08-bioe58e9fe79086-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-io/ch08-bio%E5%8E%9F%E7%90%86/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-ioch08-bioe58e9fe79086><span>CH08-BIO原理</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-ioch09-nioe59fbae7a180-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-io/ch09-nio%E5%9F%BA%E7%A1%80/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-ioch09-nioe59fbae7a180><span>CH09-NIO基础</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-ioch10-nioe58e9fe79086-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-io/ch10-nio%E5%8E%9F%E7%90%86/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-ioch10-nioe58e9fe79086><span>CH10-NIO原理</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-ioch11-aioe58e9fe79086-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-io/ch11-aio%E5%8E%9F%E7%90%86/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-ioch11-aioe58e9fe79086><span>CH11-AIO原理</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-ioch12-e99bb6e68bb7e8b49d-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-io/ch12-%E9%9B%B6%E6%8B%B7%E8%B4%9D/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-ioch12-e99bb6e68bb7e8b49d><span>CH12-零拷贝</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-ioch13-e58685e5ad98e698a0e5b084-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-io/ch13-%E5%86%85%E5%AD%98%E6%98%A0%E5%B0%84/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-ioch13-e58685e5ad98e698a0e5b084><span>CH13-内存映射</span></a>
+</li>
+</ul>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e7bc96e7a88be8afade8a880jvm-core-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-core><span>JVM 核心</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm><span>JVM Core</span></a>
+<ul class="ul-3 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch01-jvme6a682e8a788-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm/ch01-jvm%E6%A6%82%E8%A7%88/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch01-jvme6a682e8a788><span>CH01-JVM概览</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch02-jvme5ad97e88a82e7a081-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm/ch02-jvm%E5%AD%97%E8%8A%82%E7%A0%81/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch02-jvme5ad97e88a82e7a081><span>CH02-JVM字节码</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch03-jvme7b1bbe58aa0e8bdbd-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm/ch03-jvm%E7%B1%BB%E5%8A%A0%E8%BD%BD/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch03-jvme7b1bbe58aa0e8bdbd><span>CH03-JVM类加载</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch04-jvme58685e5ad98e7bb93e69e84-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm/ch04-jvm%E5%86%85%E5%AD%98%E7%BB%93%E6%9E%84/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch04-jvme58685e5ad98e7bb93e69e84><span>CH04-JVM内存结构</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch05-jvme58685e5ad98e6a8a1e59e8b-1-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm/ch05-jvm%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B-1/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch05-jvme58685e5ad98e6a8a1e59e8b-1><span>CH05-JVM内存模型-1</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch06-jvme58685e5ad98e6a8a1e59e8b-2-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm/ch06-jvm%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B-2/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch06-jvme58685e5ad98e6a8a1e59e8b-2><span>CH06-JVM内存模型-2</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch07-jvme59e83e59cbee59b9ee694b6-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm/ch07-jvm%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch07-jvme59e83e59cbee59b9ee694b6><span>CH07-JVM垃圾回收</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch08-jvm-g1-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm/ch08-jvm-g1/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch08-jvm-g1><span>CH08-JVM-G1.md</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch09-jvm-zgc-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm/ch09-jvm-zgc/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch09-jvm-zgc><span>CH09-JVM-ZGC</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch10-jvme8b083e4bc98e58f82e695b0-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm/ch10-jvm%E8%B0%83%E4%BC%98%E5%8F%82%E6%95%B0/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch10-jvme8b083e4bc98e58f82e695b0><span>CH10-JVM调优参数</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch11-jvm-oom-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm/ch11-jvm-oom/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch11-jvm-oom><span>CH11-JVM-OOM</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch12-jvme7babfe7a88bdump-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm/ch12-jvm%E7%BA%BF%E7%A8%8Bdump/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch12-jvme7babfe7a88bdump><span>CH12-JVM线程Dump</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch13-jvme8b083e8af95e591bde4bba4-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm/ch13-jvm%E8%B0%83%E8%AF%95%E5%91%BD%E4%BB%A4/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch13-jvme8b083e8af95e591bde4bba4><span>CH13-JVM调试命令</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch14-jvme8b083e8af95e5b7a5e585b7-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm/ch14-jvm%E8%B0%83%E8%AF%95%E5%B7%A5%E5%85%B7/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch14-jvme8b083e8af95e5b7a5e585b7><span>CH14-JVM调试工具</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch15-jvme58aa8e68081e8b083e8af95-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm/ch15-jvm%E5%8A%A8%E6%80%81%E8%B0%83%E8%AF%95/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch15-jvme58aa8e68081e8b083e8af95><span>CH15-JVM动态调试</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-133-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/jmm-133/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-133><span>JSR 133</span></a>
+<ul class="ul-3 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-133ch01-e68c87e4bba4e9878de68e92-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/jmm-133/ch01-%E6%8C%87%E4%BB%A4%E9%87%8D%E6%8E%92/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-133ch01-e68c87e4bba4e9878de68e92><span>CH01-指令重排</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-133ch02-e58685e5ad98e5b18fe99a9c-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/jmm-133/ch02-%E5%86%85%E5%AD%98%E5%B1%8F%E9%9A%9C/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-133ch02-e58685e5ad98e5b18fe99a9c><span>CH02-内存屏障</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-133ch03-e5a49ae5a484e79086e599a8-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/jmm-133/ch03-%E5%A4%9A%E5%A4%84%E7%90%86%E5%99%A8/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-133ch03-e5a49ae5a484e79086e599a8><span>CH03-多处理器</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-133ch04-e5bc80e58f91e68c87e58d97-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/jmm-133/ch04-%E5%BC%80%E5%8F%91%E6%8C%87%E5%8D%97/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-133ch04-e5bc80e58f91e68c87e58d97><span>CH04-开发指南</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-spec-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/jmm-spec/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-spec><span>JMM 规范</span></a>
+<ul class="ul-3 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-specch01-jmme8a784e88c83-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/jmm-spec/ch01-jmm%E8%A7%84%E8%8C%83/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-specch01-jmme8a784e88c83><span>CH01-JMM规范</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-specch02-jmme8a7a3e9878a-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/jmm-spec/ch02-jmm%E8%A7%A3%E9%87%8A/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-specch02-jmme8a7a3e9878a><span>CH02-JMM Explain</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-specch03-jmme58e9fe58899-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/jmm-spec/ch03-jmm%E5%8E%9F%E5%88%99/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-specch03-jmme58e9fe58899><span>CH03-JMM原则</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-specch04-jsr133-faq-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/jmm-spec/ch04-jsr133-faq/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-specch04-jsr133-faq><span>CH04-JSR133-FAQ</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-specch05-jsr133-cook-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/jmm-spec/ch05-jsr133-cook/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-specch05-jsr133-cook><span>CH05-JSR133-Cook</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v2/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2><span>JVM 深入理解 V2</span></a>
+<ul class="ul-3 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch01-e8b5b0e8bf9bjava-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v2/ch01-%E8%B5%B0%E8%BF%9Bjava/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch01-e8b5b0e8bf9bjava><span>CH01-走近 Java</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch02-e58685e5ad98e58cbae59f9fe4b88ee6baa2e587bae5bc82e5b8b8-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v2/ch02-%E5%86%85%E5%AD%98%E5%8C%BA%E5%9F%9F%E4%B8%8E%E6%BA%A2%E5%87%BA%E5%BC%82%E5%B8%B8/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch02-e58685e5ad98e58cbae59f9fe4b88ee6baa2e587bae5bc82e5b8b8><span>CH02-内存区域与溢出</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch03-e59e83e59cbee694b6e99b86e4b88ee58886e9858de7ad96e795a5-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v2/ch03-%E5%9E%83%E5%9C%BE%E6%94%B6%E9%9B%86%E4%B8%8E%E5%88%86%E9%85%8D%E7%AD%96%E7%95%A5/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch03-e59e83e59cbee694b6e99b86e4b88ee58886e9858de7ad96e795a5><span>CH03-垃圾收集与分配策略</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch04-e680a7e883bde79b91e68ea7e4b88ee69585e99a9ce5a484e79086-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v2/ch04-%E6%80%A7%E8%83%BD%E7%9B%91%E6%8E%A7%E4%B8%8E%E6%95%85%E9%9A%9C%E5%A4%84%E7%90%86/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch04-e680a7e883bde79b91e68ea7e4b88ee69585e99a9ce5a484e79086><span>CH04-性能监控与故障处理</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch05-e8b083e4bc98e6a188e4be8b-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v2/ch05-%E8%B0%83%E4%BC%98%E6%A1%88%E4%BE%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch05-e8b083e4bc98e6a188e4be8b><span>CH05-调优案例</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch06-e7b1bbe69687e4bbb6e7bb93e69e84-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v2/ch06-%E7%B1%BB%E6%96%87%E4%BB%B6%E7%BB%93%E6%9E%84/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch06-e7b1bbe69687e4bbb6e7bb93e69e84><span>CH06-类文件结构</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch07-e7b1bbe58aa0e8bdbde69cbae588b6-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v2/ch07-%E7%B1%BB%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch07-e7b1bbe58aa0e8bdbde69cbae588b6><span>CH07-类加载</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch08-e5ad97e88a82e7a081e689a7e8a18ce5bc95e6938e-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v2/ch08-%E5%AD%97%E8%8A%82%E7%A0%81%E6%89%A7%E8%A1%8C%E5%BC%95%E6%93%8E/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch08-e5ad97e88a82e7a081e689a7e8a18ce5bc95e6938e><span>CH08-字节码执行引擎</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch09-e6a188e4be8be4b88ee5ae9ee68898-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v2/ch09-%E6%A1%88%E4%BE%8B%E4%B8%8E%E5%AE%9E%E6%88%98/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch09-e6a188e4be8be4b88ee5ae9ee68898><span>CH09-案例与实战</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch10-e7bc96e8af91e69c9fe4bc98e58c96-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v2/ch10-%E7%BC%96%E8%AF%91%E6%9C%9F%E4%BC%98%E5%8C%96/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch10-e7bc96e8af91e69c9fe4bc98e58c96><span>CH10-编译期优化</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch11-e8bf90e8a18ce697b6e4bc98e58c96-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v2/ch11-%E8%BF%90%E8%A1%8C%E6%97%B6%E4%BC%98%E5%8C%96/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch11-e8bf90e8a18ce697b6e4bc98e58c96><span>CH11-运行时优化</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch12-e58685e5ad98e6a8a1e59e8be4b88ee7babfe7a88b-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v2/ch12-%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B%E4%B8%8E%E7%BA%BF%E7%A8%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch12-e58685e5ad98e6a8a1e59e8be4b88ee7babfe7a88b><span>CH12-内存模型与线程</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch13-e7babfe7a88be5ae89e585a8e4b88ee99481e4bc98e58c96-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v2/ch13-%E7%BA%BF%E7%A8%8B%E5%AE%89%E5%85%A8%E4%B8%8E%E9%94%81%E4%BC%98%E5%8C%96/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch13-e7babfe7a88be5ae89e585a8e4b88ee99481e4bc98e58c96><span>CH13-线程安全与锁优化</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2endix-b-e68c87e4bba4e8a1a8-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v2/endix-b-%E6%8C%87%E4%BB%A4%E8%A1%A8/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2endix-b-e68c87e4bba4e8a1a8><span>Endix-B-字节码指令</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2endix-c-e58f82e695b0e8a1a8-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v2/endix-c-%E5%8F%82%E6%95%B0%E8%A1%A8/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2endix-c-e58f82e695b0e8a1a8><span>Endix-C-虚拟机参数</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v3-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v3/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v3><span>JVM 深入理解 V3</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e7bc96e7a88be8afade8a880jvm-concurrent-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-concurrent><span>JVM 并发</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practice-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/java-con-practice/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practice><span>Java 并发实战</span></a>
+<ul class="ul-3 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech01-e7ae80e4bb8b-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/java-con-practice/ch01-%E7%AE%80%E4%BB%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech01-e7ae80e4bb8b><span>CH01-简介</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech02-e7babfe7a88be5ae89e585a8e680a7-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/java-con-practice/ch02-%E7%BA%BF%E7%A8%8B%E5%AE%89%E5%85%A8%E6%80%A7/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech02-e7babfe7a88be5ae89e585a8e680a7><span>CH02-线程安全性</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech03-e5afb9e8b1a1e585b1e4baab-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/java-con-practice/ch03-%E5%AF%B9%E8%B1%A1%E5%85%B1%E4%BA%AB/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech03-e5afb9e8b1a1e585b1e4baab><span>CH03-对象共享</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech04-e5afb9e8b1a1e7bb84e59088-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/java-con-practice/ch04-%E5%AF%B9%E8%B1%A1%E7%BB%84%E5%90%88/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech04-e5afb9e8b1a1e7bb84e59088><span>CH04-对象组合</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech05-e59fbae7a180e69e84e5bbbae59d97-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/java-con-practice/ch05-%E5%9F%BA%E7%A1%80%E6%9E%84%E5%BB%BA%E5%9D%97/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech05-e59fbae7a180e69e84e5bbbae59d97><span>CH05-基础构建块</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech06-e4bbbbe58aa1e689a7e8a18c-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/java-con-practice/ch06-%E4%BB%BB%E5%8A%A1%E6%89%A7%E8%A1%8C/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech06-e4bbbbe58aa1e689a7e8a18c><span>CH06-任务执行</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech07-e58f96e6b688e585b3e997ad-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/java-con-practice/ch07-%E5%8F%96%E6%B6%88%E5%85%B3%E9%97%AD/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech07-e58f96e6b688e585b3e997ad><span>CH07-取消关闭</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech08-e7babfe7a88be6b1a0-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/java-con-practice/ch08-%E7%BA%BF%E7%A8%8B%E6%B1%A0/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech08-e7babfe7a88be6b1a0><span>CH08-线程池</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech09-guie5ba94e794a8-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/java-con-practice/ch09-gui%E5%BA%94%E7%94%A8/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech09-guie5ba94e794a8><span>CH09-GUI应用</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech10-e6b4bbe8b783e680a7e58db1e999a9-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/java-con-practice/ch10-%E6%B4%BB%E8%B7%83%E6%80%A7%E5%8D%B1%E9%99%A9/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech10-e6b4bbe8b783e680a7e58db1e999a9><span>CH10-活跃性危险</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech11-e680a7e883bde4b88ee4bcb8e7bca9-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/java-con-practice/ch11-%E6%80%A7%E8%83%BD%E4%B8%8E%E4%BC%B8%E7%BC%A9/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech11-e680a7e883bde4b88ee4bcb8e7bca9><span>CH11-性能与伸缩</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech12-e6b58be8af95-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/java-con-practice/ch12-%E6%B5%8B%E8%AF%95/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech12-e6b58be8af95><span>CH12-测试</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech13-e698bee5bc8fe99481-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/java-con-practice/ch13-%E6%98%BE%E5%BC%8F%E9%94%81/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech13-e698bee5bc8fe99481><span>CH13-显式锁</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech14-e887aae5ae9ae4b989e689a9e5b195-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/java-con-practice/ch14-%E8%87%AA%E5%AE%9A%E4%B9%89%E6%89%A9%E5%B1%95/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech14-e887aae5ae9ae4b989e689a9e5b195><span>CH14-自定义扩展</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech15-e58e9fe5ad90e4b88ee99d9ee998bbe5a19ee5908ce6ada5-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/java-con-practice/ch15-%E5%8E%9F%E5%AD%90%E4%B8%8E%E9%9D%9E%E9%98%BB%E5%A1%9E%E5%90%8C%E6%AD%A5/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech15-e58e9fe5ad90e4b88ee99d9ee998bbe5a19ee5908ce6ada5><span>CH15-原子与非阻塞同步</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech16-e58685e5ad98e6a8a1e59e8b-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/java-con-practice/ch16-%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech16-e58685e5ad98e6a8a1e59e8b><span>CH16-内存模型</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-pattern-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/java-con-pattern/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-pattern><span>Java 并发模式</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallel-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/dive-parallel/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallel><span>深入理解并行</span></a>
+<ul class="ul-3 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch01-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/dive-parallel/ch01/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch01><span>CH01-关于本书</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch02-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/dive-parallel/ch02/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch02><span>CH02-简介</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch03-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/dive-parallel/ch03/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch03><span>CH03-硬件特性</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch04-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/dive-parallel/ch04/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch04><span>CH04-并行工具</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch05-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/dive-parallel/ch05/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch05><span>CH05-计数</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch06-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/dive-parallel/ch06/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch06><span>CH06-分割同步设计</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch07-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/dive-parallel/ch07/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch07><span>CH07-锁</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch08-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/dive-parallel/ch08/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch08><span>CH08-数据所有权</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch09-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/dive-parallel/ch09/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch09><span>CH09-延后处理</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch10-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/dive-parallel/ch10/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch10><span>CH10-数据结构</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch11-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/dive-parallel/ch11/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch11><span>CH11-验证</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch12-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/dive-parallel/ch12/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch12><span>CH12-形式验证</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch13-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/dive-parallel/ch13/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch13><span>CH13-综合应用</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch14-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/dive-parallel/ch14/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch14><span>CH14-高级同步</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch15-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/dive-parallel/ch15/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch15><span>CH15-高级同步-内存序</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelendix-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/dive-parallel/endix/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelendix><span>ENDIX-C-内存屏障</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-model-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/seven-con-model/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-model><span>七并发模型</span></a>
+<ul class="ul-3 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-modelch01-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/seven-con-model/ch01/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-modelch01><span>CH01-概述</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-modelch02-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/seven-con-model/ch02/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-modelch02><span>CH02-线程与锁</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-modelch03-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/seven-con-model/ch03/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-modelch03><span>CH03-函数式编程</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-modelch04-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/seven-con-model/ch04/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-modelch04><span>CH04-分离标识与状态</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-modelch05-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/seven-con-model/ch05/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-modelch05><span>CH05-Actor</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-modelch06-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/seven-con-model/ch06/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-modelch06><span>CH06-CSP</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-modelch07-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/seven-con-model/ch07/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-modelch07><span>CH07-数据并行</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-modelch08-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/seven-con-model/ch08/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-modelch08><span>CH08-Lambda 架构</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-modelch09-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/seven-con-model/ch09/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-modelch09><span>CH09-未来方向</span></a>
+</li>
+</ul>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e7bc96e7a88be8afade8a880scala-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880scala><span>Scala 编程</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-core-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880scalascala-core><span>Scala 精要</span></a>
+<ul class="ul-3 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-corecase-class-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/case-class/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-corecase-class><span>Case Class</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coretype-system-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/type-system/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coretype-system><span>类型系统</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-corefunctional-1-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/functional-1/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-corefunctional-1><span>函数式-基础</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-corefunctional-2-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/functional-2/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-corefunctional-2><span>函数式-用例</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-corefuture-1-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/future-1/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-corefuture-1><span>Future-基础</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-corefuture-2-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/future-2/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-corefuture-2><span>Future-用例</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-corefuture-3-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/future-3/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-corefuture-3><span>Future-集合</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-corefuture-4-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/future-4/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-corefuture-4><span>Future-Promise</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coreimplicits-1-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/implicits-1/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coreimplicits-1><span>Implicits-基础</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coreimplicits-2-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/implicits-2/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coreimplicits-2><span>Implicits-进阶</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coretrait-1-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/trait-1/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coretrait-1><span>Trait-基础</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coretrait-2-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/trait-2/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coretrait-2><span>Trait-用例</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coretry-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/try/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coretry><span>Try</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coretype-1-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/type-1/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coretype-1><span>Type-用例</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coretype-2-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/type-2/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coretype-2><span>Type-进阶</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coreprimitive-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/primitive/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coreprimitive><span>Primitive</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-corenumbers-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/numbers/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-corenumbers><span>Numbers</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-corestrings-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/strings/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-corestrings><span>String</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-corecontrol-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/control/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-corecontrol><span>Control</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-corepattern-match-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/pattern-match/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-corepattern-match><span>Pattern Match</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coreclass-object-1-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/class-object-1/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coreclass-object-1><span>Class Object: 基础</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coreclass-object-2-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/class-object-2/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coreclass-object-2><span>Class Object: 类</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coreclass-object-3-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/class-object-3/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coreclass-object-3><span>Class Object: 方法</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coreclass-object-4-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/class-object-4/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coreclass-object-4><span>Class Object: 对象</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coreclass-object-5-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/class-object-5/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coreclass-object-5><span>函数式对象</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coreclass-object-6-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/class-object-6/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coreclass-object-6><span>整体类层级</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coreclass-object-7-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/class-object-7/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coreclass-object-7><span>组合继承</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-corepackage-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/package/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-corepackage><span>Package</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coresbt-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/sbt/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coresbt><span>SBT</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-corepredef-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/predef/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-corepredef><span>Predef</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coreio-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/io/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coreio><span>I/O</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-corereserved-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/reserved/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-corereserved><span>保留字</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coreexception-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/exception/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coreexception><span>Exception</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coreannotation-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/annotation/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coreannotation><span>Inject Type</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coretype-class-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/type-class/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coretype-class><span>Type Class</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coremap-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/map/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coremap><span>Map Flatmap</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coregeneric-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/generic/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coregeneric><span>泛型型变</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-corecommon-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/common/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-corecommon><span>常见问题</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coreplaceholder-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/placeholder/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coreplaceholder><span>占位符</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coremulti-vars-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/multi-vars/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coremulti-vars><span>多变量赋值</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coreconstructor-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/constructor/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coreconstructor><span>构造器</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-corefunctional-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/functional/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-corefunctional><span>函数式入门</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coremonoid-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/monoid/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coremonoid><span>Monoid</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-corefunc-type-class-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/func-type-class/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-corefunc-type-class><span>函数式与类型类</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-coreasync-programming-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/async-programming/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coreasync-programming><span>异步编程</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-corescala-style-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/scala-style/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-corescala-style><span>战略Scala风格</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-func-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-func/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880scalascala-func><span>Scala 函数式</span></a>
+<ul class="ul-3 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-funcch00-e7b2bee8a681-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-func/ch00-%E7%B2%BE%E8%A6%81/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-funcch00-e7b2bee8a681><span>CH00-精要</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-funcch01-e5ae9ae4b989-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-func/ch01-%E5%AE%9A%E4%B9%89/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-funcch01-e5ae9ae4b989><span>CH01-定义</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-funcch02-e587bde695b0-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-func/ch02-%E5%87%BD%E6%95%B0/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-funcch02-e587bde695b0><span>CH02-函数</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-funcch03-e695b0e68dae-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-func/ch03-%E6%95%B0%E6%8D%AE/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-funcch03-e695b0e68dae><span>CH03-数据</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-funcch04-e5bc82e5b8b8-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-func/ch04-%E5%BC%82%E5%B8%B8/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-funcch04-e5bc82e5b8b8><span>CH04-异常</span></a>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</div>
+</aside>
+<aside class="d-none d-xl-block col-xl-2 td-sidebar-toc d-print-none">
+<div class="td-page-meta ml-2 pb-1 pt-2 mb-0">
+<a href=https://github.com/infilos/infilos.com/edit/master/content/zh/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/java/java-base/CH03-%e5%9f%ba%e6%9c%ac%e5%9b%be%e8%b0%b1.md target=_blank><i class="fa fa-edit fa-fw"></i> 编辑此页</a>
+<a href="https://github.com/infilos/infilos.com/new/master/content/zh/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/java/java-base/CH03-%e5%9f%ba%e6%9c%ac%e5%9b%be%e8%b0%b1.md?filename=change-me.md&value=---%0Atitle%3A+%22Long+Page+Title%22%0AlinkTitle%3A+%22Short+Nav+Title%22%0Aweight%3A+100%0Adescription%3A+%3E-%0A+++++Page+description+for+heading+and+indexes.%0A---%0A%0A%23%23+Heading%0A%0AEdit+this+template+to+create+your+new+page.%0A%0A%2A+Give+it+a+good+name%2C+ending+in+%60.md%60+-+e.g.+%60getting-started.md%60%0A%2A+Edit+the+%22front+matter%22+section+at+the+top+of+the+page+%28weight+controls+how+its+ordered+amongst+other+pages+in+the+same+directory%3B+lowest+number+first%29.%0A%2A+Add+a+good+commit+message+at+the+bottom+of+the+page+%28%3C80+characters%3B+use+the+extended+description+field+for+more+detail%29.%0A%2A+Create+a+new+branch+so+you+can+preview+your+new+file+and+request+a+review+via+Pull+Request.%0A" target=_blank><i class="fa fa-edit fa-fw"></i> 添加子页面</a>
+<a href="https://github.com/infilos/infilos.com/issues/new?title=CH03-%e5%9f%ba%e6%9c%ac%e5%9b%be%e8%b0%b1" target=_blank><i class="fab fa-github fa-fw"></i> 提交文档问题</a>
+<a id=print href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-base/_print/><i class="fa fa-print fa-fw"></i> 整节打印</a>
+</div>
+<div class=td-toc><nav id=TableOfContents>
+<ul>
+<li><a href=#概述>概述</a></li>
+<li><a href=#语言核心>语言核心</a>
+<ul>
+<li><a href=#语言元素>语言元素</a></li>
+<li><a href=#变量常量>变量/常量</a></li>
+<li><a href=#数据类型>数据类型</a></li>
+</ul>
+</li>
+<li><a href=#字符串>字符串</a></li>
+<li><a href=#数组>数组</a></li>
+<li><a href=#循环>循环</a></li>
+<li><a href=#分支>分支</a></li>
+<li><a href=#faq>FAQ</a>
+<ul>
+<li><a href=#使用哪种数据类型表示价格>使用哪种数据类型表示价格</a></li>
+<li><a href=#怎么将-byte-转换为-string>怎么将 byte 转换为 String</a></li>
+<li><a href=#java-中怎样将-bytes-转换为-long-类型>Java 中怎样将 bytes 转换为 long 类型</a></li>
+<li><a href=#我们能将-int-强制转换为-byte-类型的变量吗>我们能将 int 强制转换为 byte 类型的变量吗</a></li>
+<li><a href=#存在两个类b-继承-ac-继承-b我们能将-b-转换为-c-么-如-c--c-b>存在两个类，B 继承 A，C 继承 B，我们能将 B 转换为 C 么? 如 C = (C) B</a></li>
+<li><a href=#哪个类包含-clone-方法-是-cloneable-还是-object>哪个类包含 clone 方法? 是 Cloneable 还是 Object?</a></li>
+<li><a href=#java-中--操作符是线程安全的吗>Java 中 ++ 操作符是线程安全的吗?</a></li>
+<li><a href=#a--a--b-与-a--b-的区别>a = a + b 与 a += b 的区别</a></li>
+<li><a href=#我能在不进行强制转换的情况下将一个-double-值赋值给-long-类型的变量吗>我能在不进行强制转换的情况下将一个 double 值赋值给 long 类型的变量吗?</a></li>
+<li><a href=#301--03-将会返回什么-true-还是-false>3*0.1 == 0.3 将会返回什么? true 还是 false?</a></li>
+<li><a href=#int-和-integer-哪个会占用更多的内存>int 和 Integer 哪个会占用更多的内存?</a></li>
+<li><a href=#为什么-java-中的-string-是不可变的immutable>为什么 Java 中的 String 是不可变的(Immutable)?</a></li>
+<li><a href=#我们能在-switch-中使用-string-吗>我们能在 Switch 中使用 String 吗?</a></li>
+<li><a href=#java-中的构造器链是什么>Java 中的构造器链是什么?</a></li>
+<li><a href=#枚举类>枚举类</a></li>
+<li><a href=#什么是不可变对象immutable-object-java-中怎么创建一个不可变对象>什么是不可变对象(immutable object)? Java 中怎么创建一个不可变对象?</a></li>
+<li><a href=#我们能创建一个包含可变对象的不可变对象吗>我们能创建一个包含可变对象的不可变对象吗?</a></li>
+<li><a href=#有没有可能两个不相等的对象有有相同的-hashcode>有没有可能两个不相等的对象有有相同的 hashcode?</a></li>
+<li><a href=#两个相同的对象会有不同的的-hash-code-吗>两个相同的对象会有不同的的 hash code 吗?</a></li>
+<li><a href=#我们可以在-hashcode-中使用随机数字吗>我们可以在 hashcode() 中使用随机数字吗?</a></li>
+<li><a href=#java-中comparator-与-comparable-有什么不同>Java 中，Comparator 与 Comparable 有什么不同?</a></li>
+<li><a href=#为什么在重写-equals-方法的时候需要重写-hashcode-方法>为什么在重写 equals 方法的时候需要重写 hashCode 方法?</a></li>
+<li><a href=#ab和aequalsb有什么区别>“a==b”和”a.equals(b)”有什么区别?</a></li>
+<li><a href=#ahashcode-有什么用-与-aequalsb-有什么关系>a.hashCode() 有什么用? 与 a.equals(b) 有什么关系?</a></li>
+<li><a href=#finalfinalize-和-finally-的不同之处>final、finalize 和 finally 的不同之处?</a></li>
+<li><a href=#java-中的编译期常量是什么-使用它又什么风险>Java 中的编译期常量是什么? 使用它又什么风险?</a></li>
+<li><a href=#静态内部类与顶级类有什么区别>静态内部类与顶级类有什么区别?</a></li>
+<li><a href=#java-中serializable-与-externalizable-的区别>Java 中，Serializable 与 Externalizable 的区别?</a></li>
+<li><a href=#说出-jdk-17-中的三个新特性>说出 JDK 1.7 中的三个新特性?</a></li>
+<li><a href=#说出-5-个-jdk-18-引入的新特性>说出 5 个 JDK 1.8 引入的新特性?</a></li>
+<li><a href=#接口是什么-为什么要使用接口而不是直接使用具体类>接口是什么? 为什么要使用接口而不是直接使用具体类?</a></li>
+<li><a href=#java-中抽象类与接口之间有什么不同>Java 中，抽象类与接口之间有什么不同?</a></li>
+<li><a href=#object有哪些公用方法>Object有哪些公用方法?</a></li>
+<li><a href=#equals与的区别>equals与==的区别</a></li>
+<li><a href=#stringstringbuffer与stringbuilder的区别>String、StringBuffer与StringBuilder的区别</a></li>
+<li><a href=#接口与抽象类>接口与抽象类</a></li>
+<li><a href=#抽象类和最终类>抽象类和最终类</a></li>
+<li><a href=#异常>异常</a></li>
+<li><a href=#关于finally>关于finally</a></li>
+<li><a href=#受检查异常和运行时异常>受检查异常和运行时异常</a></li>
+<li><a href=#super出现在父类的子类中有三种存在方式>super出现在父类的子类中。有三种存在方式</a></li>
+<li><a href=#this--super在构造方法中的区别>this() & super()在构造方法中的区别</a></li>
+<li><a href=#序列化>序列化</a></li>
+<li><a href=#java移位运算符>Java移位运算符</a></li>
+<li><a href=#形参实参>形参&实参</a></li>
+<li><a href=#局部变量为什么要初始化>局部变量为什么要初始化</a></li>
+<li><a href=#java语言的鲁棒性>Java语言的鲁棒性</a></li>
+</ul>
+</li>
+</ul>
+</nav></div>
+</aside>
+<main class="col-12 col-md-9 col-xl-8 pl-md-5" role=main>
+<nav aria-label=breadcrumb class="d-none d-md-block d-print-none">
+<ol class="breadcrumb spb-1">
+<li class=breadcrumb-item>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/>编程语言</a>
+</li>
+<li class=breadcrumb-item>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/>Java 编程</a>
+</li>
+<li class=breadcrumb-item>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-base/>Java 基础</a>
+</li>
+<li class="breadcrumb-item active" aria-current=page>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-base/ch03-%E5%9F%BA%E6%9C%AC%E5%9B%BE%E8%B0%B1/>CH03-基本图谱</a>
+</li>
+</ol>
+</nav>
+<div class=td-content>
+<h1>CH03-基本图谱</h1>
+<header class=article-meta>
+</header>
+<h2 id=概述>概述</h2>
+<ul>
+<li>术语
+<ul>
+<li>JDK：Java 开发者工具，Java Developer&rsquo;s Kit</li>
+<li>JRE：Java 运行时环境，Java Runtime Environment</li>
+<li>JVM：Java 虚拟机，Java Vitual Machine</li>
+<li>API：应用程序编程接口，Application Programming Interface</li>
+</ul>
+</li>
+<li>IDE
+<ul>
+<li>Eclipse</li>
+<li>Intellij IDEA</li>
+</ul>
+</li>
+<li>程序构造块
+<ul>
+<li>package</li>
+<li>import</li>
+<li>class</li>
+<li>main</li>
+<li>大括号</li>
+<li>语句</li>
+<li>注释</li>
+</ul>
+</li>
+<li>工作方式
+<ul>
+<li>先编译后执行
+<ul>
+<li>Java 扩平台的根本</li>
+<li>编译生成中间代码</li>
+<li>JVM 加载执行中间代码</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h2 id=语言核心>语言核心</h2>
+<h3 id=语言元素>语言元素</h3>
+<ul>
+<li>关键字：有特殊含义的单词
+<ul>
+<li>48 个可用</li>
+<li>2 个保留：goto，const</li>
+</ul>
+</li>
+<li>标识符
+<ul>
+<li>字符、数字、下划线、<code>$</code></li>
+<li>不能以数字开头</li>
+<li>不能有<code>!</code>等特殊字符</li>
+<li>不能是关键字</li>
+<li>大小写敏感</li>
+<li>驼峰风格</li>
+</ul>
+</li>
+<li>运算符
+<ul>
+<li>赋值：<code>=</code></li>
+<li>算术：<code>+,-,*,/,%</code></li>
+<li>关系：<code>>,&lt;,>=,&lt;=,!=,==</code></li>
+<li>短路：<code>&&,||</code></li>
+<li>三目：<code>..?..:..</code></li>
+<li>逻辑：<code>&,|,!</code></li>
+<li>自增/减运：<code>++,--</code></li>
+<li>下标运：<code>[]</code></li>
+<li>类型运：<code>(ClassName)</code></li>
+<li>其他：
+<ul>
+<li>new</li>
+<li>instanceOf</li>
+<li>位与</li>
+<li>访问成员</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>字面量：
+<ul>
+<li>整形：122</li>
+<li>实数：3.14，2.1E-3</li>
+<li>字符：<code>'a'</code></li>
+<li>字符串：<code>"b"</code></li>
+<li>布尔：true</li>
+<li>引用：null</li>
+<li>类型：<code>int.class, String.class</code></li>
+</ul>
+</li>
+<li>分隔符</li>
+</ul>
+<h3 id=变量常量>变量/常量</h3>
+<h3 id=数据类型>数据类型</h3>
+<ul>
+<li>基本类型：
+<ul>
+<li>byte-1</li>
+<li>short-2</li>
+<li>int-4</li>
+<li>long-8</li>
+<li>float-4</li>
+<li>double-8</li>
+<li>boolean</li>
+<li>char-2</li>
+</ul>
+</li>
+<li>枚举类型：符号常量</li>
+<li>引用类型：对象</li>
+</ul>
+<h2 id=字符串>字符串</h2>
+<ul>
+<li>创建
+<ul>
+<li><code>String str = new String("abc")</code></li>
+<li><code>String str = "abc";</code></li>
+</ul>
+</li>
+<li>操作</li>
+</ul>
+<h2 id=数组>数组</h2>
+<ul>
+<li>一维数组：<code>int[] a = [1,2,3]</code></li>
+<li>二维数组：<code>int[][] a = [[1,2,3],[4,5,6]]</code></li>
+</ul>
+<h2 id=循环>循环</h2>
+<ul>
+<li>
+<p>for</p>
+</li>
+<li>
+<p>while</p>
+</li>
+<li>
+<p>do-while</p>
+</li>
+</ul>
+<h2 id=分支>分支</h2>
+<ul>
+<li>if-else</li>
+<li>switch-case</li>
+</ul>
+<h2 id=faq>FAQ</h2>
+<h3 id=使用哪种数据类型表示价格>使用哪种数据类型表示价格</h3>
+<p>如果不是特别关心内存和性能的话，使用BigDecimal，否则使用预定义精度的 double 类型。</p>
+<h3 id=怎么将-byte-转换为-string>怎么将 byte 转换为 String</h3>
+<p>可以使用 String 接收 byte[] 参数的构造器来进行转换，需要注意的点是要使用的正确的编码，否则会使用平台默认编码，这个编码可能跟原来的编码相同，也可能不同。</p>
+<h3 id=java-中怎样将-bytes-转换为-long-类型>Java 中怎样将 bytes 转换为 long 类型</h3>
+<p>String接收bytes的构造器转成String，再 Long.parseLong。</p>
+<h3 id=我们能将-int-强制转换为-byte-类型的变量吗>我们能将 int 强制转换为 byte 类型的变量吗</h3>
+<p>是的，我们可以做强制转换，但是 Java 中 int 是 32 位的，而 byte 是 8 位的，所以，如果强制转化是，int 类型的高 24 位将会被丢弃，byte 类型的范围是从 -128 到 127。</p>
+<h3 id=存在两个类b-继承-ac-继承-b我们能将-b-转换为-c-么-如-c--c-b>存在两个类，B 继承 A，C 继承 B，我们能将 B 转换为 C 么? 如 C = (C) B</h3>
+<p>可以，向下转型。但是不建议使用，容易出现类型转型异常.</p>
+<h3 id=哪个类包含-clone-方法-是-cloneable-还是-object>哪个类包含 clone 方法? 是 Cloneable 还是 Object?</h3>
+<p>著作权归https://pdai.tech所有。 链接：https://www.pdai.tech/md/java/basic/java-basic-lan-sum.html</p>
+<p>java.lang.Cloneable 是一个标示性接口，不包含任何方法，clone 方法在 object 类中定义。并且需要知道 clone() 方法是一个本地方法，这意味着它是由 c 或 c++ 或 其他本地语言实现的。</p>
+<h3 id=java-中--操作符是线程安全的吗>Java 中 ++ 操作符是线程安全的吗?</h3>
+<p>不是线程安全的操作。它涉及到多个指令，如读取变量值，增加，然后存储回内存，这个过程可能会出现多个线程交差。还会存在竞态条件(读取-修改-写入)。</p>
+<h3 id=a--a--b-与-a--b-的区别>a = a + b 与 a += b 的区别</h3>
+<p>+= 隐式的将加操作的结果类型强制转换为持有结果的类型。如果两这个整型相加，如 byte、short 或者 int，首先会将它们提升到 int 类型，然后在执行加法操作。</p>
+<h3 id=我能在不进行强制转换的情况下将一个-double-值赋值给-long-类型的变量吗>我能在不进行强制转换的情况下将一个 double 值赋值给 long 类型的变量吗?</h3>
+<p>不行，你不能在没有强制类型转换的前提下将一个 double 值赋值给 long 类型的变量，因为 double 类型的范围比 long 类型更广，所以必须要进行强制转换。</p>
+<h3 id=301--03-将会返回什么-true-还是-false>3*0.1 == 0.3 将会返回什么? true 还是 false?</h3>
+<p>false，因为有些浮点数不能完全精确的表示出来。</p>
+<h3 id=int-和-integer-哪个会占用更多的内存>int 和 Integer 哪个会占用更多的内存?</h3>
+<p>Integer 对象会占用更多的内存。Integer 是一个对象，需要存储对象的元数据。但是 int 是一个原始类型的数据，所以占用的空间更少。</p>
+<h3 id=为什么-java-中的-string-是不可变的immutable>为什么 Java 中的 String 是不可变的(Immutable)?</h3>
+<p>Java 中的 String 不可变是因为 Java 的设计者认为字符串使用非常频繁，将字符串设置为不可变可以允许多个客户端之间共享相同的字符串。更详细的内容参见答案。</p>
+<h3 id=我们能在-switch-中使用-string-吗>我们能在 Switch 中使用 String 吗?</h3>
+<p>从 Java 7 开始，我们可以在 switch case 中使用字符串，但这仅仅是一个语法糖。内部实现在 switch 中使用字符串的 hash code。</p>
+<h3 id=java-中的构造器链是什么>Java 中的构造器链是什么?</h3>
+<p>当你从一个构造器中调用另一个构造器，就是Java 中的构造器链。这种情况只在重载了类的构造器的时候才会出现。</p>
+<h3 id=枚举类>枚举类</h3>
+<p>JDK1.5出现 每个枚举值都需要调用一次构造函数</p>
+<h3 id=什么是不可变对象immutable-object-java-中怎么创建一个不可变对象>什么是不可变对象(immutable object)? Java 中怎么创建一个不可变对象?</h3>
+<p>不可变对象指对象一旦被创建，状态就不能再改变。任何修改都会创建一个新的对象，如 String、Integer及其它包装类。</p>
+<ul>
+<li>对象的状态在创建之后就不能发生改变，任何对它的改变都应该产生一个新的对象。</li>
+<li>类的所有的属性都应该是final的。</li>
+<li>对象必须被正确的创建，比如: 对象引用在对象创建过程中不能泄露(leak)。</li>
+<li>对象应该是final的，以此来限制子类继承父类，以避免子类改变了父类的immutable特性。</li>
+<li>如果类中包含mutable类对象，那么返回给客户端的时候，返回该对象的一个拷贝，而不是该对象本身(该条可以归为第一条中的一个特例)</li>
+</ul>
+<h3 id=我们能创建一个包含可变对象的不可变对象吗>我们能创建一个包含可变对象的不可变对象吗?</h3>
+<p>是的，我们是可以创建一个包含可变对象的不可变对象的，你只需要谨慎一点，不要共享可变对象的引用就可以了，如果需要变化时，就返回原对象的一个拷贝。最常见的例子就是对象中包含一个日期对象的引用。</p>
+<h3 id=有没有可能两个不相等的对象有有相同的-hashcode>有没有可能两个不相等的对象有有相同的 hashcode?</h3>
+<p>有可能，两个不相等的对象可能会有相同的 hashcode 值，这就是为什么在 hashmap 中会有冲突。相等 hashcode 值的规定只是说如果两个对象相等，必须有相同的hashcode 值，但是没有关于不相等对象的任何规定。</p>
+<h3 id=两个相同的对象会有不同的的-hash-code-吗>两个相同的对象会有不同的的 hash code 吗?</h3>
+<p>不能，根据 hash code 的规定，这是不可能的。</p>
+<h3 id=我们可以在-hashcode-中使用随机数字吗>我们可以在 hashcode() 中使用随机数字吗?</h3>
+<p>不行，因为对象的 hashcode 值必须是相同的。</p>
+<h3 id=java-中comparator-与-comparable-有什么不同>Java 中，Comparator 与 Comparable 有什么不同?</h3>
+<p>Comparable 接口用于定义对象的自然顺序，而 comparator 通常用于定义用户定制的顺序。Comparable 总是只有一个，但是可以有多个 comparator 来定义对象的顺序。</p>
+<h3 id=为什么在重写-equals-方法的时候需要重写-hashcode-方法>为什么在重写 equals 方法的时候需要重写 hashCode 方法?</h3>
+<p>因为有强制的规范指定需要同时重写 hashcode 与 equal 是方法，许多容器类，如 HashMap、HashSet 都依赖于 hashcode 与 equals 的规定。</p>
+<h3 id=ab和aequalsb有什么区别>“a==b”和”a.equals(b)”有什么区别?</h3>
+<p>如果 a 和 b 都是对象，则 a==b 是比较两个对象的引用，只有当 a 和 b 指向的是堆中的同一个对象才会返回 true，而 a.equals(b) 是进行逻辑比较，所以通常需要重写该方法来提供逻辑一致性的比较。例如，String 类重写 equals() 方法，所以可以用于两个不同对象，但是包含的字母相同的比较。</p>
+<h3 id=ahashcode-有什么用-与-aequalsb-有什么关系>a.hashCode() 有什么用? 与 a.equals(b) 有什么关系?</h3>
+<p>hashCode() 方法是相应对象整型的 hash 值。它常用于基于 hash 的集合类，如 Hashtable、HashMap、LinkedHashMap等等。</p>
+<p>它与 equals() 方法关系特别紧密。根据 Java 规范，两个使用 equal() 方法来判断相等的对象，必须具有相同的 hash code。</p>
+<h3 id=finalfinalize-和-finally-的不同之处>final、finalize 和 finally 的不同之处?</h3>
+<ul>
+<li>final 是一个修饰符，可以修饰变量、方法和类。如果 final 修饰变量，意味着该变量的值在初始化后不能被改变。</li>
+<li>Java 技术允许使用 finalize() 方法在垃圾收集器将对象从内存中清除出去之前做必要的清理工作。这个方法是由垃圾收集器在确定这个对象没有被引用时对这个对象调用的，但是什么时候调用 finalize 没有保证。</li>
+<li>finally 是一个关键字，与 try 和 catch 一起用于异常的处理。finally 块一定会被执行，无论在 try 块中是否有发生异常。</li>
+</ul>
+<h3 id=java-中的编译期常量是什么-使用它又什么风险>Java 中的编译期常量是什么? 使用它又什么风险?</h3>
+<p>变量也就是我们所说的编译期常量，这里的 public 可选的。实际上这些变量在编译时会被替换掉，因为编译器知道这些变量的值，并且知道这些变量在运行时不能改变。这种方式存在的一个问题是你使用了一个内部的或第三方库中的公有编译时常量，但是这个值后面被其他人改变了，但是你的客户端仍然在使用老的值，甚至你已经部署了一个新的jar。为了避免这种情况，当你在更新依赖 JAR 文件时，确保重新编译你的程序。</p>
+<h3 id=静态内部类与顶级类有什么区别>静态内部类与顶级类有什么区别?</h3>
+<p>一个公共的顶级类的源文件名称与类名相同，而嵌套静态类没有这个要求。一个嵌套类位于顶级类内部，需要使用顶级类的名称来引用嵌套静态类，如 HashMap.Entry 是一个嵌套静态类，HashMap 是一个顶级类，Entry是一个嵌套静态类。</p>
+<h3 id=java-中serializable-与-externalizable-的区别>Java 中，Serializable 与 Externalizable 的区别?</h3>
+<p>Serializable 接口是一个序列化 Java 类的接口，以便于它们可以在网络上传输或者可以将它们的状态保存在磁盘上，是 JVM 内嵌的默认序列化方式，成本高、脆弱而且不安全。Externalizable 允许你控制整个序列化过程，指定特定的二进制格式，增加安全机制。</p>
+<h3 id=说出-jdk-17-中的三个新特性>说出 JDK 1.7 中的三个新特性?</h3>
+<p>虽然 JDK 1.7 不像 JDK 5 和 8 一样的大版本，但是，还是有很多新的特性，如 try-with-resource 语句，这样你在使用流或者资源的时候，就不需要手动关闭，Java 会自动关闭。Fork-Join 池某种程度上实现 Java 版的 Map-reduce。允许 Switch 中有 String 变量和文本。菱形操作符(&lt;>)用于泛型推断，不再需要在变量声明的右边申明泛型，因此可以写出可读写更强、更简洁的代码。另一个值得一提的特性是改善异常处理，如允许在同一个 catch 块中捕获多个异常。</p>
+<h3 id=说出-5-个-jdk-18-引入的新特性>说出 5 个 JDK 1.8 引入的新特性?</h3>
+<p>Java 8 在 Java 历史上是一个开创新的版本，下面 JDK 8 中 5 个主要的特性: Lambda 表达式，允许像对象一样传递匿名函数 Stream API，充分利用现代多核 CPU，可以写出很简洁的代码 Date 与 Time API，最终，有一个稳定、简单的日期和时间库可供你使用 扩展方法，现在，接口中可以有静态、默认方法。 重复注解，现在你可以将相同的注解在同一类型上使用多次。</p>
+<p>下述包含 Java 面试过程中关于 SOLID 的设计原则，OOP 基础，如类，对象，接口，继承，多态，封装，抽象以及更高级的一些概念，如组合、聚合及关联。也包含了 GOF 设计模式的问题。</p>
+<h3 id=接口是什么-为什么要使用接口而不是直接使用具体类>接口是什么? 为什么要使用接口而不是直接使用具体类?</h3>
+<p>接口用于定义 API。它定义了类必须得遵循的规则。同时，它提供了一种抽象，因为客户端只使用接口，这样可以有多重实现，如 List 接口，你可以使用可随机访问的 ArrayList，也可以使用方便插入和删除的 LinkedList。接口中不允许普通方法，以此来保证抽象，但是 Java 8 中你可以在接口声明静态方法和默认普通方法。</p>
+<h3 id=java-中抽象类与接口之间有什么不同>Java 中，抽象类与接口之间有什么不同?</h3>
+<p>Java 中，抽象类和接口有很多不同之处，但是最重要的一个是 Java 中限制一个类只能继承一个类，但是可以实现多个接口。抽象类可以很好的定义一个家族类的默认行为，而接口能更好的定义类型，有助于后面实现多态机制 参见第六条。</p>
+<h3 id=object有哪些公用方法>Object有哪些公用方法?</h3>
+<p>clone equals hashcode wait notify notifyall finalize toString getClass 除了clone和finalize其他均为公共方法。</p>
+<p>11个方法，wait被重载了两次</p>
+<h3 id=equals与的区别>equals与==的区别</h3>
+<ul>
+<li>== 是一个运算符 equals是Object类的方法</li>
+<li>比较时的区别
+<ul>
+<li>用于基本类型的变量比较时: ==用于比较值是否相等，equals不能直接用于基本数据类型的比较，需要转换为其对应的包装类型。</li>
+<li>用于引用类型的比较时。==和equals都是比较栈内存中的地址是否相等 。相等为true 否则为false。但是通常会重写equals方法去实现对象内容的比较。</li>
+</ul>
+</li>
+</ul>
+<h3 id=stringstringbuffer与stringbuilder的区别>String、StringBuffer与StringBuilder的区别</h3>
+<p>第一点: 可变和适用范围。String对象是不可变的，而StringBuffer和StringBuilder是可变字符序列。每次对String的操作相当于生成一个新的String对象，而对StringBuffer和StringBuilder的操作是对对象本身的操作，而不会生成新的对象，所以对于频繁改变内容的字符串避免使用String，因为频繁的生成对象将会对系统性能产生影响。</p>
+<p>第二点: 线程安全。String由于有final修饰，是immutable的，安全性是简单而纯粹的。StringBuilder和StringBuffer的区别在于StringBuilder不保证同步，也就是说如果需要线程安全需要使用StringBuffer，不需要同步的StringBuilder效率更高。</p>
+<h3 id=接口与抽象类>接口与抽象类</h3>
+<ul>
+<li>一个子类只能继承一个抽象类,但能实现多个接口</li>
+<li>抽象类可以有构造方法,接口没有构造方法</li>
+<li>抽象类可以有普通成员变量,接口没有普通成员变量</li>
+<li>抽象类和接口都可有静态成员变量,抽象类中静态成员变量访问类型任意，接口只能public static final(默认)</li>
+<li>抽象类可以没有抽象方法,抽象类可以有普通方法,接口中都是抽象方法</li>
+<li>抽象类可以有静态方法，接口不能有静态方法</li>
+<li>抽象类中的方法可以是public、protected;接口方法只有public abstract</li>
+</ul>
+<h3 id=抽象类和最终类>抽象类和最终类</h3>
+<p>抽象类可以没有抽象方法, 最终类可以没有最终方法</p>
+<p>最终类不能被继承, 最终方法不能被重写(可以重载)</p>
+<h3 id=异常>异常</h3>
+<p>相关的关键字 throw、throws、try&mldr;catch、finally</p>
+<ul>
+<li>throws 用在方法签名上, 以便抛出的异常可以被调用者处理</li>
+<li>throw 方法内部通过throw抛出异常</li>
+<li>try 用于检测包住的语句块, 若有异常, catch子句捕获并执行catch块</li>
+</ul>
+<h3 id=关于finally>关于finally</h3>
+<ul>
+<li>finally不管有没有异常都要处理</li>
+<li>当try和catch中有return时，finally仍然会执行，finally比return先执行</li>
+<li>不管有木有异常抛出, finally在return返回前执行</li>
+<li>finally是在return后面的表达式运算后执行的(此时并没有返回运算后的值，而是先把要返回的值保存起来，管finally中的代码怎么样，返回的值都不会改变，仍然是之前保存的值)，所以函数返回值是在finally执行前确定的</li>
+</ul>
+<p>注意: finally中最好不要包含return，否则程序会提前退出，返回值不是try或catch中保存的返回值</p>
+<p>finally不执行的几种情况: 程序提前终止如调用了 System.exit、断电</p>
+<h3 id=受检查异常和运行时异常>受检查异常和运行时异常</h3>
+<ul>
+<li>受检查的异常(checked exceptions),其必须被try&mldr;catch语句块所捕获, 或者在方法签名里通过throws子句声明。受检查的异常必须在编译时被捕捉处理,命名为Checked Exception是因为Java编译器要进行检查, Java虚拟机也要进行检查, 以确保这个规则得到遵守。</li>
+<li>运行时异常(runtime exceptions), 需要程序员自己分析代码决定是否捕获和处理,比如空指针,被0除&mldr;</li>
+<li>Error的，则属于严重错误，如系统崩溃、虚拟机错误、动态链接失败等，这些错误无法恢复或者不可能捕捉，将导致应用程序中断，Error不需要捕获。</li>
+</ul>
+<h3 id=super出现在父类的子类中有三种存在方式>super出现在父类的子类中。有三种存在方式</h3>
+<ul>
+<li>super.xxx(xxx为变量名或对象名)意思是获取父类中xxx的变量或引用</li>
+<li>super.xxx(); (xxx为方法名)意思是直接访问并调用父类中的方法</li>
+<li>super() 调用父类构造</li>
+</ul>
+<h3 id=this--super在构造方法中的区别>this() & super()在构造方法中的区别</h3>
+<ul>
+<li>调用super()必须写在子类构造方法的第一行, 否则编译不通过</li>
+<li>super从子类调用父类构造, this在同一类中调用其他构造均需要放在第一行</li>
+<li>尽管可以用this调用一个构造器, 却不能调用2个</li>
+<li>this和super不能出现在同一个构造器中, 否则编译不通过</li>
+<li>this()、super()都指的对象,不可以在static环境中使用</li>
+<li>本质this指向本对象的指针。super是一个关键字</li>
+</ul>
+<h3 id=序列化>序列化</h3>
+<p>声明为static和transient类型的数据不能被序列化， 反序列化需要一个无参构造函数</p>
+<h3 id=java移位运算符>Java移位运算符</h3>
+<ul>
+<li><code>&lt;&lt;</code> :左移运算符,<code>x &lt;&lt; 1</code>,相当于x乘以2(不溢出的情况下),低位补0</li>
+<li><code>>></code> :带符号右移,<code>x >> 1</code>,相当于x除以2,正数高位补0,负数高位补1</li>
+<li><code>>>></code> :无符号右移,忽略符号位,空位都以0补齐</li>
+</ul>
+<h3 id=形参实参>形参&实参</h3>
+<p>形式参数可被视为local variable.形参和局部变量一样都不能离开方法。只有在方法中使用，不会在方法外可见。 形式参数只能用final修饰符，其它任何修饰符都会引起编译器错误。但是用这个修饰符也有一定的限制，就是在方法中不能对参数做任何修改。不过一般情况下，一个方法的形参不用final修饰。只有在特殊情况下，那就是: 方法内部类。一个方法内的内部类如果使用了这个方法的参数或者局部变量的话，这个参数或局部变量应该是final。 形参的值在调用时根据调用者更改，实参则用自身的值更改形参的值(指针、引用皆在此列)，也就是说真正被传递的是实参。</p>
+<h3 id=局部变量为什么要初始化>局部变量为什么要初始化</h3>
+<p>局部变量是指类方法中的变量，必须初始化。局部变量运行时被分配在栈中，量大，生命周期短，如果虚拟机给每个局部变量都初始化一下，是一笔很大的开销，但变量不初始化为默认值就使用是不安全的。出于速度和安全性两个方面的综合考虑，解决方案就是虚拟机不初始化，但要求编写者一定要在使用前给变量赋值。</p>
+<h3 id=java语言的鲁棒性>Java语言的鲁棒性</h3>
+<p>Java在编译和运行程序时，都要对可能出现的问题进行检查，以消除错误的产生。它提供自动垃圾收集来进行内存管理，防止程序员在管理内存时容易产生的错误。通过集成的面向对象的例外处理机制，在编译时，Java揭示出可能出现但未被处理的异常，帮助程序员正确地进行选择以防止系统的崩溃。另外，Java在编译时还可捕获类型声明中的许多常见错误，防止动态运行时不匹配问题的出现。</p>
+<style>.feedback--answer{display:inline-block}.feedback--answer-no{margin-left:1em}.feedback--response{display:none;margin-top:1em}.feedback--response__visible{display:block}</style>
+<div class=d-print-none>
+<h2 class=feedback--title>Feedback</h2>
+<p class=feedback--question>Was this page helpful?</p>
+<button class="btn btn-primary mb-4 feedback--answer feedback--answer-yes">Yes</button>
+<button class="btn btn-primary mb-4 feedback--answer feedback--answer-no">No</button>
+<p class="feedback--response feedback--response-yes">
+Glad to hear it! Please <a href=https://github.com/infilos/infilos.com/issues/new>tell us how we can improve</a>.
+</p>
+<p class="feedback--response feedback--response-no">
+Sorry to hear that. Please <a href=https://github.com/infilos/infilos.com/issues/new>tell us how we can improve</a>.
+</p>
+</div>
+<script>const yesButton=document.querySelector('.feedback--answer-yes'),noButton=document.querySelector('.feedback--answer-no'),yesResponse=document.querySelector('.feedback--response-yes'),noResponse=document.querySelector('.feedback--response-no'),disableButtons=()=>{yesButton.disabled=!0,noButton.disabled=!0},sendFeedback=b=>{if(typeof ga!='function')return;const a={command:'send',hitType:'event',category:'Helpful',action:'click',label:window.location.pathname,value:b};ga(a.command,a.hitType,a.category,a.action,a.label,a.value)};yesButton.addEventListener('click',()=>{yesResponse.classList.add('feedback--response__visible'),disableButtons(),sendFeedback(1)}),noButton.addEventListener('click',()=>{noResponse.classList.add('feedback--response__visible'),disableButtons(),sendFeedback(0)})</script>
+<br>
+</div>
+</main>
+</div>
+</div>
+<footer class="bg-dark py-5 row d-print-none">
+<div class="container-fluid mx-sm-5">
+<div class=row>
+<div class="col-6 col-sm-4 text-xs-center order-sm-2">
+</div>
+<div class="col-6 col-sm-4 text-right text-xs-center order-sm-3">
+<ul class="list-inline mb-0">
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Weibo aria-label=Weibo>
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://weibo.com/u/3848950217>
+<i class="fab fa-weibo"></i>
+</a>
+</li>
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Twitter aria-label=Twitter>
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://twitter.com/zhange_zzg>
+<i class="fab fa-twitter"></i>
+</a>
+</li>
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title="Stack Overflow" aria-label="Stack Overflow">
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://stackoverflow.com>
+<i class="fab fa-stack-overflow"></i>
+</a>
+</li>
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=GitHub aria-label=GitHub>
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://github.com/infilos/infilos.com>
+<i class="fab fa-github"></i>
+</a>
+</li>
+</ul>
+</div>
+<div class="col-12 col-sm-4 text-center py-2 order-sm-2">
+<small class=text-white>&copy; 2021 infilos.com All Rights Reserved</small>
+</div>
+</div>
+</div>
+</footer>
+</div>
+<script src=/js/popper.min.js integrity=sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49 crossorigin=anonymous></script>
+<script src=/js/bootstrap.min.js integrity=sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy crossorigin=anonymous></script>
+<script src=/js/main.min.5c74b870c6953931a705f390a49c7e4c0a842ec5c83b24354758dd674343ed0d.js integrity="sha256-XHS4cMaVOTGnBfOQpJx+TAqELsXIOyQ1R1jdZ0ND7Q0=" crossorigin=anonymous></script>
+<script src=https://cdn.jsdelivr.net/npm/docsearch.js@2.6.3/dist/cdn/docsearch.min.js></script>
+<script>docsearch({apiKey:'123',indexName:'infilos_com',inputSelector:'.td-search-input',debug:!1})</script>
+</body>
+</html>

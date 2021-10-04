@@ -1,0 +1,490 @@
+<!doctype html><html lang=zh class=no-js>
+<head>
+<meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no">
+<meta name=generator content="Hugo 0.88.1">
+<meta name=ROBOTS content="INDEX, FOLLOW">
+<link rel="shortcut icon" href=/favicons/favicon.ico>
+<link rel=apple-touch-icon href=/favicons/apple-touch-icon-180x180.png sizes=180x180>
+<link rel=icon type=image/png href=/favicons/favicon-16x16.png sizes=16x16>
+<link rel=icon type=image/png href=/favicons/favicon-32x32.png sizes=32x32>
+<link rel=icon type=image/png href=/favicons/android-36x36.png sizes=36x36>
+<link rel=icon type=image/png href=/favicons/android-48x48.png sizes=48x48>
+<link rel=icon type=image/png href=/favicons/android-72x72.png sizes=72x72>
+<link rel=icon type=image/png href=/favicons/android-96x96.png sizes=96x96>
+<link rel=icon type=image/png href=/favicons/android-144x144.png sizes=144x144>
+<link rel=icon type=image/png href=/favicons/android-192x192.png sizes=192x192>
+<title>一致性与共识算法 | infilos.com</title><meta property="og:title" content="一致性与共识算法">
+<meta property="og:description" content="分布式一致性 在一个分布式系统中，如何保证集群中所有节点中的数据完全相同，并且能够对某个提案(Proposal)达成一致，是分布式系统正常工作的核心问题，而共识算法就是用来保证分布式系统一致性的方法。
+然而分布式系统中由于引入了多个节点，所以系统中会出现各种非常复杂的情况；随着节点数量增加，节点失效、故障或者宕机就变成了非常常见的事情，解决分布式系统中的各种边界条件和意外情况也增加了解决分布式一致性问题的难度。
+在一个分布式系统中，除了节点的失效会是会导致一致性不容易达成的主要原因之外，节点之间的网络通信受到干扰甚至阻断，以及分布式系统的运行速度的差异都是解决分布式系统一致性所面临的难题。
+CAP 在 1998 年秋，加州伯克利大学的教授 Eric Brewer 第一次发布了 CAP 理论，在 1999 年论文 “Brewer&rsquo;s Conjecture and the Feasibility of Consitent, Available, Partition-Tolerant Web Service” 正式发布，其中总结了 Eric Brewer 提出的 CAP 理论。
+ 该论文证明了两个非常有意思的理论：首先是在异步网络模型中，所有的节点都是由于没有时钟，仅能根据接收到的消息做出判断，这时完全不能保证一致性、可用性、分区容错性，每个系统仅能在这三种特性中选择两种。
+这里讨论的一致性都是强一致性，即所有节点接收到同样的操作时会按照完全相同的顺序执行，被一个节点提交的更新操作会立即反映在其他通过异步或部分同步网络连接的节点上，如果想要同时满足一致性和分区容错性，在异步网络中，我们只能中心化存储所有数据，通过其他节点将请求路由给中心节点达到这两个目的。
+但是在现实世界中其实并不存在绝对异步的网络环境，如果我们允许每个节点拥有自己的时钟，这些时钟虽然有着各自不同的时间，但他们的**更新频率是完全相同的，**所以我们可以通过时钟得知接收消息的间隔时间，在这种更宽松的前提下，我们能够得到更加强大的服务。
+然而在部分同步的网络环境中，仍然没有办法同时保证三种特性，证明的过程其实非常简单，可以直接阅读 论文的 4.2 节，然而时钟的出现能够让我们知道当前消息有多久没有得到回应，通过超时时间就能在一定程度上解决信息丢失的问题。
+由于网络一定会存在延时，所以没有办法在分布式系统中做到强一致性的同时保证可用性，不过我们可以通过降低对一致性的要求，在一致性和可用性之间做出权衡，而这其实也是设计分布式系统首先要考虑的问题，由于强一致性的系统会导致系统的可用性降低，仅仅将接受请求的工作交给其他节点对于高并发的服务并不能解决问题，所以在目前主流的分布式系统中都选择最终一致性。
+ 最终一致性允许多个节点间的状态出现冲突，但是所有能够沟通的节点都能够在有限的时间内解决冲突，从不一致的状态恢复到一致。这里列出的两个条件比较重要：一是节点直接可以正常通信，而是冲突需要在有限时间内解决，只有在两个条件均成立时才能达到最终一致性。
+拜占庭将军问题 该问题是 Leslie Lamport 在 The Byzantine Generals Problem 论文中提出的分布式领域的容错问题，它是分布式领域中最复杂、最严格的容错模型。
+在该模型下，系统不会对集群中的节点做任何的限制，它们可以向其他节点发送随机数据、错误数据，也可以选择不响应其他节点的请求，这些无法预测的行为使得容错这一问题变得更加复杂。
+拜占庭将军问题描述了如下的场景，有一组将军分别指挥一部分军队，每个将军都不知道其他将军是否是可靠的，也不知道其他将军传递的信息是否可靠，但是他们需要通过投票选择是否要进攻或撤退：
+  本节中，黄色代表状态未知，绿色代表进攻，蓝色代表撤退，红色代表当前将军的信息不可靠。
+ 这时，无论将军是否可靠，只要所有的将军达成了统一的方案，选择进攻或撤退其实是没有任何问题的：
+ 上述的情况不会对当前的战局造成太大影响，但是如果其中一个将军告诉其中一部分将军选择进攻，告诉另一部分将军选择撤退，就会出现非常严重的问题了。
+ 由于将军的队伍中出现了一个叛徒或者信息在传递的过程中被拦截，会导致一部分将军会选择进攻，剩下的一份会选择撤退，他们都认为自己的选择是大多数人的选择，这时会出现严重的不一致问题。
+拜占庭将军问题是对分布式系统容错的最高要求，然而这不是日常工作中使用的大多数分布式系统中会面对的问题，我们遇到更多的还是节点故障宕机或者不响应等情况，这就大大简化了系统对容错的要求；不过类似 Bitcoin、Ethereum 等分布式系统确实需要考虑拜占庭容错的问题，我们会在下面介绍它们是如何解决的。
+FLP FLP 不可能定理是分布式系统领域最重要的定理之一，它给出了一个非常重要的结论：在网络可靠且存在节点失效的异步模型系统中，不存在一个可以解决一致性问题的确定性算法。">
+<meta property="og:type" content="article">
+<meta property="og:url" content="/%E5%88%86%E5%B8%83%E5%BC%8F/base/%E4%B8%80%E8%87%B4%E6%80%A7%E5%85%B1%E8%AF%86/"><meta property="article:section" content="分布式">
+<meta property="og:site_name" content="infilos.com">
+<meta itemprop=name content="一致性与共识算法">
+<meta itemprop=description content="分布式一致性 在一个分布式系统中，如何保证集群中所有节点中的数据完全相同，并且能够对某个提案(Proposal)达成一致，是分布式系统正常工作的核心问题，而共识算法就是用来保证分布式系统一致性的方法。
+然而分布式系统中由于引入了多个节点，所以系统中会出现各种非常复杂的情况；随着节点数量增加，节点失效、故障或者宕机就变成了非常常见的事情，解决分布式系统中的各种边界条件和意外情况也增加了解决分布式一致性问题的难度。
+在一个分布式系统中，除了节点的失效会是会导致一致性不容易达成的主要原因之外，节点之间的网络通信受到干扰甚至阻断，以及分布式系统的运行速度的差异都是解决分布式系统一致性所面临的难题。
+CAP 在 1998 年秋，加州伯克利大学的教授 Eric Brewer 第一次发布了 CAP 理论，在 1999 年论文 “Brewer&rsquo;s Conjecture and the Feasibility of Consitent, Available, Partition-Tolerant Web Service” 正式发布，其中总结了 Eric Brewer 提出的 CAP 理论。
+ 该论文证明了两个非常有意思的理论：首先是在异步网络模型中，所有的节点都是由于没有时钟，仅能根据接收到的消息做出判断，这时完全不能保证一致性、可用性、分区容错性，每个系统仅能在这三种特性中选择两种。
+这里讨论的一致性都是强一致性，即所有节点接收到同样的操作时会按照完全相同的顺序执行，被一个节点提交的更新操作会立即反映在其他通过异步或部分同步网络连接的节点上，如果想要同时满足一致性和分区容错性，在异步网络中，我们只能中心化存储所有数据，通过其他节点将请求路由给中心节点达到这两个目的。
+但是在现实世界中其实并不存在绝对异步的网络环境，如果我们允许每个节点拥有自己的时钟，这些时钟虽然有着各自不同的时间，但他们的**更新频率是完全相同的，**所以我们可以通过时钟得知接收消息的间隔时间，在这种更宽松的前提下，我们能够得到更加强大的服务。
+然而在部分同步的网络环境中，仍然没有办法同时保证三种特性，证明的过程其实非常简单，可以直接阅读 论文的 4.2 节，然而时钟的出现能够让我们知道当前消息有多久没有得到回应，通过超时时间就能在一定程度上解决信息丢失的问题。
+由于网络一定会存在延时，所以没有办法在分布式系统中做到强一致性的同时保证可用性，不过我们可以通过降低对一致性的要求，在一致性和可用性之间做出权衡，而这其实也是设计分布式系统首先要考虑的问题，由于强一致性的系统会导致系统的可用性降低，仅仅将接受请求的工作交给其他节点对于高并发的服务并不能解决问题，所以在目前主流的分布式系统中都选择最终一致性。
+ 最终一致性允许多个节点间的状态出现冲突，但是所有能够沟通的节点都能够在有限的时间内解决冲突，从不一致的状态恢复到一致。这里列出的两个条件比较重要：一是节点直接可以正常通信，而是冲突需要在有限时间内解决，只有在两个条件均成立时才能达到最终一致性。
+拜占庭将军问题 该问题是 Leslie Lamport 在 The Byzantine Generals Problem 论文中提出的分布式领域的容错问题，它是分布式领域中最复杂、最严格的容错模型。
+在该模型下，系统不会对集群中的节点做任何的限制，它们可以向其他节点发送随机数据、错误数据，也可以选择不响应其他节点的请求，这些无法预测的行为使得容错这一问题变得更加复杂。
+拜占庭将军问题描述了如下的场景，有一组将军分别指挥一部分军队，每个将军都不知道其他将军是否是可靠的，也不知道其他将军传递的信息是否可靠，但是他们需要通过投票选择是否要进攻或撤退：
+  本节中，黄色代表状态未知，绿色代表进攻，蓝色代表撤退，红色代表当前将军的信息不可靠。
+ 这时，无论将军是否可靠，只要所有的将军达成了统一的方案，选择进攻或撤退其实是没有任何问题的：
+ 上述的情况不会对当前的战局造成太大影响，但是如果其中一个将军告诉其中一部分将军选择进攻，告诉另一部分将军选择撤退，就会出现非常严重的问题了。
+ 由于将军的队伍中出现了一个叛徒或者信息在传递的过程中被拦截，会导致一部分将军会选择进攻，剩下的一份会选择撤退，他们都认为自己的选择是大多数人的选择，这时会出现严重的不一致问题。
+拜占庭将军问题是对分布式系统容错的最高要求，然而这不是日常工作中使用的大多数分布式系统中会面对的问题，我们遇到更多的还是节点故障宕机或者不响应等情况，这就大大简化了系统对容错的要求；不过类似 Bitcoin、Ethereum 等分布式系统确实需要考虑拜占庭容错的问题，我们会在下面介绍它们是如何解决的。
+FLP FLP 不可能定理是分布式系统领域最重要的定理之一，它给出了一个非常重要的结论：在网络可靠且存在节点失效的异步模型系统中，不存在一个可以解决一致性问题的确定性算法。">
+<meta itemprop=wordCount content="525">
+<meta itemprop=keywords content><meta name=twitter:card content="summary">
+<meta name=twitter:title content="一致性与共识算法">
+<meta name=twitter:description content="分布式一致性 在一个分布式系统中，如何保证集群中所有节点中的数据完全相同，并且能够对某个提案(Proposal)达成一致，是分布式系统正常工作的核心问题，而共识算法就是用来保证分布式系统一致性的方法。
+然而分布式系统中由于引入了多个节点，所以系统中会出现各种非常复杂的情况；随着节点数量增加，节点失效、故障或者宕机就变成了非常常见的事情，解决分布式系统中的各种边界条件和意外情况也增加了解决分布式一致性问题的难度。
+在一个分布式系统中，除了节点的失效会是会导致一致性不容易达成的主要原因之外，节点之间的网络通信受到干扰甚至阻断，以及分布式系统的运行速度的差异都是解决分布式系统一致性所面临的难题。
+CAP 在 1998 年秋，加州伯克利大学的教授 Eric Brewer 第一次发布了 CAP 理论，在 1999 年论文 “Brewer&rsquo;s Conjecture and the Feasibility of Consitent, Available, Partition-Tolerant Web Service” 正式发布，其中总结了 Eric Brewer 提出的 CAP 理论。
+ 该论文证明了两个非常有意思的理论：首先是在异步网络模型中，所有的节点都是由于没有时钟，仅能根据接收到的消息做出判断，这时完全不能保证一致性、可用性、分区容错性，每个系统仅能在这三种特性中选择两种。
+这里讨论的一致性都是强一致性，即所有节点接收到同样的操作时会按照完全相同的顺序执行，被一个节点提交的更新操作会立即反映在其他通过异步或部分同步网络连接的节点上，如果想要同时满足一致性和分区容错性，在异步网络中，我们只能中心化存储所有数据，通过其他节点将请求路由给中心节点达到这两个目的。
+但是在现实世界中其实并不存在绝对异步的网络环境，如果我们允许每个节点拥有自己的时钟，这些时钟虽然有着各自不同的时间，但他们的**更新频率是完全相同的，**所以我们可以通过时钟得知接收消息的间隔时间，在这种更宽松的前提下，我们能够得到更加强大的服务。
+然而在部分同步的网络环境中，仍然没有办法同时保证三种特性，证明的过程其实非常简单，可以直接阅读 论文的 4.2 节，然而时钟的出现能够让我们知道当前消息有多久没有得到回应，通过超时时间就能在一定程度上解决信息丢失的问题。
+由于网络一定会存在延时，所以没有办法在分布式系统中做到强一致性的同时保证可用性，不过我们可以通过降低对一致性的要求，在一致性和可用性之间做出权衡，而这其实也是设计分布式系统首先要考虑的问题，由于强一致性的系统会导致系统的可用性降低，仅仅将接受请求的工作交给其他节点对于高并发的服务并不能解决问题，所以在目前主流的分布式系统中都选择最终一致性。
+ 最终一致性允许多个节点间的状态出现冲突，但是所有能够沟通的节点都能够在有限的时间内解决冲突，从不一致的状态恢复到一致。这里列出的两个条件比较重要：一是节点直接可以正常通信，而是冲突需要在有限时间内解决，只有在两个条件均成立时才能达到最终一致性。
+拜占庭将军问题 该问题是 Leslie Lamport 在 The Byzantine Generals Problem 论文中提出的分布式领域的容错问题，它是分布式领域中最复杂、最严格的容错模型。
+在该模型下，系统不会对集群中的节点做任何的限制，它们可以向其他节点发送随机数据、错误数据，也可以选择不响应其他节点的请求，这些无法预测的行为使得容错这一问题变得更加复杂。
+拜占庭将军问题描述了如下的场景，有一组将军分别指挥一部分军队，每个将军都不知道其他将军是否是可靠的，也不知道其他将军传递的信息是否可靠，但是他们需要通过投票选择是否要进攻或撤退：
+  本节中，黄色代表状态未知，绿色代表进攻，蓝色代表撤退，红色代表当前将军的信息不可靠。
+ 这时，无论将军是否可靠，只要所有的将军达成了统一的方案，选择进攻或撤退其实是没有任何问题的：
+ 上述的情况不会对当前的战局造成太大影响，但是如果其中一个将军告诉其中一部分将军选择进攻，告诉另一部分将军选择撤退，就会出现非常严重的问题了。
+ 由于将军的队伍中出现了一个叛徒或者信息在传递的过程中被拦截，会导致一部分将军会选择进攻，剩下的一份会选择撤退，他们都认为自己的选择是大多数人的选择，这时会出现严重的不一致问题。
+拜占庭将军问题是对分布式系统容错的最高要求，然而这不是日常工作中使用的大多数分布式系统中会面对的问题，我们遇到更多的还是节点故障宕机或者不响应等情况，这就大大简化了系统对容错的要求；不过类似 Bitcoin、Ethereum 等分布式系统确实需要考虑拜占庭容错的问题，我们会在下面介绍它们是如何解决的。
+FLP FLP 不可能定理是分布式系统领域最重要的定理之一，它给出了一个非常重要的结论：在网络可靠且存在节点失效的异步模型系统中，不存在一个可以解决一致性问题的确定性算法。">
+<script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga('create','UA-123062585-1','auto'),ga('send','pageview'))</script>
+<script async src=https://www.google-analytics.com/analytics.js></script>
+<link rel=preload href=/scss/main.min.847464b684a6e89d7276700a5c500c17ab494dd1755b2654a7b27d8b59e3347e.css as=style>
+<link href=/scss/main.min.847464b684a6e89d7276700a5c500c17ab494dd1755b2654a7b27d8b59e3347e.css rel=stylesheet integrity>
+<script src=/js/jquery-3.5.1.min.js integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin=anonymous></script>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/npm/docsearch.js@2/dist/cdn/docsearch.min.css>
+</head>
+<body class=td-page>
+<header>
+<nav class="js-navbar-scroll navbar navbar-expand navbar-dark flex-column flex-md-row td-navbar">
+<a class=navbar-brand href=/>
+<span class=navbar-logo><svg id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512" style="enable-background:new 0 0 512 512"><path style="fill:#ffc107" d="M432.384 143.616c-4.165-4.164-10.917-4.164-15.083.0l-60.352 60.352c-4.164 4.165-4.164 10.917.0 15.083 21.187 20.463 54.951 19.876 75.413-1.311 19.962-20.668 19.962-53.435.0-74.102L432.384 143.616z"/><path style="fill:#607d8b" d="M42.667 277.334c-5.891.003-10.669-4.771-10.672-10.662-.002-4.338 2.623-8.245 6.64-9.882l234.667-96c5.455-2.233 11.687.38 13.92 5.835s-.38 11.687-5.835 13.92l-234.667 96C45.433 277.069 44.056 277.337 42.667 277.334z"/><path style="fill:#546e7a" d="M391.552 56.448l-32-32C343.938 8.745 322.689-.059 300.544.0h-3.755c-46.082.024-83.432 37.374-83.456 83.456v3.755c-.053 22.138 8.75 43.377 24.448 58.987l32 32c4.165 4.164 10.917 4.164 15.083.0L391.531 71.531C395.701 67.372 395.71 60.62 391.552 56.448z"/><path style="fill:#607d8b" d="M160 469.334c-3.279.006-6.379-1.497-8.405-4.075L34.261 315.926c-3.635-4.636-2.823-11.341 1.813-14.976s11.341-2.823 14.976 1.813l117.333 149.333c3.629 4.641 2.809 11.344-1.832 14.973C164.681 468.533 162.375 469.329 160 469.334z"/><path style="fill:#455a64" d="M487.467 86.848l-3.669-3.648c-37.687-36.557-97.71-36.197-134.955.811l-51.413 51.413c-36.996 37.25-37.357 97.263-.811 134.955l3.584 3.669c1.7 2.457 4.671 3.706 7.616 3.2 2.831.005 5.548-1.115 7.552-3.115l172.181-172.181c4.189-4.143 4.226-10.896.083-15.085-.028-.028-.055-.056-.083-.083L487.467 86.848z"/><g><path style="fill:#ffc107" d="M501.333 192H480c-5.891.0-10.667-4.776-10.667-10.667s4.776-10.667 10.667-10.667h21.333c5.891.0 10.667 4.776 10.667 10.667S507.225 192 501.333 192z"/><path style="fill:#ffc107" d="M394.667 298.667c-5.891.0-10.667-4.776-10.667-10.667v-21.333c0-5.891 4.776-10.667 10.667-10.667 5.891.0 10.667 4.776 10.667 10.667V288C405.333 293.891 400.558 298.667 394.667 298.667z"/><path style="fill:#ffc107" d="M480 277.334c-2.831.005-5.548-1.115-7.552-3.115l-21.333-21.333c-4.093-4.237-3.975-10.99.262-15.083 4.134-3.993 10.687-3.993 14.821.0l21.333 21.333c4.159 4.172 4.148 10.926-.024 15.085C485.514 276.209 482.815 277.327 480 277.334z"/></g><g><path style="fill:#455a64" d="M266.667 448H96c-29.455.0-53.333 23.878-53.333 53.333.0 5.891 4.776 10.667 10.667 10.667h256c5.891.0 10.667-4.776 10.667-10.667C320 471.878 296.122 448 266.667 448z"/><circle style="fill:#455a64" cx="32" cy="288" r="32"/></g><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/></svg></span><span class=font-weight-bold>infilos.com</span>
+</a>
+<div class="collapse navbar-collapse" id=navbarSupportedContent>
+<ul class="navbar-nav mr-auto">
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+基础
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/%e6%93%8d%e4%bd%9c%e7%b3%bb%e7%bb%9f>操作系统</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/%e6%80%a7%e8%83%bd%e4%b9%8b%e6%ae%87>性能之殇</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/io%e6%a8%a1%e5%9e%8b>IO 模型</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/%e7%bd%91%e7%bb%9c%e5%9f%ba%e7%a1%80>网络基础</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/tcp-ip>TCP-IP</a>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/http>HTTP</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+语言
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/java>Java 编程</a>
+<a class=dropdown-item href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/jvm-core>JVM 核心</a>
+<a class=dropdown-item href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/jvm-concurrent>JVM 并发</a>
+<a class=dropdown-item href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/scala>Scala 编程</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+框架库
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93/spring>Spring</a>
+<a class=dropdown-item href=/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93/hikari>Hikari</a>
+<a class=dropdown-item href=/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93/parboiled>Parboiled</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+分布式
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%88%86%e5%b8%83%e5%bc%8f/base>基本构成</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+大数据
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%ad%98%e5%82%a8%e7%b3%bb%e7%bb%9f>存储系统</a>
+<a class=dropdown-item href=/%e6%9f%a5%e8%af%a2%e7%b3%bb%e7%bb%9f>查询系统</a>
+<a class=dropdown-item href=/%e6%b6%88%e6%81%af%e7%b3%bb%e7%bb%9f>消息系统</a>
+<a class=dropdown-item href=/%e5%a4%84%e7%90%86%e7%b3%bb%e7%bb%9f>处理系统</a>
+<a class=dropdown-item href=/%e7%ae%a1%e7%90%86%e7%b3%bb%e7%bb%9f>管理系统</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+中后台
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e8%ae%be%e6%96%bd>基础设施</a>
+<a class=dropdown-item href=/%e4%ba%a4%e4%ba%92%e7%95%8c%e9%9d%a2>交互界面</a>
+<a class=dropdown-item href=/%e4%b8%9a%e5%8a%a1%e7%b3%bb%e7%bb%9f>业务系统</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+模式架构
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e6%a8%a1%e5%bc%8f%e6%9e%b6%e6%9e%84/design-pattern>设计模式</a>
+<a class=dropdown-item href=/%e6%a8%a1%e5%bc%8f%e6%9e%b6%e6%9e%84/micro-service>微服务架构</a>
+</div>
+</li>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e9%9d%a2%e8%af%95%e9%97%ae%e7%ad%94>
+<span>面试</span>
+</a>
+</li>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e7%ae%a1%e7%90%86%e8%b7%af%e5%be%84>
+<span>管理</span>
+</a>
+</li>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e5%bc%80%e6%ba%90%e9%a1%b9%e7%9b%ae>
+<span>开源</span>
+</a>
+</li>
+</ul>
+<div class="form-inline my-2 my-lg-0">
+<div class="nav-item nav-search-item my-2 my-md-0">
+<input type=search class="form-control td-search-input" placeholder="&#xf002; 站内搜索…" aria-label=站内搜索… autocomplete=off>
+</div>
+</div>
+</div>
+</nav>
+</header>
+<div class="container-fluid td-outer">
+<div class=td-main>
+<div class="row flex-xl-nowrap">
+<aside class="col-12 col-md-3 col-xl-2 td-sidebar d-print-none">
+<div id=td-sidebar-menu class=td-sidebar__inner>
+<div id=content-mobile>
+<form class="td-sidebar__search d-flex align-items-center">
+<input type=search class="form-control td-search-input" placeholder="&#xf002; 站内搜索…" aria-label=站内搜索… autocomplete=off>
+<button class="btn btn-link td-sidebar__toggle d-md-none p-0 ml-3 fas fa-bars" type=button data-toggle=collapse data-target=#td-section-nav aria-controls=td-docs-nav aria-expanded=false aria-label="Toggle section navigation">
+</button>
+</form>
+</div>
+<div id=content-desktop></div>
+<nav class="collapse td-sidebar-nav" id=td-section-nav>
+<ul class="td-sidebar-nav__section pr-md-3 ul-0">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e58886e5b883e5bc8f-li>
+<a href=/%E5%88%86%E5%B8%83%E5%BC%8F/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section tree-root" id=m-e58886e5b883e5bc8f><span>分布式</span></a>
+<ul class=ul-1>
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e58886e5b883e5bc8fbase-li>
+<a href=/%E5%88%86%E5%B8%83%E5%BC%8F/base/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e58886e5b883e5bc8fbase><span>基本构成</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e58886e5b883e5bc8fbaseconsistence-li>
+<a href=/%E5%88%86%E5%B8%83%E5%BC%8F/base/consistence/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e58886e5b883e5bc8fbaseconsistence><span>一致性模型</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e58886e5b883e5bc8fbaseacid-li>
+<a href=/%E5%88%86%E5%B8%83%E5%BC%8F/base/acid/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e58886e5b883e5bc8fbaseacid><span>ACID 隔离级别</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e58886e5b883e5bc8fbasecap-li>
+<a href=/%E5%88%86%E5%B8%83%E5%BC%8F/base/cap/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e58886e5b883e5bc8fbasecap><span>CAP</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e58886e5b883e5bc8fbasebase-li>
+<a href=/%E5%88%86%E5%B8%83%E5%BC%8F/base/base/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e58886e5b883e5bc8fbasebase><span>BASE</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e58886e5b883e5bc8fbasecalm-li>
+<a href=/%E5%88%86%E5%B8%83%E5%BC%8F/base/calm/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e58886e5b883e5bc8fbasecalm><span>CALM</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e58886e5b883e5bc8fbasegossip-li>
+<a href=/%E5%88%86%E5%B8%83%E5%BC%8F/base/gossip/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e58886e5b883e5bc8fbasegossip><span>Gossip</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e58886e5b883e5bc8fbasecrdt-li>
+<a href=/%E5%88%86%E5%B8%83%E5%BC%8F/base/crdt/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e58886e5b883e5bc8fbasecrdt><span>CRDT</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e58886e5b883e5bc8fbase2pc-li>
+<a href=/%E5%88%86%E5%B8%83%E5%BC%8F/base/2pc/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e58886e5b883e5bc8fbase2pc><span>2PC</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e58886e5b883e5bc8fbase3pc-li>
+<a href=/%E5%88%86%E5%B8%83%E5%BC%8F/base/3pc/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e58886e5b883e5bc8fbase3pc><span>3PC</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e58886e5b883e5bc8fbasepaxos-li>
+<a href=/%E5%88%86%E5%B8%83%E5%BC%8F/base/paxos/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e58886e5b883e5bc8fbasepaxos><span>Paxos</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e58886e5b883e5bc8fbasezab-li>
+<a href=/%E5%88%86%E5%B8%83%E5%BC%8F/base/zab/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e58886e5b883e5bc8fbasezab><span>ZAB</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e58886e5b883e5bc8fbaseraft-li>
+<a href=/%E5%88%86%E5%B8%83%E5%BC%8F/base/raft/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e58886e5b883e5bc8fbaseraft><span>Raft</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e58886e5b883e5bc8fbasee58886e5b883e5bc8fe4b880e887b4-li>
+<a href=/%E5%88%86%E5%B8%83%E5%BC%8F/base/%E5%88%86%E5%B8%83%E5%BC%8F%E4%B8%80%E8%87%B4/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e58886e5b883e5bc8fbasee58886e5b883e5bc8fe4b880e887b4><span>分布式一致性</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e58886e5b883e5bc8fbasee58886e5b883e5bc8fe4ba8be58aa1-li>
+<a href=/%E5%88%86%E5%B8%83%E5%BC%8F/base/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e58886e5b883e5bc8fbasee58886e5b883e5bc8fe4ba8be58aa1><span>分布式事务</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e58886e5b883e5bc8fbasee58886e5b883e5bc8fe99481-li>
+<a href=/%E5%88%86%E5%B8%83%E5%BC%8F/base/%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e58886e5b883e5bc8fbasee58886e5b883e5bc8fe99481><span>分布式锁</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child active-path" id=m-e58886e5b883e5bc8fbasee4b880e887b4e680a7e585b1e8af86-li>
+<a href=/%E5%88%86%E5%B8%83%E5%BC%8F/base/%E4%B8%80%E8%87%B4%E6%80%A7%E5%85%B1%E8%AF%86/ class="align-left pl-0 active td-sidebar-link td-sidebar-link__page" id=m-e58886e5b883e5bc8fbasee4b880e887b4e680a7e585b1e8af86><span class=td-sidebar-nav-active-item>一致性与共识算法</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e58886e5b883e5bc8fbasee4b880e887b4e680a7e59388e5b88c-li>
+<a href=/%E5%88%86%E5%B8%83%E5%BC%8F/base/%E4%B8%80%E8%87%B4%E6%80%A7%E5%93%88%E5%B8%8C/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e58886e5b883e5bc8fbasee4b880e887b4e680a7e59388e5b88c><span>一致性哈希算法</span></a>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</div>
+</aside>
+<aside class="d-none d-xl-block col-xl-2 td-sidebar-toc d-print-none">
+<div class="td-page-meta ml-2 pb-1 pt-2 mb-0">
+<a href=https://github.com/infilos/infilos.com/edit/master/content/zh/%e5%88%86%e5%b8%83%e5%bc%8f/base/%e4%b8%80%e8%87%b4%e6%80%a7%e5%85%b1%e8%af%86.md target=_blank><i class="fa fa-edit fa-fw"></i> 编辑此页</a>
+<a href="https://github.com/infilos/infilos.com/new/master/content/zh/%e5%88%86%e5%b8%83%e5%bc%8f/base/%e4%b8%80%e8%87%b4%e6%80%a7%e5%85%b1%e8%af%86.md?filename=change-me.md&value=---%0Atitle%3A+%22Long+Page+Title%22%0AlinkTitle%3A+%22Short+Nav+Title%22%0Aweight%3A+100%0Adescription%3A+%3E-%0A+++++Page+description+for+heading+and+indexes.%0A---%0A%0A%23%23+Heading%0A%0AEdit+this+template+to+create+your+new+page.%0A%0A%2A+Give+it+a+good+name%2C+ending+in+%60.md%60+-+e.g.+%60getting-started.md%60%0A%2A+Edit+the+%22front+matter%22+section+at+the+top+of+the+page+%28weight+controls+how+its+ordered+amongst+other+pages+in+the+same+directory%3B+lowest+number+first%29.%0A%2A+Add+a+good+commit+message+at+the+bottom+of+the+page+%28%3C80+characters%3B+use+the+extended+description+field+for+more+detail%29.%0A%2A+Create+a+new+branch+so+you+can+preview+your+new+file+and+request+a+review+via+Pull+Request.%0A" target=_blank><i class="fa fa-edit fa-fw"></i> 添加子页面</a>
+<a href="https://github.com/infilos/infilos.com/issues/new?title=%e4%b8%80%e8%87%b4%e6%80%a7%e4%b8%8e%e5%85%b1%e8%af%86%e7%ae%97%e6%b3%95" target=_blank><i class="fab fa-github fa-fw"></i> 提交文档问题</a>
+<a id=print href=/%E5%88%86%E5%B8%83%E5%BC%8F/base/_print/><i class="fa fa-print fa-fw"></i> 整节打印</a>
+</div>
+<div class=td-toc><nav id=TableOfContents>
+<ul>
+<li><a href=#分布式一致性>分布式一致性</a>
+<ul>
+<li><a href=#cap>CAP</a></li>
+<li><a href=#拜占庭将军问题>拜占庭将军问题</a></li>
+<li><a href=#flp>FLP</a></li>
+</ul>
+</li>
+<li><a href=#共识算法>共识算法</a>
+<ul>
+<li><a href=#paxos-与-raft>Paxos 与 Raft</a></li>
+<li><a href=#powproof-of-work>POW：Proof-of-Work</a></li>
+<li><a href=#posproof-of-stake>POS：Proof-of-Stake</a></li>
+<li><a href=#dposdelegated-proof-of-stake>DPOS：Delegated Proof-of-Stake</a></li>
+</ul>
+</li>
+<li><a href=#reference>Reference</a></li>
+</ul>
+</nav></div>
+</aside>
+<main class="col-12 col-md-9 col-xl-8 pl-md-5" role=main>
+<nav aria-label=breadcrumb class="d-none d-md-block d-print-none">
+<ol class="breadcrumb spb-1">
+<li class=breadcrumb-item>
+<a href=/%E5%88%86%E5%B8%83%E5%BC%8F/>分布式</a>
+</li>
+<li class=breadcrumb-item>
+<a href=/%E5%88%86%E5%B8%83%E5%BC%8F/base/>基本构成</a>
+</li>
+<li class="breadcrumb-item active" aria-current=page>
+<a href=/%E5%88%86%E5%B8%83%E5%BC%8F/base/%E4%B8%80%E8%87%B4%E6%80%A7%E5%85%B1%E8%AF%86/>一致性与共识算法</a>
+</li>
+</ol>
+</nav>
+<div class=td-content>
+<h1>一致性与共识算法</h1>
+<header class=article-meta>
+</header>
+<h2 id=分布式一致性>分布式一致性</h2>
+<p>在一个分布式系统中，如何保证集群中所有节点中的数据完全相同，并且能够对某个提案(Proposal)达成一致，是分布式系统正常工作的核心问题，而共识算法就是用来保证分布式系统一致性的方法。</p>
+<p>然而分布式系统中由于引入了多个节点，所以系统中会出现各种非常复杂的情况；随着节点数量增加，节点失效、故障或者宕机就变成了非常常见的事情，解决分布式系统中的各种边界条件和意外情况也增加了解决分布式一致性问题的难度。</p>
+<p>在一个分布式系统中，除了节点的失效会是会导致一致性不容易达成的主要原因之外，节点之间的网络通信受到干扰甚至阻断，以及分布式系统的运行速度的差异都是解决分布式系统一致性所面临的难题。</p>
+<h3 id=cap>CAP</h3>
+<p>在 1998 年秋，加州伯克利大学的教授 Eric Brewer 第一次发布了 CAP 理论，在 1999 年论文 “<a href="http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.67.6951&rep=rep1&type=pdf">Brewer&rsquo;s Conjecture and the Feasibility of Consitent, Available, Partition-Tolerant Web Service</a>” 正式发布，其中总结了 Eric Brewer 提出的 CAP 理论。</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/2018021615187855658956.png style=display:block;width:50% alt=NAME align=center> </div>
+<p>该论文证明了两个非常有意思的理论：首先是在异步网络模型中，所有的节点都是由于没有时钟，仅能根据接收到的消息做出判断，这时完全不能保证一致性、可用性、分区容错性，<strong>每个系统仅能在这三种特性中选择两种。</strong></p>
+<p>这里讨论的一致性都是<strong>强一致性</strong>，即所有节点接收到同样的操作时会按照完全相同的顺序执行，被一个节点提交的更新操作会立即反映在其他<strong>通过异步或部分同步网络连接的节点上，<strong>如果想要同时满足一致性和分区容错性，在异步网络中，我们只能</strong>中心化存储所有数据</strong>，通过其他节点将请求路由给中心节点达到这两个目的。</p>
+<p>但是在现实世界中其实并不存在<strong>绝对异步</strong>的网络环境，如果我们允许每个节点拥有自己的时钟，这些时钟虽然有着各自不同的时间，但他们的**更新频率是完全相同的，**所以我们可以通过时钟得知接收消息的间隔时间，在这种更宽松的前提下，我们能够得到更加强大的服务。</p>
+<p>然而在部分同步的网络环境中，仍然没有办法同时保证三种特性，证明的过程其实非常简单，可以直接阅读 <a href="http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.67.6951&rep=rep1&type=pdf">论文的 4.2 节</a>，然而时钟的出现能够让我们知道当前消息有多久没有得到回应，通过超时时间就能在一定程度上解决信息丢失的问题。</p>
+<p>由于网络一定会存在延时，所以没有办法在分布式系统中做到强一致性的同时保证可用性，不过我们可以通过降低对一致性的要求，在一致性和可用性之间做出权衡，而这其实也是设计分布式系统首先要考虑的问题，由于强一致性的系统会导致系统的可用性降低，仅仅将接受请求的工作交给其他节点对于高并发的服务并不能解决问题，所以在目前主流的分布式系统中都选择<strong>最终一致性</strong>。</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180217151884412972134.png style=display:block;width:50% alt=NAME align=center> </div>
+<p>最终一致性允许多个节点间的状态出现冲突，但是所有能够沟通的节点都能够在有限的时间内解决冲突，从不一致的状态恢复到一致。这里列出的两个条件比较重要：一是<strong>节点直接可以正常通信</strong>，而是冲突<strong>需要在有限时间内解决</strong>，只有在两个条件均成立时才能达到最终一致性。</p>
+<h3 id=拜占庭将军问题>拜占庭将军问题</h3>
+<p>该问题是 Leslie Lamport 在 <a href=https://web.archive.org/web/20170205142845/http://lamport.azurewebsites.net/pubs/byz.pdf>The Byzantine Generals Problem</a> 论文中提出的分布式领域的<strong>容错问题</strong>，它是分布式领域中最复杂、最严格的容错模型。</p>
+<p>在该模型下，系统不会对集群中的节点做任何的限制，它们可以向其他节点发送随机数据、错误数据，也可以选择不响应其他节点的请求，这些无法预测的行为使得容错这一问题变得更加复杂。</p>
+<p>拜占庭将军问题描述了如下的场景，有一组将军分别指挥一部分军队，每个将军都不知道其他将军是否是可靠的，也不知道其他将军传递的信息是否可靠，但是他们需要通过投票选择是否要进攻或撤退：</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180217151884457569865.png style=display:block;width:50% alt=NAME align=center> </div>
+<blockquote>
+<p>本节中，黄色代表状态未知，绿色代表进攻，蓝色代表撤退，红色代表当前将军的信息不可靠。</p>
+</blockquote>
+<p>这时，无论将军是否可靠，只要所有的将军达成了统一的方案，选择进攻或撤退其实是没有任何问题的：</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180217151884479414231.png style=display:block;width:50% alt=NAME align=center> </div>
+<p>上述的情况不会对当前的战局造成太大影响，但是如果其中一个将军告诉其中一部分将军选择进攻，告诉另一部分将军选择撤退，就会出现非常严重的问题了。</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/2018021715188449147423.png style=display:block;width:50% alt=NAME align=center> </div>
+<p>由于将军的队伍中出现了一个叛徒或者信息在传递的过程中被拦截，会导致一部分将军会选择进攻，剩下的一份会选择撤退，他们都认为自己的选择是大多数人的选择，这时会出现严重的不一致问题。</p>
+<p>拜占庭将军问题是对分布式系统容错的最高要求，然而这不是日常工作中使用的大多数分布式系统中会面对的问题，我们遇到更多的还是节点故障宕机或者不响应等情况，这就大大简化了系统对容错的要求；不过类似 Bitcoin、Ethereum 等分布式系统确实需要考虑拜占庭容错的问题，我们会在下面介绍它们是如何解决的。</p>
+<h3 id=flp>FLP</h3>
+<p>FLP 不可能定理是分布式系统领域最重要的定理之一，它给出了一个非常重要的结论：<strong>在网络可靠且存在节点失效的异步模型系统中，不存在一个可以解决一致性问题的确定性算法。</strong></p>
+<blockquote>
+<p>In this paper, we show the surprising result that no completely asynchronous consensus protocol can tolerate even a single unannounced process death. We do not consider Byzantine failures, and we assume that the message system is reliable it delivers all messages correctly and exactly once.</p>
+</blockquote>
+<p>这个定理其实也就是告诉我们不要浪费时间去为异步分布式系统设计在任意场景上都能实现的共识算法，异步系统完全没办法保证在有限时间内达成一致，在这里作者并不会去尝试证明 FLP 不可能定理，读者可以阅读相关论文 <a href=https://groups.csail.mit.edu/tds/papers/Lynch/jacm85.pdf>Impossibility of Distributed Consensuswith One Faulty Process</a> 了解更多内容。</p>
+<h2 id=共识算法>共识算法</h2>
+<p>在上节中，我们已经简单了解了分布式系统中面对的问题与挑战，在这里我们会介绍不同共识算法的实现原理，包括传统分布式领域的 Paxos、Raft，以及加密货币中使用的工作量证明(POW)、权益证明(POS)和委托权益证明(DPOS)，通过对这些共识算法原理的介绍和分析，我相信各位读者能对分布式一致性和共识算法有更深的理解。</p>
+<h3 id=paxos-与-raft>Paxos 与 Raft</h3>
+<p>Paxos 和 Raft 是目前分布式系统领域中两种非常著名的解决一致性问题的共识算法，两者都能解决分布式系统中的一致性问题，但是前者的实现与证明非常难以理解，后者的实现比较简洁并且遵循人类的直觉，它的出现就是为了解决 Paxos 难以理解并难以实现的问题。</p>
+<p>我们先来简单介绍一下 <a href=https://en.wikipedia.org/wiki/Paxos_(computer_science)>Paxos</a> 究竟是什么。Paxos 其实是<strong>一类</strong>能够解决分布式一致性问题的协议，它能够让分布式网络中的节点在出现错误时仍然保持一致；Leslie Lamport 提出的 Paxos 可以在没有恶意节点的前提下保证系统中节点的一致性，也是第一个被证明完备的共识算法，目前<strong>完备</strong>的共识算法包括 Raft 本质上都是 Paxos 的变种。</p>
+<p>作为一类协议，Paxos 中包括 Bais Paxos、Multi-Paxos、Cheap Paxos 和其他变种，这里我们会简单介绍 Basic Paxos 和 Multi-Paxos 这两种协议。</p>
+<h4 id=basic-paxos>Basic Paxos</h4>
+<p>Basic Paxos 是 Paxos 中最为基础的协议，每个 Basic Paxos 的协议实例最终都会选择唯一一个结果；使用 Paxos 作为共识算法的分布式系统中，节点都会有三种身份，分别是 Proposer、Acceptor、Learner。</p>
+<p>我们在这里会忽略最后一种身份 Learner 以简化协议的运行过程、便于理解；Paxos 的运行过程分为两个阶段，分别是准备阶段(Prepare) 和接受阶段(Accept)，当 Proposer 接收到来自客户端的请求时，就会进入如下流程：</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180217151884849371114.png style=display:block;width:50% alt=NAME align=center> </div>
+<blockquote>
+<p>图片来自 <a href=https://ramcloud.stanford.edu/~ongaro/userstudy/paxos.pdf>Paxos lecture (Raft user study)</a> 第 12 页。</p>
+</blockquote>
+<p>在整个共识算法运行的过程中，Proposer 负责提出提案并向 Acceptor 分别发出两次 RPC 请求，Prepare 和 Accept；Acceptor 会根据其持有的信息 minProposal、acceptedProposal、acceptValue，来选择接受或拒绝当前的提案，当某一个提案被过半数的 Acceptor 接受之后，我们就认为当前提案被整个集群接受了。</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/2018021715188487332940.png style=display:block;width:50% alt=NAME align=center> </div>
+<p>我们简单举一个例子来介绍 Paxos 是如何在多个提案下保证最终能够达到一致性的，上图中 S1 和 S5 分别接收到了来自客户端的请求 X 和 Y，S1 首先向 S2 和 S3 发出 Prepare RPC 和 Accept RPC，三个服务器都接受了 S1 的提案；之后，S5 向 S3 和 S4 服务器发出 Prepare(2.5) 的请求，S3 由于已经接受了 X，所以他会返回接受的提案和值 (1.1, X)，这时服务器使用接收到的提案代替自己的提案 Y，重新向其他服务器发送 Accept(2.5 X) 的 RPC，最终所有的服务器会达成一致并选择相同的值。</p>
+<h4 id=multi-paxos>Multi-Paxos</h4>
+<p>由于大多数分布式服务器都要接受一系列的值，如果使用 Basic Paxos 来处理数据流，那么就会导致非常明显的性能损失，而 Multi-Paxos 是前者的加强版，如果集群中的 Leader 是非常稳定的，那么我们往往不需要准备阶段的工作，这样就能将 RPC 的次数减少一半。</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180217151884920428994.png style=display:block;width:50% alt=NAME align=center> </div>
+<p>上图中描述的就是稳定阶段 Multi-Paxos 的处理过程，S1 是整个集群的 Leader，当其他的节点接收到来自客户端的请求时，都会将请求转发给 Leader 进行处理。</p>
+<p>当然，Leader 角色的出现自然会带来另一个问题，也就是 Leader 究竟应该如何选举，在 <a href=http://140.123.102.14:8080/reportSys/file/paper/lei/lei_5_paper.pdf>Paxos Made Simple</a> 一文中并没有给出 Multi-Paxos 的具体实现方法和细节，所以不同的 Multi-Paxos 实现会有各种细微的差别。</p>
+<h4 id=raft>Raft</h4>
+<p>Raft 其实就是 Multi-Paxos 的一个变种，Raft 通过简化 Multi-Paxos 模型，实现了一种更易让人理解的共识算法，它们两者都能够对一系列连续的问题达成一致。</p>
+<p>Raft 在 Multi-Paxos 的基础上做了两个限制，首先是 Raft 中追加日志的操作必须是连续的，而 Multi-Paxos 中追加日志的操作是并发的，但是对于节点内部的状态机来说两者都是有序的；第二就是 Raft 对 Leader 选举的条件做了限制，只有拥有最新、最全日志的节点才能够当选 Leader，但是 Multi-Paxos 由于任意节点都可以写日志，所以在选择 Leader 上么有什么限制，只是在选择 Leader 之后需要将 Leader 中的日志补全。</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180217151885257638482.png style=display:block;width:50% alt=NAME align=center> </div>
+<p>在 Raft 中，所有 Follower 的日志都是 Leader 的子集，而 Multi-Paxos 中的日志并不会做这个保证，由于 Raft 对日志追加的方式和选举过程进行了限制，所以在实现上会更加容易和简单。</p>
+<p>从理论上来讲，支持并发日志追加的 Paxos 会比 Raft 拥有更加优秀的性能，不过其理解和实现上还是比较复杂的，很多人都会说 Paxos 是科学，而 Raft 是工程，当作者需要去实现一个共识算法，会选择使用 Raft 和更简洁的实现，避免因为一些边界条件带来的复杂问题。</p>
+<p>可以查看 <a href=https://raft.github.io/>The Raft Consensus Algorithm</a> 了解更多 Raft 的细节。</p>
+<h3 id=powproof-of-work>POW：Proof-of-Work</h3>
+<p>上一节介绍的共识算法，无论是 Paxos 还是 Raft 其实都只能解决拜占庭将军问题的一致性问题，不能够应对分布式网络中出现的极端情况，但是这在传统的分布式系统都不是什么问题，无论分布式数据库还是消息队列集群，它们内部的节点并不会故意发送错误信息，在类似系统中，最常见的问题就是节点失去响应或失效，所以它们在这种情况下是有效可行的，也是充分的。</p>
+<p>这一节介绍的 <a href=https://en.wikipedia.org/wiki/Proof-of-work_system>工作量证明</a> 是一个用于阻止拒绝服务攻击(DDOS)和类似垃圾邮件等服务错误问题的协议，它在 1993 年被 Cynthia Dwork 和 Moni Naor 提出，它能够帮助分布式系统达到拜占庭容错。</p>
+<p>工作量证明的关键特点就是，分布式系统中的请求服务的节点必须解决一个<strong>一般难度但是可行(feasible)的问题</strong>，但是验证问题答案的过程对于服务提供者来说却非常容易，也就是一个不容易解答但是容易验证的问题。</p>
+<p>这种问题通常需要消耗一定的 CPU 时间来计算某个问题的答案，目前最大的区块链网络-比特币(Bitcoin) 就使用了工作量证明的分布式一致性算法，在网络中的所有节点计算通过以下的谜题来获得当前区块的记账权：</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180217151885399218765.png style=display:block;width:50% alt=NAME align=center> </div>
+<p>SHA-256 作为一个哈希函数，想要通过 SHA-256 函数的输出推断输入在目前来看可能性是可以忽略不计的，比特币网络就需要每一个及诶单不断改变 NONCE 来得到不同的 HASH，如果得到的 HASH 结果在小于某个范围，目前(2017-12-17)的难度是：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>0x0000000000000000000000000000000000000000000000000000017268d8a21a
+</code></pre></div><p>也就是说如果只计算一次 SHA-256 的值能够小于上述结果的可能性是 1.37 ∗ 10^-65，当前的全网算力也达到了 13,919 PH/s，这是个非常恐怖的数字，随着网络算力的不断改变，比特币也会不断改变当前问题的难度，保证每个区块被发现的时间在 10min 左右；整个比特币网络中，谁先得到当前问题的答案就能获得这个区块的记账权，并将当前区块通过 Gossip 协议发送给尽可能多的比特币节点。</p>
+<p>工作量证明的原理其实非常简单，比特币网络选择的谜题非常好的适应了工作量证明定义中的问题，比较难以计算同时又易于验证，我们可以简单理解为工作量证明防止错误或者无效请求的原理就是增加客户端请求服务的工作量，而适合难度的谜题又能保证合法的请求不会受影响。</p>
+<p>由于工作量证明需要消耗大量的算力，同时比特币大约 10min 才会产生一个区块，区块的大小也只有 1MB，仅仅能够包含 3-4000 笔交易，平均下来每秒只能够处理 5~7 笔交易，所以比特币网络的拥堵非常严重。</p>
+<h3 id=posproof-of-stake>POS：Proof-of-Stake</h3>
+<p>权益证明是区块链网络中使用的另一种共识算法，在基于权益证明的加密货币中，下一个区块的选择是根据不同节点的股份和时间随机进行的。</p>
+<p>由于创造新的区块不会消耗大量的 CPU，如果它不诚实也不会造成什么损失，这也就给了很多节点作弊的理由，每个节点为了最大化利益会在多条链上同时挖矿。</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180217151885486336299.png style=display:block;width:50% alt=NAME align=center> </div>
+<p>在早期的所有权证明算法中，整个网络只会奖励创建区块的节点，不存在任何惩罚，这时每个节点在创造的多条链上同时投票才能够最大化利益，在这种情况下网络中的节点很难对一条链达成共识。</p>
+<p>有两种办法能够解决缺乏厉害关系(nothing-at-stake)造成的问题，一种是使用 <a href=https://blog.ethereum.org/2014/01/15/slasher-a-punitive-proof-of-stake-algorithm/>Slasher</a> 协议，惩罚同时在多条链上投票的节点；第二种方法是直接惩罚在错误的链上创建块的节点，总而言之就是通过算法之外的手段来解决这个问题，引入激励和惩罚。</p>
+<p>与工作量证明相比，权益证明不需要消耗大量的电力就能保证区块链网络的安全性，同时也不需要在每个区块中创建新的货币来激励旷工参与当前网络的运行，这也就在一定程度上缩短了达成共识所需要的时间，基于权益证明的 Ethereum 每秒大概处理 30 笔交易左右。</p>
+<h3 id=dposdelegated-proof-of-stake>DPOS：Delegated Proof-of-Stake</h3>
+<p>前面介绍的权益证明算法可以将整个区块链网络理解为一家公司，出资最多、占比最大的人又更多的机会得到话语权(记账权)；对于小股东来说，千分之几甚至万分之几的股份很难有什么作为，只能得到股份带来的分红和收益。</p>
+<p>但是在这里介绍的委托权益证明能够让每个人选出可以代表自己利益的人参与到记账权的争夺中，这样多个小股东就能够通过投票选出自己的代理人，保障自己的利益。整个网络中选举出的多个节点能够在 1s 之内对 99.9% 的交易进行确认，使用委托权益证明的 EOS 能够每秒处理几十万笔交易，同时也能够比较监管的干预。</p>
+<p>在委托权益证明中，每个参与者都能够选举任意数量的节点生成下一个区块，得票最多的前 N 个节点会被选择成为区块的创建者，下一个区块的创建者就会从这样一组当选者中随机选取，除此之外，N 的数量也是整个网络投票决定的，所以可以尽可能的保证网络的去中心化。</p>
+<h2 id=reference>Reference</h2>
+<ul>
+<li><a href=https://en.wikipedia.org/wiki/Consensus_(computer_science)>Consensus (computer science)</a></li>
+<li><a href=http://blog.csdn.net/lsttoy/article/details/61624287>区块链共识算法（POW,POS,DPOS,PBFT）介绍和心得</a></li>
+<li><a href=https://yeasy.gitbooks.io/blockchain_guide/content/distribute_system/paxos.html>Paxos 与 Raft</a></li>
+<li><a href=https://en.wikipedia.org/wiki/Proof-of-work_system>Proof-of-work system</a></li>
+<li><a href=https://en.wikipedia.org/wiki/Proof-of-stake>Proof-of-stake</a></li>
+<li><a href=https://github.com/ethereum/wiki/wiki/Proof-of-Stake-FAQ>Proof of Stake FAQ · Ethereum Wiki</a></li>
+<li><a href=http://docs.bitshares.org/bitshares/dpos.html>Delegated Proof of Stake</a></li>
+<li><a href=https://bitshares.org/technology/delegated-proof-of-stake-consensus/>Delegated Proof-of-Stake Consensus</a></li>
+<li><a href=https://steemit.com/dpos/@legendx/dpos>DPOS共识算法 – 缺失的白皮书</a></li>
+<li><a href=https://yeasy.gitbooks.io/blockchain_guide/content/distribute_system/consensus.html>共识算法</a></li>
+<li><a href=https://en.wikipedia.org/wiki/CAP_theorem>CAP theorem</a></li>
+<li><a href=http://140.123.102.14:8080/reportSys/file/paper/lei/lei_5_paper.pdf>Paxos Made Simple</a></li>
+<li><a href=https://raft.github.io/>The Raft Consensus Algorithm</a></li>
+<li><a href=https://raft.github.io/raft.pdf>In Search of an Understandable Consensus Algorithm</a></li>
+<li><a href=https://baotiao.github.io/2016/05/05/paxos-raft/>谈谈 paxos, multi-paxos, raft</a></li>
+<li><a href="http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.67.6951&rep=rep1&type=pdf">Brewer’s Conjecture and the Feasibility of Consistent, Available, Partition-Tolerant Web Services</a></li>
+<li><a href=https://stackoverflow.com/questions/29381442/eventual-consistency-vs-strong-eventual-consistency-vs-strong-consistency>“Eventual Consistency” vs “Strong Eventual Consistency” vs “Strong Consistency”?</a></li>
+<li><a href=https://groups.csail.mit.edu/tds/papers/Lynch/jacm85.pdf>Impossibility of Distributed Consensuswith One Faulty Process</a></li>
+<li><a href=https://web.archive.org/web/20170205142845/http://lamport.azurewebsites.net/pubs/byz.pdf>The Byzantine Generals Problem</a></li>
+<li><a href=https://en.wikipedia.org/wiki/Byzantine_fault_tolerance>Byzantine fault tolerance</a></li>
+<li><a href=http://the-paper-trail.org/blog/a-brief-tour-of-flp-impossibility/>A Brief Tour of FLP Impossibility</a></li>
+<li><a href=http://140.123.102.14:8080/reportSys/file/paper/lei/lei_5_paper.pdf>Paxos Made Simple</a></li>
+<li><a href=http://harry.me/blog/2014/12/27/neat-algorithms-paxos/>Neat Algorithms - Paxos</a></li>
+<li><a href=http://danielw.cn/FLP-proof>FLP Impossibility 的证明</a></li>
+<li><a href=https://read.douban.com/ebook/42852957/>白话区块链</a></li>
+<li><a href=https://en.wikipedia.org/wiki/Paxos_(computer_science)>Paxos</a></li>
+<li><a href="https://www.youtube.com/watch?v=JEpsBg0AO6o">Paxos lecture (Raft user study)</a></li>
+<li><a href=https://bitcoin.org/bitcoin.pdf>Bitcoin: A Peer-to-Peer Electronic Cash System</a></li>
+<li><a href=https://en.bitcoin.it/wiki/Proof_of_Stake>Proof of Stake · Bitcoin Wiki</a></li>
+<li><a href=https://blog.ethereum.org/2014/01/15/slasher-a-punitive-proof-of-stake-algorithm/>Slasher</a></li>
+<li><a href=https://github.com/ethereum/wiki/wiki/Proof-of-Stake-FAQ>Proof of Stake FAQ</a></li>
+</ul>
+<style>.feedback--answer{display:inline-block}.feedback--answer-no{margin-left:1em}.feedback--response{display:none;margin-top:1em}.feedback--response__visible{display:block}</style>
+<div class=d-print-none>
+<h2 class=feedback--title>Feedback</h2>
+<p class=feedback--question>Was this page helpful?</p>
+<button class="btn btn-primary mb-4 feedback--answer feedback--answer-yes">Yes</button>
+<button class="btn btn-primary mb-4 feedback--answer feedback--answer-no">No</button>
+<p class="feedback--response feedback--response-yes">
+Glad to hear it! Please <a href=https://github.com/infilos/infilos.com/issues/new>tell us how we can improve</a>.
+</p>
+<p class="feedback--response feedback--response-no">
+Sorry to hear that. Please <a href=https://github.com/infilos/infilos.com/issues/new>tell us how we can improve</a>.
+</p>
+</div>
+<script>const yesButton=document.querySelector('.feedback--answer-yes'),noButton=document.querySelector('.feedback--answer-no'),yesResponse=document.querySelector('.feedback--response-yes'),noResponse=document.querySelector('.feedback--response-no'),disableButtons=()=>{yesButton.disabled=!0,noButton.disabled=!0},sendFeedback=b=>{if(typeof ga!='function')return;const a={command:'send',hitType:'event',category:'Helpful',action:'click',label:window.location.pathname,value:b};ga(a.command,a.hitType,a.category,a.action,a.label,a.value)};yesButton.addEventListener('click',()=>{yesResponse.classList.add('feedback--response__visible'),disableButtons(),sendFeedback(1)}),noButton.addEventListener('click',()=>{noResponse.classList.add('feedback--response__visible'),disableButtons(),sendFeedback(0)})</script>
+<br>
+</div>
+</main>
+</div>
+</div>
+<footer class="bg-dark py-5 row d-print-none">
+<div class="container-fluid mx-sm-5">
+<div class=row>
+<div class="col-6 col-sm-4 text-xs-center order-sm-2">
+</div>
+<div class="col-6 col-sm-4 text-right text-xs-center order-sm-3">
+<ul class="list-inline mb-0">
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Weibo aria-label=Weibo>
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://weibo.com/u/3848950217>
+<i class="fab fa-weibo"></i>
+</a>
+</li>
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Twitter aria-label=Twitter>
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://twitter.com/zhange_zzg>
+<i class="fab fa-twitter"></i>
+</a>
+</li>
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title="Stack Overflow" aria-label="Stack Overflow">
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://stackoverflow.com>
+<i class="fab fa-stack-overflow"></i>
+</a>
+</li>
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=GitHub aria-label=GitHub>
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://github.com/infilos/infilos.com>
+<i class="fab fa-github"></i>
+</a>
+</li>
+</ul>
+</div>
+<div class="col-12 col-sm-4 text-center py-2 order-sm-2">
+<small class=text-white>&copy; 2021 infilos.com All Rights Reserved</small>
+</div>
+</div>
+</div>
+</footer>
+</div>
+<script src=/js/popper.min.js integrity=sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49 crossorigin=anonymous></script>
+<script src=/js/bootstrap.min.js integrity=sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy crossorigin=anonymous></script>
+<script src=/js/main.min.5c74b870c6953931a705f390a49c7e4c0a842ec5c83b24354758dd674343ed0d.js integrity="sha256-XHS4cMaVOTGnBfOQpJx+TAqELsXIOyQ1R1jdZ0ND7Q0=" crossorigin=anonymous></script>
+<script src=https://cdn.jsdelivr.net/npm/docsearch.js@2.6.3/dist/cdn/docsearch.min.js></script>
+<script>docsearch({apiKey:'123',indexName:'infilos_com',inputSelector:'.td-search-input',debug:!1})</script>
+</body>
+</html>
