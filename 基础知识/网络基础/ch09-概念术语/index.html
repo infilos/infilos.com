@@ -14,50 +14,80 @@
 <link rel=icon type=image/png href=/favicons/android-96x96.png sizes=96x96>
 <link rel=icon type=image/png href=/favicons/android-144x144.png sizes=144x144>
 <link rel=icon type=image/png href=/favicons/android-192x192.png sizes=192x192>
-<title>UDP 协议 | infilos.com</title><meta property="og:title" content="UDP 协议">
-<meta property="og:description" content="概览 UDP(User Datagram Protocol)即用户数据报协议，在网络中它与TCP协议一样用于处理数据包，是一种无连接的协议。在OSI模型中，在第四层——传输层，处于IP协议的上一层。
-UDP用来支持那些需要在计算机之间传输数据的网络应用。包括网络视频会议系统在内的众多的客户/服务器模式的网络应用都需要使用UDP协议。UDP协议从问世至今已经被使用了很多年，虽然其最初的光彩已经被一些类似协议所掩盖，但是即使是在今天UDP仍然不失为一项非常实用和可行的网络传输层协议。UDP报文没有可靠性保证、顺序保证和流量控制字段等，可靠性较差。但是正因为UDP协议的控制选项较少，在数据传输过程中延迟小、数据传输效率高，适合对可靠性要求不高的应用程序，或者可以保障可靠性的应用程序，如DNS、TFTP、SNMP等。
-特点 UDP提供不可靠服务，但具有TCP所没有的优势：
- UDP无连接，时间上不存在建立连接需要的时延。空间上，TCP需要在端系统中维护连接状态，需要一定的开销。此连接装入包括接收和发送缓存，拥塞控制参数和序号与确认号的参数。UDP不维护连接状态，也不跟踪这些参数，开销小。空间和时间上都具有优势。 举个例子：  DNS如果运行在TCP之上而不是UDP，那么DNS的速度将会慢很多。 HTTP使用TCP而不是UDP，是因为对于基于文本数据的Web网页来说，可靠性很重要。 同一种专用应用服务器在支持UDP时，一定能支持更多的活动客户机。   分组首部开销小，TCP首部20字节，UDP首部8字节。 UDP没有拥塞控制，应用层能够更好的控制要发送的数据和发送时间，网络中的拥塞控制也不会影响主机的发送速率。某些实时应用要求以稳定的速度发送，能容 忍一些数据的丢失，但是不能允许有较大的时延（比如实时视频，直播等） UDP提供尽最大努力的交付，不保证可靠交付。所有维护传输可靠性的工作需要用户在应用层来完成。没有TCP的确认机制、重传机制。如果因为网络原因没有传送到对端，UDP也不会给应用层返回错误信息 UDP是面向报文的，对应用层交下来的报文，添加首部后直接乡下交付为IP层，既不合并，也不拆分，保留这些报文的边界。对IP层交上来UDP用户数据报，在去除首部后就原封不动地交付给上层应用进程，报文不可分割，是UDP数据报处理的最小单位。 正是因为这样，UDP显得不够灵活，不能控制读写数据的次数和数量。比如我们要发送100个字节的报文，我们调用一次sendto函数就会发送100字节，对端也需要用recvfrom函数一次性接收100字节，不能使用循环每次获取10个字节，获取十次这样的做法。 UDP常用一次性传输比较少量数据的网络应用，如DNS,SNMP等，因为对于这些应用，若是采用TCP，为连接的创建，维护和拆除带来不小的开销。UDP也常用于多媒体应用（如IP电话，实时视频会议，流媒体等）数据的可靠传输对他们而言并不重要，TCP的拥塞控制会使他们有较大的延迟，也是不可容忍的 UDP 支持一对一、一对多、多对一和多对多的交互通信。  还要注意的是：
- IP 数据报要经过互连网中许多路由器的存储转发；UDP 用户数据报是在运输层的端到端抽象的逻辑信道中传送的。  UDP 对应用层交下来的报文，既不合并，也不拆分，而是保留这些报文的边界。应用层交给 UDP 多长的报文，UDP 就照样发送，即一次发送一个报文。
- 首部格式 在计算检验和时，临时把“伪首部”和 UDP 用户数据报连接在一起。伪首部仅仅是为了计算检验和。
-  源端口: 占16位、源端口号。在需要对方回信时选用。不需要时可用全0。 目的端口: 占16位、目的端口号。这在终点交付报文时必须使用。 长度: 占16位、UDP用户数据报的长度,其最小值是8(仅有首部)。 检验和: 占16位、检测UDP用户数据报在传输中是否有错。有错就丢弃。  请注意，虽然在 UDP 之间的通信要用到其端口号，但由于 UDP 的通信是无连接的，因此不需要使用套接字。
-校验  UDP校验和的计算方法和IP数据报首部校验和的计算方法相似，都使用二进制反码运算求和再取反，但不同的是：IP数据报的校验和之检验IP数据报和首部，但UDP的校验和是把首部和数据部分一起校验。
- 发送方，首先是把全零放入校验和字段并且添加伪首部，然后把UDP数据报看成是由许多16位的子串连接起来，若UDP数据报的数据部分不是偶数个字节，则要在数据部分末尾增加一个全零字节（此字节不发送），接下来就按照二进制反码计算出这些16位字的和。将此和的二进制反码写入校验和字段。在接收方，把收到得UDP数据报加上伪首部（如果不为偶数个字节，还需要补上全零字节）后，按二进制反码计算出这些16位字的和。当无差错时其结果全为1,。否则就表明有差错出现，接收方应该丢弃这个UDP数据报。
-下图是计算UDP校验和的例子：
- 注意：
- 校验时，若UDP数据报部分的长度不是偶数个字节，则需要填入一个全0字节，但是次字节和伪首部一样，是不发送的。 如果UDP校验和校验出UDP数据报是错误的，可以丢弃，也可以交付上层，但是要附上错误报告，告诉上层这是错误的数据报。 通过伪首部，不仅可以检查源端口号，目的端口号和UDP用户数据报的数据部分，还可以检查IP数据报的源IP地址和目的地址。 这种差错检验的检错能力不强，但是简单，速度快。  ">
+<title>概念术语 | infilos.com</title><meta property="og:title" content="概念术语">
+<meta property="og:description" content="主机 计算机网络上任何一种能够连接网络的设备都被称为主机或者说端系统，比如手机、平板电脑、电视、游戏机、汽车等，随着 5G 的到来，将会有越来越多的终端设备接入网络。
+通信链路 通信链路是由物理链路（同轴电缆、双绞线、光纤等）连接到一起组成的一种物理通路。
+传输速率 单位是 bit/s 或者 bps ，用来度量不同链路从一个端系统到另一个端系统传输数据的速率。
+分组 当一台端系统向另外一台端系统发送数据时，通常会将数据进行分片，然后为每段加上首部字节，从而形成计算机网络的专业术语：分组。这些分组通过网络发送到端系统，然后再进行数据处理。
+路由器 它和链路层交换机一样，都是一种交换机，主要用于转发数据的目的。
+路径 一个分组所经历一系列通信链路和分组交换机称为通过这个网络的路径。
+因特网服务商 也叫 ISP，不是 lsp。这个好理解，就是网络运营商，移动、电信、联通。
+网络协议 网络协议是计算机网络中进行数据交换而建立的规则、标准或者约定。
+IP 网际协议，它规定了路由器和端系统之间发送和接收的分组格式。
+TCP/IP 协议簇 不仅仅只有 TCP 协议和 IP 协议，而是以 TCP、IP 协议为主的一系列协议，比如 ICMP 协议、ARP 协议、UDP 协议、DNS 协议、SMTP 协议等。
+分布式应用程序 多个端系统之间相互交换数据的端系统被称为分布式应用程序。
+套接字接口 指的就是 socket 接口，这个接口规定了端系统之间通过因特网进行数据交换的方式。
+协议 协议定义了两个以上通信实体之间交换报文格式和顺序所遵从的标准。
+客户端 在客户-服务器架构中扮演请求方的角色，通常是 PC，智能手机等端系统。
+服务器 在客户-服务器架构中扮演服务方的角色，通常是大型服务器集群扮演服务器的角色。
+转发表 路由内部记录报文路径的映射关系的一种记录。
+时延 时延指的是一个报文或者分组从网络的一端传递到另一端所需要的时间，时延分类有发送时延、传播时延、处理时延、排队时延，总时延 = 发送时延+传播时延+处理时延+排队时延。
+丢包 在计算机网络中指的是分组出现丢失的现象。
+吞吐量 吞吐量在计算机网络中指的是单位时间内成功传输数据的数量。
+报文 通常指的是应用层的分组。
+报文段 通常把运输层的分组称为报文段。
+数据报 通常将网络层的分组称为数据报。">
 <meta property="og:type" content="article">
-<meta property="og:url" content="/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/ch04-udp%E5%8D%8F%E8%AE%AE/"><meta property="article:section" content="基础知识">
+<meta property="og:url" content="/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/ch09-%E6%A6%82%E5%BF%B5%E6%9C%AF%E8%AF%AD/"><meta property="article:section" content="基础知识">
 <meta property="og:site_name" content="infilos.com">
-<meta itemprop=name content="UDP 协议">
-<meta itemprop=description content="概览 UDP(User Datagram Protocol)即用户数据报协议，在网络中它与TCP协议一样用于处理数据包，是一种无连接的协议。在OSI模型中，在第四层——传输层，处于IP协议的上一层。
-UDP用来支持那些需要在计算机之间传输数据的网络应用。包括网络视频会议系统在内的众多的客户/服务器模式的网络应用都需要使用UDP协议。UDP协议从问世至今已经被使用了很多年，虽然其最初的光彩已经被一些类似协议所掩盖，但是即使是在今天UDP仍然不失为一项非常实用和可行的网络传输层协议。UDP报文没有可靠性保证、顺序保证和流量控制字段等，可靠性较差。但是正因为UDP协议的控制选项较少，在数据传输过程中延迟小、数据传输效率高，适合对可靠性要求不高的应用程序，或者可以保障可靠性的应用程序，如DNS、TFTP、SNMP等。
-特点 UDP提供不可靠服务，但具有TCP所没有的优势：
- UDP无连接，时间上不存在建立连接需要的时延。空间上，TCP需要在端系统中维护连接状态，需要一定的开销。此连接装入包括接收和发送缓存，拥塞控制参数和序号与确认号的参数。UDP不维护连接状态，也不跟踪这些参数，开销小。空间和时间上都具有优势。 举个例子：  DNS如果运行在TCP之上而不是UDP，那么DNS的速度将会慢很多。 HTTP使用TCP而不是UDP，是因为对于基于文本数据的Web网页来说，可靠性很重要。 同一种专用应用服务器在支持UDP时，一定能支持更多的活动客户机。   分组首部开销小，TCP首部20字节，UDP首部8字节。 UDP没有拥塞控制，应用层能够更好的控制要发送的数据和发送时间，网络中的拥塞控制也不会影响主机的发送速率。某些实时应用要求以稳定的速度发送，能容 忍一些数据的丢失，但是不能允许有较大的时延（比如实时视频，直播等） UDP提供尽最大努力的交付，不保证可靠交付。所有维护传输可靠性的工作需要用户在应用层来完成。没有TCP的确认机制、重传机制。如果因为网络原因没有传送到对端，UDP也不会给应用层返回错误信息 UDP是面向报文的，对应用层交下来的报文，添加首部后直接乡下交付为IP层，既不合并，也不拆分，保留这些报文的边界。对IP层交上来UDP用户数据报，在去除首部后就原封不动地交付给上层应用进程，报文不可分割，是UDP数据报处理的最小单位。 正是因为这样，UDP显得不够灵活，不能控制读写数据的次数和数量。比如我们要发送100个字节的报文，我们调用一次sendto函数就会发送100字节，对端也需要用recvfrom函数一次性接收100字节，不能使用循环每次获取10个字节，获取十次这样的做法。 UDP常用一次性传输比较少量数据的网络应用，如DNS,SNMP等，因为对于这些应用，若是采用TCP，为连接的创建，维护和拆除带来不小的开销。UDP也常用于多媒体应用（如IP电话，实时视频会议，流媒体等）数据的可靠传输对他们而言并不重要，TCP的拥塞控制会使他们有较大的延迟，也是不可容忍的 UDP 支持一对一、一对多、多对一和多对多的交互通信。  还要注意的是：
- IP 数据报要经过互连网中许多路由器的存储转发；UDP 用户数据报是在运输层的端到端抽象的逻辑信道中传送的。  UDP 对应用层交下来的报文，既不合并，也不拆分，而是保留这些报文的边界。应用层交给 UDP 多长的报文，UDP 就照样发送，即一次发送一个报文。
- 首部格式 在计算检验和时，临时把“伪首部”和 UDP 用户数据报连接在一起。伪首部仅仅是为了计算检验和。
-  源端口: 占16位、源端口号。在需要对方回信时选用。不需要时可用全0。 目的端口: 占16位、目的端口号。这在终点交付报文时必须使用。 长度: 占16位、UDP用户数据报的长度,其最小值是8(仅有首部)。 检验和: 占16位、检测UDP用户数据报在传输中是否有错。有错就丢弃。  请注意，虽然在 UDP 之间的通信要用到其端口号，但由于 UDP 的通信是无连接的，因此不需要使用套接字。
-校验  UDP校验和的计算方法和IP数据报首部校验和的计算方法相似，都使用二进制反码运算求和再取反，但不同的是：IP数据报的校验和之检验IP数据报和首部，但UDP的校验和是把首部和数据部分一起校验。
- 发送方，首先是把全零放入校验和字段并且添加伪首部，然后把UDP数据报看成是由许多16位的子串连接起来，若UDP数据报的数据部分不是偶数个字节，则要在数据部分末尾增加一个全零字节（此字节不发送），接下来就按照二进制反码计算出这些16位字的和。将此和的二进制反码写入校验和字段。在接收方，把收到得UDP数据报加上伪首部（如果不为偶数个字节，还需要补上全零字节）后，按二进制反码计算出这些16位字的和。当无差错时其结果全为1,。否则就表明有差错出现，接收方应该丢弃这个UDP数据报。
-下图是计算UDP校验和的例子：
- 注意：
- 校验时，若UDP数据报部分的长度不是偶数个字节，则需要填入一个全0字节，但是次字节和伪首部一样，是不发送的。 如果UDP校验和校验出UDP数据报是错误的，可以丢弃，也可以交付上层，但是要附上错误报告，告诉上层这是错误的数据报。 通过伪首部，不仅可以检查源端口号，目的端口号和UDP用户数据报的数据部分，还可以检查IP数据报的源IP地址和目的地址。 这种差错检验的检错能力不强，但是简单，速度快。  ">
-<meta itemprop=wordCount content="56">
+<meta itemprop=name content="概念术语">
+<meta itemprop=description content="主机 计算机网络上任何一种能够连接网络的设备都被称为主机或者说端系统，比如手机、平板电脑、电视、游戏机、汽车等，随着 5G 的到来，将会有越来越多的终端设备接入网络。
+通信链路 通信链路是由物理链路（同轴电缆、双绞线、光纤等）连接到一起组成的一种物理通路。
+传输速率 单位是 bit/s 或者 bps ，用来度量不同链路从一个端系统到另一个端系统传输数据的速率。
+分组 当一台端系统向另外一台端系统发送数据时，通常会将数据进行分片，然后为每段加上首部字节，从而形成计算机网络的专业术语：分组。这些分组通过网络发送到端系统，然后再进行数据处理。
+路由器 它和链路层交换机一样，都是一种交换机，主要用于转发数据的目的。
+路径 一个分组所经历一系列通信链路和分组交换机称为通过这个网络的路径。
+因特网服务商 也叫 ISP，不是 lsp。这个好理解，就是网络运营商，移动、电信、联通。
+网络协议 网络协议是计算机网络中进行数据交换而建立的规则、标准或者约定。
+IP 网际协议，它规定了路由器和端系统之间发送和接收的分组格式。
+TCP/IP 协议簇 不仅仅只有 TCP 协议和 IP 协议，而是以 TCP、IP 协议为主的一系列协议，比如 ICMP 协议、ARP 协议、UDP 协议、DNS 协议、SMTP 协议等。
+分布式应用程序 多个端系统之间相互交换数据的端系统被称为分布式应用程序。
+套接字接口 指的就是 socket 接口，这个接口规定了端系统之间通过因特网进行数据交换的方式。
+协议 协议定义了两个以上通信实体之间交换报文格式和顺序所遵从的标准。
+客户端 在客户-服务器架构中扮演请求方的角色，通常是 PC，智能手机等端系统。
+服务器 在客户-服务器架构中扮演服务方的角色，通常是大型服务器集群扮演服务器的角色。
+转发表 路由内部记录报文路径的映射关系的一种记录。
+时延 时延指的是一个报文或者分组从网络的一端传递到另一端所需要的时间，时延分类有发送时延、传播时延、处理时延、排队时延，总时延 = 发送时延+传播时延+处理时延+排队时延。
+丢包 在计算机网络中指的是分组出现丢失的现象。
+吞吐量 吞吐量在计算机网络中指的是单位时间内成功传输数据的数量。
+报文 通常指的是应用层的分组。
+报文段 通常把运输层的分组称为报文段。
+数据报 通常将网络层的分组称为数据报。">
+<meta itemprop=wordCount content="455">
 <meta itemprop=keywords content><meta name=twitter:card content="summary">
-<meta name=twitter:title content="UDP 协议">
-<meta name=twitter:description content="概览 UDP(User Datagram Protocol)即用户数据报协议，在网络中它与TCP协议一样用于处理数据包，是一种无连接的协议。在OSI模型中，在第四层——传输层，处于IP协议的上一层。
-UDP用来支持那些需要在计算机之间传输数据的网络应用。包括网络视频会议系统在内的众多的客户/服务器模式的网络应用都需要使用UDP协议。UDP协议从问世至今已经被使用了很多年，虽然其最初的光彩已经被一些类似协议所掩盖，但是即使是在今天UDP仍然不失为一项非常实用和可行的网络传输层协议。UDP报文没有可靠性保证、顺序保证和流量控制字段等，可靠性较差。但是正因为UDP协议的控制选项较少，在数据传输过程中延迟小、数据传输效率高，适合对可靠性要求不高的应用程序，或者可以保障可靠性的应用程序，如DNS、TFTP、SNMP等。
-特点 UDP提供不可靠服务，但具有TCP所没有的优势：
- UDP无连接，时间上不存在建立连接需要的时延。空间上，TCP需要在端系统中维护连接状态，需要一定的开销。此连接装入包括接收和发送缓存，拥塞控制参数和序号与确认号的参数。UDP不维护连接状态，也不跟踪这些参数，开销小。空间和时间上都具有优势。 举个例子：  DNS如果运行在TCP之上而不是UDP，那么DNS的速度将会慢很多。 HTTP使用TCP而不是UDP，是因为对于基于文本数据的Web网页来说，可靠性很重要。 同一种专用应用服务器在支持UDP时，一定能支持更多的活动客户机。   分组首部开销小，TCP首部20字节，UDP首部8字节。 UDP没有拥塞控制，应用层能够更好的控制要发送的数据和发送时间，网络中的拥塞控制也不会影响主机的发送速率。某些实时应用要求以稳定的速度发送，能容 忍一些数据的丢失，但是不能允许有较大的时延（比如实时视频，直播等） UDP提供尽最大努力的交付，不保证可靠交付。所有维护传输可靠性的工作需要用户在应用层来完成。没有TCP的确认机制、重传机制。如果因为网络原因没有传送到对端，UDP也不会给应用层返回错误信息 UDP是面向报文的，对应用层交下来的报文，添加首部后直接乡下交付为IP层，既不合并，也不拆分，保留这些报文的边界。对IP层交上来UDP用户数据报，在去除首部后就原封不动地交付给上层应用进程，报文不可分割，是UDP数据报处理的最小单位。 正是因为这样，UDP显得不够灵活，不能控制读写数据的次数和数量。比如我们要发送100个字节的报文，我们调用一次sendto函数就会发送100字节，对端也需要用recvfrom函数一次性接收100字节，不能使用循环每次获取10个字节，获取十次这样的做法。 UDP常用一次性传输比较少量数据的网络应用，如DNS,SNMP等，因为对于这些应用，若是采用TCP，为连接的创建，维护和拆除带来不小的开销。UDP也常用于多媒体应用（如IP电话，实时视频会议，流媒体等）数据的可靠传输对他们而言并不重要，TCP的拥塞控制会使他们有较大的延迟，也是不可容忍的 UDP 支持一对一、一对多、多对一和多对多的交互通信。  还要注意的是：
- IP 数据报要经过互连网中许多路由器的存储转发；UDP 用户数据报是在运输层的端到端抽象的逻辑信道中传送的。  UDP 对应用层交下来的报文，既不合并，也不拆分，而是保留这些报文的边界。应用层交给 UDP 多长的报文，UDP 就照样发送，即一次发送一个报文。
- 首部格式 在计算检验和时，临时把“伪首部”和 UDP 用户数据报连接在一起。伪首部仅仅是为了计算检验和。
-  源端口: 占16位、源端口号。在需要对方回信时选用。不需要时可用全0。 目的端口: 占16位、目的端口号。这在终点交付报文时必须使用。 长度: 占16位、UDP用户数据报的长度,其最小值是8(仅有首部)。 检验和: 占16位、检测UDP用户数据报在传输中是否有错。有错就丢弃。  请注意，虽然在 UDP 之间的通信要用到其端口号，但由于 UDP 的通信是无连接的，因此不需要使用套接字。
-校验  UDP校验和的计算方法和IP数据报首部校验和的计算方法相似，都使用二进制反码运算求和再取反，但不同的是：IP数据报的校验和之检验IP数据报和首部，但UDP的校验和是把首部和数据部分一起校验。
- 发送方，首先是把全零放入校验和字段并且添加伪首部，然后把UDP数据报看成是由许多16位的子串连接起来，若UDP数据报的数据部分不是偶数个字节，则要在数据部分末尾增加一个全零字节（此字节不发送），接下来就按照二进制反码计算出这些16位字的和。将此和的二进制反码写入校验和字段。在接收方，把收到得UDP数据报加上伪首部（如果不为偶数个字节，还需要补上全零字节）后，按二进制反码计算出这些16位字的和。当无差错时其结果全为1,。否则就表明有差错出现，接收方应该丢弃这个UDP数据报。
-下图是计算UDP校验和的例子：
- 注意：
- 校验时，若UDP数据报部分的长度不是偶数个字节，则需要填入一个全0字节，但是次字节和伪首部一样，是不发送的。 如果UDP校验和校验出UDP数据报是错误的，可以丢弃，也可以交付上层，但是要附上错误报告，告诉上层这是错误的数据报。 通过伪首部，不仅可以检查源端口号，目的端口号和UDP用户数据报的数据部分，还可以检查IP数据报的源IP地址和目的地址。 这种差错检验的检错能力不强，但是简单，速度快。  ">
+<meta name=twitter:title content="概念术语">
+<meta name=twitter:description content="主机 计算机网络上任何一种能够连接网络的设备都被称为主机或者说端系统，比如手机、平板电脑、电视、游戏机、汽车等，随着 5G 的到来，将会有越来越多的终端设备接入网络。
+通信链路 通信链路是由物理链路（同轴电缆、双绞线、光纤等）连接到一起组成的一种物理通路。
+传输速率 单位是 bit/s 或者 bps ，用来度量不同链路从一个端系统到另一个端系统传输数据的速率。
+分组 当一台端系统向另外一台端系统发送数据时，通常会将数据进行分片，然后为每段加上首部字节，从而形成计算机网络的专业术语：分组。这些分组通过网络发送到端系统，然后再进行数据处理。
+路由器 它和链路层交换机一样，都是一种交换机，主要用于转发数据的目的。
+路径 一个分组所经历一系列通信链路和分组交换机称为通过这个网络的路径。
+因特网服务商 也叫 ISP，不是 lsp。这个好理解，就是网络运营商，移动、电信、联通。
+网络协议 网络协议是计算机网络中进行数据交换而建立的规则、标准或者约定。
+IP 网际协议，它规定了路由器和端系统之间发送和接收的分组格式。
+TCP/IP 协议簇 不仅仅只有 TCP 协议和 IP 协议，而是以 TCP、IP 协议为主的一系列协议，比如 ICMP 协议、ARP 协议、UDP 协议、DNS 协议、SMTP 协议等。
+分布式应用程序 多个端系统之间相互交换数据的端系统被称为分布式应用程序。
+套接字接口 指的就是 socket 接口，这个接口规定了端系统之间通过因特网进行数据交换的方式。
+协议 协议定义了两个以上通信实体之间交换报文格式和顺序所遵从的标准。
+客户端 在客户-服务器架构中扮演请求方的角色，通常是 PC，智能手机等端系统。
+服务器 在客户-服务器架构中扮演服务方的角色，通常是大型服务器集群扮演服务器的角色。
+转发表 路由内部记录报文路径的映射关系的一种记录。
+时延 时延指的是一个报文或者分组从网络的一端传递到另一端所需要的时间，时延分类有发送时延、传播时延、处理时延、排队时延，总时延 = 发送时延+传播时延+处理时延+排队时延。
+丢包 在计算机网络中指的是分组出现丢失的现象。
+吞吐量 吞吐量在计算机网络中指的是单位时间内成功传输数据的数量。
+报文 通常指的是应用层的分组。
+报文段 通常把运输层的分组称为报文段。
+数据报 通常将网络层的分组称为数据报。">
 <script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga('create','UA-123062585-1','auto'),ga('send','pageview'))</script>
 <script async src=https://www.google-analytics.com/analytics.js></script>
 <link rel=preload href=/scss/main.min.847464b684a6e89d7276700a5c500c17ab494dd1755b2654a7b27d8b59e3347e.css as=style>
@@ -268,8 +298,8 @@ UDP用来支持那些需要在计算机之间传输数据的网络应用。包�
 <a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/ch02-ip%E5%8D%8F%E8%AE%AE/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch02-ipe58d8fe8aeae><span>IP 协议</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch03-tcpe58d8fe8aeae-li>
 <a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/ch03-tcp%E5%8D%8F%E8%AE%AE/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch03-tcpe58d8fe8aeae><span>TCP 协议</span></a>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child active-path" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch04-udpe58d8fe8aeae-li>
-<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/ch04-udp%E5%8D%8F%E8%AE%AE/ class="align-left pl-0 active td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch04-udpe58d8fe8aeae><span class=td-sidebar-nav-active-item>UDP 协议</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch04-udpe58d8fe8aeae-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/ch04-udp%E5%8D%8F%E8%AE%AE/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch04-udpe58d8fe8aeae><span>UDP 协议</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch05-httpe58d8fe8aeae-li>
 <a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/ch05-http%E5%8D%8F%E8%AE%AE/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch05-httpe58d8fe8aeae><span>HTTP 协议</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch06-websocket-li>
@@ -278,8 +308,8 @@ UDP用来支持那些需要在计算机之间传输数据的网络应用。包�
 <a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/ch07-dns%E6%9C%8D%E5%8A%A1/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch07-dnse69c8de58aa1><span>DNS 服务</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch08-e6b58fe8a788e599a8e8bf87e7a88b-li>
 <a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/ch08-%E6%B5%8F%E8%A7%88%E5%99%A8%E8%BF%87%E7%A8%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch08-e6b58fe8a788e599a8e8bf87e7a88b><span>浏览器过程</span></a>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch09-e6a682e5bfb5e69cafe8afad-li>
-<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/ch09-%E6%A6%82%E5%BF%B5%E6%9C%AF%E8%AF%AD/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch09-e6a682e5bfb5e69cafe8afad><span>概念术语</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child active-path" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch09-e6a682e5bfb5e69cafe8afad-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/ch09-%E6%A6%82%E5%BF%B5%E6%9C%AF%E8%AF%AD/ class="align-left pl-0 active td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch09-e6a682e5bfb5e69cafe8afad><span class=td-sidebar-nav-active-item>概念术语</span></a>
 </li>
 </ul>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e59fbae7a180e79fa5e8af86tcp-ip-li>
@@ -323,20 +353,101 @@ UDP用来支持那些需要在计算机之间传输数据的网络应用。包�
 </aside>
 <aside class="d-none d-xl-block col-xl-2 td-sidebar-toc d-print-none">
 <div class="td-page-meta ml-2 pb-1 pt-2 mb-0">
-<a href=https://github.com/infilos/infilos.com/edit/master/content/zh/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/%e7%bd%91%e7%bb%9c%e5%9f%ba%e7%a1%80/CH04-UDP%e5%8d%8f%e8%ae%ae.md target=_blank><i class="fa fa-edit fa-fw"></i> 编辑此页</a>
-<a href="https://github.com/infilos/infilos.com/new/master/content/zh/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/%e7%bd%91%e7%bb%9c%e5%9f%ba%e7%a1%80/CH04-UDP%e5%8d%8f%e8%ae%ae.md?filename=change-me.md&value=---%0Atitle%3A+%22Long+Page+Title%22%0AlinkTitle%3A+%22Short+Nav+Title%22%0Aweight%3A+100%0Adescription%3A+%3E-%0A+++++Page+description+for+heading+and+indexes.%0A---%0A%0A%23%23+Heading%0A%0AEdit+this+template+to+create+your+new+page.%0A%0A%2A+Give+it+a+good+name%2C+ending+in+%60.md%60+-+e.g.+%60getting-started.md%60%0A%2A+Edit+the+%22front+matter%22+section+at+the+top+of+the+page+%28weight+controls+how+its+ordered+amongst+other+pages+in+the+same+directory%3B+lowest+number+first%29.%0A%2A+Add+a+good+commit+message+at+the+bottom+of+the+page+%28%3C80+characters%3B+use+the+extended+description+field+for+more+detail%29.%0A%2A+Create+a+new+branch+so+you+can+preview+your+new+file+and+request+a+review+via+Pull+Request.%0A" target=_blank><i class="fa fa-edit fa-fw"></i> 添加子页面</a>
-<a href="https://github.com/infilos/infilos.com/issues/new?title=UDP%20%e5%8d%8f%e8%ae%ae" target=_blank><i class="fab fa-github fa-fw"></i> 提交文档问题</a>
+<a href=https://github.com/infilos/infilos.com/edit/master/content/zh/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/%e7%bd%91%e7%bb%9c%e5%9f%ba%e7%a1%80/CH09-%e6%a6%82%e5%bf%b5%e6%9c%af%e8%af%ad.md target=_blank><i class="fa fa-edit fa-fw"></i> 编辑此页</a>
+<a href="https://github.com/infilos/infilos.com/new/master/content/zh/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/%e7%bd%91%e7%bb%9c%e5%9f%ba%e7%a1%80/CH09-%e6%a6%82%e5%bf%b5%e6%9c%af%e8%af%ad.md?filename=change-me.md&value=---%0Atitle%3A+%22Long+Page+Title%22%0AlinkTitle%3A+%22Short+Nav+Title%22%0Aweight%3A+100%0Adescription%3A+%3E-%0A+++++Page+description+for+heading+and+indexes.%0A---%0A%0A%23%23+Heading%0A%0AEdit+this+template+to+create+your+new+page.%0A%0A%2A+Give+it+a+good+name%2C+ending+in+%60.md%60+-+e.g.+%60getting-started.md%60%0A%2A+Edit+the+%22front+matter%22+section+at+the+top+of+the+page+%28weight+controls+how+its+ordered+amongst+other+pages+in+the+same+directory%3B+lowest+number+first%29.%0A%2A+Add+a+good+commit+message+at+the+bottom+of+the+page+%28%3C80+characters%3B+use+the+extended+description+field+for+more+detail%29.%0A%2A+Create+a+new+branch+so+you+can+preview+your+new+file+and+request+a+review+via+Pull+Request.%0A" target=_blank><i class="fa fa-edit fa-fw"></i> 添加子页面</a>
+<a href="https://github.com/infilos/infilos.com/issues/new?title=%e6%a6%82%e5%bf%b5%e6%9c%af%e8%af%ad" target=_blank><i class="fab fa-github fa-fw"></i> 提交文档问题</a>
 <a id=print href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/_print/><i class="fa fa-print fa-fw"></i> 整节打印</a>
 </div>
 <div class=td-toc><nav id=TableOfContents>
 <ul>
-<li><a href=#概览>概览</a></li>
-<li><a href=#特点>特点</a></li>
-<li><a href=#首部格式>首部格式</a>
-<ul>
-<li><a href=#校验>校验</a></li>
-</ul>
-</li>
+<li><a href=#主机>主机</a></li>
+<li><a href=#通信链路>通信链路</a></li>
+<li><a href=#传输速率>传输速率</a></li>
+<li><a href=#分组>分组</a></li>
+<li><a href=#路由器>路由器</a></li>
+<li><a href=#路径>路径</a></li>
+<li><a href=#因特网服务商>因特网服务商</a></li>
+<li><a href=#网络协议>网络协议</a></li>
+<li><a href=#ip>IP</a></li>
+<li><a href=#tcpip-协议簇>TCP/IP 协议簇</a></li>
+<li><a href=#分布式应用程序>分布式应用程序</a></li>
+<li><a href=#套接字接口>套接字接口</a></li>
+<li><a href=#协议>协议</a></li>
+<li><a href=#客户端>客户端</a></li>
+<li><a href=#服务器>服务器</a></li>
+<li><a href=#转发表>转发表</a></li>
+<li><a href=#时延>时延</a></li>
+<li><a href=#丢包>丢包</a></li>
+<li><a href=#吞吐量>吞吐量</a></li>
+<li><a href=#报文>报文</a></li>
+<li><a href=#报文段>报文段</a></li>
+<li><a href=#数据报>数据报</a></li>
+<li><a href=#帧>帧</a></li>
+<li><a href=#客户-服务体系>客户-服务体系</a></li>
+<li><a href=#cidr>CIDR</a></li>
+<li><a href=#-ip-地址>## IP 地址</a></li>
+<li><a href=#端口号>端口号</a></li>
+<li><a href=#uri>URI</a></li>
+<li><a href=#url>URL</a></li>
+<li><a href=#html>HTML</a></li>
+<li><a href=#web-页面>Web 页面</a></li>
+<li><a href=#web-服务器>Web 服务器</a></li>
+<li><a href=#cdn>CDN</a></li>
+<li><a href=#waf>WAF</a></li>
+<li><a href=#webservice>WebService</a></li>
+<li><a href=#http>HTTP</a></li>
+<li><a href=#session>Session</a></li>
+<li><a href=#cookie>Cookie</a></li>
+<li><a href=#smtp-协议>SMTP 协议</a></li>
+<li><a href=#dns-协议>DNS 协议</a></li>
+<li><a href=#telnet-协议>TELNET 协议</a></li>
+<li><a href=#ssh-协议>SSH 协议</a></li>
+<li><a href=#ftp-协议>FTP 协议</a></li>
+<li><a href=#mime-类型>MIME 类型</a></li>
+<li><a href=#多路分解>多路分解</a></li>
+<li><a href=#多路复用>多路复用</a></li>
+<li><a href=#周知端口号>周知端口号</a></li>
+<li><a href=#单向数据传输>单向数据传输</a></li>
+<li><a href=#双向数据传输>双向数据传输</a></li>
+<li><a href=#面向连接的>面向连接的</a></li>
+<li><a href=#三次握手>三次握手</a></li>
+<li><a href=#最大报文段长度>最大报文段长度</a></li>
+<li><a href=#最大传输单元>最大传输单元</a></li>
+<li><a href=#冗余-ack>冗余 ACK</a></li>
+<li><a href=#快速重传>快速重传</a></li>
+<li><a href=#选择确认>选择确认</a></li>
+<li><a href=#拥塞控制>拥塞控制</a></li>
+<li><a href=#四次挥手>四次挥手</a></li>
+<li><a href=#路由选择算法>路由选择算法</a></li>
+<li><a href=#转发>转发</a></li>
+<li><a href=#分组调度>分组调度</a></li>
+<li><a href=#ipv4>IPv4</a></li>
+<li><a href=#ipv6>IPv6</a></li>
+<li><a href=#接口>接口</a></li>
+<li><a href=#arp-协议>ARP 协议</a></li>
+<li><a href=#rarp>RARP</a></li>
+<li><a href=#代理-arp>代理 ARP</a></li>
+<li><a href=#icmp-协议>ICMP 协议</a></li>
+<li><a href=#dhcp-协议>DHCP 协议</a></li>
+<li><a href=#nat-协议>NAT 协议</a></li>
+<li><a href=#ip-隧道>IP 隧道</a></li>
+<li><a href=#单播>单播</a></li>
+<li><a href=#广播>广播</a></li>
+<li><a href=#多播>多播</a></li>
+<li><a href=#任播>任播</a></li>
+<li><a href=#igp>IGP</a></li>
+<li><a href=#egp>EGP</a></li>
+<li><a href=#rip>RIP</a></li>
+<li><a href=#ospf>OSPF</a></li>
+<li><a href=#mpls>MPLS</a></li>
+<li><a href=#节点>节点</a></li>
+<li><a href=#链路>链路</a></li>
+<li><a href=#mac-协议>MAC 协议</a></li>
+<li><a href=#奇偶校验位>奇偶校验位</a></li>
+<li><a href=#向前纠错>向前纠错</a></li>
+<li><a href=#以太网>以太网</a></li>
+<li><a href=#vlan>VLAN</a></li>
+<li><a href=#基站>基站</a></li>
 </ul>
 </nav></div>
 </aside>
@@ -350,63 +461,192 @@ UDP用来支持那些需要在计算机之间传输数据的网络应用。包�
 <a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/>网络基础</a>
 </li>
 <li class="breadcrumb-item active" aria-current=page>
-<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/ch04-udp%E5%8D%8F%E8%AE%AE/>UDP 协议</a>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/ch09-%E6%A6%82%E5%BF%B5%E6%9C%AF%E8%AF%AD/>概念术语</a>
 </li>
 </ol>
 </nav>
 <div class=td-content>
-<h1>UDP 协议</h1>
+<h1>概念术语</h1>
 <header class=article-meta>
 </header>
-<h2 id=概览>概览</h2>
-<p>UDP(User Datagram Protocol)即用户数据报协议，在网络中它与TCP协议一样用于处理数据包，是一种无连接的协议。在OSI模型中，在第四层——传输层，处于IP协议的上一层。</p>
-<p>UDP用来支持那些需要在计算机之间传输数据的网络应用。包括网络视频会议系统在内的众多的客户/服务器模式的网络应用都需要使用UDP协议。UDP协议从问世至今已经被使用了很多年，虽然其最初的光彩已经被一些类似协议所掩盖，但是即使是在今天UDP仍然不失为一项非常实用和可行的网络传输层协议。UDP报文没有可靠性保证、顺序保证和流量控制字段等，可靠性较差。但是正因为UDP协议的控制选项较少，在数据传输过程中延迟小、数据传输效率高，适合对可靠性要求不高的应用程序，或者可以保障可靠性的应用程序，如DNS、TFTP、SNMP等。</p>
-<h2 id=特点>特点</h2>
-<p>UDP提供不可靠服务，但具有TCP所没有的优势：</p>
-<ul>
-<li><strong>UDP无连接</strong>，时间上不存在建立连接需要的时延。空间上，TCP需要在端系统中维护连接状态，需要一定的开销。此连接装入包括接收和发送缓存，拥塞控制参数和序号与确认号的参数。UDP不维护连接状态，也不跟踪这些参数，开销小。空间和时间上都具有优势。 举个例子：
-<ul>
-<li>DNS如果运行在TCP之上而不是UDP，那么DNS的速度将会慢很多。</li>
-<li>HTTP使用TCP而不是UDP，是因为对于基于文本数据的Web网页来说，可靠性很重要。</li>
-<li>同一种专用应用服务器在支持UDP时，一定能支持更多的活动客户机。</li>
-</ul>
-</li>
-<li><strong>分组首部开销小</strong>，TCP首部20字节，UDP首部8字节。</li>
-<li><strong>UDP没有拥塞控制</strong>，应用层能够更好的控制要发送的数据和发送时间，网络中的拥塞控制也不会影响主机的发送速率。某些实时应用要求以稳定的速度发送，能容 忍一些数据的丢失，但是不能允许有较大的时延（比如实时视频，直播等）</li>
-<li><strong>UDP提供尽最大努力的交付，不保证可靠交付</strong>。所有维护传输可靠性的工作需要用户在应用层来完成。没有TCP的确认机制、重传机制。如果因为网络原因没有传送到对端，UDP也不会给应用层返回错误信息</li>
-<li><strong>UDP是面向报文的</strong>，对应用层交下来的报文，添加首部后直接乡下交付为IP层，既不合并，也不拆分，保留这些报文的边界。对IP层交上来UDP用户数据报，在去除首部后就原封不动地交付给上层应用进程，报文不可分割，是UDP数据报处理的最小单位。 正是因为这样，UDP显得不够灵活，不能控制读写数据的次数和数量。比如我们要发送100个字节的报文，我们调用一次sendto函数就会发送100字节，对端也需要用recvfrom函数一次性接收100字节，不能使用循环每次获取10个字节，获取十次这样的做法。</li>
-<li><strong>UDP常用一次性传输比较少量数据的网络应用</strong>，如DNS,SNMP等，因为对于这些应用，若是采用TCP，为连接的创建，维护和拆除带来不小的开销。UDP也常用于多媒体应用（如IP电话，实时视频会议，流媒体等）数据的可靠传输对他们而言并不重要，TCP的拥塞控制会使他们有较大的延迟，也是不可容忍的</li>
-<li><strong>UDP 支持一对一、一对多、多对一和多对多的交互通信</strong>。</li>
-</ul>
-<p>还要注意的是：</p>
-<ul>
-<li>IP 数据报要经过互连网中许多路由器的存储转发；UDP 用户数据报是在<strong>运输层的端到端抽象的逻辑信道中传送</strong>的。</li>
-</ul>
-<p><strong>UDP 对应用层交下来的报文，既不合并，也不拆分，而是保留这些报文的边界。应用层交给 UDP 多长的报文，UDP 就照样发送，即一次发送一个报文</strong>。</p>
-<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20210502155133.png style=display:block;width:50% alt=NAME align=center> </div>
-<h2 id=首部格式>首部格式</h2>
-<p>在计算检验和时，<strong>临时把“伪首部”和 UDP 用户数据报连接在一起。伪首部仅仅是为了计算检验和。</strong></p>
-<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20210502155153.png style=display:block;width:50% alt=NAME align=center> </div>
-<ul>
-<li><strong>源端口</strong>: 占16位、源端口号。在需要对方回信时选用。不需要时可用全0。</li>
-<li><strong>目的端口</strong>: 占16位、目的端口号。这在终点交付报文时必须使用。</li>
-<li><strong>长度</strong>: 占16位、UDP用户数据报的长度,其最小值是8(仅有首部)。</li>
-<li><strong>检验和</strong>: 占16位、检测UDP用户数据报在传输中是否有错。有错就丢弃。</li>
-</ul>
-<p>请注意，虽然在 UDP 之间的通信要用到其端口号，但由于 UDP 的通信是无连接的，因此不需要使用套接字。</p>
-<h3 id=校验>校验</h3>
-<blockquote>
-<p>UDP校验和的计算方法和IP数据报首部校验和的计算方法相似，都<strong>使用二进制反码运算求和再取反</strong>，但不同的是：<strong>IP数据报的校验和之检验IP数据报和首部，但UDP的校验和是把首部和数据部分一起校验</strong>。</p>
-</blockquote>
-<p>发送方，首先是把全零放入校验和字段并且添加伪首部，然后把UDP数据报看成是由许多16位的子串连接起来，若UDP数据报的数据部分不是偶数个字节，则要在数据部分末尾增加一个全零字节（此字节不发送），接下来就按照二进制反码计算出这些16位字的和。将此和的二进制反码写入校验和字段。在接收方，把收到得UDP数据报加上伪首部（如果不为偶数个字节，还需要补上全零字节）后，按二进制反码计算出这些16位字的和。当无差错时其结果全为1,。否则就表明有差错出现，接收方应该丢弃这个UDP数据报。</p>
-<p>下图是计算UDP校验和的例子：</p>
-<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20210502155231.png style=display:block;width:50% alt=NAME align=center> </div>
-<p>注意：</p>
-<ul>
-<li>校验时，若UDP数据报部分的长度不是偶数个字节，则需要填入一个全0字节，但是次字节和伪首部一样，是不发送的。</li>
-<li>如果UDP校验和校验出UDP数据报是错误的，可以丢弃，也可以交付上层，但是要附上错误报告，告诉上层这是错误的数据报。</li>
-<li>通过伪首部，不仅可以检查源端口号，目的端口号和UDP用户数据报的数据部分，还可以检查IP数据报的源IP地址和目的地址。 这种差错检验的检错能力不强，但是简单，速度快。</li>
-</ul>
+<h2 id=主机>主机</h2>
+<p>计算机网络上任何一种能够连接网络的设备都被称为主机或者说端系统，比如手机、平板电脑、电视、游戏机、汽车等，随着 5G 的到来，将会有越来越多的终端设备接入网络。</p>
+<h2 id=通信链路>通信链路</h2>
+<p>通信链路是由物理链路（同轴电缆、双绞线、光纤等）连接到一起组成的一种物理通路。</p>
+<h2 id=传输速率>传输速率</h2>
+<p>单位是 bit/s 或者 bps ，用来度量不同链路从一个端系统到另一个端系统传输数据的速率。</p>
+<h2 id=分组>分组</h2>
+<p>当一台端系统向另外一台端系统发送数据时，通常会将数据进行分片，然后为每段加上首部字节，从而形成计算机网络的专业术语：分组。这些分组通过网络发送到端系统，然后再进行数据处理。</p>
+<h2 id=路由器>路由器</h2>
+<p>它和链路层交换机一样，都是一种交换机，主要用于转发数据的目的。</p>
+<h2 id=路径>路径</h2>
+<p>一个分组所经历一系列通信链路和分组交换机称为通过这个网络的路径。</p>
+<h2 id=因特网服务商>因特网服务商</h2>
+<p>也叫 ISP，不是 lsp。这个好理解，就是网络运营商，移动、电信、联通。</p>
+<h2 id=网络协议>网络协议</h2>
+<p>网络协议是计算机网络中进行数据交换而建立的规则、标准或者约定。</p>
+<h2 id=ip>IP</h2>
+<p>网际协议，它规定了路由器和端系统之间发送和接收的分组格式。</p>
+<h2 id=tcpip-协议簇>TCP/IP 协议簇</h2>
+<p>不仅仅只有 TCP 协议和 IP 协议，而是以 TCP、IP 协议为主的一系列协议，比如 ICMP 协议、ARP 协议、UDP 协议、DNS 协议、SMTP 协议等。</p>
+<h2 id=分布式应用程序>分布式应用程序</h2>
+<p>多个端系统之间相互交换数据的端系统被称为分布式应用程序。</p>
+<h2 id=套接字接口>套接字接口</h2>
+<p>指的就是 socket 接口，这个接口规定了端系统之间通过因特网进行数据交换的方式。</p>
+<h2 id=协议>协议</h2>
+<p>协议定义了两个以上通信实体之间交换报文格式和顺序所遵从的标准。</p>
+<h2 id=客户端>客户端</h2>
+<p>在客户-服务器架构中扮演请求方的角色，通常是 PC，智能手机等端系统。</p>
+<h2 id=服务器>服务器</h2>
+<p>在客户-服务器架构中扮演服务方的角色，通常是大型服务器集群扮演服务器的角色。</p>
+<h2 id=转发表>转发表</h2>
+<p>路由内部记录报文路径的映射关系的一种记录。</p>
+<h2 id=时延>时延</h2>
+<p>时延指的是一个报文或者分组从网络的一端传递到另一端所需要的时间，时延分类有发送时延、传播时延、处理时延、排队时延，总时延 = 发送时延+传播时延+处理时延+排队时延。</p>
+<h2 id=丢包>丢包</h2>
+<p>在计算机网络中指的是分组出现丢失的现象。</p>
+<h2 id=吞吐量>吞吐量</h2>
+<p>吞吐量在计算机网络中指的是单位时间内成功传输数据的数量。</p>
+<h2 id=报文>报文</h2>
+<p>通常指的是应用层的分组。</p>
+<h2 id=报文段>报文段</h2>
+<p>通常把运输层的分组称为报文段。</p>
+<h2 id=数据报>数据报</h2>
+<p>通常将网络层的分组称为数据报。</p>
+<h2 id=帧>帧</h2>
+<p>一般把链路层的分组称为帧。</p>
+<h2 id=客户-服务体系>客户-服务体系</h2>
+<p>它是一种面向网络应用的体系结构。把系统中的不同端系统区分为客户和服务器两类，客户向服务器发出服务请求，由服务器完成所请求的服务，并把处理结果回送给客户。在客户-服务器体系结构中，有一个总是打开的主机称为 服务器(Server)，它提供来自于 客户(client) 的服务。我们最常见的服务器就是 Web 服务器，Web 服务器服务于来自 浏览器 的请求。</p>
+<h2 id=cidr>CIDR</h2>
+<p>使用任意长度分割 IP 地址的网络标识和主机标识</p>
+<p>P2P 体系
+对等体系结构，相当于没有服务器了，大家都是客户机，每个客户既能发送请求，也能对请求作出响应。</p>
+<h2 id=-ip-地址>## IP 地址</h2>
+<p>IP 地址就是网际协议地址，在互联网中唯一标识主机的一种地址。每一台入网的设备都会有一个 IP 地址，这个 IP 又分为内网 IP 和公网 IP。</p>
+<h2 id=端口号>端口号</h2>
+<p>在同一台主机内，端口号用于标识不同应用程序进程。</p>
+<h2 id=uri>URI</h2>
+<p>它的全称是（Uniform Resource Identifier），中文名称是统一资源标识符，使用它就能够唯一地标记互联网上资源。</p>
+<h2 id=url>URL</h2>
+<p>它的全称是（Uniform Resource Locator），中文名称是统一资源定位符，它实际上是 URI 的一个子集。</p>
+<h2 id=html>HTML</h2>
+<p>HTML 称为超文本标记语言，是一种标识性的语言。它包括一系列标签．通过这些标签可以将网络上的文档格式统一，使分散的 Internet 资源连接为一个逻辑整体。HTML 文本是由 HTML 命令组成的描述性文本，HTML 命令可以说明文字，图形、动画、声音、表格、链接等。</p>
+<h2 id=web-页面>Web 页面</h2>
+<p>Web 页面也叫做 Web Page，它是由对象组成，一个对象(object) 简单来说就是一个文件，这个文件可以是 HTML 文件、一个图片、一段 Java 应用程序等，它们都可以通过 URI 来找到。一个 Web 页面包含了很多对象，Web 页面可以说是对象的集合体。</p>
+<h2 id=web-服务器>Web 服务器</h2>
+<p>Web 服务器的正式名称叫做 Web Server，Web 服务器可以向浏览器等 Web 客户端提供文档，也可以放置网站文件，让全世界浏览；可以放置数据文件，让全世界下载。目前最主流的三个 Web 服务器是 Apache、 Nginx 、IIS。</p>
+<h2 id=cdn>CDN</h2>
+<p>CDN 的全称是Content Delivery Network，即内容分发网络，它应用了 HTTP 协议里的缓存和代理技术，代替源站响应客户端的请求。CDN 是构建在现有网络基础之上的网络，它依靠部署在各地的边缘服务器，通过中心平台的负载均衡、内容分发、调度等功能模块，使用户就近获取所需内容，降低网络拥塞，提高用户访问响应速度和命中率。</p>
+<h2 id=waf>WAF</h2>
+<p>WAF 是一种 应用程序防护系统，它是一种通过执行一系列针对 HTTP / HTTPS的安全策略来专门为 Web 应用提供保护的一款产品，它是应用层面的防火墙，专门检测 HTTP 流量，是防护 Web 应用的安全技术。</p>
+<h2 id=webservice>WebService</h2>
+<p>WebService 是一种 Web 应用程序，WebService 是一种跨编程语言和跨操作系统平台的远程调用技术。</p>
+<h2 id=http>HTTP</h2>
+<p>TCP/IP 协议簇的一种，它是一个在计算机世界里专门在两点之间传输文字、图片、音频、视频等超文本数据的约定和规范。</p>
+<h2 id=session>Session</h2>
+<p>Session 其实就是客户端会话的缓存，主要是为了弥补 HTTP 无状态的特性而设计的。服务器可以利用 Session 存储客户端在同一个会话期间的一些操作记录。当客户端请求服务端时，服务端会为这次请求开辟一块内存空间，这个对象便是 Session 对象，存储结构为 ConcurrentHashMap。</p>
+<h2 id=cookie>Cookie</h2>
+<p>HTTP 协议中的 Cookie 包括 Web Cookie 和浏览器 Cookie，它是服务器发送到 Web 浏览器的一小块数据。服务器发送到浏览器的 Cookie，浏览器会进行存储，并与下一个请求一起发送到服务器。通常，它用于判断两个请求是否来自于同一个浏览器，例如用户保持登录状态。</p>
+<h2 id=smtp-协议>SMTP 协议</h2>
+<p>提供电子邮件服务的协议叫做 SMTP 协议， SMTP 在传输层也使用了 TCP 协议。SMTP 协议主要用于系统之间的邮件信息传递，并提供有关来信的通知。</p>
+<h2 id=dns-协议>DNS 协议</h2>
+<p>由于 IP 地址是计算机能够识别的地址，而我们人类不方便记忆这种地址，所以为了方便人类的记忆，使用 DNS 协议，来把我们容易记忆的网络地址映射称为主机能够识别的 IP 地址。</p>
+<h2 id=telnet-协议>TELNET 协议</h2>
+<p>远程登陆协议，它允许用户(Telnet 客户端)通过一个协商过程来与一个远程设备进行通信，它为用户提供了在本地计算机上完成远程主机工作的能力。</p>
+<h2 id=ssh-协议>SSH 协议</h2>
+<p>SSH 是一种建立在应用层上的安全加密协议。因为 TELNET 有一个非常明显的缺点，那就是在主机和远程主机的发送数据包的过程中是明文传输，未经任何安全加密，这样的后果是容易被互联网上不法分子嗅探到数据包来搞一些坏事，为了数据的安全性，我们一般使用 SSH 进行远程登录。</p>
+<h2 id=ftp-协议>FTP 协议</h2>
+<p>文件传输协议，是应用层协议之一。FTP 协议包括两个组成部分，分为 FTP 服务器和 FTP 客户端。其中 FTP 服务器用来存储文件，用户可以使用 FTP 客户端通过 FTP 协议访问位于 FTP 服务器上的资源。FTP 协议传输效率很高，一般用来传输大文件。</p>
+<h2 id=mime-类型>MIME 类型</h2>
+<p>它表示的是互联网的资源类型，一般类型有 超文本标记语言文本 .html text/html、xml文档 .xml text/xml、普通文本 .txt text/plain、PNG图像 .png image/png、GIF图形 .gif image/gif、JPEG图形 .jpeg,.jpg image/jpeg、AVI 文件 .avi video/x-msvideo 等。</p>
+<h2 id=多路分解>多路分解</h2>
+<p>在接收端，运输层会检查源端口号和目的端口号等字段，然后标识出接收的套接字，从而将运输层报文段的数据交付到正确套接字的过程被称为多路分解。</p>
+<h2 id=多路复用>多路复用</h2>
+<p>在发送方，从不同的套接字中收集数据块，然后为数据块封装上首部信息从而生成报文段，然后将报文段传递给网络层的过程被称为多路复用。</p>
+<h2 id=周知端口号>周知端口号</h2>
+<p>在主机的应用程序中，从 0 - 1023 的端口号是受限制的，被称为周知端口号，这些端口号一般不能占用。</p>
+<h2 id=单向数据传输>单向数据传输</h2>
+<p>数据的流向只能是单向的，也就是从发送端 -> 接收端。</p>
+<h2 id=双向数据传输>双向数据传输</h2>
+<p>数据的流向是双向的，又叫做全双工通信，发送端和接收端可以相互发送数据。</p>
+<h2 id=面向连接的>面向连接的</h2>
+<p>面向连接指的是应用进程在向另一个应用进程发送数据前，需要先进行握手，即它们必须先相互发送预备报文段，用来建立确保数据传输的参数。</p>
+<h2 id=三次握手>三次握手</h2>
+<p>TCP 连接的建立需要经过三个报文段的发送，这种连接的建立过程被称为三次握手。</p>
+<h2 id=最大报文段长度>最大报文段长度</h2>
+<p>即 MSS，它指的是从缓存中取出并放入报文段中的最大值。</p>
+<h2 id=最大传输单元>最大传输单元</h2>
+<p>即 MTU，它指的是通信双方能够接收有效载荷的大小，MSS 通常会根据 MTU 来设。</p>
+<h2 id=冗余-ack>冗余 ACK</h2>
+<p>就是再次确认某个报文段的 ACK，报文段的丢失会导致冗余 ACK 的出现。</p>
+<h2 id=快速重传>快速重传</h2>
+<p>即在报文段定时器过期之前重传丢失的报文段。</p>
+<h2 id=选择确认>选择确认</h2>
+<p>在报文段出现丢失的情况下，TCP 能够选择确认失序的报文段，这个机制通常和重传一起使用。</p>
+<h2 id=拥塞控制>拥塞控制</h2>
+<p>拥塞控制说的是，当某一段时间网络中的分组过多，使得接收端来不及处理，从而引起部分甚至整个网络性能下降的现象时采取的一种抑制发送端发送数据，等过一段时间或者网络情况改善后再继续发送报文段的一种方法。</p>
+<h2 id=四次挥手>四次挥手</h2>
+<p>TCP 断开链接需要经过四个报文段的发送，这种断开过程是四次挥手。</p>
+<h2 id=路由选择算法>路由选择算法</h2>
+<p>网络层中决定分组发送路径的一种算法。</p>
+<h2 id=转发>转发</h2>
+<p>它指的是将分组从一个输入链路转移到合适的输出链路的动作。</p>
+<h2 id=分组调度>分组调度</h2>
+<p>分组调度讨论的是分组如何经输出链路传输的问题，主要有三种调度方式：先进先出、优先级排队和"循环和加权公平排队"。</p>
+<h2 id=ipv4>IPv4</h2>
+<p>网际协议的第四个版本，也是被广泛使用的一个版本。IPv4 是一种无连接的协议，无连接不保证数据的可靠性交付。使用 32 位的地址。</p>
+<h2 id=ipv6>IPv6</h2>
+<p>网际协议的第六个版本，IPv6 的地址长度是 128 位，由于 IPv4 最大的问题在于网络地址资源不足，严重制约了互联网的应用和发展。IPv6 的使用，不仅能解决网络地址资源数量的问题，而且也解决了多种接入设备连入互联网的障碍。</p>
+<h2 id=接口>接口</h2>
+<p>主机和物理链路之间的边界。</p>
+<h2 id=arp-协议>ARP 协议</h2>
+<p>ARP 是一种解决地址问题的协议，通过 IP 位线索，可以定位下一个用来接收数据的网络设备的 MAC 地址。如果目标主机与主机不在同一个链路上时，可以通过 ARP 查找下一跳路由的地址。不过 ARP 只适用于 IPv4 ，不适用于 IPv6。</p>
+<h2 id=rarp>RARP</h2>
+<p>RARP 就是将 ARP 协议反过来，通过 MAC 地址定位 IP 地址的一种协议。</p>
+<h2 id=代理-arp>代理 ARP</h2>
+<p>用于解决 ARP 包被路由器隔离的情况，通过代理 ARP 可以实现将 ARP 请求转发给临近的网段。</p>
+<h2 id=icmp-协议>ICMP 协议</h2>
+<p>Internet 报文控制协议，如果在 IP 通信过程中由于某个 IP 包由于某种原因未能到达目标主机，那么将会发送 ICMP 消息，ICMP 实际上是 IP 的一部分。</p>
+<h2 id=dhcp-协议>DHCP 协议</h2>
+<p>DHCP 是一种动态主机配置协议。使用 DHCP 就能实现自动设置 IP 地址、统一管理 IP 地址分配，实现即插即用。</p>
+<h2 id=nat-协议>NAT 协议</h2>
+<p>网络地址转换协议，它指的是所有本地地址的主机在接入网络时，都会要在 NAT 路由器上将其转换成为全球 IP 地址，才能和其他主机进行通信。</p>
+<h2 id=ip-隧道>IP 隧道</h2>
+<p>IP 隧道技术说的是由路由器把网络层协议封装到另一个协议中从而跨过网络传输到另外一个路由器的过程。</p>
+<h2 id=单播>单播</h2>
+<p>单播最大的特点就是 1 对 1，早期的固定电话就是单播的一个例子</p>
+<h2 id=广播>广播</h2>
+<p>我们一般小时候经常会广播体操，这就是广播的一个事例，主机和与他连接的所有端系统相连，主机将信号发送给所有的端系统。</p>
+<h2 id=多播>多播</h2>
+<p>多播与广播很类似，也是将消息发送给多个接收主机，不同之处在于多播需要限定在某一组主机作为接收端。</p>
+<h2 id=任播>任播</h2>
+<p>任播是在特定的多台主机中选出一个接收端的通信方式。虽然和多播很相似，但是行为与多播不同，任播是从许多目标机群中选出一台最符合网络条件的主机作为目标主机发送消息。然后被选中的特定主机将返回一个单播信号，然后再与目标主机进行通信。</p>
+<h2 id=igp>IGP</h2>
+<p>内部网关协议，一般用于企业内部自己搭建的路由自治系统。</p>
+<h2 id=egp>EGP</h2>
+<p>外部网关协议，EGP 通常用于在网络主机之间相互交换路由信息。</p>
+<h2 id=rip>RIP</h2>
+<p>一种距离向量型路由协议，广泛应用于 LAN 网。</p>
+<h2 id=ospf>OSPF</h2>
+<p>是根据 OSI 的 IS-IS 协议提出的一种链路状态型协议。这种协议还能够有效的解决网络环路问题。</p>
+<h2 id=mpls>MPLS</h2>
+<p>它是一种标记交换技术，标记交换会对每个 IP 数据包都设定一个标记，然后根据这个标记进行转发。</p>
+<h2 id=节点>节点</h2>
+<p>一般指链路层协议中的设备。</p>
+<h2 id=链路>链路</h2>
+<p>一般把沿着通信路径连接相邻节点的通信信道称为链路。</p>
+<h2 id=mac-协议>MAC 协议</h2>
+<p>媒体访问控制协议，它规定了帧在链路上传输的规则。</p>
+<h2 id=奇偶校验位>奇偶校验位</h2>
+<p>一种差错检测方式，多用于计算机硬件的错误检测中，奇偶校验通常用在数据通信中来保证数据的有效性。</p>
+<h2 id=向前纠错>向前纠错</h2>
+<p>接收方检测和纠正差错的能力被称为向前纠错。</p>
+<h2 id=以太网>以太网</h2>
+<p>以太网是一种当今最普遍的局域网技术，它规定了物理层的连线、电子信号和 MAC 协议的内容。</p>
+<h2 id=vlan>VLAN</h2>
+<p>虚拟局域网（VLAN）是一组逻辑上的设备和用户，这些设备和用户并不受物理位置的限制，可以根据功能、部门及应用等因素将它们组织起来，相互之间的通信就好像它们在同一个网段中一样，所以称为虚拟局域网。</p>
+<h2 id=基站>基站</h2>
+<p>无线网络的基础设施。</p>
 <style>.feedback--answer{display:inline-block}.feedback--answer-no{margin-left:1em}.feedback--response{display:none;margin-top:1em}.feedback--response__visible{display:block}</style>
 <div class=d-print-none>
 <h2 class=feedback--title>Feedback</h2>
