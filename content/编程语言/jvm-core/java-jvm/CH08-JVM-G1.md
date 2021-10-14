@@ -1,7 +1,7 @@
 ---
 type: docs
-title: "CH08-JVM-G1.md"
-linkTitle: "CH08-JVM-G1.md"
+title: "CH08-JVM-G1"
+linkTitle: "CH08-JVM-G1"
 weight: 8
 ---
 
