@@ -171,6 +171,7 @@
 <li>9: <a href=#pg-f318ab73b27584f92427d5fdaeaa969e>CH10-配置注入</a></li>
 <li>10: <a href=#pg-edd784317807198b5ce95957ab1805fa>CH11-配置绑定</a></li>
 <li>11: <a href=#pg-72976b5fc4d547c63c1244ea27bda80b>CH12-环境变量</a></li>
+<li>12: <a href=#pg-ab6686a9d87d82772b5814cec7a2b8ef>CH13-缓存注解</a></li>
 </ul>
 <div class=content>
 </div>
@@ -4274,6 +4275,280 @@ susan.test.list[3]=13
     <span style=color:#ce5c00;font-weight:700>}</span>
 <span style=color:#ce5c00;font-weight:700>}</span>
 </code></pre></div><p>经过上面这样的配置，我们就可以使用 <code>${key}</code> 这种形式来取变量的值。<strong>有时如果我们没配置 key 的值，Spring 会抛异常。这时我们可以使用 <code>${key:defaultvalue} </code>这种形式配置默认值</strong>。</p>
+</div>
+<div class=td-content style=page-break-before:always>
+<h1 id=pg-ab6686a9d87d82772b5814cec7a2b8ef>12 - CH13-缓存注解</h1>
+<h2 id=cacheable>@Cacheable</h2>
+<p>@Cacheable 的作用 主要针对方法配置，能够根据方法的请求参数对其结果进行缓存</p>
+<h3 id=cacheable-作用和配置方法>@Cacheable 作用和配置方法</h3>
+<table>
+<thead>
+<tr>
+<th style=text-align:left>参数</th>
+<th>解释</th>
+<th>示例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style=text-align:left>value</td>
+<td>缓存的名称，在spring配置文件中定义，必须指定至少一个</td>
+<td>例如: <code>@Cacheable(value="mycache")</code> <code>@Cacheable(value={"cache1","cache2"}</code></td>
+</tr>
+<tr>
+<td style=text-align:left>key</td>
+<td>缓存的<code>key</code>，可以为空，如果指定要按照<code>SpEL</code>表达式编写，如果不指定，则缺省按照方法的所有参数进行组合</td>
+<td><code>@Cacheable(value="testcache",key="#userName")</code></td>
+</tr>
+<tr>
+<td style=text-align:left>condition</td>
+<td>缓存的条件，可以为空，使用<code>SpEL</code>编写，返回<code>true</code>或者<code>false</code>，只有为<code>true</code>才进行缓存</td>
+<td><code>@Cacheable(value="testcache",condition="#userName.length()>2")</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id=实例>实例</h3>
+<p><code>@Cacheable(value=”accountCache”)</code>，这个注释的意思是，当调用这个方法的时候，会从一个名叫 accountCache 的缓存中查询，如果没有，则执行实际的方法（即查询数据库），并将执行的结果存入缓存中，否则返回缓存中的对象。这里的缓存中的 key 就是参数 userName，value 就是 Account 对象。“accountCache”缓存是在 spring*.xml 中定义的名称。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#5c35cc;font-weight:700>@Cacheable</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>value</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#4e9a06>&#34;accountCache&#34;</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#8f5902;font-style:italic>// 使用了一个缓存名叫 accountCache 
+</span><span style=color:#8f5902;font-style:italic></span><span style=color:#204a87;font-weight:700>public</span> <span style=color:#000>Account</span> <span style=color:#000>getAccountByName</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>String</span> <span style=color:#000>userName</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>
+     <span style=color:#8f5902;font-style:italic>// 方法内部实现不考虑缓存逻辑，直接实现业务
+</span><span style=color:#8f5902;font-style:italic></span>     <span style=color:#000>System</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>out</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>println</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;real query account.&#34;</span><span style=color:#ce5c00;font-weight:700>+</span><span style=color:#000>userName</span><span style=color:#ce5c00;font-weight:700>);</span> 
+     <span style=color:#204a87;font-weight:700>return</span> <span style=color:#000>getFromDB</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>userName</span><span style=color:#ce5c00;font-weight:700>);</span> 
+<span style=color:#ce5c00;font-weight:700>}</span> 
+</code></pre></div><h2 id=cacheput>@CachePut</h2>
+<p>@CachePut 的作用 主要针对方法配置，能够根据方法的请求参数对其结果进行缓存，和 @Cacheable 不同的是，它每次都会触发真实方法的调用。</p>
+<h3 id=cacheput-作用和配置方法>@CachePut 作用和配置方法</h3>
+<table>
+<thead>
+<tr>
+<th style=text-align:left>参数</th>
+<th>解释</th>
+<th style=text-align:left>example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style=text-align:left>value</td>
+<td>缓存的名称，在spring配置文件中定义，必须指定至少一个</td>
+<td style=text-align:left><code>@CachePut(value=”my cache”)</code></td>
+</tr>
+<tr>
+<td style=text-align:left>key</td>
+<td>缓存的<code>key</code>，可以为空，如果指定要按照<code>SpEL</code>表达式编写，如果不指定，则缺省按照方法的所有参数进行组合</td>
+<td style=text-align:left><code>@CachePut(value="testcache",key="#userName")</code></td>
+</tr>
+<tr>
+<td style=text-align:left>condition</td>
+<td>缓存的条件，可以为空，使用<code>SpEL</code>编写，返回<code>true</code>或者<code>false</code>，只有为<code>true</code>才进行缓存</td>
+<td style=text-align:left><code>@CachePut(value="testcache",condition="#userName.length()>2")</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id=实例-1>实例</h3>
+<p>@CachePut 注释，这个注释可以确保方法被执行，同时方法的返回值也被记录到缓存中，实现缓存与数据库的同步更新。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#5c35cc;font-weight:700>@CachePut</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>value</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#4e9a06>&#34;accountCache&#34;</span><span style=color:#ce5c00;font-weight:700>,</span><span style=color:#000>key</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#4e9a06>&#34;#account.getName()&#34;</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#8f5902;font-style:italic>// 更新accountCache 缓存
+</span><span style=color:#8f5902;font-style:italic></span><span style=color:#204a87;font-weight:700>public</span> <span style=color:#000>Account</span> <span style=color:#000>updateAccount</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>Account</span> <span style=color:#000>account</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span> 
+   <span style=color:#204a87;font-weight:700>return</span> <span style=color:#000>updateDB</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>account</span><span style=color:#ce5c00;font-weight:700>);</span> 
+<span style=color:#ce5c00;font-weight:700>}</span> 
+</code></pre></div><h2 id=cacheevict>@CacheEvict</h2>
+<p>@CachEvict 的作用 主要针对方法配置，能够根据一定的条件对缓存进行清空</p>
+<h3 id=cacheevict-作用和配置方法>@CacheEvict 作用和配置方法</h3>
+<table>
+<thead>
+<tr>
+<th style=text-align:left>参数</th>
+<th style=text-align:left>解释</th>
+<th style=text-align:left>example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style=text-align:left>value</td>
+<td style=text-align:left>缓存的名称，在 spring 配置文件中定义,必须指定至少一个</td>
+<td style=text-align:left><code>@CacheEvict(value="my cache")</code></td>
+</tr>
+<tr>
+<td style=text-align:left>key</td>
+<td style=text-align:left>缓存的<code>key</code>,可以为空，如果指定要按照<code>SpEL</code>表达式编写，如果不指定，则缺省按照方法的所有参数进行组合</td>
+<td style=text-align:left><code>@CacheEvict(value="testcache",key="#userName")</code></td>
+</tr>
+<tr>
+<td style=text-align:left>condition</td>
+<td style=text-align:left>缓存的条件,可以为空，使用<code>SpEL</code>编写，返回<code>true</code>或者<code>false</code>,只有为<code>true</code>才进行缓存</td>
+<td style=text-align:left><code>@CacheEvict(value="testcache",condition="#userName.length()>2")</code></td>
+</tr>
+<tr>
+<td style=text-align:left>allEntries</td>
+<td style=text-align:left>是否清空所有缓存内容,缺省为<code>false</code>，如果指定为<code>true</code>，则方法调用后将立即清空所有缓存</td>
+<td style=text-align:left><code>@CachEvict(value="testcache",allEntries=true)</code></td>
+</tr>
+<tr>
+<td style=text-align:left>beforeInvocation</td>
+<td style=text-align:left>是否在方法执行前就清空，缺省为<code>false</code>，如果指定为<code>true</code>，则在方法还没有执行的时候就清空缓存，缺省情况下，如果方法执行抛出异常，则不会清空缓存</td>
+<td style=text-align:left><code>@CachEvict(value="testcache"，beforeInvocation=true)</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id=实例-2>实例</h3>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#5c35cc;font-weight:700>@CacheEvict</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>value</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#4e9a06>&#34;accountCache&#34;</span><span style=color:#ce5c00;font-weight:700>,</span><span style=color:#000>key</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#4e9a06>&#34;#account.getName()&#34;</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#8f5902;font-style:italic>// 清空accountCache 缓存  
+</span><span style=color:#8f5902;font-style:italic></span><span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>void</span> <span style=color:#000>updateAccount</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>Account</span> <span style=color:#000>account</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>
+     <span style=color:#000>updateDB</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>account</span><span style=color:#ce5c00;font-weight:700>);</span> 
+<span style=color:#ce5c00;font-weight:700>}</span> 
+  
+<span style=color:#5c35cc;font-weight:700>@CacheEvict</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>value</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#4e9a06>&#34;accountCache&#34;</span><span style=color:#ce5c00;font-weight:700>,</span><span style=color:#000>allEntries</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#204a87;font-weight:700>true</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#8f5902;font-style:italic>// 清空accountCache 缓存
+</span><span style=color:#8f5902;font-style:italic></span><span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>void</span> <span style=color:#000>reload</span><span style=color:#ce5c00;font-weight:700>()</span> <span style=color:#ce5c00;font-weight:700>{</span>
+     <span style=color:#000>reloadAll</span><span style=color:#ce5c00;font-weight:700>()</span>
+<span style=color:#ce5c00;font-weight:700>}</span>
+
+<span style=color:#5c35cc;font-weight:700>@Cacheable</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>value</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#4e9a06>&#34;accountCache&#34;</span><span style=color:#ce5c00;font-weight:700>,</span><span style=color:#000>condition</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#4e9a06>&#34;#userName.length() &lt;=4&#34;</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#8f5902;font-style:italic>// 缓存名叫 accountCache 
+</span><span style=color:#8f5902;font-style:italic></span><span style=color:#204a87;font-weight:700>public</span> <span style=color:#000>Account</span> <span style=color:#000>getAccountByName</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>String</span> <span style=color:#000>userName</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span> 
+ <span style=color:#8f5902;font-style:italic>// 方法内部实现不考虑缓存逻辑，直接实现业务
+</span><span style=color:#8f5902;font-style:italic></span> <span style=color:#204a87;font-weight:700>return</span> <span style=color:#000>getFromDB</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>userName</span><span style=color:#ce5c00;font-weight:700>);</span> 
+<span style=color:#ce5c00;font-weight:700>}</span>
+</code></pre></div><h2 id=cacheconfig>@CacheConfig</h2>
+<p>所有的 <code>@Cacheable</code> 里面都有一个value＝“xxx”的属性，这显然如果方法多了，写起来也是挺累的，如果可以一次性声明完 那就省事了，
+所以，有了 <code>@CacheConfig</code> 这个配置，@CacheConfig is a class-level annotation that allows to share the cache names，如果你在你的方法写别的名字，那么依然以方法的名字为准。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#5c35cc;font-weight:700>@CacheConfig</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;books&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
+<span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>BookRepositoryImpl</span> <span style=color:#204a87;font-weight:700>implements</span> <span style=color:#000>BookRepository</span> <span style=color:#ce5c00;font-weight:700>{</span>
+
+    <span style=color:#5c35cc;font-weight:700>@Cacheable</span>
+    <span style=color:#204a87;font-weight:700>public</span> <span style=color:#000>Book</span> <span style=color:#000>findBook</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>ISBN</span> <span style=color:#000>isbn</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{...}</span>
+<span style=color:#ce5c00;font-weight:700>}</span>
+</code></pre></div><h2 id=条件缓存>条件缓存</h2>
+<p>下面提供一些常用的条件缓存</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#8f5902;font-style:italic>//@Cacheable将在执行方法之前( #result还拿不到返回值)判断condition，如果返回true，则查缓存； 
+</span><span style=color:#8f5902;font-style:italic></span><span style=color:#5c35cc;font-weight:700>@Cacheable</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>value</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#4e9a06>&#34;user&#34;</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>key</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#4e9a06>&#34;#id&#34;</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>condition</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#4e9a06>&#34;#id lt 10&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
+<span style=color:#204a87;font-weight:700>public</span> <span style=color:#000>User</span> <span style=color:#000>conditionFindById</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#204a87;font-weight:700>final</span> <span style=color:#000>Long</span> <span style=color:#000>id</span><span style=color:#ce5c00;font-weight:700>)</span>  
+  
+<span style=color:#8f5902;font-style:italic>//@CachePut将在执行完方法后（#result就能拿到返回值了）判断condition，如果返回true，则放入缓存； 
+</span><span style=color:#8f5902;font-style:italic></span><span style=color:#5c35cc;font-weight:700>@CachePut</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>value</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#4e9a06>&#34;user&#34;</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>key</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#4e9a06>&#34;#id&#34;</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>condition</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#4e9a06>&#34;#result.username ne &#39;zhang&#39;&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>  
+<span style=color:#204a87;font-weight:700>public</span> <span style=color:#000>User</span> <span style=color:#000>conditionSave</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#204a87;font-weight:700>final</span> <span style=color:#000>User</span> <span style=color:#000>user</span><span style=color:#ce5c00;font-weight:700>)</span>   
+
+<span style=color:#8f5902;font-style:italic>//@CachePut将在执行完方法后（#result就能拿到返回值了）判断unless，如果返回false，则放入缓存；（即跟condition相反）
+</span><span style=color:#8f5902;font-style:italic></span><span style=color:#5c35cc;font-weight:700>@CachePut</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>value</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#4e9a06>&#34;user&#34;</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>key</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#4e9a06>&#34;#user.id&#34;</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>unless</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#4e9a06>&#34;#result.username eq &#39;zhang&#39;&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
+<span style=color:#204a87;font-weight:700>public</span> <span style=color:#000>User</span> <span style=color:#000>conditionSave2</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#204a87;font-weight:700>final</span> <span style=color:#000>User</span> <span style=color:#000>user</span><span style=color:#ce5c00;font-weight:700>)</span>   
+
+<span style=color:#8f5902;font-style:italic>//@CacheEvict， beforeInvocation=false表示在方法执行之后调用（#result能拿到返回值了）；且判断condition，如果返回true，则移除缓存；
+</span><span style=color:#8f5902;font-style:italic></span><span style=color:#5c35cc;font-weight:700>@CacheEvict</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>value</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#4e9a06>&#34;user&#34;</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>key</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#4e9a06>&#34;#user.id&#34;</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>beforeInvocation</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>false</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>condition</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#4e9a06>&#34;#result.username ne &#39;zhang&#39;&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>  
+<span style=color:#204a87;font-weight:700>public</span> <span style=color:#000>User</span> <span style=color:#000>conditionDelete</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#204a87;font-weight:700>final</span> <span style=color:#000>User</span> <span style=color:#000>user</span><span style=color:#ce5c00;font-weight:700>)</span>   
+</code></pre></div><h2 id=caching>@Caching</h2>
+<p>有时候我们可能组合多个Cache注解使用；比如用户新增成功后，我们要添加id–>user；username—>user；email—>user的缓存；此时就需要@Caching组合多个注解标签了。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#5c35cc;font-weight:700>@Caching</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>put</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>{</span>
+<span style=color:#5c35cc;font-weight:700>@CachePut</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>value</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#4e9a06>&#34;user&#34;</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>key</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#4e9a06>&#34;#user.id&#34;</span><span style=color:#ce5c00;font-weight:700>),</span>
+<span style=color:#5c35cc;font-weight:700>@CachePut</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>value</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#4e9a06>&#34;user&#34;</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>key</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#4e9a06>&#34;#user.username&#34;</span><span style=color:#ce5c00;font-weight:700>),</span>
+<span style=color:#5c35cc;font-weight:700>@CachePut</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>value</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#4e9a06>&#34;user&#34;</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>key</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#4e9a06>&#34;#user.email&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
+<span style=color:#ce5c00;font-weight:700>})</span>
+<span style=color:#204a87;font-weight:700>public</span> <span style=color:#000>User</span> <span style=color:#000>save</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>User</span> <span style=color:#000>user</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</code></pre></div><h2 id=自定义缓存注解>自定义缓存注解</h2>
+<p>比如之前的那个@Caching组合，会让方法上的注解显得整个代码比较乱，此时可以使用自定义注解把这些注解组合到一个注解中，如：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#5c35cc;font-weight:700>@Caching</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>put</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>{</span>
+<span style=color:#5c35cc;font-weight:700>@CachePut</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>value</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#4e9a06>&#34;user&#34;</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>key</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#4e9a06>&#34;#user.id&#34;</span><span style=color:#ce5c00;font-weight:700>),</span>
+<span style=color:#5c35cc;font-weight:700>@CachePut</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>value</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#4e9a06>&#34;user&#34;</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>key</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#4e9a06>&#34;#user.username&#34;</span><span style=color:#ce5c00;font-weight:700>),</span>
+<span style=color:#5c35cc;font-weight:700>@CachePut</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>value</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#4e9a06>&#34;user&#34;</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>key</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#4e9a06>&#34;#user.email&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
+<span style=color:#ce5c00;font-weight:700>})</span>
+<span style=color:#5c35cc;font-weight:700>@Target</span><span style=color:#ce5c00;font-weight:700>({</span><span style=color:#000>ElementType</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>METHOD</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>ElementType</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>TYPE</span><span style=color:#ce5c00;font-weight:700>})</span>
+<span style=color:#5c35cc;font-weight:700>@Retention</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>RetentionPolicy</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>RUNTIME</span><span style=color:#ce5c00;font-weight:700>)</span>
+<span style=color:#5c35cc;font-weight:700>@Inherited</span>
+<span style=color:#204a87;font-weight:700>public</span> <span style=color:#5c35cc;font-weight:700>@interface</span> <span style=color:#000>UserSaveCache</span> <span style=color:#ce5c00;font-weight:700>{</span>
+<span style=color:#ce5c00;font-weight:700>}</span>
+</code></pre></div><p>这样我们在方法上使用如下代码即可，整个代码显得比较干净。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#5c35cc;font-weight:700>@UserSaveCache</span>
+<span style=color:#204a87;font-weight:700>public</span> <span style=color:#000>User</span> <span style=color:#000>save</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>User</span> <span style=color:#000>user</span><span style=color:#ce5c00;font-weight:700>)</span>
+</code></pre></div><h2 id=扩展>扩展</h2>
+<p>比如findByUsername时，不应该只放username–>user，应该连同id—>user和email—>user一起放入；这样下次如果按照id查找直接从缓存中就命中了</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#5c35cc;font-weight:700>@Caching</span><span style=color:#ce5c00;font-weight:700>(</span>
+    <span style=color:#000>cacheable</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>{</span>
+       <span style=color:#5c35cc;font-weight:700>@Cacheable</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>value</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#4e9a06>&#34;user&#34;</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>key</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#4e9a06>&#34;#username&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
+    <span style=color:#ce5c00;font-weight:700>},</span>
+    <span style=color:#000>put</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>{</span>
+       <span style=color:#5c35cc;font-weight:700>@CachePut</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>value</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#4e9a06>&#34;user&#34;</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>key</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#4e9a06>&#34;#result.id&#34;</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>condition</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#4e9a06>&#34;#result != null&#34;</span><span style=color:#ce5c00;font-weight:700>),</span>
+       <span style=color:#5c35cc;font-weight:700>@CachePut</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>value</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#4e9a06>&#34;user&#34;</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>key</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#4e9a06>&#34;#result.email&#34;</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>condition</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#4e9a06>&#34;#result != null&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
+    <span style=color:#ce5c00;font-weight:700>}</span>
+<span style=color:#ce5c00;font-weight:700>)</span>
+<span style=color:#204a87;font-weight:700>public</span> <span style=color:#000>User</span> <span style=color:#000>findByUsername</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#204a87;font-weight:700>final</span> <span style=color:#000>String</span> <span style=color:#000>username</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>
+    <span style=color:#000>System</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>out</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>println</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;cache miss, invoke find by username, username:&#34;</span> <span style=color:#ce5c00;font-weight:700>+</span> <span style=color:#000>username</span><span style=color:#ce5c00;font-weight:700>);</span>
+    <span style=color:#204a87;font-weight:700>for</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>User</span> <span style=color:#000>user</span> <span style=color:#ce5c00;font-weight:700>:</span> <span style=color:#000>users</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>
+        <span style=color:#204a87;font-weight:700>if</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>user</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>getUsername</span><span style=color:#ce5c00;font-weight:700>().</span><span style=color:#c4a000>equals</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>username</span><span style=color:#ce5c00;font-weight:700>))</span> <span style=color:#ce5c00;font-weight:700>{</span>
+            <span style=color:#204a87;font-weight:700>return</span> <span style=color:#000>user</span><span style=color:#ce5c00;font-weight:700>;</span>
+        <span style=color:#ce5c00;font-weight:700>}</span>
+    <span style=color:#ce5c00;font-weight:700>}</span>
+    <span style=color:#204a87;font-weight:700>return</span> <span style=color:#204a87;font-weight:700>null</span><span style=color:#ce5c00;font-weight:700>;</span>
+<span style=color:#ce5c00;font-weight:700>}</span>
+</code></pre></div><p>其实对于：id—>user；username—->user；email—>user；更好的方式可能是：id—>user；username—>id；email—>id；保证user只存一份；如：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#5c35cc;font-weight:700>@CachePut</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>value</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#4e9a06>&#34;cacheName&#34;</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>key</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#4e9a06>&#34;#user.username&#34;</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>cacheValue</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#4e9a06>&#34;#user.username&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>  
+<span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>void</span> <span style=color:#000>save</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>User</span> <span style=color:#000>user</span><span style=color:#ce5c00;font-weight:700>)</span>   
+
+
+<span style=color:#5c35cc;font-weight:700>@Cacheable</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>value</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#4e9a06>&#34;cacheName&#34;</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>key</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#4e9a06>&#34;#user.username&#34;</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>cacheValue</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#4e9a06>&#34;#caches[0].get(#caches[0].get(#username).get())&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>  
+<span style=color:#204a87;font-weight:700>public</span> <span style=color:#000>User</span> <span style=color:#000>findByUsername</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>String</span> <span style=color:#000>username</span><span style=color:#ce5c00;font-weight:700>)</span>  
+</code></pre></div><h2 id=spel-上下文数据>SpEL 上下文数据</h2>
+<p>Spring Cache提供了一些供我们使用的SpEL上下文数据，下表直接摘自Spring官方文档：</p>
+<table>
+<thead>
+<tr>
+<th>名称</th>
+<th>位置</th>
+<th>描述</th>
+<th>示例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>methodName</td>
+<td>root对象</td>
+<td>当前被调用的方法名</td>
+<td>#root.methodName</td>
+</tr>
+<tr>
+<td>method</td>
+<td>root对象</td>
+<td>当前被调用的方法</td>
+<td>#root.method.name</td>
+</tr>
+<tr>
+<td>target</td>
+<td>root对象</td>
+<td>当前被调用的目标对象</td>
+<td>#root.target</td>
+</tr>
+<tr>
+<td>targetClass</td>
+<td>root对象</td>
+<td>当前被调用的目标对象类</td>
+<td>#root.targetClass</td>
+</tr>
+<tr>
+<td>args</td>
+<td>root对象</td>
+<td>当前被调用的方法的参数列表</td>
+<td>#root.args[0]</td>
+</tr>
+<tr>
+<td>caches</td>
+<td>root对象</td>
+<td>当前方法调用使用的缓存列表（如@Cacheable(value={“cache1”, “cache2”})），则有两个cache</td>
+<td>#root.caches[0].name</td>
+</tr>
+<tr>
+<td>argument name</td>
+<td>执行上下文</td>
+<td>当前被调用的方法的参数，如findById(Long id)，我们可以通过#id拿到参数</td>
+<td>#user.id</td>
+</tr>
+<tr>
+<td>result</td>
+<td>执行上下文</td>
+<td>方法执行后的返回值（仅当方法执行之后的判断有效，如‘unless’，’cache evict’的beforeInvocation=false）</td>
+<td>#result</td>
+</tr>
+</tbody>
+</table>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#5c35cc;font-weight:700>@CacheEvict</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>value</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#4e9a06>&#34;user&#34;</span><span style=color:#ce5c00;font-weight:700>,</span> 
+            <span style=color:#000>key</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#4e9a06>&#34;#user.id&#34;</span><span style=color:#ce5c00;font-weight:700>,</span> 
+            <span style=color:#000>condition</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#4e9a06>&#34;#root.target.canCache() and #root.caches[0].get(#user.id).get().username ne #user.username&#34;</span><span style=color:#ce5c00;font-weight:700>,</span> 
+            <span style=color:#000>beforeInvocation</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>true</span><span style=color:#ce5c00;font-weight:700>)</span>  
+<span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>void</span> <span style=color:#000>conditionUpdate</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>User</span> <span style=color:#000>user</span><span style=color:#ce5c00;font-weight:700>)</span> 
+</code></pre></div>
 </div>
 </main>
 </div>
