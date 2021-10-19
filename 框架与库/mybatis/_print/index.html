@@ -174,6 +174,9 @@
 <li>12: <a href=#pg-68611e2d64eb5f1709d53542acbd61f4>CH12-代码生成</a></li>
 <li>13: <a href=#pg-1b4c6af1cc9c41504ec2b73cde59980f>CH13-多数据源</a></li>
 <li>14: <a href=#pg-6381d54b4f53832189fba7dda04feff4>CH14-常用片段</a></li>
+<li>15: <a href=#pg-793fd8ea7c464da2cc8fff2fb0e503ba>CH15-事务管理原理</a></li>
+<li>16: <a href=#pg-7d266cedb46af8162e4941805ad7b1a0>CH16-一级缓存原理</a></li>
+<li>17: <a href=#pg-5fa0843facc8832df69a145efc110729>CH17-二级缓存原理</a></li>
 </ul>
 <div class=content>
 <p>参考自 &lt;MyBatis 技术内幕>。</p>
@@ -7744,6 +7747,639 @@ insert into excel_data_info
     <span style=color:#204a87;font-weight:700>&lt;/foreach&gt;</span>
 <span style=color:#204a87;font-weight:700>&lt;/insert&gt;</span>
 </code></pre></div>
+</div>
+<div class=td-content style=page-break-before:always>
+<h1 id=pg-793fd8ea7c464da2cc8fff2fb0e503ba>15 - CH15-事务管理原理</h1>
+<h2 id=概述>概述</h2>
+<p>对数据库的事务而言，应该具有以下几点：创建（create）、提交（commit）、回滚（rollback）、关闭（close）。对应地，MyBatis将事务抽象成了Transaction接口：</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211019223025.png style=display:block;width:80% alt=NAME align=center> </div>
+<p>MyBatis的事务管理分为两种形式：</p>
+<ul>
+<li><strong>使用JDBC的事务管理机制</strong>：即利用java.sql.Connection对象完成对事务的提交（commit()）、回滚（rollback()）、关闭（close()）等。</li>
+<li><strong>使用MANAGED的事务管理机制</strong>：这种机制MyBatis自身不会去实现事务管理，而是让程序的容器如（JBOSS，Weblogic）来实现对事务的管理。</li>
+</ul>
+<p>这两者的类图如下所示：</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211019223050.png style=display:block;width:80% alt=NAME align=center> </div>
+<h2 id=事务配置>事务配置</h2>
+<p>在 MyBatis 中有两种类型的事务管理器（也就是 <code>type="[JDBC|MANAGED]"</code>）：</p>
+<ul>
+<li><strong>JDBC</strong> – 这个配置直接使用了 JDBC 的提交和回滚设施，它依赖从数据源获得的连接来管理事务作用域。</li>
+<li><strong>MANAGED</strong> – 这个配置几乎没做什么。它从不提交或回滚一个连接，而是让容器来管理事务的整个生命周期（比如 JEE 应用服务器的上下文）。 默认情况下它会关闭连接。然而一些容器并不希望连接被关闭，因此需要将 closeConnection 属性设置为 false 来阻止默认的关闭行为。例如:</li>
+</ul>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-xml data-lang=xml><span style=color:#204a87;font-weight:700>&lt;transactionManager</span> <span style=color:#c4a000>type=</span><span style=color:#4e9a06>&#34;MANAGED&#34;</span><span style=color:#204a87;font-weight:700>&gt;</span>
+  <span style=color:#204a87;font-weight:700>&lt;property</span> <span style=color:#c4a000>name=</span><span style=color:#4e9a06>&#34;closeConnection&#34;</span> <span style=color:#c4a000>value=</span><span style=color:#4e9a06>&#34;false&#34;</span><span style=color:#204a87;font-weight:700>/&gt;</span>
+<span style=color:#204a87;font-weight:700>&lt;/transactionManager&gt;</span>
+</code></pre></div><blockquote>
+<p>如果你正在使用 Spring + MyBatis，则没有必要配置事务管理器，因为 Spring 模块会使用自带的管理器来覆盖前面的配置。</p>
+</blockquote>
+<p>这两种事务管理器类型都不需要设置任何属性。它们其实是类型别名，换句话说，你可以用 TransactionFactory 接口实现类的全限定名或类型别名代替它们。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>interface</span> <span style=color:#000>TransactionFactory</span> <span style=color:#ce5c00;font-weight:700>{</span>
+  <span style=color:#204a87;font-weight:700>default</span> <span style=color:#204a87;font-weight:700>void</span> <span style=color:#000>setProperties</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>Properties</span> <span style=color:#000>props</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span> <span style=color:#8f5902;font-style:italic>// 从 3.5.2 开始，该方法为默认方法
+</span><span style=color:#8f5902;font-style:italic></span>    <span style=color:#8f5902;font-style:italic>// 空实现
+</span><span style=color:#8f5902;font-style:italic></span>  <span style=color:#ce5c00;font-weight:700>}</span>
+  <span style=color:#000>Transaction</span> <span style=color:#000>newTransaction</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>Connection</span> <span style=color:#000>conn</span><span style=color:#ce5c00;font-weight:700>);</span>
+  <span style=color:#000>Transaction</span> <span style=color:#000>newTransaction</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>DataSource</span> <span style=color:#000>dataSource</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>TransactionIsolationLevel</span> <span style=color:#000>level</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#204a87;font-weight:700>boolean</span> <span style=color:#000>autoCommit</span><span style=color:#ce5c00;font-weight:700>);</span>
+<span style=color:#ce5c00;font-weight:700>}</span>
+</code></pre></div><p>在事务管理器实例化后，所有在 XML 中配置的属性将会被传递给 setProperties() 方法。你的实现还需要创建一个 Transaction 接口的实现类，这个接口也很简单：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>interface</span> <span style=color:#000>Transaction</span> <span style=color:#ce5c00;font-weight:700>{</span>
+  <span style=color:#000>Connection</span> <span style=color:#000>getConnection</span><span style=color:#ce5c00;font-weight:700>()</span> <span style=color:#204a87;font-weight:700>throws</span> <span style=color:#000>SQLException</span><span style=color:#ce5c00;font-weight:700>;</span>
+  <span style=color:#204a87;font-weight:700>void</span> <span style=color:#000>commit</span><span style=color:#ce5c00;font-weight:700>()</span> <span style=color:#204a87;font-weight:700>throws</span> <span style=color:#000>SQLException</span><span style=color:#ce5c00;font-weight:700>;</span>
+  <span style=color:#204a87;font-weight:700>void</span> <span style=color:#000>rollback</span><span style=color:#ce5c00;font-weight:700>()</span> <span style=color:#204a87;font-weight:700>throws</span> <span style=color:#000>SQLException</span><span style=color:#ce5c00;font-weight:700>;</span>
+  <span style=color:#204a87;font-weight:700>void</span> <span style=color:#000>close</span><span style=color:#ce5c00;font-weight:700>()</span> <span style=color:#204a87;font-weight:700>throws</span> <span style=color:#000>SQLException</span><span style=color:#ce5c00;font-weight:700>;</span>
+  <span style=color:#000>Integer</span> <span style=color:#000>getTimeout</span><span style=color:#ce5c00;font-weight:700>()</span> <span style=color:#204a87;font-weight:700>throws</span> <span style=color:#000>SQLException</span><span style=color:#ce5c00;font-weight:700>;</span>
+<span style=color:#ce5c00;font-weight:700>}</span>
+</code></pre></div><p>使用这两个接口，你可以完全自定义 MyBatis 对事务的处理。</p>
+<h2 id=事务的配置创建和使用>事务的配置、创建和使用</h2>
+<h3 id=事务的配置>事务的配置</h3>
+<p>我们在使用MyBatis时，一般会在MyBatisXML配置文件中定义类似如下的信息：</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211019223156.png style=display:block;width:80% alt=NAME align=center> </div>
+<p><code>&lt;environment></code>节点定义了连接某个数据库的信息，其子节点<code>&lt;transactionManager></code> 的type 会决定我们用什么类型的事务管理机制。</p>
+<h3 id=事务工厂的创建>事务工厂的创建</h3>
+<p>MyBatis事务的创建是交给TransactionFactory 事务工厂来创建的，如果我们将<code>&lt;transactionManager></code>的type 配置为"JDBC",那么，在MyBatis初始化解析 <code>&lt;environment></code>节点时，会根据type=&ldquo;JDBC"创建一个JdbcTransactionFactory工厂，其源码如下：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#8f5902;font-style:italic>/** 
+</span><span style=color:#8f5902;font-style:italic> * 解析&lt;transactionManager&gt;节点，创建对应的TransactionFactory 
+</span><span style=color:#8f5902;font-style:italic> * @param context 
+</span><span style=color:#8f5902;font-style:italic> * @return 
+</span><span style=color:#8f5902;font-style:italic> * @throws Exception 
+</span><span style=color:#8f5902;font-style:italic> */</span>  
+<span style=color:#204a87;font-weight:700>private</span> <span style=color:#000>TransactionFactory</span> <span style=color:#000>transactionManagerElement</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>XNode</span> <span style=color:#000>context</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#204a87;font-weight:700>throws</span> <span style=color:#000>Exception</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+    <span style=color:#204a87;font-weight:700>if</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>context</span> <span style=color:#ce5c00;font-weight:700>!=</span> <span style=color:#204a87;font-weight:700>null</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+        <span style=color:#000>String</span> <span style=color:#000>type</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>context</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>getStringAttribute</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;type&#34;</span><span style=color:#ce5c00;font-weight:700>);</span>  
+        <span style=color:#000>Properties</span> <span style=color:#000>props</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>context</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>getChildrenAsProperties</span><span style=color:#ce5c00;font-weight:700>();</span>  
+        <span style=color:#8f5902;font-style:italic>/* 
+</span><span style=color:#8f5902;font-style:italic>         * 在Configuration初始化的时候，会通过以下语句，给JDBC和MANAGED对应的工厂类 
+</span><span style=color:#8f5902;font-style:italic>         * typeAliasRegistry.registerAlias(&#34;JDBC&#34;, JdbcTransactionFactory.class); 
+</span><span style=color:#8f5902;font-style:italic>         * typeAliasRegistry.registerAlias(&#34;MANAGED&#34;, ManagedTransactionFactory.class); 
+</span><span style=color:#8f5902;font-style:italic>         * 下述的resolveClass(type).newInstance()会创建对应的工厂实例 
+</span><span style=color:#8f5902;font-style:italic>         */</span>  
+        <span style=color:#000>TransactionFactory</span> <span style=color:#000>factory</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>TransactionFactory</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#000>resolveClass</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>type</span><span style=color:#ce5c00;font-weight:700>).</span><span style=color:#c4a000>newInstance</span><span style=color:#ce5c00;font-weight:700>();</span>  
+        <span style=color:#000>factory</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>setProperties</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>props</span><span style=color:#ce5c00;font-weight:700>);</span>  
+        <span style=color:#204a87;font-weight:700>return</span> <span style=color:#000>factory</span><span style=color:#ce5c00;font-weight:700>;</span>  
+    <span style=color:#ce5c00;font-weight:700>}</span>  
+    <span style=color:#204a87;font-weight:700>throw</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>BuilderException</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;Environment declaration requires a TransactionFactory.&#34;</span><span style=color:#ce5c00;font-weight:700>);</span>  
+<span style=color:#ce5c00;font-weight:700>}</span>  
+
+  
+        <span style=color:#5c35cc;font-weight:700>@pdai</span><span style=color:#ce5c00;font-weight:700>:</span> <span style=color:#000>代码已经复制到剪贴板</span>
+    
+</code></pre></div><p>如上述代码所示，如果type = &ldquo;JDBC&rdquo;,则MyBatis会创建一个JdbcTransactionFactory.class 实例；如果type=&ldquo;MANAGED&rdquo;，则MyBatis会创建一个MangedTransactionFactory.class实例。</p>
+<p>MyBatis对<code>&lt;transactionManager></code>节点的解析会生成TransactionFactory实例；而对<code>&lt;dataSource></code>解析会生成datasouce实例，作为<code>&lt;environment></code>节点，会根据TransactionFactory和DataSource实例创建一个Environment对象，代码如下所示：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#204a87;font-weight:700>private</span> <span style=color:#204a87;font-weight:700>void</span> <span style=color:#000>environmentsElement</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>XNode</span> <span style=color:#000>context</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#204a87;font-weight:700>throws</span> <span style=color:#000>Exception</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+    <span style=color:#204a87;font-weight:700>if</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>context</span> <span style=color:#ce5c00;font-weight:700>!=</span> <span style=color:#204a87;font-weight:700>null</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+        <span style=color:#204a87;font-weight:700>if</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>environment</span> <span style=color:#ce5c00;font-weight:700>==</span> <span style=color:#204a87;font-weight:700>null</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+            <span style=color:#000>environment</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>context</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>getStringAttribute</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;default&#34;</span><span style=color:#ce5c00;font-weight:700>);</span>  
+        <span style=color:#ce5c00;font-weight:700>}</span>  
+        <span style=color:#204a87;font-weight:700>for</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>XNode</span> <span style=color:#000>child</span> <span style=color:#ce5c00;font-weight:700>:</span> <span style=color:#000>context</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>getChildren</span><span style=color:#ce5c00;font-weight:700>())</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+            <span style=color:#000>String</span> <span style=color:#000>id</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>child</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>getStringAttribute</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;id&#34;</span><span style=color:#ce5c00;font-weight:700>);</span>  
+            <span style=color:#8f5902;font-style:italic>//是和默认的环境相同时，解析之  
+</span><span style=color:#8f5902;font-style:italic></span>            <span style=color:#204a87;font-weight:700>if</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>isSpecifiedEnvironment</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>id</span><span style=color:#ce5c00;font-weight:700>))</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+                <span style=color:#8f5902;font-style:italic>//1.解析&lt;transactionManager&gt;节点，决定创建什么类型的TransactionFactory  
+</span><span style=color:#8f5902;font-style:italic></span>                <span style=color:#000>TransactionFactory</span> <span style=color:#000>txFactory</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>transactionManagerElement</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>child</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>evalNode</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;transactionManager&#34;</span><span style=color:#ce5c00;font-weight:700>));</span>  
+                <span style=color:#8f5902;font-style:italic>//2. 创建dataSource  
+</span><span style=color:#8f5902;font-style:italic></span>                <span style=color:#000>DataSourceFactory</span> <span style=color:#000>dsFactory</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>dataSourceElement</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>child</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>evalNode</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;dataSource&#34;</span><span style=color:#ce5c00;font-weight:700>));</span>  
+                <span style=color:#000>DataSource</span> <span style=color:#000>dataSource</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>dsFactory</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>getDataSource</span><span style=color:#ce5c00;font-weight:700>();</span>  
+                <span style=color:#8f5902;font-style:italic>//3. 使用了Environment内置的构造器Builder，传递id 事务工厂TransactionFactory和数据源DataSource  
+</span><span style=color:#8f5902;font-style:italic></span>                <span style=color:#000>Environment</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>Builder</span> <span style=color:#000>environmentBuilder</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>Environment</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>Builder</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>id</span><span style=color:#ce5c00;font-weight:700>)</span>  
+                <span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>transactionFactory</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>txFactory</span><span style=color:#ce5c00;font-weight:700>)</span>  
+                <span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>dataSource</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>dataSource</span><span style=color:#ce5c00;font-weight:700>);</span>  
+                <span style=color:#000>configuration</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>setEnvironment</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>environmentBuilder</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>build</span><span style=color:#ce5c00;font-weight:700>());</span>  
+            <span style=color:#ce5c00;font-weight:700>}</span>  
+        <span style=color:#ce5c00;font-weight:700>}</span>  
+    <span style=color:#ce5c00;font-weight:700>}</span>  
+<span style=color:#ce5c00;font-weight:700>}</span>  
+</code></pre></div><p>Environment表示着一个数据库的连接，生成后的Environment对象会被设置到Configuration实例中，以供后续的使用。</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211019223254.png style=display:block;width:80% alt=NAME align=center> </div>
+<p>上述一直在讲事务工厂TransactionFactory来创建的Transaction，现在让我们看一下MyBatis中的TransactionFactory的定义吧。</p>
+<h3 id=事务工厂-transactionfactory>事务工厂 TransactionFactory</h3>
+<p>事务工厂Transaction定义了创建Transaction的两个方法：一个是通过指定的Connection对象创建Transaction，另外是通过数据源DataSource来创建Transaction。与JDBC 和MANAGED两种Transaction相对应，TransactionFactory有两个对应的实现的子类：</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211019223330.png style=display:block;width:80% alt=NAME align=center> </div>
+<h3 id=事务transaction的创建>事务Transaction的创建</h3>
+<p>通过事务工厂TransactionFactory很容易获取到Transaction对象实例。我们以JdbcTransaction为例，看一下JdbcTransactionFactory是怎样生成JdbcTransaction的，代码如下：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>JdbcTransactionFactory</span> <span style=color:#204a87;font-weight:700>implements</span> <span style=color:#000>TransactionFactory</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+ 
+    <span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>void</span> <span style=color:#000>setProperties</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>Properties</span> <span style=color:#000>props</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+    <span style=color:#ce5c00;font-weight:700>}</span>  
+ 
+    <span style=color:#8f5902;font-style:italic>/** 
+</span><span style=color:#8f5902;font-style:italic>     * 根据给定的数据库连接Connection创建Transaction 
+</span><span style=color:#8f5902;font-style:italic>     * @param conn Existing database connection 
+</span><span style=color:#8f5902;font-style:italic>     * @return 
+</span><span style=color:#8f5902;font-style:italic>     */</span>  
+    <span style=color:#204a87;font-weight:700>public</span> <span style=color:#000>Transaction</span> <span style=color:#000>newTransaction</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>Connection</span> <span style=color:#000>conn</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+        <span style=color:#204a87;font-weight:700>return</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>JdbcTransaction</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>conn</span><span style=color:#ce5c00;font-weight:700>);</span>  
+    <span style=color:#ce5c00;font-weight:700>}</span>  
+ 
+    <span style=color:#8f5902;font-style:italic>/** 
+</span><span style=color:#8f5902;font-style:italic>     * 根据DataSource、隔离级别和是否自动提交创建Transacion 
+</span><span style=color:#8f5902;font-style:italic>     * 
+</span><span style=color:#8f5902;font-style:italic>     * @param ds 
+</span><span style=color:#8f5902;font-style:italic>     * @param level Desired isolation level 
+</span><span style=color:#8f5902;font-style:italic>     * @param autoCommit Desired autocommit 
+</span><span style=color:#8f5902;font-style:italic>     * @return 
+</span><span style=color:#8f5902;font-style:italic>     */</span>  
+    <span style=color:#204a87;font-weight:700>public</span> <span style=color:#000>Transaction</span> <span style=color:#000>newTransaction</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>DataSource</span> <span style=color:#000>ds</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>TransactionIsolationLevel</span> <span style=color:#000>level</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#204a87;font-weight:700>boolean</span> <span style=color:#000>autoCommit</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+        <span style=color:#204a87;font-weight:700>return</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>JdbcTransaction</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>ds</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>level</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>autoCommit</span><span style=color:#ce5c00;font-weight:700>);</span>  
+    <span style=color:#ce5c00;font-weight:700>}</span>  
+<span style=color:#ce5c00;font-weight:700>}</span>  
+</code></pre></div><p>如上说是，JdbcTransactionFactory会创建JDBC类型的Transaction，即JdbcTransaction。类似地，ManagedTransactionFactory也会创建ManagedTransaction。下面我们会分别深入JdbcTranaction 和ManagedTransaction，看它们到底是怎样实现事务管理的。</p>
+<h3 id=jdbctranscation>JdbcTranscation</h3>
+<p>JdbcTransaction直接使用JDBC的提交和回滚事务管理机制。它依赖与从dataSource中取得的连接connection 来管理transaction 的作用域，connection对象的获取被延迟到调用getConnection()方法。如果autocommit设置为on，开启状态的话，它会忽略commit和rollback。</p>
+<p>直观地讲，就是JdbcTransaction是使用的java.sql.Connection 上的commit和rollback功能，JdbcTransaction只是相当于对java.sql.Connection事务处理进行了一次包装（wrapper），Transaction的事务管理都是通过java.sql.Connection实现的。JdbcTransaction的代码实现如下：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>JdbcTransaction</span> <span style=color:#204a87;font-weight:700>implements</span> <span style=color:#000>Transaction</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+ 
+    <span style=color:#204a87;font-weight:700>private</span> <span style=color:#204a87;font-weight:700>static</span> <span style=color:#204a87;font-weight:700>final</span> <span style=color:#000>Log</span> <span style=color:#000>log</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>LogFactory</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>getLog</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>JdbcTransaction</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>class</span><span style=color:#ce5c00;font-weight:700>);</span>  
+ 
+    <span style=color:#8f5902;font-style:italic>//数据库连接  
+</span><span style=color:#8f5902;font-style:italic></span>    <span style=color:#204a87;font-weight:700>protected</span> <span style=color:#000>Connection</span> <span style=color:#000>connection</span><span style=color:#ce5c00;font-weight:700>;</span>  
+    <span style=color:#8f5902;font-style:italic>//数据源  
+</span><span style=color:#8f5902;font-style:italic></span>    <span style=color:#204a87;font-weight:700>protected</span> <span style=color:#000>DataSource</span> <span style=color:#000>dataSource</span><span style=color:#ce5c00;font-weight:700>;</span>  
+    <span style=color:#8f5902;font-style:italic>//隔离级别  
+</span><span style=color:#8f5902;font-style:italic></span>    <span style=color:#204a87;font-weight:700>protected</span> <span style=color:#000>TransactionIsolationLevel</span> <span style=color:#000>level</span><span style=color:#ce5c00;font-weight:700>;</span>  
+    <span style=color:#8f5902;font-style:italic>//是否为自动提交  
+</span><span style=color:#8f5902;font-style:italic></span>    <span style=color:#204a87;font-weight:700>protected</span> <span style=color:#204a87;font-weight:700>boolean</span> <span style=color:#000>autoCommmit</span><span style=color:#ce5c00;font-weight:700>;</span>  
+ 
+    <span style=color:#204a87;font-weight:700>public</span> <span style=color:#000>JdbcTransaction</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>DataSource</span> <span style=color:#000>ds</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>TransactionIsolationLevel</span> <span style=color:#000>desiredLevel</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#204a87;font-weight:700>boolean</span> <span style=color:#000>desiredAutoCommit</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+        <span style=color:#000>dataSource</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>ds</span><span style=color:#ce5c00;font-weight:700>;</span>  
+        <span style=color:#000>level</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>desiredLevel</span><span style=color:#ce5c00;font-weight:700>;</span>  
+        <span style=color:#000>autoCommmit</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>desiredAutoCommit</span><span style=color:#ce5c00;font-weight:700>;</span>  
+    <span style=color:#ce5c00;font-weight:700>}</span>  
+ 
+    <span style=color:#204a87;font-weight:700>public</span> <span style=color:#000>JdbcTransaction</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>Connection</span> <span style=color:#000>connection</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+        <span style=color:#204a87;font-weight:700>this</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>connection</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>connection</span><span style=color:#ce5c00;font-weight:700>;</span>  
+    <span style=color:#ce5c00;font-weight:700>}</span>  
+ 
+    <span style=color:#204a87;font-weight:700>public</span> <span style=color:#000>Connection</span> <span style=color:#000>getConnection</span><span style=color:#ce5c00;font-weight:700>()</span> <span style=color:#204a87;font-weight:700>throws</span> <span style=color:#000>SQLException</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+        <span style=color:#204a87;font-weight:700>if</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>connection</span> <span style=color:#ce5c00;font-weight:700>==</span> <span style=color:#204a87;font-weight:700>null</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+            <span style=color:#000>openConnection</span><span style=color:#ce5c00;font-weight:700>();</span>  
+        <span style=color:#ce5c00;font-weight:700>}</span>  
+        <span style=color:#204a87;font-weight:700>return</span> <span style=color:#000>connection</span><span style=color:#ce5c00;font-weight:700>;</span>  
+    <span style=color:#ce5c00;font-weight:700>}</span>  
+ 
+    <span style=color:#8f5902;font-style:italic>/** 
+</span><span style=color:#8f5902;font-style:italic>     * commit()功能 使用connection的commit() 
+</span><span style=color:#8f5902;font-style:italic>     * @throws SQLException 
+</span><span style=color:#8f5902;font-style:italic>     */</span>  
+    <span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>void</span> <span style=color:#000>commit</span><span style=color:#ce5c00;font-weight:700>()</span> <span style=color:#204a87;font-weight:700>throws</span> <span style=color:#000>SQLException</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+        <span style=color:#204a87;font-weight:700>if</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>connection</span> <span style=color:#ce5c00;font-weight:700>!=</span> <span style=color:#204a87;font-weight:700>null</span> <span style=color:#ce5c00;font-weight:700>&amp;&amp;</span> <span style=color:#ce5c00;font-weight:700>!</span><span style=color:#000>connection</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>getAutoCommit</span><span style=color:#ce5c00;font-weight:700>())</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+            <span style=color:#204a87;font-weight:700>if</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>log</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>isDebugEnabled</span><span style=color:#ce5c00;font-weight:700>())</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+                <span style=color:#000>log</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>debug</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;Committing JDBC Connection [&#34;</span> <span style=color:#ce5c00;font-weight:700>+</span> <span style=color:#000>connection</span> <span style=color:#ce5c00;font-weight:700>+</span> <span style=color:#4e9a06>&#34;]&#34;</span><span style=color:#ce5c00;font-weight:700>);</span>  
+            <span style=color:#ce5c00;font-weight:700>}</span>  
+            <span style=color:#000>connection</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>commit</span><span style=color:#ce5c00;font-weight:700>();</span>  
+        <span style=color:#ce5c00;font-weight:700>}</span>  
+    <span style=color:#ce5c00;font-weight:700>}</span>  
+ 
+    <span style=color:#8f5902;font-style:italic>/** 
+</span><span style=color:#8f5902;font-style:italic>     * rollback()功能 使用connection的rollback() 
+</span><span style=color:#8f5902;font-style:italic>     * @throws SQLException 
+</span><span style=color:#8f5902;font-style:italic>     */</span>  
+    <span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>void</span> <span style=color:#000>rollback</span><span style=color:#ce5c00;font-weight:700>()</span> <span style=color:#204a87;font-weight:700>throws</span> <span style=color:#000>SQLException</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+        <span style=color:#204a87;font-weight:700>if</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>connection</span> <span style=color:#ce5c00;font-weight:700>!=</span> <span style=color:#204a87;font-weight:700>null</span> <span style=color:#ce5c00;font-weight:700>&amp;&amp;</span> <span style=color:#ce5c00;font-weight:700>!</span><span style=color:#000>connection</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>getAutoCommit</span><span style=color:#ce5c00;font-weight:700>())</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+            <span style=color:#204a87;font-weight:700>if</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>log</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>isDebugEnabled</span><span style=color:#ce5c00;font-weight:700>())</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+                <span style=color:#000>log</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>debug</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;Rolling back JDBC Connection [&#34;</span> <span style=color:#ce5c00;font-weight:700>+</span> <span style=color:#000>connection</span> <span style=color:#ce5c00;font-weight:700>+</span> <span style=color:#4e9a06>&#34;]&#34;</span><span style=color:#ce5c00;font-weight:700>);</span>  
+            <span style=color:#ce5c00;font-weight:700>}</span>  
+            <span style=color:#000>connection</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>rollback</span><span style=color:#ce5c00;font-weight:700>();</span>  
+        <span style=color:#ce5c00;font-weight:700>}</span>  
+    <span style=color:#ce5c00;font-weight:700>}</span>  
+ 
+    <span style=color:#8f5902;font-style:italic>/** 
+</span><span style=color:#8f5902;font-style:italic>     * close()功能 使用connection的close() 
+</span><span style=color:#8f5902;font-style:italic>     * @throws SQLException 
+</span><span style=color:#8f5902;font-style:italic>     */</span>  
+    <span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>void</span> <span style=color:#000>close</span><span style=color:#ce5c00;font-weight:700>()</span> <span style=color:#204a87;font-weight:700>throws</span> <span style=color:#000>SQLException</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+        <span style=color:#204a87;font-weight:700>if</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>connection</span> <span style=color:#ce5c00;font-weight:700>!=</span> <span style=color:#204a87;font-weight:700>null</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+            <span style=color:#000>resetAutoCommit</span><span style=color:#ce5c00;font-weight:700>();</span>  
+            <span style=color:#204a87;font-weight:700>if</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>log</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>isDebugEnabled</span><span style=color:#ce5c00;font-weight:700>())</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+                <span style=color:#000>log</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>debug</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;Closing JDBC Connection [&#34;</span> <span style=color:#ce5c00;font-weight:700>+</span> <span style=color:#000>connection</span> <span style=color:#ce5c00;font-weight:700>+</span> <span style=color:#4e9a06>&#34;]&#34;</span><span style=color:#ce5c00;font-weight:700>);</span>  
+            <span style=color:#ce5c00;font-weight:700>}</span>  
+            <span style=color:#000>connection</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>close</span><span style=color:#ce5c00;font-weight:700>();</span>  
+        <span style=color:#ce5c00;font-weight:700>}</span>  
+    <span style=color:#ce5c00;font-weight:700>}</span>  
+ 
+    <span style=color:#204a87;font-weight:700>protected</span> <span style=color:#204a87;font-weight:700>void</span> <span style=color:#000>setDesiredAutoCommit</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#204a87;font-weight:700>boolean</span> <span style=color:#000>desiredAutoCommit</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+        <span style=color:#204a87;font-weight:700>try</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+            <span style=color:#204a87;font-weight:700>if</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>connection</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>getAutoCommit</span><span style=color:#ce5c00;font-weight:700>()</span> <span style=color:#ce5c00;font-weight:700>!=</span> <span style=color:#000>desiredAutoCommit</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+                <span style=color:#204a87;font-weight:700>if</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>log</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>isDebugEnabled</span><span style=color:#ce5c00;font-weight:700>())</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+                    <span style=color:#000>log</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>debug</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;Setting autocommit to &#34;</span> <span style=color:#ce5c00;font-weight:700>+</span> <span style=color:#000>desiredAutoCommit</span> <span style=color:#ce5c00;font-weight:700>+</span> <span style=color:#4e9a06>&#34; on JDBC Connection [&#34;</span> <span style=color:#ce5c00;font-weight:700>+</span> <span style=color:#000>connection</span> <span style=color:#ce5c00;font-weight:700>+</span> <span style=color:#4e9a06>&#34;]&#34;</span><span style=color:#ce5c00;font-weight:700>);</span>  
+                <span style=color:#ce5c00;font-weight:700>}</span>  
+                <span style=color:#000>connection</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>setAutoCommit</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>desiredAutoCommit</span><span style=color:#ce5c00;font-weight:700>);</span>  
+            <span style=color:#ce5c00;font-weight:700>}</span>  
+        <span style=color:#ce5c00;font-weight:700>}</span> <span style=color:#204a87;font-weight:700>catch</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>SQLException</span> <span style=color:#000>e</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+            <span style=color:#8f5902;font-style:italic>// Only a very poorly implemented driver would fail here,  
+</span><span style=color:#8f5902;font-style:italic></span>            <span style=color:#8f5902;font-style:italic>// and there&#39;s not much we can do about that.  
+</span><span style=color:#8f5902;font-style:italic></span>            <span style=color:#204a87;font-weight:700>throw</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>TransactionException</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;Error configuring AutoCommit.  &#34;</span>  
+             <span style=color:#ce5c00;font-weight:700>+</span> <span style=color:#4e9a06>&#34;Your driver may not support getAutoCommit() or setAutoCommit(). &#34;</span>  
+             <span style=color:#ce5c00;font-weight:700>+</span> <span style=color:#4e9a06>&#34;Requested setting: &#34;</span> <span style=color:#ce5c00;font-weight:700>+</span> <span style=color:#000>desiredAutoCommit</span> <span style=color:#ce5c00;font-weight:700>+</span> <span style=color:#4e9a06>&#34;.  Cause: &#34;</span> <span style=color:#ce5c00;font-weight:700>+</span> <span style=color:#000>e</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>e</span><span style=color:#ce5c00;font-weight:700>);</span>  
+        <span style=color:#ce5c00;font-weight:700>}</span>  
+    <span style=color:#ce5c00;font-weight:700>}</span>  
+ 
+    <span style=color:#204a87;font-weight:700>protected</span> <span style=color:#204a87;font-weight:700>void</span> <span style=color:#000>resetAutoCommit</span><span style=color:#ce5c00;font-weight:700>()</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+        <span style=color:#204a87;font-weight:700>try</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+            <span style=color:#204a87;font-weight:700>if</span> <span style=color:#ce5c00;font-weight:700>(!</span><span style=color:#000>connection</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>getAutoCommit</span><span style=color:#ce5c00;font-weight:700>())</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+                <span style=color:#8f5902;font-style:italic>// MyBatis does not call commit/rollback on a connection if just selects were performed.  
+</span><span style=color:#8f5902;font-style:italic></span>                <span style=color:#8f5902;font-style:italic>// Some databases start transactions with select statements  
+</span><span style=color:#8f5902;font-style:italic></span>                <span style=color:#8f5902;font-style:italic>// and they mandate a commit/rollback before closing the connection.  
+</span><span style=color:#8f5902;font-style:italic></span>                <span style=color:#8f5902;font-style:italic>// A workaround is setting the autocommit to true before closing the connection.  
+</span><span style=color:#8f5902;font-style:italic></span>                <span style=color:#8f5902;font-style:italic>// Sybase throws an exception here.  
+</span><span style=color:#8f5902;font-style:italic></span>                <span style=color:#204a87;font-weight:700>if</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>log</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>isDebugEnabled</span><span style=color:#ce5c00;font-weight:700>())</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+                    <span style=color:#000>log</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>debug</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;Resetting autocommit to true on JDBC Connection [&#34;</span> <span style=color:#ce5c00;font-weight:700>+</span> <span style=color:#000>connection</span> <span style=color:#ce5c00;font-weight:700>+</span> <span style=color:#4e9a06>&#34;]&#34;</span><span style=color:#ce5c00;font-weight:700>);</span>  
+                <span style=color:#ce5c00;font-weight:700>}</span>  
+                <span style=color:#000>connection</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>setAutoCommit</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#204a87;font-weight:700>true</span><span style=color:#ce5c00;font-weight:700>);</span>  
+            <span style=color:#ce5c00;font-weight:700>}</span>  
+        <span style=color:#ce5c00;font-weight:700>}</span> <span style=color:#204a87;font-weight:700>catch</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>SQLException</span> <span style=color:#000>e</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+            <span style=color:#000>log</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>debug</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;Error resetting autocommit to true &#34;</span>  
+             <span style=color:#ce5c00;font-weight:700>+</span> <span style=color:#4e9a06>&#34;before closing the connection.  Cause: &#34;</span> <span style=color:#ce5c00;font-weight:700>+</span> <span style=color:#000>e</span><span style=color:#ce5c00;font-weight:700>);</span>  
+        <span style=color:#ce5c00;font-weight:700>}</span>  
+    <span style=color:#ce5c00;font-weight:700>}</span>  
+ 
+    <span style=color:#204a87;font-weight:700>protected</span> <span style=color:#204a87;font-weight:700>void</span> <span style=color:#000>openConnection</span><span style=color:#ce5c00;font-weight:700>()</span> <span style=color:#204a87;font-weight:700>throws</span> <span style=color:#000>SQLException</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+        <span style=color:#204a87;font-weight:700>if</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>log</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>isDebugEnabled</span><span style=color:#ce5c00;font-weight:700>())</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+            <span style=color:#000>log</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>debug</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;Opening JDBC Connection&#34;</span><span style=color:#ce5c00;font-weight:700>);</span>  
+        <span style=color:#ce5c00;font-weight:700>}</span>  
+        <span style=color:#000>connection</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>dataSource</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>getConnection</span><span style=color:#ce5c00;font-weight:700>();</span>  
+        <span style=color:#204a87;font-weight:700>if</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>level</span> <span style=color:#ce5c00;font-weight:700>!=</span> <span style=color:#204a87;font-weight:700>null</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+            <span style=color:#000>connection</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>setTransactionIsolation</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>level</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>getLevel</span><span style=color:#ce5c00;font-weight:700>());</span>  
+        <span style=color:#ce5c00;font-weight:700>}</span>  
+        <span style=color:#000>setDesiredAutoCommit</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>autoCommmit</span><span style=color:#ce5c00;font-weight:700>);</span>  
+    <span style=color:#ce5c00;font-weight:700>}</span>  
+ 
+<span style=color:#ce5c00;font-weight:700>}</span>  
+</code></pre></div><h3 id=managedtransaction>ManagedTransaction</h3>
+<p>ManagedTransaction让容器来管理事务Transaction的整个生命周期，意思就是说，使用ManagedTransaction的commit和rollback功能不会对事务有任何的影响，它什么都不会做，它将事务管理的权利移交给了容器来实现。看如下Managed的实现代码大家就会一目了然：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#8f5902;font-style:italic>/** 
+</span><span style=color:#8f5902;font-style:italic> *  
+</span><span style=color:#8f5902;font-style:italic> * 让容器管理事务transaction的整个生命周期 
+</span><span style=color:#8f5902;font-style:italic> * connection的获取延迟到getConnection()方法的调用 
+</span><span style=color:#8f5902;font-style:italic> * 忽略所有的commit和rollback操作 
+</span><span style=color:#8f5902;font-style:italic> * 默认情况下，可以关闭一个连接connection，也可以配置它不可以关闭一个连接 
+</span><span style=color:#8f5902;font-style:italic> * 让容器来管理transaction的整个生命周期 
+</span><span style=color:#8f5902;font-style:italic> * @see ManagedTransactionFactory 
+</span><span style=color:#8f5902;font-style:italic> */</span>   
+<span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>ManagedTransaction</span> <span style=color:#204a87;font-weight:700>implements</span> <span style=color:#000>Transaction</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+ 
+    <span style=color:#204a87;font-weight:700>private</span> <span style=color:#204a87;font-weight:700>static</span> <span style=color:#204a87;font-weight:700>final</span> <span style=color:#000>Log</span> <span style=color:#000>log</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>LogFactory</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>getLog</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>ManagedTransaction</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>class</span><span style=color:#ce5c00;font-weight:700>);</span>  
+ 
+    <span style=color:#204a87;font-weight:700>private</span> <span style=color:#000>DataSource</span> <span style=color:#000>dataSource</span><span style=color:#ce5c00;font-weight:700>;</span>  
+    <span style=color:#204a87;font-weight:700>private</span> <span style=color:#000>TransactionIsolationLevel</span> <span style=color:#000>level</span><span style=color:#ce5c00;font-weight:700>;</span>  
+    <span style=color:#204a87;font-weight:700>private</span> <span style=color:#000>Connection</span> <span style=color:#000>connection</span><span style=color:#ce5c00;font-weight:700>;</span>  
+    <span style=color:#204a87;font-weight:700>private</span> <span style=color:#204a87;font-weight:700>boolean</span> <span style=color:#000>closeConnection</span><span style=color:#ce5c00;font-weight:700>;</span>  
+ 
+    <span style=color:#204a87;font-weight:700>public</span> <span style=color:#000>ManagedTransaction</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>Connection</span> <span style=color:#000>connection</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#204a87;font-weight:700>boolean</span> <span style=color:#000>closeConnection</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+        <span style=color:#204a87;font-weight:700>this</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>connection</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>connection</span><span style=color:#ce5c00;font-weight:700>;</span>  
+        <span style=color:#204a87;font-weight:700>this</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>closeConnection</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>closeConnection</span><span style=color:#ce5c00;font-weight:700>;</span>  
+    <span style=color:#ce5c00;font-weight:700>}</span>  
+ 
+    <span style=color:#204a87;font-weight:700>public</span> <span style=color:#000>ManagedTransaction</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>DataSource</span> <span style=color:#000>ds</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>TransactionIsolationLevel</span> <span style=color:#000>level</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#204a87;font-weight:700>boolean</span> <span style=color:#000>closeConnection</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+        <span style=color:#204a87;font-weight:700>this</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>dataSource</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>ds</span><span style=color:#ce5c00;font-weight:700>;</span>  
+        <span style=color:#204a87;font-weight:700>this</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>level</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>level</span><span style=color:#ce5c00;font-weight:700>;</span>  
+        <span style=color:#204a87;font-weight:700>this</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>closeConnection</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>closeConnection</span><span style=color:#ce5c00;font-weight:700>;</span>  
+    <span style=color:#ce5c00;font-weight:700>}</span>  
+ 
+    <span style=color:#204a87;font-weight:700>public</span> <span style=color:#000>Connection</span> <span style=color:#000>getConnection</span><span style=color:#ce5c00;font-weight:700>()</span> <span style=color:#204a87;font-weight:700>throws</span> <span style=color:#000>SQLException</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+        <span style=color:#204a87;font-weight:700>if</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#204a87;font-weight:700>this</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>connection</span> <span style=color:#ce5c00;font-weight:700>==</span> <span style=color:#204a87;font-weight:700>null</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+            <span style=color:#000>openConnection</span><span style=color:#ce5c00;font-weight:700>();</span>  
+        <span style=color:#ce5c00;font-weight:700>}</span>  
+        <span style=color:#204a87;font-weight:700>return</span> <span style=color:#204a87;font-weight:700>this</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>connection</span><span style=color:#ce5c00;font-weight:700>;</span>  
+    <span style=color:#ce5c00;font-weight:700>}</span>  
+ 
+    <span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>void</span> <span style=color:#000>commit</span><span style=color:#ce5c00;font-weight:700>()</span> <span style=color:#204a87;font-weight:700>throws</span> <span style=color:#000>SQLException</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+        <span style=color:#8f5902;font-style:italic>// Does nothing  
+</span><span style=color:#8f5902;font-style:italic></span>    <span style=color:#ce5c00;font-weight:700>}</span>  
+ 
+    <span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>void</span> <span style=color:#000>rollback</span><span style=color:#ce5c00;font-weight:700>()</span> <span style=color:#204a87;font-weight:700>throws</span> <span style=color:#000>SQLException</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+        <span style=color:#8f5902;font-style:italic>// Does nothing  
+</span><span style=color:#8f5902;font-style:italic></span>    <span style=color:#ce5c00;font-weight:700>}</span>  
+ 
+    <span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>void</span> <span style=color:#000>close</span><span style=color:#ce5c00;font-weight:700>()</span> <span style=color:#204a87;font-weight:700>throws</span> <span style=color:#000>SQLException</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+        <span style=color:#204a87;font-weight:700>if</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#204a87;font-weight:700>this</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>closeConnection</span> <span style=color:#ce5c00;font-weight:700>&amp;&amp;</span> <span style=color:#204a87;font-weight:700>this</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>connection</span> <span style=color:#ce5c00;font-weight:700>!=</span> <span style=color:#204a87;font-weight:700>null</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+            <span style=color:#204a87;font-weight:700>if</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>log</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>isDebugEnabled</span><span style=color:#ce5c00;font-weight:700>())</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+                <span style=color:#000>log</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>debug</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;Closing JDBC Connection [&#34;</span> <span style=color:#ce5c00;font-weight:700>+</span> <span style=color:#204a87;font-weight:700>this</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>connection</span> <span style=color:#ce5c00;font-weight:700>+</span> <span style=color:#4e9a06>&#34;]&#34;</span><span style=color:#ce5c00;font-weight:700>);</span>  
+            <span style=color:#ce5c00;font-weight:700>}</span>  
+            <span style=color:#204a87;font-weight:700>this</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>connection</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>close</span><span style=color:#ce5c00;font-weight:700>();</span>  
+        <span style=color:#ce5c00;font-weight:700>}</span>
+    <span style=color:#ce5c00;font-weight:700>}</span>  
+ 
+    <span style=color:#204a87;font-weight:700>protected</span> <span style=color:#204a87;font-weight:700>void</span> <span style=color:#000>openConnection</span><span style=color:#ce5c00;font-weight:700>()</span> <span style=color:#204a87;font-weight:700>throws</span> <span style=color:#000>SQLException</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+        <span style=color:#204a87;font-weight:700>if</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>log</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>isDebugEnabled</span><span style=color:#ce5c00;font-weight:700>())</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+            <span style=color:#000>log</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>debug</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;Opening JDBC Connection&#34;</span><span style=color:#ce5c00;font-weight:700>);</span>  
+        <span style=color:#ce5c00;font-weight:700>}</span>  
+        <span style=color:#204a87;font-weight:700>this</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>connection</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>this</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>dataSource</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>getConnection</span><span style=color:#ce5c00;font-weight:700>();</span>  
+        <span style=color:#204a87;font-weight:700>if</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#204a87;font-weight:700>this</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>level</span> <span style=color:#ce5c00;font-weight:700>!=</span> <span style=color:#204a87;font-weight:700>null</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+            <span style=color:#204a87;font-weight:700>this</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>connection</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>setTransactionIsolation</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#204a87;font-weight:700>this</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>level</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>getLevel</span><span style=color:#ce5c00;font-weight:700>());</span>  
+        <span style=color:#ce5c00;font-weight:700>}</span>  
+    <span style=color:#ce5c00;font-weight:700>}</span>
+<span style=color:#ce5c00;font-weight:700>}</span> 
+</code></pre></div><p>注意：如果我们使用MyBatis构建本地程序，即不是WEB程序，若将type设置成"MANAGED&rdquo;，那么，我们执行的任何update操作，即使我们最后执行了commit操作，数据也不会保留，不会对数据库造成任何影响。因为我们将MyBatis配置成了“MANAGED”，即MyBatis自己不管理事务，而我们又是运行的本地程序，没有事务管理功能，所以对数据库的update操作都是无效的。</p>
+</div>
+<div class=td-content style=page-break-before:always>
+<h1 id=pg-7d266cedb46af8162e4941805ad7b1a0>16 - CH16-一级缓存原理</h1>
+<h2 id=什么是一级缓存>什么是一级缓存？</h2>
+<p>每当我们使用MyBatis开启一次和数据库的会话，MyBatis会创建出一个SqlSession对象表示一次数据库会话。</p>
+<p>在对数据库的一次会话中，我们有可能会反复地执行完全相同的查询语句，如果不采取一些措施的话，每一次查询都会查询一次数据库,而我们在极短的时间内做了完全相同的查询，那么它们的结果极有可能完全相同，由于查询一次数据库的代价很大，这有可能造成很大的资源浪费。</p>
+<p>为了解决这一问题，减少资源的浪费，MyBatis会在表示会话的SqlSession对象中建立一个简单的缓存，将每次查询到的结果结果缓存起来，当下次查询的时候，如果判断先前有个完全一样的查询，会直接从缓存中直接将结果取出，返回给用户，不需要再进行一次数据库查询了。</p>
+<p>如下图所示，MyBatis一次会话: 一个SqlSession对象中创建一个本地缓存(local cache)，对于每一次查询，都会尝试根据查询的条件去本地缓存中查找是否在缓存中，如果在缓存中，就直接从缓存中取出，然后返回给用户；否则，从数据库读取数据，将查询结果存入缓存并返回给用户。</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211019223514.png style=display:block;width:80% alt=NAME align=center> </div>
+<p>对于会话（Session）级别的数据缓存，我们称之为一级数据缓存，简称一级缓存。</p>
+<h2 id=mybatis中的一级缓存是怎样组织的>MyBatis中的一级缓存是怎样组织的？</h2>
+<blockquote>
+<p>即SqlSession中的缓存是怎样组织的？由于MyBatis使用SqlSession对象表示一次数据库的会话，那么，对于会话级别的一级缓存也应该是在SqlSession中控制的。</p>
+</blockquote>
+<p>实际上, MyBatis只是一个MyBatis对外的接口，SqlSession将它的工作交给了Executor执行器这个角色来完成，负责完成对数据库的各种操作。当创建了一个SqlSession对象时，MyBatis会为这个SqlSession对象创建一个新的Executor执行器，而缓存信息就被维护在这个Executor执行器中，MyBatis将缓存和对缓存相关的操作封装成了Cache接口中。SqlSession、Executor、Cache之间的关系如下列类图所示：</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211019223551.png style=display:block;width:80% alt=NAME align=center> </div>
+<p>如上述的类图所示，Executor接口的实现类BaseExecutor中拥有一个Cache接口的实现类PerpetualCache，则对于BaseExecutor对象而言，它将使用PerpetualCache对象维护缓存。</p>
+<p>综上，SqlSession对象、Executor对象、Cache对象之间的关系如下图所示：</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211019223604.png style=display:block;width:80% alt=NAME align=center> </div>
+<p>由于Session级别的一级缓存实际上就是使用PerpetualCache维护的，那么PerpetualCache是怎样实现的呢？</p>
+<p>PerpetualCache实现原理其实很简单，其内部就是通过一个简单的<code>HashMap&lt;k,v></code> 来实现的，没有其他的任何限制。如下是PerpetualCache的实现代码：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#204a87;font-weight:700>package</span> <span style=color:#000>org.apache.ibatis.cache.impl</span><span style=color:#ce5c00;font-weight:700>;</span>  
+  
+<span style=color:#204a87;font-weight:700>import</span> <span style=color:#000>java.util.HashMap</span><span style=color:#ce5c00;font-weight:700>;</span>  
+<span style=color:#204a87;font-weight:700>import</span> <span style=color:#000>java.util.Map</span><span style=color:#ce5c00;font-weight:700>;</span>  
+<span style=color:#204a87;font-weight:700>import</span> <span style=color:#000>java.util.concurrent.locks.ReadWriteLock</span><span style=color:#ce5c00;font-weight:700>;</span>  
+  
+<span style=color:#204a87;font-weight:700>import</span> <span style=color:#000>org.apache.ibatis.cache.Cache</span><span style=color:#ce5c00;font-weight:700>;</span>  
+<span style=color:#204a87;font-weight:700>import</span> <span style=color:#000>org.apache.ibatis.cache.CacheException</span><span style=color:#ce5c00;font-weight:700>;</span>  
+  
+<span style=color:#8f5902;font-style:italic>/** 
+</span><span style=color:#8f5902;font-style:italic> * 使用简单的HashMap来维护缓存 
+</span><span style=color:#8f5902;font-style:italic> * @author Clinton Begin 
+</span><span style=color:#8f5902;font-style:italic> */</span>  
+<span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>PerpetualCache</span> <span style=color:#204a87;font-weight:700>implements</span> <span style=color:#000>Cache</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+  
+  <span style=color:#204a87;font-weight:700>private</span> <span style=color:#000>String</span> <span style=color:#000>id</span><span style=color:#ce5c00;font-weight:700>;</span>  
+  
+  <span style=color:#204a87;font-weight:700>private</span> <span style=color:#000>Map</span><span style=color:#ce5c00;font-weight:700>&lt;</span><span style=color:#000>Object</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>Object</span><span style=color:#ce5c00;font-weight:700>&gt;</span> <span style=color:#000>cache</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>HashMap</span><span style=color:#ce5c00;font-weight:700>&lt;</span><span style=color:#000>Object</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>Object</span><span style=color:#ce5c00;font-weight:700>&gt;();</span>  
+  
+  <span style=color:#204a87;font-weight:700>public</span> <span style=color:#000>PerpetualCache</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>String</span> <span style=color:#000>id</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+    <span style=color:#204a87;font-weight:700>this</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>id</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>id</span><span style=color:#ce5c00;font-weight:700>;</span>  
+  <span style=color:#ce5c00;font-weight:700>}</span>  
+  
+  <span style=color:#204a87;font-weight:700>public</span> <span style=color:#000>String</span> <span style=color:#000>getId</span><span style=color:#ce5c00;font-weight:700>()</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+    <span style=color:#204a87;font-weight:700>return</span> <span style=color:#000>id</span><span style=color:#ce5c00;font-weight:700>;</span>  
+  <span style=color:#ce5c00;font-weight:700>}</span>  
+  
+  <span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>getSize</span><span style=color:#ce5c00;font-weight:700>()</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+    <span style=color:#204a87;font-weight:700>return</span> <span style=color:#000>cache</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>size</span><span style=color:#ce5c00;font-weight:700>();</span>  
+  <span style=color:#ce5c00;font-weight:700>}</span>  
+  
+  <span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>void</span> <span style=color:#000>putObject</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>Object</span> <span style=color:#000>key</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>Object</span> <span style=color:#000>value</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+    <span style=color:#000>cache</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>put</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>key</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>value</span><span style=color:#ce5c00;font-weight:700>);</span>  
+  <span style=color:#ce5c00;font-weight:700>}</span>  
+  
+  <span style=color:#204a87;font-weight:700>public</span> <span style=color:#000>Object</span> <span style=color:#000>getObject</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>Object</span> <span style=color:#000>key</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+    <span style=color:#204a87;font-weight:700>return</span> <span style=color:#000>cache</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>get</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>key</span><span style=color:#ce5c00;font-weight:700>);</span>  
+  <span style=color:#ce5c00;font-weight:700>}</span>  
+  
+  <span style=color:#204a87;font-weight:700>public</span> <span style=color:#000>Object</span> <span style=color:#000>removeObject</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>Object</span> <span style=color:#000>key</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+    <span style=color:#204a87;font-weight:700>return</span> <span style=color:#000>cache</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>remove</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>key</span><span style=color:#ce5c00;font-weight:700>);</span>  
+  <span style=color:#ce5c00;font-weight:700>}</span>  
+  
+  <span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>void</span> <span style=color:#000>clear</span><span style=color:#ce5c00;font-weight:700>()</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+    <span style=color:#000>cache</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>clear</span><span style=color:#ce5c00;font-weight:700>();</span>  
+  <span style=color:#ce5c00;font-weight:700>}</span>  
+  
+  <span style=color:#204a87;font-weight:700>public</span> <span style=color:#000>ReadWriteLock</span> <span style=color:#000>getReadWriteLock</span><span style=color:#ce5c00;font-weight:700>()</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+    <span style=color:#204a87;font-weight:700>return</span> <span style=color:#204a87;font-weight:700>null</span><span style=color:#ce5c00;font-weight:700>;</span>  
+  <span style=color:#ce5c00;font-weight:700>}</span>  
+  
+  <span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>boolean</span> <span style=color:#000>equals</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>Object</span> <span style=color:#000>o</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+    <span style=color:#204a87;font-weight:700>if</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>getId</span><span style=color:#ce5c00;font-weight:700>()</span> <span style=color:#ce5c00;font-weight:700>==</span> <span style=color:#204a87;font-weight:700>null</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#204a87;font-weight:700>throw</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>CacheException</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;Cache instances require an ID.&#34;</span><span style=color:#ce5c00;font-weight:700>);</span>  
+    <span style=color:#204a87;font-weight:700>if</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#204a87;font-weight:700>this</span> <span style=color:#ce5c00;font-weight:700>==</span> <span style=color:#000>o</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#204a87;font-weight:700>return</span> <span style=color:#204a87;font-weight:700>true</span><span style=color:#ce5c00;font-weight:700>;</span>  
+    <span style=color:#204a87;font-weight:700>if</span> <span style=color:#ce5c00;font-weight:700>(!(</span><span style=color:#000>o</span> <span style=color:#204a87;font-weight:700>instanceof</span> <span style=color:#000>Cache</span><span style=color:#ce5c00;font-weight:700>))</span> <span style=color:#204a87;font-weight:700>return</span> <span style=color:#204a87;font-weight:700>false</span><span style=color:#ce5c00;font-weight:700>;</span>  
+  
+    <span style=color:#000>Cache</span> <span style=color:#000>otherCache</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>Cache</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#000>o</span><span style=color:#ce5c00;font-weight:700>;</span>  
+    <span style=color:#204a87;font-weight:700>return</span> <span style=color:#000>getId</span><span style=color:#ce5c00;font-weight:700>().</span><span style=color:#c4a000>equals</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>otherCache</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>getId</span><span style=color:#ce5c00;font-weight:700>());</span>  
+  <span style=color:#ce5c00;font-weight:700>}</span>  
+  
+  <span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>hashCode</span><span style=color:#ce5c00;font-weight:700>()</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+    <span style=color:#204a87;font-weight:700>if</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>getId</span><span style=color:#ce5c00;font-weight:700>()</span> <span style=color:#ce5c00;font-weight:700>==</span> <span style=color:#204a87;font-weight:700>null</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#204a87;font-weight:700>throw</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>CacheException</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;Cache instances require an ID.&#34;</span><span style=color:#ce5c00;font-weight:700>);</span>  
+    <span style=color:#204a87;font-weight:700>return</span> <span style=color:#000>getId</span><span style=color:#ce5c00;font-weight:700>().</span><span style=color:#c4a000>hashCode</span><span style=color:#ce5c00;font-weight:700>();</span>  
+  <span style=color:#ce5c00;font-weight:700>}</span>  
+  
+<span style=color:#ce5c00;font-weight:700>}</span> 
+</code></pre></div><h2 id=一级缓存的生命周期有多长>一级缓存的生命周期有多长？</h2>
+<p>MyBatis在开启一个数据库会话时，会创建一个新的SqlSession对象，SqlSession对象中会有一个新的Executor对象，Executor对象中持有一个新的PerpetualCache对象；当会话结束时，SqlSession对象及其内部的Executor对象还有PerpetualCache对象也一并释放掉。</p>
+<ul>
+<li>如果SqlSession调用了close()方法，会释放掉一级缓存PerpetualCache对象，一级缓存将不可用；</li>
+<li>如果SqlSession调用了clearCache()，会清空PerpetualCache对象中的数据，但是该对象仍可使用；</li>
+<li>SqlSession中执行了任何一个update操作(update()、delete()、insert()) ，都会清空PerpetualCache对象的数据，但是该对象可以继续使用；</li>
+</ul>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211019223620.png style=display:block;width:80% alt=NAME align=center> </div>
+<h2 id=sqlsession-一级缓存的工作流程>SqlSession 一级缓存的工作流程</h2>
+<ul>
+<li>对于某个查询，根据statementId,params,rowBounds来构建一个key值，根据这个key值去缓存Cache中取出对应的key值存储的缓存结果；</li>
+<li>判断从Cache中根据特定的key值取的数据数据是否为空，即是否命中；</li>
+<li>如果命中，则直接将缓存结果返回；</li>
+<li>如果没命中：
+<ul>
+<li>去数据库中查询数据，得到查询结果；</li>
+<li>将key和查询到的结果分别作为key,value对存储到Cache中；</li>
+<li>将查询结果返回；</li>
+</ul>
+</li>
+<li>结束。</li>
+</ul>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211019223633.png style=display:block;width:80% alt=NAME align=center> </div>
+<h2 id=cache接口的设计以及cachekey的定义>Cache接口的设计以及CacheKey的定义</h2>
+<p>如下图所示，MyBatis定义了一个org.apache.ibatis.cache.Cache接口作为其Cache提供者的SPI(Service Provider Interface) ，所有的MyBatis内部的Cache缓存，都应该实现这一接口。MyBatis定义了一个PerpetualCache实现类实现了Cache接口，实际上，在SqlSession对象里的Executor对象内维护的Cache类型实例对象，就是PerpetualCache子类创建的。</p>
+<p>（MyBatis内部还有很多Cache接口的实现，一级缓存只会涉及到这一个PerpetualCache子类，Cache的其他实现将会放到二级缓存中介绍）。</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/mybatis-y-cache-6.png style=display:block;width:80% alt=NAME align=center> </div>
+<p>我们知道，Cache最核心的实现其实就是一个Map，将本次查询使用的特征值作为key，将查询结果作为value存储到Map中。现在最核心的问题出现了：怎样来确定一次查询的特征值？换句话说就是：怎样判断某两次查询是完全相同的查询？也可以这样说：如何确定Cache中的key值？</p>
+<p>MyBatis认为，对于两次查询，如果以下条件都完全一样，那么就认为它们是完全相同的两次查询：</p>
+<ul>
+<li>传入的 statementId</li>
+<li>查询时要求的结果集中的结果范围 （结果的范围通过rowBounds.offset和rowBounds.limit表示）</li>
+<li>这次查询所产生的最终要传递给JDBC java.sql.Preparedstatement的Sql语句字符串（boundSql.getSql() ）</li>
+<li>传递给java.sql.Statement要设置的参数值</li>
+</ul>
+<p><strong>现在分别解释上述四个条件</strong>：</p>
+<ul>
+<li>传入的statementId，对于MyBatis而言，你要使用它，必须需要一个statementId，它代表着你将执行什么样的Sql；</li>
+<li>MyBatis自身提供的分页功能是通过RowBounds来实现的，它通过rowBounds.offset和rowBounds.limit来过滤查询出来的结果集，这种分页功能是基于查询结果的再过滤，而不是进行数据库的物理分页；</li>
+<li>由于MyBatis底层还是依赖于JDBC实现的，那么，对于两次完全一模一样的查询，MyBatis要保证对于底层JDBC而言，也是完全一致的查询才行。而对于JDBC而言，两次查询，只要传入给JDBC的SQL语句完全一致，传入的参数也完全一致，就认为是两次查询是完全一致的。</li>
+<li>上述的第3个条件正是要求保证传递给JDBC的SQL语句完全一致；第4条则是保证传递给JDBC的参数也完全一致；即3、4两条MyBatis最本质的要求就是：调用JDBC的时候，传入的SQL语句要完全相同，传递给JDBC的参数值也要完全相同。</li>
+</ul>
+<p>综上所述,CacheKey由以下条件决定：<strong>statementId + rowBounds + 传递给JDBC的SQL + 传递给JDBC的参数值</strong>；</p>
+<ul>
+<li><strong>CacheKey的创建</strong></li>
+</ul>
+<p>对于每次的查询请求，Executor都会根据传递的参数信息以及动态生成的SQL语句，将上面的条件根据一定的计算规则，创建一个对应的CacheKey对象。</p>
+<p>我们知道创建CacheKey的目的，就两个：</p>
+<ul>
+<li>根据CacheKey作为key,去Cache缓存中查找缓存结果；</li>
+<li>如果查找缓存命中失败，则通过此CacheKey作为key，将从数据库查询到的结果作为value，组成key,value对存储到Cache缓存中；</li>
+</ul>
+<p>CacheKey的构建被放置到了Executor接口的实现类BaseExecutor中，定义如下：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#8f5902;font-style:italic>/** 
+</span><span style=color:#8f5902;font-style:italic> * 所属类:  org.apache.ibatis.executor.BaseExecutor 
+</span><span style=color:#8f5902;font-style:italic> * 功能   :   根据传入信息构建CacheKey 
+</span><span style=color:#8f5902;font-style:italic> */</span>  
+<span style=color:#204a87;font-weight:700>public</span> <span style=color:#000>CacheKey</span> <span style=color:#000>createCacheKey</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>MappedStatement</span> <span style=color:#000>ms</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>Object</span> <span style=color:#000>parameterObject</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>RowBounds</span> <span style=color:#000>rowBounds</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>BoundSql</span> <span style=color:#000>boundSql</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+    <span style=color:#204a87;font-weight:700>if</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>closed</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#204a87;font-weight:700>throw</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>ExecutorException</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;Executor was closed.&#34;</span><span style=color:#ce5c00;font-weight:700>);</span>  
+    <span style=color:#000>CacheKey</span> <span style=color:#000>cacheKey</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>CacheKey</span><span style=color:#ce5c00;font-weight:700>();</span>  
+    <span style=color:#8f5902;font-style:italic>//1.statementId  
+</span><span style=color:#8f5902;font-style:italic></span>    <span style=color:#000>cacheKey</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>update</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>ms</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>getId</span><span style=color:#ce5c00;font-weight:700>());</span>  
+    <span style=color:#8f5902;font-style:italic>//2. rowBounds.offset  
+</span><span style=color:#8f5902;font-style:italic></span>    <span style=color:#000>cacheKey</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>update</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>rowBounds</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>getOffset</span><span style=color:#ce5c00;font-weight:700>());</span>  
+    <span style=color:#8f5902;font-style:italic>//3. rowBounds.limit  
+</span><span style=color:#8f5902;font-style:italic></span>    <span style=color:#000>cacheKey</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>update</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>rowBounds</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>getLimit</span><span style=color:#ce5c00;font-weight:700>());</span>  
+    <span style=color:#8f5902;font-style:italic>//4. SQL语句  
+</span><span style=color:#8f5902;font-style:italic></span>    <span style=color:#000>cacheKey</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>update</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>boundSql</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>getSql</span><span style=color:#ce5c00;font-weight:700>());</span>  
+    <span style=color:#8f5902;font-style:italic>//5. 将每一个要传递给JDBC的参数值也更新到CacheKey中  
+</span><span style=color:#8f5902;font-style:italic></span>    <span style=color:#000>List</span><span style=color:#ce5c00;font-weight:700>&lt;</span><span style=color:#000>ParameterMapping</span><span style=color:#ce5c00;font-weight:700>&gt;</span> <span style=color:#000>parameterMappings</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>boundSql</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>getParameterMappings</span><span style=color:#ce5c00;font-weight:700>();</span>  
+    <span style=color:#000>TypeHandlerRegistry</span> <span style=color:#000>typeHandlerRegistry</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>ms</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>getConfiguration</span><span style=color:#ce5c00;font-weight:700>().</span><span style=color:#c4a000>getTypeHandlerRegistry</span><span style=color:#ce5c00;font-weight:700>();</span>  
+    <span style=color:#204a87;font-weight:700>for</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>i</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>0</span><span style=color:#ce5c00;font-weight:700>;</span> <span style=color:#000>i</span> <span style=color:#ce5c00;font-weight:700>&lt;</span> <span style=color:#000>parameterMappings</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>size</span><span style=color:#ce5c00;font-weight:700>();</span> <span style=color:#000>i</span><span style=color:#ce5c00;font-weight:700>++)</span> <span style=color:#ce5c00;font-weight:700>{</span> <span style=color:#8f5902;font-style:italic>// mimic DefaultParameterHandler logic  
+</span><span style=color:#8f5902;font-style:italic></span>        <span style=color:#000>ParameterMapping</span> <span style=color:#000>parameterMapping</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>parameterMappings</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>get</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>i</span><span style=color:#ce5c00;font-weight:700>);</span>  
+        <span style=color:#204a87;font-weight:700>if</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>parameterMapping</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>getMode</span><span style=color:#ce5c00;font-weight:700>()</span> <span style=color:#ce5c00;font-weight:700>!=</span> <span style=color:#000>ParameterMode</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>OUT</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+            <span style=color:#000>Object</span> <span style=color:#000>value</span><span style=color:#ce5c00;font-weight:700>;</span>  
+            <span style=color:#000>String</span> <span style=color:#000>propertyName</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>parameterMapping</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>getProperty</span><span style=color:#ce5c00;font-weight:700>();</span>  
+            <span style=color:#204a87;font-weight:700>if</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>boundSql</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>hasAdditionalParameter</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>propertyName</span><span style=color:#ce5c00;font-weight:700>))</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+                <span style=color:#000>value</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>boundSql</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>getAdditionalParameter</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>propertyName</span><span style=color:#ce5c00;font-weight:700>);</span>  
+            <span style=color:#ce5c00;font-weight:700>}</span> <span style=color:#204a87;font-weight:700>else</span> <span style=color:#204a87;font-weight:700>if</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>parameterObject</span> <span style=color:#ce5c00;font-weight:700>==</span> <span style=color:#204a87;font-weight:700>null</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+                <span style=color:#000>value</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>null</span><span style=color:#ce5c00;font-weight:700>;</span>  
+            <span style=color:#ce5c00;font-weight:700>}</span> <span style=color:#204a87;font-weight:700>else</span> <span style=color:#204a87;font-weight:700>if</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>typeHandlerRegistry</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>hasTypeHandler</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>parameterObject</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>getClass</span><span style=color:#ce5c00;font-weight:700>()))</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+                <span style=color:#000>value</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>parameterObject</span><span style=color:#ce5c00;font-weight:700>;</span>  
+            <span style=color:#ce5c00;font-weight:700>}</span> <span style=color:#204a87;font-weight:700>else</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+                <span style=color:#000>MetaObject</span> <span style=color:#000>metaObject</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>configuration</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>newMetaObject</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>parameterObject</span><span style=color:#ce5c00;font-weight:700>);</span>  
+                <span style=color:#000>value</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>metaObject</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>getValue</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>propertyName</span><span style=color:#ce5c00;font-weight:700>);</span>  
+            <span style=color:#ce5c00;font-weight:700>}</span>  
+            <span style=color:#8f5902;font-style:italic>//将每一个要传递给JDBC的参数值也更新到CacheKey中  
+</span><span style=color:#8f5902;font-style:italic></span>            <span style=color:#000>cacheKey</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>update</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>value</span><span style=color:#ce5c00;font-weight:700>);</span>  
+        <span style=color:#ce5c00;font-weight:700>}</span>  
+    <span style=color:#ce5c00;font-weight:700>}</span>  
+    <span style=color:#204a87;font-weight:700>return</span> <span style=color:#000>cacheKey</span><span style=color:#ce5c00;font-weight:700>;</span>  
+<span style=color:#ce5c00;font-weight:700>}</span>
+</code></pre></div><ul>
+<li><strong>CacheKey的hashcode生成算法</strong></li>
+</ul>
+<p>刚才已经提到，Cache接口的实现，本质上是使用的<code>HashMap&lt;k,v></code>,而构建CacheKey的目的就是为了作为<code>HashMap&lt;k,v></code>中的key值。而HashMap是通过key值的hashcode 来组织和存储的，那么，构建CacheKey的过程实际上就是构造其hashCode的过程。下面的代码就是CacheKey的核心hashcode生成算法，感兴趣的话可以看一下：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>void</span> <span style=color:#000>update</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>Object</span> <span style=color:#000>object</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+    <span style=color:#204a87;font-weight:700>if</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>object</span> <span style=color:#ce5c00;font-weight:700>!=</span> <span style=color:#204a87;font-weight:700>null</span> <span style=color:#ce5c00;font-weight:700>&amp;&amp;</span> <span style=color:#000>object</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>getClass</span><span style=color:#ce5c00;font-weight:700>().</span><span style=color:#c4a000>isArray</span><span style=color:#ce5c00;font-weight:700>())</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+        <span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>length</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>Array</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>getLength</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>object</span><span style=color:#ce5c00;font-weight:700>);</span>  
+        <span style=color:#204a87;font-weight:700>for</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>i</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>0</span><span style=color:#ce5c00;font-weight:700>;</span> <span style=color:#000>i</span> <span style=color:#ce5c00;font-weight:700>&lt;</span> <span style=color:#000>length</span><span style=color:#ce5c00;font-weight:700>;</span> <span style=color:#000>i</span><span style=color:#ce5c00;font-weight:700>++)</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+            <span style=color:#000>Object</span> <span style=color:#000>element</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>Array</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>get</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>object</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>i</span><span style=color:#ce5c00;font-weight:700>);</span>  
+            <span style=color:#000>doUpdate</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>element</span><span style=color:#ce5c00;font-weight:700>);</span>  
+        <span style=color:#ce5c00;font-weight:700>}</span>  
+    <span style=color:#ce5c00;font-weight:700>}</span> <span style=color:#204a87;font-weight:700>else</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+        <span style=color:#000>doUpdate</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>object</span><span style=color:#ce5c00;font-weight:700>);</span>  
+    <span style=color:#ce5c00;font-weight:700>}</span>  
+<span style=color:#ce5c00;font-weight:700>}</span>  
+ 
+<span style=color:#204a87;font-weight:700>private</span> <span style=color:#204a87;font-weight:700>void</span> <span style=color:#000>doUpdate</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>Object</span> <span style=color:#000>object</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>  
+ 
+    <span style=color:#8f5902;font-style:italic>//1. 得到对象的hashcode;    
+</span><span style=color:#8f5902;font-style:italic></span>    <span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>baseHashCode</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>object</span> <span style=color:#ce5c00;font-weight:700>==</span> <span style=color:#204a87;font-weight:700>null</span> <span style=color:#ce5c00;font-weight:700>?</span> <span style=color:#000>1</span> <span style=color:#ce5c00;font-weight:700>:</span> <span style=color:#000>object</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>hashCode</span><span style=color:#ce5c00;font-weight:700>();</span>  
+    <span style=color:#8f5902;font-style:italic>//对象计数递增  
+</span><span style=color:#8f5902;font-style:italic></span>    <span style=color:#000>count</span><span style=color:#ce5c00;font-weight:700>++;</span>  
+    <span style=color:#000>checksum</span> <span style=color:#ce5c00;font-weight:700>+=</span> <span style=color:#000>baseHashCode</span><span style=color:#ce5c00;font-weight:700>;</span>  
+    <span style=color:#8f5902;font-style:italic>//2. 对象的hashcode 扩大count倍  
+</span><span style=color:#8f5902;font-style:italic></span>    <span style=color:#000>baseHashCode</span> <span style=color:#ce5c00;font-weight:700>*=</span> <span style=color:#000>count</span><span style=color:#ce5c00;font-weight:700>;</span>  
+    <span style=color:#8f5902;font-style:italic>//3. hashCode * 拓展因子（默认37）+拓展扩大后的对象hashCode值  
+</span><span style=color:#8f5902;font-style:italic></span>    <span style=color:#000>hashcode</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>multiplier</span> <span style=color:#ce5c00;font-weight:700>*</span> <span style=color:#000>hashcode</span> <span style=color:#ce5c00;font-weight:700>+</span> <span style=color:#000>baseHashCode</span><span style=color:#ce5c00;font-weight:700>;</span>  
+    <span style=color:#000>updateList</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>add</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>object</span><span style=color:#ce5c00;font-weight:700>);</span>  
+<span style=color:#ce5c00;font-weight:700>}</span> 
+</code></pre></div><p>MyBatis认为的完全相同的查询，不是指使用sqlSession查询时传递给算起来Session的所有参数值完完全全相同，你只要保证statementId，rowBounds,最后生成的SQL语句，以及这个SQL语句所需要的参数完全一致就可以了。</p>
+<h3 id=一级缓存的性能分析>一级缓存的性能分析</h3>
+<ul>
+<li><strong>MyBatis对会话（Session）级别的一级缓存设计的比较简单，就简单地使用了HashMap来维护，并没有对HashMap的容量和大小进行限制</strong></li>
+</ul>
+<p>读者有可能就觉得不妥了：如果我一直使用某一个SqlSession对象查询数据，这样会不会导致HashMap太大，而导致 java.lang.OutOfMemoryError错误啊？ 读者这么考虑也不无道理，不过MyBatis的确是这样设计的。</p>
+<p>MyBatis这样设计也有它自己的理由：</p>
+<ul>
+<li>一般而言SqlSession的生存时间很短。一般情况下使用一个SqlSession对象执行的操作不会太多，执行完就会消亡；</li>
+<li>对于某一个SqlSession对象而言，只要执行update操作（update、insert、delete），都会将这个SqlSession对象中对应的一级缓存清空掉，所以一般情况下不会出现缓存过大，影响JVM内存空间的问题；</li>
+<li>可以手动地释放掉SqlSession对象中的缓存。</li>
+<li><strong>一级缓存是一个粗粒度的缓存，没有更新缓存和缓存过期的概念</strong></li>
+</ul>
+<p>MyBatis的一级缓存就是使用了简单的HashMap，MyBatis只负责将查询数据库的结果存储到缓存中去， 不会去判断缓存存放的时间是否过长、是否过期，因此也就没有对缓存的结果进行更新这一说了。</p>
+<p>根据一级缓存的特性，在使用的过程中，我认为应该注意：</p>
+<ul>
+<li>对于数据变化频率很大，并且需要高时效准确性的数据要求，我们使用SqlSession查询的时候，要控制好SqlSession的生存时间， SqlSession的生存时间越长，它其中缓存的数据有可能就越旧，从而造成和真实数据库的误差；同时对于这种情况，用户也可以手动地适时清空SqlSession中的缓存；</li>
+<li>对于只执行、并且频繁执行大范围的select操作的SqlSession对象，SqlSession对象的生存时间不应过长。</li>
+</ul>
+</div>
+<div class=td-content style=page-break-before:always>
+<h1 id=pg-5fa0843facc8832df69a145efc110729>17 - CH17-二级缓存原理</h1>
+<p>MyBatis的二级缓存是Application级别的缓存，它可以提高对数据库查询的效率，以提高应用的性能。</p>
+<h2 id=整体设计与工作模式>整体设计与工作模式</h2>
+<p>当开一个会话时，一个SqlSession对象会使用一个Executor对象来完成会话操作，MyBatis的二级缓存机制的关键就是对这个Executor对象做文章。如果用户配置了"cacheEnabled=true"，那么MyBatis在为SqlSession对象创建Executor对象时，会对Executor对象加上一个装饰者：CachingExecutor，这时SqlSession使用CachingExecutor对象来完成操作请求。CachingExecutor对于查询请求，会先判断该查询请求在Application级别的二级缓存中是否有缓存结果，如果有查询结果，则直接返回缓存结果；如果缓存中没有，再交给真正的Executor对象来完成查询操作，之后CachingExecutor会将真正Executor返回的查询结果放置到缓存中，然后在返回给用户。</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211019224032.png style=display:block;width:80% alt=NAME align=center> </div>
+<p>CachingExecutor是Executor的装饰者，以增强Executor的功能，使其具有缓存查询的功能，这里用到了设计模式中的装饰者模式，CachingExecutor和Executor的接口的关系如下类图所示：</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211019224047.png style=display:block;width:80% alt=NAME align=center> </div>
+<h2 id=二级缓存的划分>二级缓存的划分</h2>
+<p>MyBatis并不是简单地对整个Application就只有一个Cache缓存对象，它将缓存划分的更细，即是Mapper级别的，即每一个Mapper都可以拥有一个Cache对象，具体如下：</p>
+<ul>
+<li><strong>为每一个Mapper分配一个Cache缓存对象</strong>（使用<code>&lt;cache></code>节点配置）</li>
+</ul>
+<p>MyBatis将Application级别的二级缓存细分到Mapper级别，即对于每一个Mapper.xml,如果在其中使用了<code>&lt;cache></code> 节点，则MyBatis会为这个Mapper创建一个Cache缓存对象，如下图所示：</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211019224115.png style=display:block;width:80% alt=NAME align=center> </div>
+<p>注：上述的每一个Cache对象，都会有一个自己所属的namespace命名空间，并且会将Mapper的 namespace作为它们的ID；</p>
+<ul>
+<li><strong>多个Mapper共用一个Cache缓存对象</strong>（使用<code>&lt;cache-ref></code>节点配置）</li>
+</ul>
+<p>如果你想让多个Mapper公用一个Cache的话，你可以使用<code>&lt;cache-ref namespace=""></code>节点，来指定你的这个Mapper使用到了哪一个Mapper的Cache缓存。</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211019224132.png style=display:block;width:80% alt=NAME align=center> </div>
+<h2 id=必须要具备的条件>必须要具备的条件</h2>
+<p>MyBatis对二级缓存的支持粒度很细，它会指定某一条查询语句是否使用二级缓存。</p>
+<p>虽然在Mapper中配置了<code>&lt;cache></code>,并且为此Mapper分配了Cache对象，这并不表示我们使用Mapper中定义的查询语句查到的结果都会放置到Cache对象之中，我们必须指定Mapper中的某条选择语句是否支持缓存，即如下所示，在<code>&lt;select></code> 节点中配置useCache=&ldquo;true&rdquo;，Mapper才会对此Select的查询支持缓存特性，否则，不会对此Select查询，不会经过Cache缓存。如下所示，Select语句配置了useCache=&ldquo;true&rdquo;，则表明这条Select语句的查询会使用二级缓存。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-xml data-lang=xml><span style=color:#204a87;font-weight:700>&lt;select</span> <span style=color:#c4a000>id=</span><span style=color:#4e9a06>&#34;selectByMinSalary&#34;</span> <span style=color:#c4a000>resultMap=</span><span style=color:#4e9a06>&#34;BaseResultMap&#34;</span> <span style=color:#c4a000>parameterType=</span><span style=color:#4e9a06>&#34;java.util.Map&#34;</span> <span style=color:#c4a000>useCache=</span><span style=color:#4e9a06>&#34;true&#34;</span><span style=color:#204a87;font-weight:700>&gt;</span>
+</code></pre></div><p>总之，要想使某条Select查询支持二级缓存，你需要保证：</p>
+<ul>
+<li>MyBatis支持二级缓存的总开关：全局配置变量参数 cacheEnabled=true</li>
+<li>该select语句所在的Mapper，配置了<code>&lt;cache></code> 或<code>&lt;cached-ref></code>节点，并且有效</li>
+<li>该select语句的参数 useCache=true</li>
+</ul>
+<h2 id=一级缓存和二级缓存的使用顺序>一级缓存和二级缓存的使用顺序</h2>
+<p>请注意，如果你的MyBatis使用了二级缓存，并且你的Mapper和select语句也配置使用了二级缓存，那么在执行select查询的时候，MyBatis会先从二级缓存中取输入，其次才是一级缓存，即<strong>MyBatis查询数据的顺序是：二级缓存 ———> 一级缓存 ——> 数据库</strong>。</p>
+<h2 id=二级缓存实现的选择>二级缓存实现的选择</h2>
+<p>MyBatis对二级缓存的设计非常灵活，它自己内部实现了一系列的Cache缓存实现类，并提供了各种缓存刷新策略如LRU，FIFO等等；另外，MyBatis还允许用户自定义Cache接口实现，用户是需要实现org.apache.ibatis.cache.Cache接口，然后将Cache实现类配置在<code>&lt;cache type=""></code>节点的type属性上即可；除此之外，MyBatis还支持跟第三方内存缓存库如Memecached的集成，总之，使用MyBatis的二级缓存有三个选择:</p>
+<ul>
+<li>MyBatis自身提供的缓存实现；</li>
+<li>用户自定义的Cache接口实现；</li>
+<li>跟第三方内存缓存库的集成；</li>
+</ul>
+<h2 id=mybatis自身提供的二级缓存的实现>MyBatis自身提供的二级缓存的实现</h2>
+<blockquote>
+<p>MyBatis自身提供了丰富的，并且功能强大的二级缓存的实现，它拥有一系列的Cache接口装饰者，可以满足各种对缓存操作和更新的策略。</p>
+</blockquote>
+<p>MyBatis定义了大量的Cache的装饰器来增强Cache缓存的功能，如下类图所示。</p>
+<p>对于每个Cache而言，都有一个容量限制，MyBatis各供了各种策略来对Cache缓存的容量进行控制，以及对Cache中的数据进行刷新和置换。MyBatis主要提供了以下几个刷新和置换策略：</p>
+<ul>
+<li>LRU：（Least Recently Used）,最近最少使用算法，即如果缓存中容量已经满了，会将缓存中最近最少被使用的缓存记录清除掉，然后添加新的记录；</li>
+<li>FIFO：（First in first out）,先进先出算法，如果缓存中的容量已经满了，那么会将最先进入缓存中的数据清除掉；</li>
+<li>Scheduled：指定时间间隔清空算法，该算法会以指定的某一个时间间隔将Cache缓存中的数据清空；</li>
+</ul>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211019224211.png style=display:block;width:80% alt=NAME align=center> </div>
+<h2 id=如何细粒度地控制你的mybatis二级缓存>如何细粒度地控制你的MyBatis二级缓存</h2>
+<h3 id=一个关于mybatis的二级缓存的实际问题>一个关于MyBatis的二级缓存的实际问题</h3>
+<p>现有AMapper.xml中定义了对数据库表 ATable 的CRUD操作，BMapper定义了对数据库表BTable的CRUD操作；</p>
+<p>假设 MyBatis 的二级缓存开启，并且 AMapper 中使用了二级缓存，AMapper对应的二级缓存为ACache；</p>
+<p>除此之外，AMapper 中还定义了一个跟BTable有关的查询语句，类似如下所述：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-xml data-lang=xml><span style=color:#204a87;font-weight:700>&lt;select</span> <span style=color:#c4a000>id=</span><span style=color:#4e9a06>&#34;selectATableWithJoin&#34;</span> <span style=color:#c4a000>resultMap=</span><span style=color:#4e9a06>&#34;BaseResultMap&#34;</span> <span style=color:#c4a000>useCache=</span><span style=color:#4e9a06>&#34;true&#34;</span><span style=color:#204a87;font-weight:700>&gt;</span>  
+      select * from ATable left join BTable on ....  
+<span style=color:#204a87;font-weight:700>&lt;/select&gt;</span>
+</code></pre></div><p>执行以下操作：</p>
+<ul>
+<li>执行AMapper中的"selectATableWithJoin" 操作，此时会将查询到的结果放置到AMapper对应的二级缓存ACache中；</li>
+<li>执行BMapper中对BTable的更新操作(update、delete、insert)后，BTable的数据更新；</li>
+<li>再执行1完全相同的查询，这时候会直接从AMapper二级缓存ACache中取值，将ACache中的值直接返回；</li>
+</ul>
+<p>好，<strong>问题就出现在第3步</strong>上：</p>
+<p>由于AMapper的“selectATableWithJoin” 对应的SQL语句需要和BTable进行join查找，而在第 2 步BTable的数据已经更新了，但是第 3 步查询的值是第 1 步的缓存值，已经极有可能跟真实数据库结果不一样，即ACache中缓存数据过期了！</p>
+<p>总结来看，就是：</p>
+<p>对于某些使用了 join连接的查询，如果其关联的表数据发生了更新，join连接的查询由于先前缓存的原因，导致查询结果和真实数据不同步；</p>
+<p>从MyBatis的角度来看，这个问题可以这样表述：</p>
+<p><strong>对于某些表执行了更新(update、delete、insert)操作后，如何去清空跟这些表有关联的查询语句所造成的缓存</strong>；</p>
+<h3 id=当前mybatis二级缓存的工作机制>当前MyBatis二级缓存的工作机制</h3>
+<blockquote>
+<p>MyBatis二级缓存的一个重要特点：即松散的Cache缓存管理和维护</p>
+</blockquote>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211019224242.png style=display:block;width:80% alt=NAME align=center> </div>
+<p>一个Mapper中定义的增删改查操作只能影响到自己关联的Cache对象。如上图所示的Mapper namespace1中定义的若干CRUD语句，产生的缓存只会被放置到相应关联的Cache1中，即Mapper namespace2,namespace3,namespace4 中的CRUD的语句不会影响到Cache1。</p>
+<p>可以看出，<strong>Mapper之间的缓存关系比较松散，相互关联的程度比较弱</strong>。</p>
+<p>现在再回到上面描述的问题，如果我们将AMapper和BMapper共用一个Cache对象，那么，当BMapper执行更新操作时，可以清空对应Cache中的所有的缓存数据，这样的话，数据不是也可以保持最新吗？</p>
+<p>确实这个也是一种解决方案，不过，它会使缓存的使用效率变的很低！AMapper和BMapper的任意的更新操作都会将共用的Cache清空，会频繁地清空Cache，导致Cache实际的命中率和使用率就变得很低了，所以这种策略实际情况下是不可取的。</p>
+<p>最理想的解决方案就是：</p>
+<p><strong>对于某些表执行了更新(update、delete、insert)操作后，如何去清空跟这些表有关联的查询语句所造成的缓存</strong>; 这样，就是以很细的粒度管理MyBatis内部的缓存，使得缓存的使用率和准确率都能大大地提升。</p>
 </div>
 </main>
 </div>

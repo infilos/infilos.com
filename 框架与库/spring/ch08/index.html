@@ -14,7 +14,7 @@
 <link rel=icon type=image/png href=/favicons/android-96x96.png sizes=96x96>
 <link rel=icon type=image/png href=/favicons/android-144x144.png sizes=144x144>
 <link rel=icon type=image/png href=/favicons/android-192x192.png sizes=192x192>
-<title>CH08-接口定义 | infilos.com</title><meta property="og:title" content="CH08-接口定义">
+<title>CH08-定义接口 | infilos.com</title><meta property="og:title" content="CH08-定义接口">
 <meta property="og:description" content="接口参数 SpringMVC中处理控制器参数的接口是HandlerMethodArgumentResolver，此接口有众多子类，分别处理不同(注解类型)的参数，下面只列举几个子类：
  RequestParamMethodArgumentResolver：解析处理使用了@RequestParam注解的参数、MultipartFile类型参数和Simple类型(如long、int等类型)参数。 RequestResponseBodyMethodProcessor：解析处理@RequestBody注解的参数。 PathVariableMapMethodArgumentResolver：解析处理@PathVariable注解的参数。  实际上，一般在解析一个控制器的请求参数的时候，用到的是HandlerMethodArgumentResolverComposite，里面装载了所有启用的HandlerMethodArgumentResolver子类。而HandlerMethodArgumentResolver子类在解析参数的时候使用到HttpMessageConverter（实际上也是一个列表，进行遍历匹配解析）子类进行匹配解析，常见的如MappingJackson2HttpMessageConverter（使用Jackson进行序列化和反序列化）。
  而HandlerMethodArgumentResolver子类到底依赖什么HttpMessageConverter实例实际上是由请求头中的Content-Type（在SpringMVC中统一命名为MediaType，见org.springframework.http.MediaType）决定的，因此我们在处理控制器的请求参数之前必须要明确外部请求的Content-Type到底是什么。上面的逻辑可以直接看源码AbstractMessageConverterMethodArgumentResolver#readWithMessageConverters，思路是比较清晰的。在@RequestMapping注解中，produces和consumes属性就是和请求的Accept或者响应的Content-Type相关的：
@@ -27,7 +27,7 @@ GET 方法请求参数处理 HTTP(s)协议使用GET方法进行请求的时候�
 <meta property="og:type" content="article">
 <meta property="og:url" content="/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/spring/ch08/"><meta property="article:section" content="框架与库">
 <meta property="og:site_name" content="infilos.com">
-<meta itemprop=name content="CH08-接口定义">
+<meta itemprop=name content="CH08-定义接口">
 <meta itemprop=description content="接口参数 SpringMVC中处理控制器参数的接口是HandlerMethodArgumentResolver，此接口有众多子类，分别处理不同(注解类型)的参数，下面只列举几个子类：
  RequestParamMethodArgumentResolver：解析处理使用了@RequestParam注解的参数、MultipartFile类型参数和Simple类型(如long、int等类型)参数。 RequestResponseBodyMethodProcessor：解析处理@RequestBody注解的参数。 PathVariableMapMethodArgumentResolver：解析处理@PathVariable注解的参数。  实际上，一般在解析一个控制器的请求参数的时候，用到的是HandlerMethodArgumentResolverComposite，里面装载了所有启用的HandlerMethodArgumentResolver子类。而HandlerMethodArgumentResolver子类在解析参数的时候使用到HttpMessageConverter（实际上也是一个列表，进行遍历匹配解析）子类进行匹配解析，常见的如MappingJackson2HttpMessageConverter（使用Jackson进行序列化和反序列化）。
  而HandlerMethodArgumentResolver子类到底依赖什么HttpMessageConverter实例实际上是由请求头中的Content-Type（在SpringMVC中统一命名为MediaType，见org.springframework.http.MediaType）决定的，因此我们在处理控制器的请求参数之前必须要明确外部请求的Content-Type到底是什么。上面的逻辑可以直接看源码AbstractMessageConverterMethodArgumentResolver#readWithMessageConverters，思路是比较清晰的。在@RequestMapping注解中，produces和consumes属性就是和请求的Accept或者响应的Content-Type相关的：
@@ -39,7 +39,7 @@ GET 方法请求参数处理 HTTP(s)协议使用GET方法进行请求的时候�
 @Slf4j @RestController public class SampleController { @GetMapping(path = &#34;/get1&#34;) public void get1(@RequestParam(name = &#34;name&#34;) String name, @RequestParam(name = &#34;age&#34;) Integer age) { log.">
 <meta itemprop=wordCount content="1246">
 <meta itemprop=keywords content><meta name=twitter:card content="summary">
-<meta name=twitter:title content="CH08-接口定义">
+<meta name=twitter:title content="CH08-定义接口">
 <meta name=twitter:description content="接口参数 SpringMVC中处理控制器参数的接口是HandlerMethodArgumentResolver，此接口有众多子类，分别处理不同(注解类型)的参数，下面只列举几个子类：
  RequestParamMethodArgumentResolver：解析处理使用了@RequestParam注解的参数、MultipartFile类型参数和Simple类型(如long、int等类型)参数。 RequestResponseBodyMethodProcessor：解析处理@RequestBody注解的参数。 PathVariableMapMethodArgumentResolver：解析处理@PathVariable注解的参数。  实际上，一般在解析一个控制器的请求参数的时候，用到的是HandlerMethodArgumentResolverComposite，里面装载了所有启用的HandlerMethodArgumentResolver子类。而HandlerMethodArgumentResolver子类在解析参数的时候使用到HttpMessageConverter（实际上也是一个列表，进行遍历匹配解析）子类进行匹配解析，常见的如MappingJackson2HttpMessageConverter（使用Jackson进行序列化和反序列化）。
  而HandlerMethodArgumentResolver子类到底依赖什么HttpMessageConverter实例实际上是由请求头中的Content-Type（在SpringMVC中统一命名为MediaType，见org.springframework.http.MediaType）决定的，因此我们在处理控制器的请求参数之前必须要明确外部请求的Content-Type到底是什么。上面的逻辑可以直接看源码AbstractMessageConverterMethodArgumentResolver#readWithMessageConverters，思路是比较清晰的。在@RequestMapping注解中，produces和consumes属性就是和请求的Accept或者响应的Content-Type相关的：
@@ -201,7 +201,7 @@ GET 方法请求参数处理 HTTP(s)协议使用GET方法进行请求的时候�
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a186e69eb6e4b88ee5ba93springch07-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/spring/ch07/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93springch07><span>CH07-动态代理</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child active-path" id=m-e6a186e69eb6e4b88ee5ba93springch08-li>
-<a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/spring/ch08/ class="align-left pl-0 active td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93springch08><span class=td-sidebar-nav-active-item>CH08-接口定义</span></a>
+<a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/spring/ch08/ class="align-left pl-0 active td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93springch08><span class=td-sidebar-nav-active-item>CH08-定义接口</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a186e69eb6e4b88ee5ba93springch09-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/spring/ch09/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93springch09><span>CH09-请求过程</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a186e69eb6e4b88ee5ba93springch10-li>
@@ -211,7 +211,21 @@ GET 方法请求参数处理 HTTP(s)协议使用GET方法进行请求的时候�
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a186e69eb6e4b88ee5ba93springch12-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/spring/ch12/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93springch12><span>CH12-环境变量</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a186e69eb6e4b88ee5ba93springch13-li>
-<a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/spring/ch13/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93springch13><span>CH13-缓存注解</span></a>
+<a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/spring/ch13/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93springch13><span>CH13-事务原理</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a186e69eb6e4b88ee5ba93springch14-li>
+<a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/spring/ch14/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93springch14><span>CH14-定义 Bean</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a186e69eb6e4b88ee5ba93springch15-li>
+<a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/spring/ch15/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93springch15><span>CH15-注入 Bean</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a186e69eb6e4b88ee5ba93springch16-li>
+<a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/spring/ch16/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93springch16><span>CH16-拦截器</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a186e69eb6e4b88ee5ba93springch17-li>
+<a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/spring/ch17/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93springch17><span>CH17-监听器</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a186e69eb6e4b88ee5ba93springch18-li>
+<a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/spring/ch18/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93springch18><span>CH18-设计模式</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a186e69eb6e4b88ee5ba93springch19-li>
+<a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/spring/ch19/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93springch19><span>CH19-Servlet</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a186e69eb6e4b88ee5ba93springch20-li>
+<a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/spring/ch20/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93springch20><span>CH20-缓存注解</span></a>
 </li>
 </ul>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a186e69eb6e4b88ee5ba93spring-ioc-li>
@@ -275,6 +289,12 @@ GET 方法请求参数处理 HTTP(s)协议使用GET方法进行请求的时候�
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/mybatis/ch13/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93mybatisch13><span>CH13-多数据源</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93mybatisch14-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/mybatis/ch14/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93mybatisch14><span>CH14-常用片段</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93mybatisch15-li>
+<a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/mybatis/ch15/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93mybatisch15><span>CH15-事务管理原理</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93mybatisch16-li>
+<a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/mybatis/ch16/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93mybatisch16><span>CH16-一级缓存原理</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93mybatisch17-li>
+<a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/mybatis/ch17/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93mybatisch17><span>CH17-二级缓存原理</span></a>
 </li>
 </ul>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a186e69eb6e4b88ee5ba93hikari-li>
@@ -338,6 +358,74 @@ GET 方法请求参数处理 HTTP(s)协议使用GET方法进行请求的时候�
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/parboiled/ch09-advanced-topics/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93parboiledch09-advanced-topics><span>CH09-Advanced Topics</span></a>
 </li>
 </ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a186e69eb6e4b88ee5ba93netty-li>
+<a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/netty/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a186e69eb6e4b88ee5ba93netty><span>Netty</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93nettych01-li>
+<a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/netty/ch01/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93nettych01><span>CH01-Netty 概览</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93nettych02-li>
+<a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/netty/ch02/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93nettych02><span>CH02-应用实例</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93nettych04-li>
+<a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/netty/ch04/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93nettych04><span>CH04-Transport</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93nettych05-li>
+<a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/netty/ch05/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93nettych05><span>CH05-Buffer</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93nettych06-li>
+<a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/netty/ch06/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93nettych06><span>CH06-ChannelHandler 与 ChannelPipeline</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93nettych07-li>
+<a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/netty/ch07/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93nettych07><span>CH07-Codec 框架</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93nettych08-li>
+<a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/netty/ch08/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93nettych08><span>CH08-内置 ChannelHandler 与 Codec</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93nettych09-li>
+<a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/netty/ch09/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93nettych09><span>CH09-Bootstraping</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93nettych10-li>
+<a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/netty/ch10/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93nettych10><span>CH10-单元测试</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93nettych11-li>
+<a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/netty/ch11/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93nettych11><span>CH11-Websocket</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93nettych12-li>
+<a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/netty/ch12/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93nettych12><span>CH12-SPDY</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93nettych13-li>
+<a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/netty/ch13/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93nettych13><span>CH13-UDP 广播</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93nettych14-li>
+<a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/netty/ch14/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93nettych14><span>CH14-自定义编解码器</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93nettych15-li>
+<a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/netty/ch15/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93nettych15><span>CH15-EventLoop 与线程模型</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93nettych03-li>
+<a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/netty/ch03/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93nettych03><span></span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a186e69eb6e4b88ee5ba93reactor-netty-li>
+<a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/reactor-netty/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a186e69eb6e4b88ee5ba93reactor-netty><span>Reactor Netty</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a186e69eb6e4b88ee5ba93thymeleaf-li>
+<a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/thymeleaf/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a186e69eb6e4b88ee5ba93thymeleaf><span>Thymeleaf</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93thymeleafch01-li>
+<a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/thymeleaf/ch01/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93thymeleafch01><span>CH01-介绍</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93thymeleafch02-li>
+<a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/thymeleaf/ch02/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93thymeleafch02><span>CH02-使用文本</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93thymeleafch03-li>
+<a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/thymeleaf/ch03/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93thymeleafch03><span>CH03-表达式</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93thymeleafch04-li>
+<a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/thymeleaf/ch04/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93thymeleafch04><span>CH04-设置属性值</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93thymeleafch05-li>
+<a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/thymeleaf/ch05/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93thymeleafch05><span>CH05-迭代器</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93thymeleafch06-li>
+<a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/thymeleaf/ch06/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93thymeleafch06><span>CH06-条件语句</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93thymeleafch07-li>
+<a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/thymeleaf/ch07/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93thymeleafch07><span>CH07-模板布局</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93thymeleafch08-li>
+<a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/thymeleaf/ch08/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93thymeleafch08><span>CH08-局部变量</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93thymeleafch09-li>
+<a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/thymeleaf/ch09/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93thymeleafch09><span>CH09-属性优先级</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93thymeleafch10-li>
+<a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/thymeleaf/ch10/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93thymeleafch10><span>CH10-注释及注释块</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93thymeleafch11-li>
+<a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/thymeleaf/ch11/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93thymeleafch11><span>CH11-内联</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a186e69eb6e4b88ee5ba93spring-cloud-li>
+<a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/spring-cloud/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a186e69eb6e4b88ee5ba93spring-cloud><span>Spring Cloud</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a186e69eb6e4b88ee5ba93dubbo-li>
+<a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/dubbo/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a186e69eb6e4b88ee5ba93dubbo><span>Dubbo</span></a>
 </li>
 </ul>
 </li>
@@ -349,7 +437,7 @@ GET 方法请求参数处理 HTTP(s)协议使用GET方法进行请求的时候�
 <div class="td-page-meta ml-2 pb-1 pt-2 mb-0">
 <a href=https://github.com/infilos/infilos.com/edit/master/content/zh/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93/spring/CH08.md target=_blank><i class="fa fa-edit fa-fw"></i> 编辑此页</a>
 <a href="https://github.com/infilos/infilos.com/new/master/content/zh/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93/spring/CH08.md?filename=change-me.md&value=---%0Atitle%3A+%22Long+Page+Title%22%0AlinkTitle%3A+%22Short+Nav+Title%22%0Aweight%3A+100%0Adescription%3A+%3E-%0A+++++Page+description+for+heading+and+indexes.%0A---%0A%0A%23%23+Heading%0A%0AEdit+this+template+to+create+your+new+page.%0A%0A%2A+Give+it+a+good+name%2C+ending+in+%60.md%60+-+e.g.+%60getting-started.md%60%0A%2A+Edit+the+%22front+matter%22+section+at+the+top+of+the+page+%28weight+controls+how+its+ordered+amongst+other+pages+in+the+same+directory%3B+lowest+number+first%29.%0A%2A+Add+a+good+commit+message+at+the+bottom+of+the+page+%28%3C80+characters%3B+use+the+extended+description+field+for+more+detail%29.%0A%2A+Create+a+new+branch+so+you+can+preview+your+new+file+and+request+a+review+via+Pull+Request.%0A" target=_blank><i class="fa fa-edit fa-fw"></i> 添加子页面</a>
-<a href="https://github.com/infilos/infilos.com/issues/new?title=CH08-%e6%8e%a5%e5%8f%a3%e5%ae%9a%e4%b9%89" target=_blank><i class="fab fa-github fa-fw"></i> 提交文档问题</a>
+<a href="https://github.com/infilos/infilos.com/issues/new?title=CH08-%e5%ae%9a%e4%b9%89%e6%8e%a5%e5%8f%a3" target=_blank><i class="fab fa-github fa-fw"></i> 提交文档问题</a>
 <a id=print href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/spring/_print/><i class="fa fa-print fa-fw"></i> 整节打印</a>
 </div>
 <div class=td-toc><nav id=TableOfContents>
@@ -398,12 +486,12 @@ GET 方法请求参数处理 HTTP(s)协议使用GET方法进行请求的时候�
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/spring/>Spring</a>
 </li>
 <li class="breadcrumb-item active" aria-current=page>
-<a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/spring/ch08/>CH08-接口定义</a>
+<a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/spring/ch08/>CH08-定义接口</a>
 </li>
 </ol>
 </nav>
 <div class=td-content>
-<h1>CH08-接口定义</h1>
+<h1>CH08-定义接口</h1>
 <header class=article-meta>
 </header>
 <h2 id=接口参数>接口参数</h2>
