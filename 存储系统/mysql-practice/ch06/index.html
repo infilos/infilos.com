@@ -14,29 +14,17 @@
 <link rel=icon type=image/png href=/favicons/android-96x96.png sizes=96x96>
 <link rel=icon type=image/png href=/favicons/android-144x144.png sizes=144x144>
 <link rel=icon type=image/png href=/favicons/android-192x192.png sizes=192x192>
-<title>CH06-复制分离 | infilos.com</title><meta property="og:title" content="CH06-复制分离">
-<meta property="og:description" content="主从复制 主要涉及三个线程: binlog 线程、I/O 线程和 SQL 线程。
- binlog 线程 : 负责将主服务器上的数据更改写入二进制日志中。 I/O 线程 : 负责从主服务器上读取二进制日志，并写入从服务器的中继日志中。 SQL 线程 : 负责读取中继日志并重放其中的 SQL 语句。   读写分离 主服务器处理写操作以及实时性要求比较高的读操作，而从服务器处理读操作。
-读写分离能提高性能的原因在于:
- 主从服务器负责各自的读和写，极大程度缓解了锁的争用； 从服务器可以使用 MyISAM，提升查询性能以及节约系统开销； 增加冗余，提高可用性。  读写分离常用代理方式来实现，代理服务器接收应用层传来的读写请求，然后决定转发到哪个服务器。
- ">
+<title>MySQL | infilos.com</title><meta property="og:title" content="MySQL">
+<meta property="og:description" content>
 <meta property="og:type" content="article">
-<meta property="og:url" content="/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql/ch06-%E5%A4%8D%E5%88%B6%E5%88%86%E7%A6%BB/"><meta property="article:section" content="存储系统">
+<meta property="og:url" content="/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch06/"><meta property="article:section" content="存储系统">
 <meta property="og:site_name" content="infilos.com">
-<meta itemprop=name content="CH06-复制分离">
-<meta itemprop=description content="主从复制 主要涉及三个线程: binlog 线程、I/O 线程和 SQL 线程。
- binlog 线程 : 负责将主服务器上的数据更改写入二进制日志中。 I/O 线程 : 负责从主服务器上读取二进制日志，并写入从服务器的中继日志中。 SQL 线程 : 负责读取中继日志并重放其中的 SQL 语句。   读写分离 主服务器处理写操作以及实时性要求比较高的读操作，而从服务器处理读操作。
-读写分离能提高性能的原因在于:
- 主从服务器负责各自的读和写，极大程度缓解了锁的争用； 从服务器可以使用 MyISAM，提升查询性能以及节约系统开销； 增加冗余，提高可用性。  读写分离常用代理方式来实现，代理服务器接收应用层传来的读写请求，然后决定转发到哪个服务器。
- ">
-<meta itemprop=wordCount content="29">
+<meta itemprop=name content="MySQL">
+<meta itemprop=description content>
+<meta itemprop=wordCount content="0">
 <meta itemprop=keywords content><meta name=twitter:card content="summary">
-<meta name=twitter:title content="CH06-复制分离">
-<meta name=twitter:description content="主从复制 主要涉及三个线程: binlog 线程、I/O 线程和 SQL 线程。
- binlog 线程 : 负责将主服务器上的数据更改写入二进制日志中。 I/O 线程 : 负责从主服务器上读取二进制日志，并写入从服务器的中继日志中。 SQL 线程 : 负责读取中继日志并重放其中的 SQL 语句。   读写分离 主服务器处理写操作以及实时性要求比较高的读操作，而从服务器处理读操作。
-读写分离能提高性能的原因在于:
- 主从服务器负责各自的读和写，极大程度缓解了锁的争用； 从服务器可以使用 MyISAM，提升查询性能以及节约系统开销； 增加冗余，提高可用性。  读写分离常用代理方式来实现，代理服务器接收应用层传来的读写请求，然后决定转发到哪个服务器。
- ">
+<meta name=twitter:title content="MySQL">
+<meta name=twitter:description content>
 <script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga('create','UA-123062585-1','auto'),ga('send','pageview'))</script>
 <script async src=https://www.google-analytics.com/analytics.js></script>
 <link rel=preload href=/scss/main.min.847464b684a6e89d7276700a5c500c17ab494dd1755b2654a7b27d8b59e3347e.css as=style>
@@ -199,47 +187,47 @@
 <a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/sql/ch04-%E6%9F%A5%E8%AF%A2%E4%BC%98%E5%8C%96/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fsqlch04-e69fa5e8afa2e4bc98e58c96><span>CH04-查询优化</span></a>
 </li>
 </ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-li>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-li>
 <a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e5ad98e582a8e7b3bbe7bb9fmysql><span>MySQL</span></a>
 <ul class="ul-2 foldable">
-<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch01-e695b0e68daee7b1bbe59e8b-li>
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch01-e695b0e68daee7b1bbe59e8b-li>
 <a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql/ch01-%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch01-e695b0e68daee7b1bbe59e8b><span>CH01-数据类型</span></a>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch02-e5ad98e582a8e5bc95e6938e-li>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch02-e5ad98e582a8e5bc95e6938e-li>
 <a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql/ch02-%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch02-e5ad98e582a8e5bc95e6938e><span>CH02-存储引擎</span></a>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch03-e7b4a2e5bc95be6a091-li>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch03-e7b4a2e5bc95be6a091-li>
 <a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql/ch03-%E7%B4%A2%E5%BC%95b+%E6%A0%91/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch03-e7b4a2e5bc95be6a091><span>CH03-索引B+树</span></a>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch04-e680a7e883bde4bc98e58c96-li>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch04-e680a7e883bde4bc98e58c96-li>
 <a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql/ch04-%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch04-e680a7e883bde4bc98e58c96><span>CH04-性能优化</span></a>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch05-e58886e5ba93e58886e8a1a8-li>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch05-e58886e5ba93e58886e8a1a8-li>
 <a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql/ch05-%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch05-e58886e5ba93e58886e8a1a8><span>CH05-分库分表</span></a>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child active-path" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch06-e5a48de588b6e58886e7a6bb-li>
-<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql/ch06-%E5%A4%8D%E5%88%B6%E5%88%86%E7%A6%BB/ class="align-left pl-0 active td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch06-e5a48de588b6e58886e7a6bb><span class=td-sidebar-nav-active-item>CH06-复制分离</span></a>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch07-e689a7e8a18ce8bf87e7a88b-li>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch06-e5a48de588b6e58886e7a6bb-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql/ch06-%E5%A4%8D%E5%88%B6%E5%88%86%E7%A6%BB/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch06-e5a48de588b6e58886e7a6bb><span>CH06-复制分离</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch07-e689a7e8a18ce8bf87e7a88b-li>
 <a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql/ch07-%E6%89%A7%E8%A1%8C%E8%BF%87%E7%A8%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch07-e689a7e8a18ce8bf87e7a88b><span>CH07-执行过程</span></a>
 </li>
 </ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practice-li>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practice-li>
 <a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practice><span>MySQL 实战</span></a>
 <ul class="ul-2 foldable">
-<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech01-li>
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech01-li>
 <a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch01/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech01><span>CH01-基础架构</span></a>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech04-li>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech04-li>
 <a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch04/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech04><span>MySQL</span></a>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech05-li>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech05-li>
 <a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch05/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech05><span>MySQL</span></a>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech06-li>
-<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch06/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech06><span>MySQL</span></a>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech07-li>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child active-path" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech06-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch06/ class="align-left pl-0 active td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech06><span class=td-sidebar-nav-active-item>MySQL</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech07-li>
 <a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch07/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech07><span>MySQL</span></a>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech08-li>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech08-li>
 <a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch08/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech08><span>MySQL</span></a>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech09-li>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech09-li>
 <a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch09/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech09><span>MySQL</span></a>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech10-li>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech10-li>
 <a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch10/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech10><span>MySQL</span></a>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech02-li>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech02-li>
 <a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch02/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech02><span>CH02-日志系统</span></a>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech03-li>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech03-li>
 <a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch03/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech03><span>CH03-事务隔离</span></a>
 </li>
 </ul>
@@ -267,10 +255,10 @@
 </aside>
 <aside class="d-none d-xl-block col-xl-2 td-sidebar-toc d-print-none">
 <div class="td-page-meta ml-2 pb-1 pt-2 mb-0">
-<a href=https://github.com/infilos/infilos.com/edit/master/content/zh/%e5%ad%98%e5%82%a8%e7%b3%bb%e7%bb%9f/mysql/CH06-%e5%a4%8d%e5%88%b6%e5%88%86%e7%a6%bb.md target=_blank><i class="fa fa-edit fa-fw"></i> 编辑此页</a>
-<a href="https://github.com/infilos/infilos.com/new/master/content/zh/%e5%ad%98%e5%82%a8%e7%b3%bb%e7%bb%9f/mysql/CH06-%e5%a4%8d%e5%88%b6%e5%88%86%e7%a6%bb.md?filename=change-me.md&value=---%0Atitle%3A+%22Long+Page+Title%22%0AlinkTitle%3A+%22Short+Nav+Title%22%0Aweight%3A+100%0Adescription%3A+%3E-%0A+++++Page+description+for+heading+and+indexes.%0A---%0A%0A%23%23+Heading%0A%0AEdit+this+template+to+create+your+new+page.%0A%0A%2A+Give+it+a+good+name%2C+ending+in+%60.md%60+-+e.g.+%60getting-started.md%60%0A%2A+Edit+the+%22front+matter%22+section+at+the+top+of+the+page+%28weight+controls+how+its+ordered+amongst+other+pages+in+the+same+directory%3B+lowest+number+first%29.%0A%2A+Add+a+good+commit+message+at+the+bottom+of+the+page+%28%3C80+characters%3B+use+the+extended+description+field+for+more+detail%29.%0A%2A+Create+a+new+branch+so+you+can+preview+your+new+file+and+request+a+review+via+Pull+Request.%0A" target=_blank><i class="fa fa-edit fa-fw"></i> 添加子页面</a>
-<a href="https://github.com/infilos/infilos.com/issues/new?title=CH06-%e5%a4%8d%e5%88%b6%e5%88%86%e7%a6%bb" target=_blank><i class="fab fa-github fa-fw"></i> 提交文档问题</a>
-<a id=print href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql/_print/><i class="fa fa-print fa-fw"></i> 整节打印</a>
+<a href=https://github.com/infilos/infilos.com/edit/master/content/zh/%e5%ad%98%e5%82%a8%e7%b3%bb%e7%bb%9f/mysql-practice/CH06.md target=_blank><i class="fa fa-edit fa-fw"></i> 编辑此页</a>
+<a href="https://github.com/infilos/infilos.com/new/master/content/zh/%e5%ad%98%e5%82%a8%e7%b3%bb%e7%bb%9f/mysql-practice/CH06.md?filename=change-me.md&value=---%0Atitle%3A+%22Long+Page+Title%22%0AlinkTitle%3A+%22Short+Nav+Title%22%0Aweight%3A+100%0Adescription%3A+%3E-%0A+++++Page+description+for+heading+and+indexes.%0A---%0A%0A%23%23+Heading%0A%0AEdit+this+template+to+create+your+new+page.%0A%0A%2A+Give+it+a+good+name%2C+ending+in+%60.md%60+-+e.g.+%60getting-started.md%60%0A%2A+Edit+the+%22front+matter%22+section+at+the+top+of+the+page+%28weight+controls+how+its+ordered+amongst+other+pages+in+the+same+directory%3B+lowest+number+first%29.%0A%2A+Add+a+good+commit+message+at+the+bottom+of+the+page+%28%3C80+characters%3B+use+the+extended+description+field+for+more+detail%29.%0A%2A+Create+a+new+branch+so+you+can+preview+your+new+file+and+request+a+review+via+Pull+Request.%0A" target=_blank><i class="fa fa-edit fa-fw"></i> 添加子页面</a>
+<a href="https://github.com/infilos/infilos.com/issues/new?title=MySQL" target=_blank><i class="fab fa-github fa-fw"></i> 提交文档问题</a>
+<a id=print href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/_print/><i class="fa fa-print fa-fw"></i> 整节打印</a>
 </div>
 </aside>
 <main class="col-12 col-md-9 col-xl-8 pl-md-5" role=main>
@@ -280,35 +268,17 @@
 <a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/>存储系统</a>
 </li>
 <li class=breadcrumb-item>
-<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql/>MySQL</a>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/>MySQL 实战</a>
 </li>
 <li class="breadcrumb-item active" aria-current=page>
-<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql/ch06-%E5%A4%8D%E5%88%B6%E5%88%86%E7%A6%BB/>CH06-复制分离</a>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch06/>MySQL</a>
 </li>
 </ol>
 </nav>
 <div class=td-content>
-<h1>CH06-复制分离</h1>
+<h1>MySQL</h1>
 <header class=article-meta>
 </header>
-<h2 id=主从复制>主从复制</h2>
-<p>主要涉及三个线程: binlog 线程、I/O 线程和 SQL 线程。</p>
-<ul>
-<li><strong>binlog 线程</strong> : 负责将主服务器上的数据更改写入二进制日志中。</li>
-<li><strong>I/O 线程</strong> : 负责从主服务器上读取二进制日志，并写入从服务器的中继日志中。</li>
-<li><strong>SQL 线程</strong> : 负责读取中继日志并重放其中的 SQL 语句。</li>
-</ul>
-<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20210503194809.png style=display:block;width:50% alt=NAME align=center> </div>
-<h2 id=读写分离>读写分离</h2>
-<p>主服务器处理写操作以及实时性要求比较高的读操作，而从服务器处理读操作。</p>
-<p>读写分离能提高性能的原因在于:</p>
-<ul>
-<li>主从服务器负责各自的读和写，极大程度缓解了锁的争用；</li>
-<li>从服务器可以使用 MyISAM，提升查询性能以及节约系统开销；</li>
-<li>增加冗余，提高可用性。</li>
-</ul>
-<p>读写分离常用代理方式来实现，代理服务器接收应用层传来的读写请求，然后决定转发到哪个服务器。</p>
-<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20210503194848.png style=display:block;width:50% alt=NAME align=center> </div>
 <style>.feedback--answer{display:inline-block}.feedback--answer-no{margin-left:1em}.feedback--response{display:none;margin-top:1em}.feedback--response__visible{display:block}</style>
 <div class=d-print-none>
 <h2 class=feedback--title>Feedback</h2>
