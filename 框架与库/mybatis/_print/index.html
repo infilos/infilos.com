@@ -177,6 +177,7 @@
 <li>15: <a href=#pg-793fd8ea7c464da2cc8fff2fb0e503ba>CH15-事务管理原理</a></li>
 <li>16: <a href=#pg-7d266cedb46af8162e4941805ad7b1a0>CH16-一级缓存原理</a></li>
 <li>17: <a href=#pg-5fa0843facc8832df69a145efc110729>CH17-二级缓存原理</a></li>
+<li>18: <a href=#pg-91f758c1e325ae2666e56b9f26b9dbb4>CH18-性能优化</a></li>
 </ul>
 <div class=content>
 <p>参考自 &lt;MyBatis 技术内幕>。</p>
@@ -8380,6 +8381,86 @@ insert into excel_data_info
 <p>确实这个也是一种解决方案，不过，它会使缓存的使用效率变的很低！AMapper和BMapper的任意的更新操作都会将共用的Cache清空，会频繁地清空Cache，导致Cache实际的命中率和使用率就变得很低了，所以这种策略实际情况下是不可取的。</p>
 <p>最理想的解决方案就是：</p>
 <p><strong>对于某些表执行了更新(update、delete、insert)操作后，如何去清空跟这些表有关联的查询语句所造成的缓存</strong>; 这样，就是以很细的粒度管理MyBatis内部的缓存，使得缓存的使用率和准确率都能大大地提升。</p>
+</div>
+<div class=td-content style=page-break-before:always>
+<h1 id=pg-91f758c1e325ae2666e56b9f26b9dbb4>18 - CH18-性能优化</h1>
+<h2 id=动态条件>动态条件</h2>
+<p>通过传入参数动态组装条件语句时，条件可能均为空，常见做法是使用 <code>where 1=1</code> 作为占位符，避免所有条件为空时语法错误：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-xml data-lang=xml><span style=color:#204a87;font-weight:700>&lt;select</span> <span style=color:#c4a000>id=</span><span style=color:#4e9a06>&#34;getFruitInfo&#34;</span> <span style=color:#c4a000>resultType=</span><span style=color:#4e9a06>&#34;Fruit&#34;</span><span style=color:#204a87;font-weight:700>&gt;</span>
+  SELECT * FROM Fruit
+  WHERE 1=1
+  <span style=color:#204a87;font-weight:700>&lt;if</span> <span style=color:#c4a000>test=</span><span style=color:#4e9a06>&#34;id!= null&#34;</span><span style=color:#204a87;font-weight:700>&gt;</span>
+    and id = #{id}
+  <span style=color:#204a87;font-weight:700>&lt;/if&gt;</span> 
+  <span style=color:#204a87;font-weight:700>&lt;if</span> <span style=color:#c4a000>test=</span><span style=color:#4e9a06>&#34;name!= null&#34;</span><span style=color:#204a87;font-weight:700>&gt;</span>
+    and name = #{name}
+  <span style=color:#204a87;font-weight:700>&lt;/if&gt;</span> 
+<span style=color:#204a87;font-weight:700>&lt;/select&gt;</span>
+</code></pre></div><p>如果 id 和 name 均为 null，则整个语句变成了：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sql data-lang=sql><span style=color:#204a87;font-weight:700>SELECT</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#ce5c00;font-weight:700>*</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>FROM</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#000>Fruit</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>WHERE</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#0000cf;font-weight:700>1</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#0000cf;font-weight:700>1</span><span style=color:#f8f8f8;text-decoration:underline>
+</span></code></pre></div><p>这时数据库就无法使用索引等查询优化策略，被迫对每行数据进行扫描，如果表很大，则性能消耗巨大，推荐的做法是使用 <code>WHERE</code> 标签：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-xml data-lang=xml><span style=color:#204a87;font-weight:700>&lt;select</span> <span style=color:#c4a000>id=</span><span style=color:#4e9a06>&#34;getFruitInfo&#34;</span> <span style=color:#c4a000>resultType=</span><span style=color:#4e9a06>&#34;Fruit&#34;</span><span style=color:#204a87;font-weight:700>&gt;</span>
+  SELECT * FROM Fruit
+  <span style=color:#204a87;font-weight:700>&lt;WHERE&gt;</span>
+  <span style=color:#204a87;font-weight:700>&lt;if</span> <span style=color:#c4a000>test=</span><span style=color:#4e9a06>&#34;id!= null&#34;</span><span style=color:#204a87;font-weight:700>&gt;</span>
+    id = #{id}
+  <span style=color:#204a87;font-weight:700>&lt;/if&gt;</span> 
+  <span style=color:#204a87;font-weight:700>&lt;if</span> <span style=color:#c4a000>test=</span><span style=color:#4e9a06>&#34;name!= null&#34;</span><span style=color:#204a87;font-weight:700>&gt;</span>
+    and name = #{name}
+  <span style=color:#204a87;font-weight:700>&lt;/if&gt;</span> 
+  <span style=color:#204a87;font-weight:700>&lt;/WHERE&gt;</span>
+<span style=color:#204a87;font-weight:700>&lt;/select&gt;</span>
+</code></pre></div><p>where 元素知道只有在一个以上的 if 条件有值的情况下才去插入 “where” 子句，且最后的内容如果是 “AND” 或 “OR” 开头的，where 元素也能识别并将它们去除。</p>
+<h2 id=批量插入>批量插入</h2>
+<p>在使用 foreach 执行批量插入时，如果条目很多，会生成一个很长的 sql 语句，然后再使用实际的条目数据带入，构造出要执行的 sql，这个过程会很慢。</p>
+<p>推荐的做法是使用 BATCH 模式执行批量插入：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#5c35cc;font-weight:700>@Service</span>
+<span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>PersonService</span> <span style=color:#ce5c00;font-weight:700>{</span>
+
+    <span style=color:#5c35cc;font-weight:700>@Autowired</span>
+    <span style=color:#204a87;font-weight:700>private</span> <span style=color:#000>SqlSessionFactory</span> <span style=color:#000>sqlSessionFactory</span><span style=color:#ce5c00;font-weight:700>;</span>
+    
+    <span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>void</span> <span style=color:#000>insertPersions</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>List</span><span style=color:#ce5c00;font-weight:700>&lt;</span><span style=color:#000>Person</span><span style=color:#ce5c00;font-weight:700>&gt;</span> <span style=color:#000>persons</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>
+        <span style=color:#204a87;font-weight:700>try</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>SqlSession</span> <span style=color:#000>session</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>sqlSessionFactory</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>openSession</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>ExecutorType</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>BATCH</span><span style=color:#ce5c00;font-weight:700>))</span> <span style=color:#ce5c00;font-weight:700>{</span>
+            <span style=color:#000>PersonMapper</span> <span style=color:#000>mapper</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>session</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>getMapper</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>PersonMapper</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>class</span><span style=color:#ce5c00;font-weight:700>);</span>
+            <span style=color:#204a87;font-weight:700>for</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>Person</span> <span style=color:#000>person</span> <span style=color:#ce5c00;font-weight:700>:</span> <span style=color:#000>persons</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>
+                <span style=color:#000>mapper</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>insert</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>person</span><span style=color:#ce5c00;font-weight:700>);</span>
+            <span style=color:#ce5c00;font-weight:700>}</span>
+            
+            <span style=color:#000>session</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>commit</span><span style=color:#ce5c00;font-weight:700>();</span>
+            <span style=color:#000>session</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>clearCache</span><span style=color:#ce5c00;font-weight:700>();</span>
+        <span style=color:#ce5c00;font-weight:700>}</span>
+    <span style=color:#ce5c00;font-weight:700>}</span>
+<span style=color:#ce5c00;font-weight:700>}</span>
+</code></pre></div><h2 id=where-in-foreach>WHERE IN foreach</h2>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-xml data-lang=xml><span style=color:#204a87;font-weight:700>&lt;select</span> <span style=color:#c4a000>id=</span><span style=color:#4e9a06>&#34;getUserInfo&#34;</span> <span style=color:#c4a000>resultType=</span><span style=color:#4e9a06>&#34;com.test.UserList&#34;</span><span style=color:#204a87;font-weight:700>&gt;</span>
+  SELECT age FROM user
+  WHERE
+  <span style=color:#204a87;font-weight:700>&lt;if</span> <span style=color:#c4a000>test=</span><span style=color:#4e9a06>&#34;userName!= null and userName.size() &gt;0&#34;</span><span style=color:#204a87;font-weight:700>&gt;</span>
+    user_name IN
+    <span style=color:#204a87;font-weight:700>&lt;foreach</span> <span style=color:#c4a000>collection=</span><span style=color:#4e9a06>&#34;userName&#34;</span> <span style=color:#c4a000>item=</span><span style=color:#4e9a06>&#34;value&#34;</span> <span style=color:#c4a000>separator=</span><span style=color:#4e9a06>&#34;,&#34;</span> <span style=color:#c4a000>open=</span><span style=color:#4e9a06>&#34;(&#34;</span> <span style=color:#c4a000>close=</span><span style=color:#4e9a06>&#34;)&#34;</span><span style=color:#204a87;font-weight:700>&gt;</span>
+      #{value}
+    <span style=color:#204a87;font-weight:700>&lt;/foreach&gt;</span>
+  <span style=color:#204a87;font-weight:700>&lt;/if&gt;</span>
+<span style=color:#204a87;font-weight:700>&lt;/select&gt;</span>
+</code></pre></div><p>但列表可能为空，所以总是在调用之前判空。或者有些同学会以如下方式兼容：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-xml data-lang=xml><span style=color:#204a87;font-weight:700>&lt;select</span> <span style=color:#c4a000>id=</span><span style=color:#4e9a06>&#34;getUserInfo&#34;</span> <span style=color:#c4a000>resultType=</span><span style=color:#4e9a06>&#34;com.test.UserList&#34;</span><span style=color:#204a87;font-weight:700>&gt;</span>
+  SELECT age FROM user
+  WHERE
+  <span style=color:#204a87;font-weight:700>&lt;if</span> <span style=color:#c4a000>test=</span><span style=color:#4e9a06>&#34;userName!= null and userName.size() &gt;0&#34;</span><span style=color:#204a87;font-weight:700>&gt;</span>
+    user_name IN
+    <span style=color:#204a87;font-weight:700>&lt;foreach</span> <span style=color:#c4a000>collection=</span><span style=color:#4e9a06>&#34;userName&#34;</span> <span style=color:#c4a000>item=</span><span style=color:#4e9a06>&#34;value&#34;</span> <span style=color:#c4a000>separator=</span><span style=color:#4e9a06>&#34;,&#34;</span> <span style=color:#c4a000>open=</span><span style=color:#4e9a06>&#34;(&#34;</span> <span style=color:#c4a000>close=</span><span style=color:#4e9a06>&#34;)&#34;</span><span style=color:#204a87;font-weight:700>&gt;</span>
+      #{value}
+    <span style=color:#204a87;font-weight:700>&lt;/foreach&gt;</span>
+  <span style=color:#204a87;font-weight:700>&lt;/if&gt;</span>
+  <span style=color:#204a87;font-weight:700>&lt;if</span> <span style=color:#c4a000>test=</span><span style=color:#4e9a06>&#34;userName!= null and userName.size() ==0&#34;</span><span style=color:#204a87;font-weight:700>&gt;</span>
+    1=2
+  <span style=color:#204a87;font-weight:700>&lt;/if&gt;</span>
+  <span style=color:#204a87;font-weight:700>&lt;if</span> <span style=color:#c4a000>test=</span><span style=color:#4e9a06>&#34;userName!= null and userName.size() ==1&#34;</span><span style=color:#204a87;font-weight:700>&gt;</span>
+    user_name = #{users[0].userName}
+  <span style=color:#204a87;font-weight:700>&lt;/if&gt;</span>
+<span style=color:#204a87;font-weight:700>&lt;/select&gt;</span>
+</code></pre></div><p>基于 IN 的性能问题，可以将 IN 改为 JOIN。</p>
 </div>
 </main>
 </div>

@@ -160,6 +160,16 @@
 </div>
 <h1 class=title>基础设施</h1>
 <ul>
+<li>1: <a href=#pg-1de59da874da5a3607df998b699c2038>Git</a></li>
+<ul>
+<li>1.1: <a href=#pg-ea1a6c9426d94a7ff14e8f05cdee333d>飞行手册</a></li>
+<li>1.2: <a href=#pg-0c7e3232d3e69589f8b8e2895697cee3>速查手册</a></li>
+</ul>
+<li>2: <a href=#pg-30a61620f3ff1664f9c77b138b5d1bd8>Docker</a></li>
+<ul>
+<li>2.1: <a href=#pg-750965be63a0662f0d03e14ecad3cf1b>Dockerfile</a></li>
+<li>2.2: <a href=#pg-b5b32ea2a8d7a0858812be1d0a7ffaa7>Docker 实战</a></li>
+</ul>
 </ul>
 <div class=content>
 <h2 id=working-in-progress>Working In Progress</h2>
@@ -167,6 +177,812 @@
 <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/tumblr_o68i2aVvlE1s9f4joo1_500.gif style=display:block;width:70% alt=NAME align=center>
 </div>
 </div>
+</div>
+<div class=td-content>
+<h1 id=pg-1de59da874da5a3607df998b699c2038>1 - Git</h1>
+</div>
+<div class=td-content>
+<h1 id=pg-ea1a6c9426d94a7ff14e8f05cdee333d>1.1 - 飞行手册</h1>
+<blockquote>
+<p>Flight rules for Git: <a href=https://github.com/k88hudson/git-flight-rules>k88hudson/git-flight-rules: Flight rules for git</a></p>
+</blockquote>
+<h2 id=编辑提交editting-commits>编辑提交(editting commits)</h2>
+<p><a name=diff-last></a></p>
+<h3 id=我刚才提交了什么>我刚才提交了什么?</h3>
+<p>如果你用 <code>git commit -a</code> 提交了一次变化(changes)，而你又不确定到底这次提交了哪些内容。 你就可以用下面的命令显示当前<code>HEAD</code>上的最近一次的提交(commit):</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh><span style=color:#ce5c00;font-weight:700>(</span>main<span style=color:#ce5c00;font-weight:700>)</span>$ git show
+</code></pre></div><p>或者</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh>$ git log -n1 -p
+</code></pre></div><p><a name=#i-wrote-the-wrong-thing-in-a-commit-message></a></p>
+<h3 id=我的提交信息commit-message写错了>我的提交信息(commit message)写错了</h3>
+<p>如果你的提交信息(commit message)写错了且这次提交(commit)还没有推(push), 你可以通过下面的方法来修改提交信息(commit message):</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh>$ git commit --amend --only
+</code></pre></div><p>这会打开你的默认编辑器, 在这里你可以编辑信息. 另一方面, 你也可以用一条命令一次完成:</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh>$ git commit --amend --only -m <span style=color:#4e9a06>&#39;xxxxxxx&#39;</span>
+</code></pre></div><p>如果你已经推(push)了这次提交(commit), 你可以修改这次提交(commit)然后强推(force push), 但是不推荐这么做。</p>
+<p><a name=commit-wrong-author></a></p>
+<h3 id=我提交commit里的用户名和邮箱不对>我提交(commit)里的用户名和邮箱不对</h3>
+<p>如果这只是单个提交(commit)，修改它：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh>$ git commit --amend --author <span style=color:#4e9a06>&#34;New Authorname &lt;authoremail@mydomain.com&gt;&#34;</span>
+</code></pre></div><p>如果你需要修改所有历史, 参考 &lsquo;git filter-branch&rsquo;的指南页.</p>
+<p><a href=#i-want-to-remove-a-file-from-a-commit></a></p>
+<h3 id=我想从一个提交commit里移除一个文件>我想从一个提交(commit)里移除一个文件</h3>
+<p>通过下面的方法，从一个提交(commit)里移除一个文件:</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh>$ git checkout HEAD^ myfile
+$ git add -A
+$ git commit --amend
+</code></pre></div><p>这将非常有用，当你有一个开放的补丁(open patch)，你往上面提交了一个不必要的文件，你需要强推(force push)去更新这个远程补丁。</p>
+<p><a name=delete-pushed-commit></a></p>
+<h3 id=我想删除我的的最后一次提交commit>我想删除我的的最后一次提交(commit)</h3>
+<p>如果你需要删除推了的提交(pushed commits)，你可以使用下面的方法。可是，这会不可逆的改变你的历史，也会搞乱那些已经从该仓库拉取(pulled)了的人的历史。简而言之，如果你不是很确定，千万不要这么做。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh>$ git reset HEAD^ --hard
+$ git push -f <span style=color:#ce5c00;font-weight:700>[</span>remote<span style=color:#ce5c00;font-weight:700>]</span> <span style=color:#ce5c00;font-weight:700>[</span>branch<span style=color:#ce5c00;font-weight:700>]</span>
+</code></pre></div><p>如果你还没有推到远程, 把Git重置(reset)到你最后一次提交前的状态就可以了(同时保存暂存的变化):</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>(my-branch*)$ git reset --soft HEAD@{1}
+
+</code></pre></div><p>这只能在没有推送之前有用. 如果你已经推了, 唯一安全能做的是 <code>git revert SHAofBadCommit</code>， 那会创建一个新的提交(commit)用于撤消前一个提交的所有变化(changes)； 或者, 如果你推的这个分支是rebase-safe的 (例如： 其它开发者不会从这个分支拉), 只需要使用 <code>git push -f</code>； 更多, 请参考 <a href=#deleteremove-last-pushed-commit>the above section</a>。</p>
+<p><a name=delete-any-commit></a></p>
+<h3 id=删除任意提交commit>删除任意提交(commit)</h3>
+<p>同样的警告：不到万不得已的时候不要这么做.</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh>$ git rebase --onto SHA1_OF_BAD_COMMIT^ SHA1_OF_BAD_COMMIT
+$ git push -f <span style=color:#ce5c00;font-weight:700>[</span>remote<span style=color:#ce5c00;font-weight:700>]</span> <span style=color:#ce5c00;font-weight:700>[</span>branch<span style=color:#ce5c00;font-weight:700>]</span>
+</code></pre></div><p>或者做一个 <a href=#interactive-rebase>交互式rebase</a> 删除那些你想要删除的提交(commit)里所对应的行。</p>
+<p><a name=#force-push></a></p>
+<h3 id=我尝试推一个修正后的提交amended-commit到远程但是报错>我尝试推一个修正后的提交(amended commit)到远程，但是报错：</h3>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh>To https://github.com/yourusername/repo.git
+! <span style=color:#ce5c00;font-weight:700>[</span>rejected<span style=color:#ce5c00;font-weight:700>]</span>        mybranch -&gt; mybranch <span style=color:#ce5c00;font-weight:700>(</span>non-fast-forward<span style=color:#ce5c00;font-weight:700>)</span>
+error: failed to push some refs to <span style=color:#4e9a06>&#39;https://github.com/tanay1337/webmaker.org.git&#39;</span>
+hint: Updates were rejected because the tip of your current branch is behind
+hint: its remote counterpart. Integrate the remote changes <span style=color:#ce5c00;font-weight:700>(</span>e.g.
+hint: <span style=color:#4e9a06>&#39;git pull ...&#39;</span><span style=color:#ce5c00;font-weight:700>)</span> before pushing again.
+hint: See the <span style=color:#4e9a06>&#39;Note about fast-forwards&#39;</span> in <span style=color:#4e9a06>&#39;git push --help&#39;</span> <span style=color:#204a87;font-weight:700>for</span> details.
+</code></pre></div><p>注意, rebasing(见下面)和修正(amending)会用一个<strong>新的提交(commit)代替旧的</strong>, 所以如果之前你已经往远程仓库上推过一次修正前的提交(commit)，那你现在就必须强推(force push) (<code>-f</code>)。 注意 – <em>总是</em> 确保你指明一个分支!</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh><span style=color:#ce5c00;font-weight:700>(</span>my-branch<span style=color:#ce5c00;font-weight:700>)</span>$ git push origin mybranch -f
+</code></pre></div><p>一般来说, <strong>要避免强推</strong>. 最好是创建和推(push)一个新的提交(commit)，而不是强推一个修正后的提交。后者会使那些与该分支或该分支的子分支工作的开发者，在源历史中产生冲突。</p>
+<p><a href=undo-git-reset-hard></a></p>
+<h3 id=我意外的做了一次硬重置hard-reset我想找回我的内容>我意外的做了一次硬重置(hard reset)，我想找回我的内容</h3>
+<p>如果你意外的做了 <code>git reset --hard</code>, 你通常能找回你的提交(commit), 因为Git对每件事都会有日志，且都会保存几天。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh><span style=color:#ce5c00;font-weight:700>(</span>main<span style=color:#ce5c00;font-weight:700>)</span>$ git reflog
+</code></pre></div><p>你将会看到一个你过去提交(commit)的列表, 和一个重置的提交。 选择你想要回到的提交(commit)的SHA，再重置一次:</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh><span style=color:#ce5c00;font-weight:700>(</span>main<span style=color:#ce5c00;font-weight:700>)</span>$ git reset --hard SHA1234
+</code></pre></div><p>这样就完成了。</p>
+<h2 id=暂存staging>暂存(Staging)</h2>
+<p><a href=#i-need-to-add-staged-changes-to-the-previous-commit></a></p>
+<h3 id=我需要把暂存的内容添加到上一次的提交commit>我需要把暂存的内容添加到上一次的提交(commit)</h3>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh><span style=color:#ce5c00;font-weight:700>(</span>my-branch*<span style=color:#ce5c00;font-weight:700>)</span>$ git commit --amend
+
+</code></pre></div><p><a name=commit-partial-new-file></a></p>
+<h3 id=我想要暂存一个新文件的一部分而不是这个文件的全部>我想要暂存一个新文件的一部分，而不是这个文件的全部</h3>
+<p>一般来说, 如果你想暂存一个文件的一部分, 你可这样做:</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh>$ git add --patch filename.x
+</code></pre></div><p><code>-p</code> 简写。这会打开交互模式， 你将能够用 <code>s</code> 选项来分隔提交(commit)； 然而, 如果这个文件是新的, 会没有这个选择， 添加一个新文件时, 这样做:</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh>$ git add -N filename.x
+</code></pre></div><p>然后, 你需要用 <code>e</code> 选项来手动选择需要添加的行，执行 <code>git diff --cached</code> 将会显示哪些行暂存了哪些行只是保存在本地了。</p>
+<p><a href=stage-in-two-commits></a></p>
+<h3 id=我想把在一个文件里的变化changes加到两个提交commit里>我想把在一个文件里的变化(changes)加到两个提交(commit)里</h3>
+<p><code>git add</code> 会把整个文件加入到一个提交. <code>git add -p</code> 允许交互式的选择你想要提交的部分.</p>
+<p><a href=unstaging-edits-and-staging-the-unstaged></a></p>
+<h3 id=我想把暂存的内容变成未暂存把未暂存的内容暂存起来>我想把暂存的内容变成未暂存，把未暂存的内容暂存起来</h3>
+<p>多数情况下，你应该将所有的内容变为未暂存，然后再选择你想要的内容进行commit。
+但假定你就是想要这么做，这里你可以创建一个临时的commit来保存你已暂存的内容，然后暂存你的未暂存的内容并进行stash。然后reset最后一个commit将原本暂存的内容变为未暂存，最后stash pop回来。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh>$ git commit -m <span style=color:#4e9a06>&#34;WIP&#34;</span>
+$ git add .
+$ git stash
+$ git reset HEAD^
+$ git stash pop --index <span style=color:#0000cf;font-weight:700>0</span>
+</code></pre></div><p>注意1: 这里使用<code>pop</code>仅仅是因为想尽可能保持幂等。
+注意2: 假如你不加上<code>--index</code>你会把暂存的文件标记为为存储.这个<a href="https://stackoverflow.com/questions/31595873/git-stash-with-staged-files-does-stash-convert-staged-files-to-unstaged?answertab=active#tab-top">链接</a> 解释得比较清楚。（不过是英文的，其大意是说，这是一个较为底层的问题，stash时会做2个commit，其中一个会记录index状态，staged的文件等东西，另一个记录worktree和其他的一些东西，如果你不在apply时加index，git会把两个一起销毁，所以staged里就空了）。</p>
+<h2 id=未暂存unstaged的内容>未暂存(Unstaged)的内容</h2>
+<p><a href=move-unstaged-edits-to-new-branch></a></p>
+<h3 id=我想把未暂存的内容移动到一个新分支>我想把未暂存的内容移动到一个新分支</h3>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh>$ git checkout -b my-branch
+</code></pre></div><p><a href=move-unstaged-edits-to-old-branch></a></p>
+<h3 id=我想把未暂存的内容移动到另一个已存在的分支>我想把未暂存的内容移动到另一个已存在的分支</h3>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh>$ git stash
+$ git checkout my-branch
+$ git stash pop
+</code></pre></div><p><a href=i-want-to-discard-my-local-uncommitted-changes></a></p>
+<h3 id=我想丢弃本地未提交的变化uncommitted-changes>我想丢弃本地未提交的变化(uncommitted changes)</h3>
+<p>如果你只是想重置源(origin)和你本地(local)之间的一些提交(commit)，你可以：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh><span style=color:#8f5902;font-style:italic># one commit</span>
+<span style=color:#ce5c00;font-weight:700>(</span>my-branch<span style=color:#ce5c00;font-weight:700>)</span>$ git reset --hard HEAD^
+<span style=color:#8f5902;font-style:italic># two commits</span>
+<span style=color:#ce5c00;font-weight:700>(</span>my-branch<span style=color:#ce5c00;font-weight:700>)</span>$ git reset --hard HEAD^^
+<span style=color:#8f5902;font-style:italic># four commits</span>
+<span style=color:#ce5c00;font-weight:700>(</span>my-branch<span style=color:#ce5c00;font-weight:700>)</span>$ git reset --hard HEAD~4
+<span style=color:#8f5902;font-style:italic># or</span>
+<span style=color:#ce5c00;font-weight:700>(</span>main<span style=color:#ce5c00;font-weight:700>)</span>$ git checkout -f
+</code></pre></div><p>重置某个特殊的文件, 你可以用文件名做为参数:</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh>$ git reset filename
+</code></pre></div><p><a href=i-want-to-discard-specific-unstaged-changes></a></p>
+<h3 id=我想丢弃某些未暂存的内容>我想丢弃某些未暂存的内容</h3>
+<p>如果你想丢弃工作拷贝中的一部分内容，而不是全部。</p>
+<p>签出(checkout)不需要的内容，保留需要的。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh>$ git checkout -p
+<span style=color:#8f5902;font-style:italic># Answer y to all of the snippets you want to drop</span>
+</code></pre></div><p>另外一个方法是使用 <code>stash</code>， Stash所有要保留下的内容, 重置工作拷贝, 重新应用保留的部分。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh>$ git stash -p
+<span style=color:#8f5902;font-style:italic># Select all of the snippets you want to save</span>
+$ git reset --hard
+$ git stash pop
+</code></pre></div><p>或者, stash 你不需要的部分, 然后stash drop。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh>$ git stash -p
+<span style=color:#8f5902;font-style:italic># Select all of the snippets you don&#39;t want to save</span>
+$ git stash drop
+</code></pre></div><h2 id=分支branches>分支(Branches)</h2>
+<p><a name=pull-wrong-branch></a></p>
+<h3 id=我从错误的分支拉取了内容或把内容拉取到了错误的分支>我从错误的分支拉取了内容，或把内容拉取到了错误的分支</h3>
+<p>这是另外一种使用 <code>git reflog</code> 情况，找到在这次错误拉(pull) 之前HEAD的指向。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh><span style=color:#ce5c00;font-weight:700>(</span>main<span style=color:#ce5c00;font-weight:700>)</span>$ git reflog
+ab7555f HEAD@<span style=color:#ce5c00;font-weight:700>{</span>0<span style=color:#ce5c00;font-weight:700>}</span>: pull origin wrong-branch: Fast-forward
+c5bc55a HEAD@<span style=color:#ce5c00;font-weight:700>{</span>1<span style=color:#ce5c00;font-weight:700>}</span>: checkout: checkout message goes here
+</code></pre></div><p>重置分支到你所需的提交(desired commit):</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh>$ git reset --hard c5bc55a
+</code></pre></div><p>完成。</p>
+<p><a href=discard-local-commits></a></p>
+<h3 id=我想扔掉本地的提交commit以便我的分支与远程的保持一致>我想扔掉本地的提交(commit)，以便我的分支与远程的保持一致</h3>
+<p>先确认你没有推(push)你的内容到远程。</p>
+<p><code>git status</code> 会显示你领先(ahead)源(origin)多少个提交:</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh><span style=color:#ce5c00;font-weight:700>(</span>my-branch<span style=color:#ce5c00;font-weight:700>)</span>$ git status
+<span style=color:#8f5902;font-style:italic># On branch my-branch</span>
+<span style=color:#8f5902;font-style:italic># Your branch is ahead of &#39;origin/my-branch&#39; by 2 commits.</span>
+<span style=color:#8f5902;font-style:italic>#   (use &#34;git push&#34; to publish your local commits)</span>
+<span style=color:#8f5902;font-style:italic>#</span>
+</code></pre></div><p>一种方法是:</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh><span style=color:#ce5c00;font-weight:700>(</span>main<span style=color:#ce5c00;font-weight:700>)</span>$ git reset --hard origin/my-branch
+</code></pre></div><p><a name=commit-wrong-branch></a></p>
+<h3 id=我需要提交到一个新分支但错误的提交到了main>我需要提交到一个新分支，但错误的提交到了main</h3>
+<p>在main下创建一个新分支，不切换到新分支,仍在main下:</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh><span style=color:#ce5c00;font-weight:700>(</span>main<span style=color:#ce5c00;font-weight:700>)</span>$ git branch my-branch
+</code></pre></div><p>把main分支重置到前一个提交:</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh><span style=color:#ce5c00;font-weight:700>(</span>main<span style=color:#ce5c00;font-weight:700>)</span>$ git reset --hard HEAD^
+</code></pre></div><p><code>HEAD^</code> 是 <code>HEAD^1</code> 的简写，你可以通过指定要设置的<code>HEAD</code>来进一步重置。</p>
+<p>或者, 如果你不想使用 <code>HEAD^</code>, 找到你想重置到的提交(commit)的hash(<code>git log</code> 能够完成)， 然后重置到这个hash。 使用<code>git push</code> 同步内容到远程。</p>
+<p>例如, main分支想重置到的提交的hash为<code>a13b85e</code>:</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh><span style=color:#ce5c00;font-weight:700>(</span>main<span style=color:#ce5c00;font-weight:700>)</span>$ git reset --hard a13b85e
+HEAD is now at a13b85e
+</code></pre></div><p>签出(checkout)刚才新建的分支继续工作:</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh><span style=color:#ce5c00;font-weight:700>(</span>main<span style=color:#ce5c00;font-weight:700>)</span>$ git checkout my-branch
+</code></pre></div><p><a name=keep-whole-file></a></p>
+<h3 id=我想保留来自另外一个ref-ish的整个文件>我想保留来自另外一个ref-ish的整个文件</h3>
+<p>假设你正在做一个原型方案(原文为working spike (see note)), 有成百的内容，每个都工作得很好。现在, 你提交到了一个分支，保存工作内容:</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh><span style=color:#ce5c00;font-weight:700>(</span>solution<span style=color:#ce5c00;font-weight:700>)</span>$ git add -A <span style=color:#ce5c00;font-weight:700>&amp;&amp;</span> git commit -m <span style=color:#4e9a06>&#34;Adding all changes from this spike into one big commit.&#34;</span>
+</code></pre></div><p>当你想要把它放到一个分支里 (可能是<code>feature</code>, 或者 <code>develop</code>), 你关心是保持整个文件的完整，你想要一个大的提交分隔成比较小。</p>
+<p>假设你有:</p>
+<ul>
+<li>分支 <code>solution</code>, 拥有原型方案， 领先 <code>develop</code> 分支。</li>
+<li>分支 <code>develop</code>, 在这里你应用原型方案的一些内容。</li>
+</ul>
+<p>我去可以通过把内容拿到你的分支里，来解决这个问题:</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh><span style=color:#ce5c00;font-weight:700>(</span>develop<span style=color:#ce5c00;font-weight:700>)</span>$ git checkout solution -- file1.txt
+</code></pre></div><p>这会把这个文件内容从分支 <code>solution</code> 拿到分支 <code>develop</code> 里来:</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh><span style=color:#8f5902;font-style:italic># On branch develop</span>
+<span style=color:#8f5902;font-style:italic># Your branch is up-to-date with &#39;origin/develop&#39;.</span>
+<span style=color:#8f5902;font-style:italic># Changes to be committed:</span>
+<span style=color:#8f5902;font-style:italic>#  (use &#34;git reset HEAD &lt;file&gt;...&#34; to unstage)</span>
+<span style=color:#8f5902;font-style:italic>#</span>
+<span style=color:#8f5902;font-style:italic>#        modified:   file1.txt</span>
+</code></pre></div><p>然后, 正常提交。</p>
+<p>Note: Spike solutions are made to analyze or solve the problem. These solutions are used for estimation and discarded once everyone gets clear visualization of the problem. ~ <a href=https://en.wikipedia.org/wiki/Extreme_programming_practices>Wikipedia</a>.</p>
+<p><a name=cherry-pick></a></p>
+<h3 id=我把几个提交commit提交到了同一个分支而这些提交应该分布在不同的分支里>我把几个提交(commit)提交到了同一个分支，而这些提交应该分布在不同的分支里</h3>
+<p>假设你有一个<code>main</code>分支， 执行<code>git log</code>, 你看到你做过两次提交:</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh><span style=color:#ce5c00;font-weight:700>(</span>main<span style=color:#ce5c00;font-weight:700>)</span>$ git log
+
+commit e3851e817c451cc36f2e6f3049db528415e3c114
+Author: Alex Lee &lt;alexlee@example.com&gt;
+Date:   Tue Jul <span style=color:#0000cf;font-weight:700>22</span> 15:39:27 <span style=color:#0000cf;font-weight:700>2014</span> -0400
+
+    Bug <span style=color:#8f5902;font-style:italic>#21 - Added CSRF protection</span>
+
+commit 5ea51731d150f7ddc4a365437931cd8be3bf3131
+Author: Alex Lee &lt;alexlee@example.com&gt;
+Date:   Tue Jul <span style=color:#0000cf;font-weight:700>22</span> 15:39:12 <span style=color:#0000cf;font-weight:700>2014</span> -0400
+
+    Bug <span style=color:#8f5902;font-style:italic>#14 - Fixed spacing on title</span>
+
+commit a13b85e984171c6e2a1729bb061994525f626d14
+Author: Aki Rose &lt;akirose@example.com&gt;
+Date:   Tue Jul <span style=color:#0000cf;font-weight:700>21</span> 01:12:48 <span style=color:#0000cf;font-weight:700>2014</span> -0400
+
+    First commit
+</code></pre></div><p>让我们用提交hash(commit hash)标记bug (<code>e3851e8</code> for #21, <code>5ea5173</code> for #14).</p>
+<p>首先, 我们把<code>main</code>分支重置到正确的提交(<code>a13b85e</code>):</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh><span style=color:#ce5c00;font-weight:700>(</span>main<span style=color:#ce5c00;font-weight:700>)</span>$ git reset --hard a13b85e
+HEAD is now at a13b85e
+</code></pre></div><p>现在, 我们对 bug #21 创建一个新的分支:</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh><span style=color:#ce5c00;font-weight:700>(</span>main<span style=color:#ce5c00;font-weight:700>)</span>$ git checkout -b <span style=color:#0000cf;font-weight:700>21</span>
+<span style=color:#ce5c00;font-weight:700>(</span>21<span style=color:#ce5c00;font-weight:700>)</span>$
+</code></pre></div><p>接着, 我们用 <em>cherry-pick</em> 把对bug #21的提交放入当前分支。 这意味着我们将应用(apply)这个提交(commit)，仅仅这一个提交(commit)，直接在HEAD上面。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh><span style=color:#ce5c00;font-weight:700>(</span>21<span style=color:#ce5c00;font-weight:700>)</span>$ git cherry-pick e3851e8
+</code></pre></div><p>这时候, 这里可能会产生冲突， 参见<a href=#interactive-rebase>交互式 rebasing 章</a> <a href=#merge-conflict><strong>冲突节</strong></a> 解决冲突.</p>
+<p>再者， 我们为bug #14 创建一个新的分支, 也基于<code>main</code>分支</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh><span style=color:#ce5c00;font-weight:700>(</span>21<span style=color:#ce5c00;font-weight:700>)</span>$ git checkout main
+<span style=color:#ce5c00;font-weight:700>(</span>main<span style=color:#ce5c00;font-weight:700>)</span>$ git checkout -b <span style=color:#0000cf;font-weight:700>14</span>
+<span style=color:#ce5c00;font-weight:700>(</span>14<span style=color:#ce5c00;font-weight:700>)</span>$
+</code></pre></div><p>最后, 为 bug #14 执行 <code>cherry-pick</code>:</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh><span style=color:#ce5c00;font-weight:700>(</span>14<span style=color:#ce5c00;font-weight:700>)</span>$ git cherry-pick 5ea5173
+</code></pre></div><p><a name=delete-stale-local-branches></a></p>
+<h3 id=我想删除上游upstream分支被删除了的本地分支>我想删除上游(upstream)分支被删除了的本地分支</h3>
+<p>一旦你在github 上面合并(merge)了一个pull request, 你就可以删除你fork里被合并的分支。 如果你不准备继续在这个分支里工作, 删除这个分支的本地拷贝会更干净，使你不会陷入工作分支和一堆陈旧分支的混乱之中。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh>$ git fetch -p
+</code></pre></div><p><a name=restore-a-deleted-branch></a></p>
+<h3 id=我不小心删除了我的分支>我不小心删除了我的分支</h3>
+<p>如果你定期推送到远程, 多数情况下应该是安全的，但有些时候还是可能删除了还没有推到远程的分支。 让我们先创建一个分支和一个新的文件:</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh><span style=color:#ce5c00;font-weight:700>(</span>main<span style=color:#ce5c00;font-weight:700>)</span>$ git checkout -b my-branch
+<span style=color:#ce5c00;font-weight:700>(</span>my-branch<span style=color:#ce5c00;font-weight:700>)</span>$ git branch
+<span style=color:#ce5c00;font-weight:700>(</span>my-branch<span style=color:#ce5c00;font-weight:700>)</span>$ touch foo.txt
+<span style=color:#ce5c00;font-weight:700>(</span>my-branch<span style=color:#ce5c00;font-weight:700>)</span>$ ls
+README.md foo.txt
+</code></pre></div><p>添加文件并做一次提交</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh><span style=color:#ce5c00;font-weight:700>(</span>my-branch<span style=color:#ce5c00;font-weight:700>)</span>$ git add .
+<span style=color:#ce5c00;font-weight:700>(</span>my-branch<span style=color:#ce5c00;font-weight:700>)</span>$ git commit -m <span style=color:#4e9a06>&#39;foo.txt added&#39;</span>
+<span style=color:#ce5c00;font-weight:700>(</span>my-branch<span style=color:#ce5c00;font-weight:700>)</span>$ foo.txt added
+ <span style=color:#0000cf;font-weight:700>1</span> files changed, <span style=color:#0000cf;font-weight:700>1</span> insertions<span style=color:#ce5c00;font-weight:700>(</span>+<span style=color:#ce5c00;font-weight:700>)</span>
+ create mode <span style=color:#0000cf;font-weight:700>100644</span> foo.txt
+<span style=color:#ce5c00;font-weight:700>(</span>my-branch<span style=color:#ce5c00;font-weight:700>)</span>$ git log
+
+commit 4e3cd85a670ced7cc17a2b5d8d3d809ac88d5012
+Author: siemiatj &lt;siemiatj@example.com&gt;
+Date:   Wed Jul <span style=color:#0000cf;font-weight:700>30</span> 00:34:10 <span style=color:#0000cf;font-weight:700>2014</span> +0200
+
+    foo.txt added
+
+commit 69204cdf0acbab201619d95ad8295928e7f411d5
+Author: Kate Hudson &lt;katehudson@example.com&gt;
+Date:   Tue Jul <span style=color:#0000cf;font-weight:700>29</span> 13:14:46 <span style=color:#0000cf;font-weight:700>2014</span> -0400
+
+    Fixes <span style=color:#8f5902;font-style:italic>#6: Force pushing after amending commits</span>
+</code></pre></div><p>现在我们切回到主(main)分支，‘不小心的’删除<code>my-branch</code>分支</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh><span style=color:#ce5c00;font-weight:700>(</span>my-branch<span style=color:#ce5c00;font-weight:700>)</span>$ git checkout main
+Switched to branch <span style=color:#4e9a06>&#39;main&#39;</span>
+Your branch is up-to-date with <span style=color:#4e9a06>&#39;origin/main&#39;</span>.
+<span style=color:#ce5c00;font-weight:700>(</span>main<span style=color:#ce5c00;font-weight:700>)</span>$ git branch -D my-branch
+Deleted branch my-branch <span style=color:#ce5c00;font-weight:700>(</span>was 4e3cd85<span style=color:#ce5c00;font-weight:700>)</span>.
+<span style=color:#ce5c00;font-weight:700>(</span>main<span style=color:#ce5c00;font-weight:700>)</span>$ <span style=color:#204a87>echo</span> oh noes, deleted my branch!
+oh noes, deleted my branch!
+</code></pre></div><p>在这时候你应该想起了<code>reflog</code>, 一个升级版的日志，它存储了仓库(repo)里面所有动作的历史。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>(main)$ git reflog
+69204cd HEAD@{0}: checkout: moving from my-branch to main
+4e3cd85 HEAD@{1}: commit: foo.txt added
+69204cd HEAD@{2}: checkout: moving from main to my-branch
+</code></pre></div><p>正如你所见，我们有一个来自删除分支的提交hash(commit hash)，接下来看看是否能恢复删除了的分支。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh><span style=color:#ce5c00;font-weight:700>(</span>main<span style=color:#ce5c00;font-weight:700>)</span>$ git checkout -b my-branch-help
+Switched to a new branch <span style=color:#4e9a06>&#39;my-branch-help&#39;</span>
+<span style=color:#ce5c00;font-weight:700>(</span>my-branch-help<span style=color:#ce5c00;font-weight:700>)</span>$ git reset --hard 4e3cd85
+HEAD is now at 4e3cd85 foo.txt added
+<span style=color:#ce5c00;font-weight:700>(</span>my-branch-help<span style=color:#ce5c00;font-weight:700>)</span>$ ls
+README.md foo.txt
+</code></pre></div><p>看! 我们把删除的文件找回来了。 Git的 <code>reflog</code> 在rebasing出错的时候也是同样有用的。</p>
+<p><a name=i-want-to-delete-a-branch></a></p>
+<h3 id=我想删除一个分支>我想删除一个分支</h3>
+<p>删除一个远程分支:</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh><span style=color:#ce5c00;font-weight:700>(</span>main<span style=color:#ce5c00;font-weight:700>)</span>$ git push origin --delete my-branch
+</code></pre></div><p>你也可以:</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh><span style=color:#ce5c00;font-weight:700>(</span>main<span style=color:#ce5c00;font-weight:700>)</span>$ git push origin :my-branch
+</code></pre></div><p>删除一个本地分支:</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh><span style=color:#ce5c00;font-weight:700>(</span>main<span style=color:#ce5c00;font-weight:700>)</span>$ git branch -D my-branch
+</code></pre></div><p><a name=i-want-to-checkout-to-a-remote-branch-that-someone-else-is-working-on></a></p>
+<h3 id=我想从别人正在工作的远程分支签出checkout一个分支>我想从别人正在工作的远程分支签出(checkout)一个分支</h3>
+<p>首先, 从远程拉取(fetch) 所有分支:</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh><span style=color:#ce5c00;font-weight:700>(</span>main<span style=color:#ce5c00;font-weight:700>)</span>$ git fetch --all
+</code></pre></div><p>假设你想要从远程的<code>daves</code>分支签出到本地的<code>daves</code></p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh><span style=color:#ce5c00;font-weight:700>(</span>main<span style=color:#ce5c00;font-weight:700>)</span>$ git checkout --track origin/daves
+Branch daves <span style=color:#204a87>set</span> up to track remote branch daves from origin.
+Switched to a new branch <span style=color:#4e9a06>&#39;daves&#39;</span>
+</code></pre></div><p>(<code>--track</code> 是 <code>git checkout -b [branch] [remotename]/[branch]</code> 的简写)</p>
+<p>这样就得到了一个<code>daves</code>分支的本地拷贝, 任何推过(pushed)的更新，远程都能看到.</p>
+<h2 id=rebasing-和合并merging>Rebasing 和合并(Merging)</h2>
+<p><a name=undo-rebase></a></p>
+<h3 id=我想撤销rebasemerge>我想撤销rebase/merge</h3>
+<p>你可以合并(merge)或rebase了一个错误的分支, 或者完成不了一个进行中的rebase/merge。 Git 在进行危险操作的时候会把原始的HEAD保存在一个叫ORIG_HEAD的变量里, 所以要把分支恢复到rebase/merge前的状态是很容易的。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh><span style=color:#ce5c00;font-weight:700>(</span>my-branch<span style=color:#ce5c00;font-weight:700>)</span>$ git reset --hard ORIG_HEAD
+</code></pre></div><p><a name=force-push-rebase></a></p>
+<h3 id=我已经rebase过-但是我不想强推force-push>我已经rebase过, 但是我不想强推(force push)</h3>
+<p>不幸的是，如果你想把这些变化(changes)反应到远程分支上，你就必须得强推(force push)。 是因你快进(Fast forward)了提交，改变了Git历史, 远程分支不会接受变化(changes)，除非强推(force push)。这就是许多人使用 merge 工作流, 而不是 rebasing 工作流的主要原因之一， 开发者的强推(force push)会使大的团队陷入麻烦。使用时需要注意，一种安全使用 rebase 的方法是，不要把你的变化(changes)反映到远程分支上, 而是按下面的做:</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh><span style=color:#ce5c00;font-weight:700>(</span>main<span style=color:#ce5c00;font-weight:700>)</span>$ git checkout my-branch
+<span style=color:#ce5c00;font-weight:700>(</span>my-branch<span style=color:#ce5c00;font-weight:700>)</span>$ git rebase -i main
+<span style=color:#ce5c00;font-weight:700>(</span>my-branch<span style=color:#ce5c00;font-weight:700>)</span>$ git checkout main
+<span style=color:#ce5c00;font-weight:700>(</span>main<span style=color:#ce5c00;font-weight:700>)</span>$ git merge --ff-only my-branch
+</code></pre></div><p>更多, 参见 <a href=http://stackoverflow.com/questions/11058312/how-can-i-use-git-rebase-without-requiring-a-forced-push>this SO thread</a>.</p>
+<p><a name=interactive-rebase></a></p>
+<h3 id=我需要组合combine几个提交commit>我需要组合(combine)几个提交(commit)</h3>
+<p>假设你的工作分支将会做对于 <code>main</code> 的pull-request。 一般情况下你不关心提交(commit)的时间戳，只想组合 <em>所有</em> 提交(commit) 到一个单独的里面, 然后重置(reset)重提交(recommit)。 确保主(main)分支是最新的和你的变化都已经提交了, 然后:</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh><span style=color:#ce5c00;font-weight:700>(</span>my-branch<span style=color:#ce5c00;font-weight:700>)</span>$ git reset --soft main
+<span style=color:#ce5c00;font-weight:700>(</span>my-branch<span style=color:#ce5c00;font-weight:700>)</span>$ git commit -am <span style=color:#4e9a06>&#34;New awesome feature&#34;</span>
+</code></pre></div><p>如果你想要更多的控制, 想要保留时间戳, 你需要做交互式rebase (interactive rebase):</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh><span style=color:#ce5c00;font-weight:700>(</span>my-branch<span style=color:#ce5c00;font-weight:700>)</span>$ git rebase -i main
+</code></pre></div><p>如果没有相对的其它分支， 你将不得不相对自己的<code>HEAD</code> 进行 rebase。 例如：你想组合最近的两次提交(commit), 你将相对于<code>HEAD~2</code> 进行rebase， 组合最近3次提交(commit), 相对于<code>HEAD~3</code>, 等等。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh><span style=color:#ce5c00;font-weight:700>(</span>main<span style=color:#ce5c00;font-weight:700>)</span>$ git rebase -i HEAD~2
+</code></pre></div><p>在你执行了交互式 rebase的命令(interactive rebase command)后, 你将在你的编辑器里看到类似下面的内容:</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-vim data-lang=vim><span style=color:#000>pick</span> <span style=color:#000>a9c8a1d</span> <span style=color:#000>Some</span> <span style=color:#000>refactoring</span><span style=color:#a40000>
+</span><span style=color:#a40000></span><span style=color:#000>pick</span> <span style=color:#0000cf;font-weight:700>01</span>b<span style=color:#0000cf;font-weight:700>2</span>fd<span style=color:#0000cf;font-weight:700>8</span> <span style=color:#000>New</span> <span style=color:#000>awesome</span> <span style=color:#000>feature</span><span style=color:#a40000>
+</span><span style=color:#a40000></span><span style=color:#000>pick</span> <span style=color:#000>b729ad5</span> <span style=color:#000>fixup</span><span style=color:#a40000>
+</span><span style=color:#a40000></span><span style=color:#000>pick</span> <span style=color:#000>e3851e8</span> <span style=color:#000>another</span> <span style=color:#000>fix</span><span style=color:#a40000>
+</span><span style=color:#a40000>
+</span><span style=color:#a40000></span># <span style=color:#000>Rebase</span> <span style=color:#0000cf;font-weight:700>8074</span>d<span style=color:#0000cf;font-weight:700>12</span>..<span style=color:#000>b729ad5</span> <span style=color:#000>onto</span> <span style=color:#0000cf;font-weight:700>8074</span>d<span style=color:#0000cf;font-weight:700>12</span><span style=color:#a40000>
+</span><span style=color:#a40000></span>#<span style=color:#a40000>
+</span><span style=color:#a40000></span># <span style=color:#000>Commands</span>:<span style=color:#a40000>
+</span><span style=color:#a40000></span>#  <span style=color:#000>p</span><span style=color:#000;font-weight:700>,</span> <span style=color:#000>pick</span> <span style=color:#000;font-weight:700>=</span> <span style=color:#000>use</span> <span style=color:#000>commit</span><span style=color:#a40000>
+</span><span style=color:#a40000></span>#  <span style=color:#000>r</span><span style=color:#000;font-weight:700>,</span> <span style=color:#000>reword</span> <span style=color:#000;font-weight:700>=</span> <span style=color:#000>use</span> <span style=color:#000>commit</span><span style=color:#000;font-weight:700>,</span> <span style=color:#000>but</span> <span style=color:#000>edit</span> <span style=color:#000>the</span> <span style=color:#000>commit</span> <span style=color:#000>message</span><span style=color:#a40000>
+</span><span style=color:#a40000></span>#  <span style=color:#000>e</span><span style=color:#000;font-weight:700>,</span> <span style=color:#000>edit</span> <span style=color:#000;font-weight:700>=</span> <span style=color:#000>use</span> <span style=color:#000>commit</span><span style=color:#000;font-weight:700>,</span> <span style=color:#000>but</span> <span style=color:#000>stop</span> <span style=color:#000>for</span> <span style=color:#000>amending</span><span style=color:#a40000>
+</span><span style=color:#a40000></span>#  <span style=color:#000>s</span><span style=color:#000;font-weight:700>,</span> <span style=color:#000>squash</span> <span style=color:#000;font-weight:700>=</span> <span style=color:#000>use</span> <span style=color:#000>commit</span><span style=color:#000;font-weight:700>,</span> <span style=color:#000>but</span> <span style=color:#000>meld</span> <span style=color:#000>into</span> <span style=color:#000>previous</span> <span style=color:#000>commit</span><span style=color:#a40000>
+</span><span style=color:#a40000></span>#  <span style=color:#000>f</span><span style=color:#000;font-weight:700>,</span> <span style=color:#000>fixup</span> <span style=color:#000;font-weight:700>=</span> <span style=color:#000>like</span> <span style=color:#4e9a06>&#34;squash&#34;</span><span style=color:#000;font-weight:700>,</span> <span style=color:#000>but</span> <span style=color:#000>discard</span> <span style=color:#000>this</span> <span style=color:#000>commit</span>&#39;<span style=color:#000>s</span> <span style=color:#000>log</span> <span style=color:#000>message</span><span style=color:#a40000>
+</span><span style=color:#a40000></span>#  <span style=color:#000>x</span><span style=color:#000;font-weight:700>,</span> <span style=color:#000>exec</span> <span style=color:#000;font-weight:700>=</span> <span style=color:#000>run</span> <span style=color:#000>command</span> <span style=color:#000;font-weight:700>(</span><span style=color:#000>the</span> <span style=color:#000>rest</span> <span style=color:#000>of</span> <span style=color:#000>the</span> <span style=color:#000>line</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000>using</span> <span style=color:#000>shell</span><span style=color:#a40000>
+</span><span style=color:#a40000></span>#<span style=color:#a40000>
+</span><span style=color:#a40000></span># <span style=color:#000>These</span> <span style=color:#000>lines</span> <span style=color:#000>can</span> <span style=color:#000>be</span> <span style=color:#000>re</span><span style=color:#000;font-weight:700>-</span><span style=color:#000>ordered</span>; <span style=color:#000>they</span> <span style=color:#000>are</span> <span style=color:#000>executed</span> <span style=color:#000>from</span> <span style=color:#000>top</span> <span style=color:#000>to</span> <span style=color:#000>bottom</span>.<span style=color:#a40000>
+</span><span style=color:#a40000></span>#<span style=color:#a40000>
+</span><span style=color:#a40000></span># <span style=color:#000>If</span> <span style=color:#000>you</span> <span style=color:#000>remove</span> <span style=color:#000>a</span> <span style=color:#000>line</span> <span style=color:#000>here</span> <span style=color:#000>THAT</span> <span style=color:#000>COMMIT</span> <span style=color:#000>WILL</span> <span style=color:#000>BE</span> <span style=color:#000>LOST</span>.<span style=color:#a40000>
+</span><span style=color:#a40000></span>#<span style=color:#a40000>
+</span><span style=color:#a40000></span># <span style=color:#000>However</span><span style=color:#000;font-weight:700>,</span> <span style=color:#204a87;font-weight:700>if</span> <span style=color:#000>you</span> <span style=color:#000>remove</span> <span style=color:#000>everything</span><span style=color:#000;font-weight:700>,</span> <span style=color:#000>the</span> <span style=color:#000>rebase</span> <span style=color:#000>will</span> <span style=color:#000>be</span> <span style=color:#000>aborted</span>.<span style=color:#a40000>
+</span><span style=color:#a40000></span>#<span style=color:#a40000>
+</span><span style=color:#a40000></span># <span style=color:#000>Note</span> <span style=color:#000>that</span> <span style=color:#000>empty</span> <span style=color:#000>commits</span> <span style=color:#000>are</span> <span style=color:#000>commented</span> <span style=color:#000>out</span><span style=color:#a40000>
+</span></code></pre></div><p>所有以 <code>#</code> 开头的行都是注释, 不会影响 rebase.</p>
+<p>然后，你可以用任何上面命令列表的命令替换 <code>pick</code>, 你也可以通过删除对应的行来删除一个提交(commit)。</p>
+<p>例如, 如果你想 <strong>单独保留最旧(first)的提交(commit),组合所有剩下的到第二个里面</strong>, 你就应该编辑第二个提交(commit)后面的每个提交(commit) 前的单词为 <code>f</code>:</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-vim data-lang=vim><span style=color:#000>pick</span> <span style=color:#000>a9c8a1d</span> <span style=color:#000>Some</span> <span style=color:#000>refactoring</span><span style=color:#a40000>
+</span><span style=color:#a40000></span><span style=color:#000>pick</span> <span style=color:#0000cf;font-weight:700>01</span>b<span style=color:#0000cf;font-weight:700>2</span>fd<span style=color:#0000cf;font-weight:700>8</span> <span style=color:#000>New</span> <span style=color:#000>awesome</span> <span style=color:#000>feature</span><span style=color:#a40000>
+</span><span style=color:#a40000></span><span style=color:#000>f</span> <span style=color:#000>b729ad5</span> <span style=color:#000>fixup</span><span style=color:#a40000>
+</span><span style=color:#a40000></span><span style=color:#000>f</span> <span style=color:#000>e3851e8</span> <span style=color:#000>another</span> <span style=color:#000>fix</span><span style=color:#a40000>
+</span></code></pre></div><p>如果你想组合这些提交(commit) <strong>并重命名这个提交(commit)</strong>, 你应该在第二个提交(commit)旁边添加一个<code>r</code>，或者更简单的用<code>s</code> 替代 <code>f</code>:</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-vim data-lang=vim><span style=color:#000>pick</span> <span style=color:#000>a9c8a1d</span> <span style=color:#000>Some</span> <span style=color:#000>refactoring</span><span style=color:#a40000>
+</span><span style=color:#a40000></span><span style=color:#000>pick</span> <span style=color:#0000cf;font-weight:700>01</span>b<span style=color:#0000cf;font-weight:700>2</span>fd<span style=color:#0000cf;font-weight:700>8</span> <span style=color:#000>New</span> <span style=color:#000>awesome</span> <span style=color:#000>feature</span><span style=color:#a40000>
+</span><span style=color:#a40000></span><span style=color:#000>s</span> <span style=color:#000>b729ad5</span> <span style=color:#000>fixup</span><span style=color:#a40000>
+</span><span style=color:#a40000></span><span style=color:#000>s</span> <span style=color:#000>e3851e8</span> <span style=color:#000>another</span> <span style=color:#000>fix</span><span style=color:#a40000>
+</span></code></pre></div><p>你可以在接下来弹出的文本提示框里重命名提交(commit)。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-vim data-lang=vim><span style=color:#000>Newer</span><span style=color:#000;font-weight:700>,</span> <span style=color:#000>awesomer</span> <span style=color:#000>features</span><span style=color:#a40000>
+</span><span style=color:#a40000>
+</span><span style=color:#a40000></span># <span style=color:#000>Please</span> <span style=color:#000>enter</span> <span style=color:#000>the</span> <span style=color:#000>commit</span> <span style=color:#000>message</span> <span style=color:#000>for</span> <span style=color:#000>your</span> <span style=color:#000>changes</span>. <span style=color:#000>Lines</span> <span style=color:#000>starting</span><span style=color:#a40000>
+</span><span style=color:#a40000></span># <span style=color:#000>with</span> <span style=color:#4e9a06>&#39;#&#39;</span> <span style=color:#000>will</span> <span style=color:#000>be</span> <span style=color:#000>ignored</span><span style=color:#000;font-weight:700>,</span> <span style=color:#000>and</span> <span style=color:#000>an</span> <span style=color:#000>empty</span> <span style=color:#000>message</span> <span style=color:#000>aborts</span> <span style=color:#000>the</span> <span style=color:#000>commit</span>.<span style=color:#a40000>
+</span><span style=color:#a40000></span># <span style=color:#000>rebase</span> <span style=color:#000>in</span> <span style=color:#000>progress</span>; <span style=color:#000>onto</span> <span style=color:#0000cf;font-weight:700>8074</span>d<span style=color:#0000cf;font-weight:700>12</span><span style=color:#a40000>
+</span><span style=color:#a40000></span># <span style=color:#000>You</span> <span style=color:#000>are</span> <span style=color:#000>currently</span> <span style=color:#000>editing</span> <span style=color:#000>a</span> <span style=color:#000>commit</span> <span style=color:#000>while</span> <span style=color:#000>rebasing</span> <span style=color:#000>branch</span> <span style=color:#4e9a06>&#39;main&#39;</span> <span style=color:#000>on</span> <span style=color:#4e9a06>&#39;8074d12&#39;</span>.<span style=color:#a40000>
+</span><span style=color:#a40000></span>#<span style=color:#a40000>
+</span><span style=color:#a40000></span># <span style=color:#000>Changes</span> <span style=color:#000>to</span> <span style=color:#000>be</span> <span style=color:#000>committed</span>:<span style=color:#a40000>
+</span><span style=color:#a40000></span>#	<span style=color:#000>modified</span>:   <span style=color:#000>README</span>.<span style=color:#000>md</span><span style=color:#a40000>
+</span><span style=color:#a40000></span>#<span style=color:#a40000>
+</span><span style=color:#a40000>
+</span></code></pre></div><p>如果成功了, 你应该看到类似下面的内容:</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh><span style=color:#ce5c00;font-weight:700>(</span>main<span style=color:#ce5c00;font-weight:700>)</span>$ Successfully rebased and updated refs/heads/main.
+</code></pre></div><h4 id=安全合并merging策略>安全合并(merging)策略</h4>
+<p><code>--no-commit</code> 执行合并(merge)但不自动提交, 给用户在做提交前检查和修改的机会。 <code>no-ff</code> 会为特性分支(feature branch)的存在过留下证据, 保持项目历史一致。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh><span style=color:#ce5c00;font-weight:700>(</span>main<span style=color:#ce5c00;font-weight:700>)</span>$ git merge --no-ff --no-commit my-branch
+</code></pre></div><h4 id=我需要将一个分支合并成一个提交commit>我需要将一个分支合并成一个提交(commit)</h4>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh><span style=color:#ce5c00;font-weight:700>(</span>main<span style=color:#ce5c00;font-weight:700>)</span>$ git merge --squash my-branch
+</code></pre></div><p><a name=rebase-unpushed-commits></a></p>
+<h4 id=我只想组合combine未推的提交unpushed-commit>我只想组合(combine)未推的提交(unpushed commit)</h4>
+<p>有时候，在将数据推向上游之前，你有几个正在进行的工作提交(commit)。这时候不希望把已经推(push)过的组合进来，因为其他人可能已经有提交(commit)引用它们了。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh><span style=color:#ce5c00;font-weight:700>(</span>main<span style=color:#ce5c00;font-weight:700>)</span>$ git rebase -i @<span style=color:#ce5c00;font-weight:700>{</span>u<span style=color:#ce5c00;font-weight:700>}</span>
+</code></pre></div><p>这会产生一次交互式的rebase(interactive rebase), 只会列出没有推(push)的提交(commit)， 在这个列表时进行reorder/fix/squash 都是安全的。</p>
+<p><a name=check-if-all-commits-on-a-branch-are-merged></a></p>
+<h3 id=检查是否分支上的所有提交commit都合并merge过了>检查是否分支上的所有提交(commit)都合并(merge)过了</h3>
+<p>检查一个分支上的所有提交(commit)是否都已经合并(merge)到了其它分支, 你应该在这些分支的head(或任何 commits)之间做一次diff:</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh><span style=color:#ce5c00;font-weight:700>(</span>main<span style=color:#ce5c00;font-weight:700>)</span>$ git log --graph --left-right --cherry-pick --oneline HEAD...feature/120-on-scroll
+</code></pre></div><p>这会告诉你在一个分支里有而另一个分支没有的所有提交(commit), 和分支之间不共享的提交(commit)的列表。 另一个做法可以是:</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh><span style=color:#ce5c00;font-weight:700>(</span>main<span style=color:#ce5c00;font-weight:700>)</span>$ git log main ^feature/120-on-scroll --no-merges
+</code></pre></div><h3 id=交互式rebaseinteractive-rebase可能出现的问题>交互式rebase(interactive rebase)可能出现的问题</h3>
+<p><a name=noop></a></p>
+<h4 id=这个rebase-编辑屏幕出现noop>这个rebase 编辑屏幕出现&rsquo;noop&rsquo;</h4>
+<p>如果你看到的是这样:</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>noop
+</code></pre></div><p>这意味着你rebase的分支和当前分支在同一个提交(commit)上, 或者 <em>领先(ahead)</em> 当前分支。 你可以尝试:</p>
+<ul>
+<li>检查确保主(main)分支没有问题</li>
+<li>rebase <code>HEAD~2</code> 或者更早</li>
+</ul>
+<p><a name=merge-conflict></a></p>
+<h4 id=有冲突的情况>有冲突的情况</h4>
+<p>如果你不能成功的完成rebase, 你可能必须要解决冲突。</p>
+<p>首先执行 <code>git status</code> 找出哪些文件有冲突:</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh><span style=color:#ce5c00;font-weight:700>(</span>my-branch<span style=color:#ce5c00;font-weight:700>)</span>$ git status
+On branch my-branch
+Changes not staged <span style=color:#204a87;font-weight:700>for</span> commit:
+  <span style=color:#ce5c00;font-weight:700>(</span>use <span style=color:#4e9a06>&#34;git add &lt;file&gt;...&#34;</span> to update what will be committed<span style=color:#ce5c00;font-weight:700>)</span>
+  <span style=color:#ce5c00;font-weight:700>(</span>use <span style=color:#4e9a06>&#34;git checkout -- &lt;file&gt;...&#34;</span> to discard changes in working directory<span style=color:#ce5c00;font-weight:700>)</span>
+
+	modified:   README.md
+</code></pre></div><p>在这个例子里面, <code>README.md</code> 有冲突。 打开这个文件找到类似下面的内容:</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-vim data-lang=vim>   <span style=color:#000;font-weight:700>&lt;&lt;&lt;&lt;&lt;&lt;&lt;</span> <span style=color:#000>HEAD</span><span style=color:#a40000>
+</span><span style=color:#a40000></span>   <span style=color:#000>some</span> <span style=color:#000>code</span><span style=color:#a40000>
+</span><span style=color:#a40000></span>   <span style=color:#000;font-weight:700>=========</span><span style=color:#a40000>
+</span><span style=color:#a40000></span>   <span style=color:#000>some</span> <span style=color:#000>code</span><span style=color:#a40000>
+</span><span style=color:#a40000></span>   <span style=color:#000;font-weight:700>&gt;&gt;&gt;&gt;&gt;&gt;&gt;</span> <span style=color:#000>new</span><span style=color:#000;font-weight:700>-</span><span style=color:#000>commit</span><span style=color:#a40000>
+</span></code></pre></div><p>你需要解决新提交的代码(示例里, 从中间<code>==</code>线到<code>new-commit</code>的地方)与<code>HEAD</code> 之间不一样的地方.</p>
+<p>有时候这些合并非常复杂，你应该使用可视化的差异编辑器(visual diff editor):</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh><span style=color:#ce5c00;font-weight:700>(</span>main*<span style=color:#ce5c00;font-weight:700>)</span>$ git mergetool -t opendiff
+</code></pre></div><p>在你解决完所有冲突和测试过后, <code>git add</code> 变化了的(changed)文件, 然后用<code>git rebase --continue</code> 继续rebase。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh><span style=color:#ce5c00;font-weight:700>(</span>my-branch<span style=color:#ce5c00;font-weight:700>)</span>$ git add README.md
+<span style=color:#ce5c00;font-weight:700>(</span>my-branch<span style=color:#ce5c00;font-weight:700>)</span>$ git rebase --continue
+</code></pre></div><p>如果在解决完所有的冲突过后，得到了与提交前一样的结果, 可以执行<code>git rebase --skip</code>。</p>
+<p>任何时候你想结束整个rebase 过程，回来rebase前的分支状态, 你可以做:</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh><span style=color:#ce5c00;font-weight:700>(</span>my-branch<span style=color:#ce5c00;font-weight:700>)</span>$ git rebase --abort
+</code></pre></div><p><a name=stashing></a></p>
+<h2 id=stash>Stash</h2>
+<h3 id=暂存所有改动>暂存所有改动</h3>
+<p>暂存你工作目录下的所有改动</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh>$ git stash
+</code></pre></div><p>你可以使用<code>-u</code>来排除一些文件</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh>$ git stash -u
+</code></pre></div><h3 id=暂存指定文件>暂存指定文件</h3>
+<p>假设你只想暂存某一个文件</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh>$ git stash push working-directory-path/filename.ext
+</code></pre></div><p>假设你想暂存多个文件</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh>$ git stash push working-directory-path/filename1.ext working-directory-path/filename2.ext
+</code></pre></div><p><a name=stash-msg></a></p>
+<h3 id=暂存时记录消息>暂存时记录消息</h3>
+<p>这样你可以在<code>list</code>时看到它</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh>$ git stash save &lt;message&gt;
+</code></pre></div><p>或</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh>$ git stash push -m &lt;message&gt;
+</code></pre></div><p><a name=stash-apply-specific></a></p>
+<h3 id=使用某个指定暂存>使用某个指定暂存</h3>
+<p>首先你可以查看你的<code>stash</code>记录</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh>$ git stash list
+</code></pre></div><p>然后你可以<code>apply</code>某个<code>stash</code></p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh>$ git stash apply <span style=color:#4e9a06>&#34;stash@{n}&#34;</span>
+</code></pre></div><p>此处， &lsquo;n&rsquo;是<code>stash</code>在栈中的位置，最上层的<code>stash</code>会是0</p>
+<p>除此之外，也可以使用时间标记(假如你能记得的话)。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh>$ git stash apply <span style=color:#4e9a06>&#34;stash@{2.hours.ago}&#34;</span>
+</code></pre></div><p><a href=stage-and-keep-unstaged></a></p>
+<h3 id=暂存时保留未暂存的内容>暂存时保留未暂存的内容</h3>
+<p>你需要手动create一个<code>stash commit</code>， 然后使用<code>git stash store</code>。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh>$ git stash create
+$ git stash store -m <span style=color:#4e9a06>&#34;commit-message&#34;</span> CREATED_SHA1
+</code></pre></div><p><a name=miscellaneous-objects></a></p>
+<h2 id=杂项miscellaneous-objects>杂项(Miscellaneous Objects)</h2>
+<p><a name=clone-submodules></a></p>
+<h3 id=克隆所有子模块>克隆所有子模块</h3>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh>$ git clone --recursive git://github.com/foo/bar.git
+</code></pre></div><p>如果已经克隆了:</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh>$ git submodule update --init --recursive
+</code></pre></div><p><a name=delete-tag></a></p>
+<h3 id=删除标签tag>删除标签(tag)</h3>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh>$ git tag -d &lt;tag_name&gt;
+$ git push &lt;remote&gt; :refs/tags/&lt;tag_name&gt;
+</code></pre></div><p><a name=recover-tag></a></p>
+<h3 id=恢复已删除标签tag>恢复已删除标签(tag)</h3>
+<p>如果你想恢复一个已删除标签(tag), 可以按照下面的步骤: 首先, 需要找到无法访问的标签(unreachable tag):</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh>$ git fsck --unreachable <span style=color:#000;font-weight:700>|</span> grep tag
+</code></pre></div><p>记下这个标签(tag)的hash，然后用Git的 <a href=http://git-scm.com/docs/git-update-ref>update-ref</a>:</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh>$ git update-ref refs/tags/&lt;tag_name&gt; &lt;hash&gt;
+</code></pre></div><p>这时你的标签(tag)应该已经恢复了。</p>
+<p><a name=deleted-patch></a></p>
+<h3 id=已删除补丁patch>已删除补丁(patch)</h3>
+<p>如果某人在 GitHub 上给你发了一个pull request, 但是然后他删除了他自己的原始 fork, 你将没法克隆他们的提交(commit)或使用 <code>git am</code>。在这种情况下, 最好手动的查看他们的提交(commit)，并把它们拷贝到一个本地新分支，然后做提交。</p>
+<p>做完提交后, 再修改作者，参见<a href=#commit-wrong-author>变更作者</a>。 然后, 应用变化, 再发起一个新的pull request。</p>
+<h2 id=跟踪文件tracking-files>跟踪文件(Tracking Files)</h2>
+<p><a href=i-want-to-change-a-file-names-capitalization-without-changing-the-contents-of-the-file></a></p>
+<h3 id=我只想改变一个文件名字的大小写而不修改内容>我只想改变一个文件名字的大小写，而不修改内容</h3>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh><span style=color:#ce5c00;font-weight:700>(</span>main<span style=color:#ce5c00;font-weight:700>)</span>$ git mv --force myfile MyFile
+</code></pre></div><p><a href=remove-from-git></a></p>
+<h3 id=我想从git删除一个文件但保留该文件>我想从Git删除一个文件，但保留该文件</h3>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh><span style=color:#ce5c00;font-weight:700>(</span>main<span style=color:#ce5c00;font-weight:700>)</span>$ git rm --cached log.txt
+</code></pre></div><h2 id=配置configuration>配置(Configuration)</h2>
+<p><a name=adding-command-aliases></a></p>
+<h3 id=我想给一些git命令添加别名alias>我想给一些Git命令添加别名(alias)</h3>
+<p>在 OS X 和 Linux 下, 你的 Git的配置文件储存在 <code>~/.gitconfig</code>。我在<code>[alias]</code> 部分添加了一些快捷别名(和一些我容易拼写错误的)，如下:</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-vim data-lang=vim>[<span style=color:#000>alias</span>]<span style=color:#a40000>
+</span><span style=color:#a40000></span>    <span style=color:#000>a</span> <span style=color:#000;font-weight:700>=</span> <span style=color:#000>add</span><span style=color:#a40000>
+</span><span style=color:#a40000></span>    <span style=color:#000>amend</span> <span style=color:#000;font-weight:700>=</span> <span style=color:#000>commit</span> <span style=color:#000;font-weight:700>--</span><span style=color:#000>amend</span><span style=color:#a40000>
+</span><span style=color:#a40000></span>    <span style=color:#000>c</span> <span style=color:#000;font-weight:700>=</span> <span style=color:#000>commit</span><span style=color:#a40000>
+</span><span style=color:#a40000></span>    <span style=color:#000>ca</span> <span style=color:#000;font-weight:700>=</span> <span style=color:#000>commit</span> <span style=color:#000;font-weight:700>--</span><span style=color:#000>amend</span><span style=color:#a40000>
+</span><span style=color:#a40000></span>    <span style=color:#000>ci</span> <span style=color:#000;font-weight:700>=</span> <span style=color:#000>commit</span> <span style=color:#000;font-weight:700>-</span><span style=color:#000>a</span><span style=color:#a40000>
+</span><span style=color:#a40000></span>    <span style=color:#000>co</span> <span style=color:#000;font-weight:700>=</span> <span style=color:#000>checkout</span><span style=color:#a40000>
+</span><span style=color:#a40000></span>    <span style=color:#000>d</span> <span style=color:#000;font-weight:700>=</span> <span style=color:#000>diff</span><span style=color:#a40000>
+</span><span style=color:#a40000></span>    <span style=color:#000>dc</span> <span style=color:#000;font-weight:700>=</span> <span style=color:#000>diff</span> <span style=color:#000;font-weight:700>--</span><span style=color:#000>changed</span><span style=color:#a40000>
+</span><span style=color:#a40000></span>    <span style=color:#000>ds</span> <span style=color:#000;font-weight:700>=</span> <span style=color:#000>diff</span> <span style=color:#000;font-weight:700>--</span><span style=color:#000>staged</span><span style=color:#a40000>
+</span><span style=color:#a40000></span>    <span style=color:#000>f</span> <span style=color:#000;font-weight:700>=</span> <span style=color:#000>fetch</span><span style=color:#a40000>
+</span><span style=color:#a40000></span>    <span style=color:#000>loll</span> <span style=color:#000;font-weight:700>=</span> <span style=color:#000>log</span> <span style=color:#000;font-weight:700>--</span><span style=color:#000>graph</span> <span style=color:#000;font-weight:700>--</span><span style=color:#000>decorate</span> <span style=color:#000;font-weight:700>--</span><span style=color:#000>pretty</span><span style=color:#000;font-weight:700>=</span><span style=color:#000>oneline</span> <span style=color:#000;font-weight:700>--</span><span style=color:#000>abbrev</span><span style=color:#000;font-weight:700>-</span><span style=color:#000>commit</span><span style=color:#a40000>
+</span><span style=color:#a40000></span>    <span style=color:#000>m</span> <span style=color:#000;font-weight:700>=</span> <span style=color:#000>merge</span><span style=color:#a40000>
+</span><span style=color:#a40000></span>    <span style=color:#000>one</span> <span style=color:#000;font-weight:700>=</span> <span style=color:#000>log</span> <span style=color:#000;font-weight:700>--</span><span style=color:#000>pretty</span><span style=color:#000;font-weight:700>=</span><span style=color:#000>oneline</span><span style=color:#a40000>
+</span><span style=color:#a40000></span>    <span style=color:#000>outstanding</span> <span style=color:#000;font-weight:700>=</span> <span style=color:#000>rebase</span> <span style=color:#000;font-weight:700>-</span><span style=color:#000>i</span> @{<span style=color:#000>u</span>}<span style=color:#a40000>
+</span><span style=color:#a40000></span>    <span style=color:#000>s</span> <span style=color:#000;font-weight:700>=</span> <span style=color:#000>status</span><span style=color:#a40000>
+</span><span style=color:#a40000></span>    <span style=color:#000>unpushed</span> <span style=color:#000;font-weight:700>=</span> <span style=color:#000>log</span> @{<span style=color:#000>u</span>}<span style=color:#a40000>
+</span><span style=color:#a40000></span>    <span style=color:#000>wc</span> <span style=color:#000;font-weight:700>=</span> <span style=color:#000>whatchanged</span><span style=color:#a40000>
+</span><span style=color:#a40000></span>    <span style=color:#000>wip</span> <span style=color:#000;font-weight:700>=</span> <span style=color:#000>rebase</span> <span style=color:#000;font-weight:700>-</span><span style=color:#000>i</span> @{<span style=color:#000>u</span>}<span style=color:#a40000>
+</span><span style=color:#a40000></span>    <span style=color:#000>zap</span> <span style=color:#000;font-weight:700>=</span> <span style=color:#000>fetch</span> <span style=color:#000;font-weight:700>-</span><span style=color:#000>p</span><span style=color:#a40000>
+</span></code></pre></div><p><a name=credential-helper></a></p>
+<h3 id=我想缓存一个仓库repository的用户名和密码>我想缓存一个仓库(repository)的用户名和密码</h3>
+<p>你可能有一个仓库需要授权，这时你可以缓存用户名和密码，而不用每次推/拉(push/pull)的时候都输入，Credential helper能帮你。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh>$ git config --global credential.helper cache
+<span style=color:#8f5902;font-style:italic># Set git to use the credential memory cache</span>
+</code></pre></div><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh>$ git config --global credential.helper <span style=color:#4e9a06>&#39;cache --timeout=3600&#39;</span>
+<span style=color:#8f5902;font-style:italic># Set the cache to timeout after 1 hour (setting is in seconds)</span>
+</code></pre></div><p><a href=#ive-no-idea-what-i-did-wrong></a></p>
+<h2 id=我不知道我做错了些什么>我不知道我做错了些什么</h2>
+<p>你把事情搞砸了：你 <code>重置(reset)</code> 了一些东西, 或者你合并了错误的分支, 亦或你强推了后找不到你自己的提交(commit)了。有些时候, 你一直都做得很好, 但你想回到以前的某个状态。</p>
+<p>这就是 <code>git reflog</code> 的目的， <code>reflog</code> 记录对分支顶端(the tip of a branch)的任何改变, 即使那个顶端没有被任何分支或标签引用。基本上, 每次HEAD的改变, 一条新的记录就会增加到<code>reflog</code>。遗憾的是，这只对本地分支起作用，且它只跟踪动作 (例如，不会跟踪一个没有被记录的文件的任何改变)。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh><span style=color:#ce5c00;font-weight:700>(</span>main<span style=color:#ce5c00;font-weight:700>)</span>$ git reflog
+0a2e358 HEAD@<span style=color:#ce5c00;font-weight:700>{</span>0<span style=color:#ce5c00;font-weight:700>}</span>: reset: moving to HEAD~2
+0254ea7 HEAD@<span style=color:#ce5c00;font-weight:700>{</span>1<span style=color:#ce5c00;font-weight:700>}</span>: checkout: moving from 2.2 to main
+c10f740 HEAD@<span style=color:#ce5c00;font-weight:700>{</span>2<span style=color:#ce5c00;font-weight:700>}</span>: checkout: moving from main to 2.2
+</code></pre></div><p>上面的reflog展示了从main分支签出(checkout)到2.2 分支，然后再签回。 那里，还有一个硬重置(hard reset)到一个较旧的提交。最新的动作出现在最上面以 <code>HEAD@{0}</code>标识.</p>
+<p>如果事实证明你不小心回移(move back)了提交(commit), reflog 会包含你不小心回移前main上指向的提交(0254ea7)。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh>$ git reset --hard 0254ea7
+</code></pre></div><p>然后使用git reset就可以把main改回到之前的commit，这提供了一个在历史被意外更改情况下的安全网。</p>
+<p>(<a href=https://www.atlassian.com/git/tutorials/rewriting-history/git-reflog>摘自</a>).</p>
+<h1 id=其它资源other-resources>其它资源(Other Resources)</h1>
+<h2 id=书books>书(Books)</h2>
+<ul>
+<li><a href=https://git-scm.com/book/en/v2>Pro Git</a> - Scott Chacon&rsquo;s excellent git book</li>
+<li><a href=https://github.com/pluralsight/git-internals-pdf>Git Internals</a> - Scott Chacon&rsquo;s other excellent git book</li>
+</ul>
+<h2 id=教程tutorials>教程(Tutorials)</h2>
+<ul>
+<li><a href=https://learngitbranching.js.org/>Learn Git branching</a> 一个基于网页的交互式 branching/merging/rebasing 教程</li>
+<li><a href=https://medium.com/@porteneuve/getting-solid-at-git-rebase-vs-merge-4fa1a48c53aa>Getting solid at Git rebase vs. merge</a></li>
+<li><a href=https://github.com/asmeurer/git-workflow>git-workflow</a> - <a href=https://github.com/asmeurer>Aaron Meurer</a>的怎么使用Git为开源仓库贡献</li>
+<li><a href=http://hugogiraudel.com/2015/08/13/github-as-a-workflow/>GitHub as a workflow</a> - 使用GitHub做为工作流的趣事, 尤其是空PRs</li>
+</ul>
+<h2 id=脚本和工具scripts-and-tools>脚本和工具(Scripts and Tools)</h2>
+<ul>
+<li><a href=http://firstaidgit.io/>firstaidgit.io</a> 一个可搜索的最常被问到的Git的问题</li>
+<li><a href=https://github.com/unixorn/git-extra-commands>git-extra-commands</a> - 一堆有用的额外的Git脚本</li>
+<li><a href=https://github.com/tj/git-extras>git-extras</a> - GIT 工具集 &ndash; repo summary, repl, changelog population, author commit percentages and more</li>
+<li><a href=https://github.com/qw3rtman/git-fire>git-fire</a> - git-fire 是一个 Git 插件，用于帮助在紧急情况下添加所有当前文件, 做提交(committing), 和推(push)到一个新分支(阻止合并冲突)。</li>
+<li><a href=https://github.com/git-tips/tips>git-tips</a> - Git小提示</li>
+<li><a href=https://github.com/Originate/git-town>git-town</a> - 通用，高级Git工作流支持！ <a href=http://www.git-town.com>http://www.git-town.com</a></li>
+</ul>
+<h2 id=gui客户端gui-clients>GUI客户端(GUI Clients)</h2>
+<ul>
+<li><a href=https://www.gitkraken.com/>GitKraken</a> - 豪华的Git客户端 Windows, Mac & Linux</li>
+<li><a href=https://git-cola.github.io/>git-cola</a> - 另外一个Git客户端 Windows & OS X</li>
+<li><a href=https://github.com/git-up/GitUp>GitUp</a> - 一个新的Git客户端，在处理Git的复杂性上有自己的特点</li>
+<li><a href=https://rowanj.github.io/gitx/>gitx-dev</a> - 图形化的Git客户端 OS X</li>
+<li><a href=https://www.sourcetreeapp.com/>Source Tree</a> - 免费的图形化Git客户端 Windows & OS X</li>
+<li><a href=http://www.git-tower.com/>Tower</a> - 图形化Git客户端 OS X(付费)</li>
+</ul>
+</div>
+<div class=td-content style=page-break-before:always>
+<h1 id=pg-0c7e3232d3e69589f8b8e2895697cee3>1.2 - 速查手册</h1>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211023153501.png style=display:block;width:100% alt=NAME align=center> </div>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211023153525.png style=display:block;width:100% alt=NAME align=center> </div>
+</div>
+<div class=td-content style=page-break-before:always>
+<h1 id=pg-30a61620f3ff1664f9c77b138b5d1bd8>2 - Docker</h1>
+</div>
+<div class=td-content>
+<h1 id=pg-750965be63a0662f0d03e14ecad3cf1b>2.1 - Dockerfile</h1>
+<h2 id=dockerfile>Dockerfile</h2>
+<p>Docker可以通过<code>Dockerfile</code>自动构建镜像，<code>Dockerfile</code>是一个包含多个指令的文档。如下</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-dockerfile data-lang=dockerfile><span style=color:#8f5902;font-style:italic># syntax=docker/dockerfile:1</span><span style=color:#a40000>
+</span><span style=color:#a40000></span><span style=color:#204a87;font-weight:700>FROM</span><span style=color:#4e9a06> ubuntu:18.04</span><span style=color:#a40000>
+</span><span style=color:#a40000></span><span style=color:#204a87;font-weight:700>COPY</span> . /app<span style=color:#a40000>
+</span><span style=color:#a40000></span><span style=color:#204a87;font-weight:700>RUN</span> make /app<span style=color:#a40000>
+</span><span style=color:#a40000></span><span style=color:#204a87;font-weight:700>CMD</span> python /app/app.py<span style=color:#a40000>
+</span></code></pre></div><h2 id=from>FROM</h2>
+<p><code>FROM</code>命令用于初始化一个新的构建阶段，并为后续指令设置基础镜像：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-dockerfile data-lang=dockerfile><span style=color:#204a87;font-weight:700>FROM</span><span style=color:#4e9a06> [--platform=&lt;platform&gt;] &lt;image&gt; [AS &lt;name&gt;]</span><span style=color:#a40000>
+</span><span style=color:#a40000></span><span style=color:#204a87;font-weight:700>FROM</span><span style=color:#4e9a06> [--platform=&lt;platform&gt;] &lt;image&gt;[:&lt;tag&gt;] [AS &lt;name&gt;]</span><span style=color:#a40000>
+</span><span style=color:#a40000></span><span style=color:#204a87;font-weight:700>FROM</span><span style=color:#4e9a06> [--platform=&lt;platform&gt;] &lt;image&gt;[@&lt;digest&gt;] [AS &lt;name&gt;]</span><span style=color:#a40000>
+</span></code></pre></div><ul>
+<li><code>FROM</code>指令用于指定基础镜像，<code>ARG</code>是唯一可以位于<code>FROM</code>指令之前的指令，一般用于声明基础镜像的版本。</li>
+<li>单个<code>Dockerfile</code>可以多次出现<code>FROM</code>，以使用之前的构建阶段作为另一个构建阶段的依赖项。</li>
+<li><code>--platform</code>选项可用在<code>FROM</code>多平台镜像的情况下指定平台。例如，linux/amd64、lunux/arm64、windows/amd64。</li>
+<li><code>AS name</code>表示为构建阶段命令，在后续<code>FROM</code>和<code>COPY --from=name</code>说明中可以使用这个名词，引用此阶段构建的映像。</li>
+<li><code>tag</code>或<code>digest</code>值是可选的。如果您省略其中任何一个，构建器默认使用<code>latest</code>标签。如果找不到指定<code>tag</code>，构建起将返回错误。</li>
+</ul>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-dockerfile data-lang=dockerfile><span style=color:#204a87;font-weight:700>ARG</span> <span style=color:#000>CODE_VERSION</span><span style=color:#ce5c00;font-weight:700>=</span>latest
+<span style=color:#204a87;font-weight:700>FROM</span><span style=color:#4e9a06> base:${CODE_VERSION}</span><span style=color:#a40000>
+</span><span style=color:#a40000></span><span style=color:#204a87;font-weight:700>CMD</span> /code/run-app<span style=color:#a40000>
+</span><span style=color:#a40000></span><span style=color:#204a87;font-weight:700>FROM</span><span style=color:#4e9a06> extras:${CODE_VERSION}</span><span style=color:#a40000>
+</span><span style=color:#a40000></span><span style=color:#204a87;font-weight:700>CMD</span> /code/run-extras<span style=color:#a40000>
+</span></code></pre></div><h2 id=run>RUN</h2>
+<p><code>RUN</code>指令将在当前镜像之上的新层中执行命令，并且提交结果。在<code>docker build</code>时运行。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-dockerfile data-lang=dockerfile><span style=color:#204a87;font-weight:700>RUN</span> /bin/bash -c <span style=color:#4e9a06>&#39;source $HOME/.bashrc; \
+</span><span style=color:#4e9a06>echo $HOME&#39;</span><span style=color:#a40000>
+</span></code></pre></div><p>RUN有两种形式：</p>
+<ul>
+<li>RUN <command>：shell形式，命令在shell中运行，默认在Linux上使用<code>/bin/sh -c</code>，在Windows上使用<code>cmd /S /C</code>。</li>
+<li>RUN [&ldquo;程序名&rdquo;,&ldquo;param1&rdquo;,&ldquo;param1&rdquo;]：exec形式，不会触发shell，所以$HOME这样的环境变量无法使用，但它可以在没有bash的镜像中执行。</li>
+</ul>
+<p>说明：</p>
+<ul>
+<li>可以使用反斜杠（\）将单个<code>RUN</code>命令延续到下一行。</li>
+<li><code>RUN</code>在下一次构建期间，指令缓存不会自动失效。可以使用<code>--no-cache</code>选项使指令缓存失效。如RUN apt-get update之类的构建缓存将在下一次构建期间被重用，此时构建中可能安装过时版本的工具，但我们可以使用&ndash;no-cache标志来使RUN命令的缓存失效，如docker build &ndash;no-cache。</li>
+<li>Dockerfile的指令每执行一次就会给镜像新建一层只读层。过多无意义的层会造成镜像膨胀过大，可以使用&&符号连接多个命令，这样执行RUN指令后之后创建一层镜像。</li>
+</ul>
+<p>有些命令会使用管道（|），如：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-dockerfile data-lang=dockerfile><span style=color:#204a87;font-weight:700>RUN</span> wget -O - https://some.site <span style=color:#000;font-weight:700>|</span> wc -l &gt; /number<span style=color:#a40000>
+</span></code></pre></div><p>Docker使用<code>/bin/sh -c</code>解释器，解释器只计算所有一个命令的退出状态码以确定命令是否执行成功，如上例，只要<code>wc -l</code>执行成功，即使<code>wget</code>命令失败，这个构建步骤也会生成一层新镜像。如果希望命令由于管道中任意阶段命令的错误而失败，需要预先设置<code>set-o pipefail&&</code>，如下：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback> RUN set -o pipefail &amp;&amp; wget -O - https://some.site | wc -l &gt; /number
+</code></pre></div><blockquote>
+<p>注意，基于debian的镜像要使用exec形式支持<code>-o pipefail</code>:</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-dockerfile data-lang=dockerfile><span style=color:#204a87;font-weight:700>RUN</span> <span style=color:#ce5c00;font-weight:700>[</span><span style=color:#4e9a06>&#34;/bin/bash&#34;</span>, <span style=color:#4e9a06>&#34;-c&#34;</span>, <span style=color:#4e9a06>&#34;set -o pipefail &amp;&amp; wget -O - https://some.site | wc -l &gt; /number&#34;</span><span style=color:#ce5c00;font-weight:700>]</span><span style=color:#a40000>
+</span></code></pre></div></blockquote>
+<h2 id=cmd>CMD</h2>
+<p>Dockerfile使用<code>RUN</code>指令完成<code>docker build</code>所有的环境安装与配置，通过<code>CMD</code>指令来指示<code>docker run</code>命令运行镜像时要执行的命令。Dockerfile只允许使用一次<code>CMD</code>命令。使用多个<code>CMD</code>会抵消之前所有的命令，只有最后一个命令生效。一般来说，这是整个Dockerfile脚本的最后一个命令。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-dockerfile data-lang=dockerfile><span style=color:#204a87;font-weight:700>FROM</span><span style=color:#4e9a06> ubuntu</span><span style=color:#a40000>
+</span><span style=color:#a40000></span><span style=color:#204a87;font-weight:700>CMD</span> <span style=color:#000;font-weight:700>[</span><span style=color:#4e9a06>&#34;/usr/bin/wc&#34;</span><span style=color:#000;font-weight:700>,</span><span style=color:#4e9a06>&#34;--help&#34;</span><span style=color:#000;font-weight:700>]</span><span style=color:#a40000>
+</span></code></pre></div><p>CMD有三种形式：</p>
+<ul>
+<li>CMD [&ldquo;exec&rdquo;,&ldquo;param1&rdquo;,&ldquo;param2&rdquo;]：使用exec执行，推荐方式。</li>
+<li>CMD command param1 param2：在/bin/sh中执行，可以提供交互操作。</li>
+<li>CMD [&ldquo;param1&rdquo;,&ldquo;param2&rdquo;]：提供给ENTRYPOINT的默认参数（极少这样使用）。</li>
+</ul>
+<h2 id=expose>EXPOSE</h2>
+<p><code>EXPOSE</code>指令通知容器在运行时监听某个端口，可以指定TCP或UDP，如果不指定协议，默认为TCP端口。但是为了安全，<code>docker run</code>命令如果没有带上相应的端口映射参数，Docker并不会将端口映射出去。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-dockerfile data-lang=dockerfile><span style=color:#204a87;font-weight:700>EXPOSE</span><span style=color:#4e9a06> 80/tcp</span><span style=color:#a40000>
+</span><span style=color:#a40000></span><span style=color:#204a87;font-weight:700>EXPOSE</span><span style=color:#4e9a06> 80/udp</span><span style=color:#a40000>
+</span></code></pre></div><p>指定映射端口方式：</p>
+<p>docker run -P：将所有端口发布到主机接口，每个公开端口绑定到主机上的随机端口，端口范围在<code>/proc/sys/net/ipv4/ip_local_port_range</code>定义的临时端口范围内。</p>
+<p>docker run -p ：显式映射单个端口或端口范围。</p>
+<h2 id=label>LABEL</h2>
+<p><code>LABEL</code>指令为镜像添加标签，当前镜像会继承父镜像的标签，如果与父标签重复，会覆盖之前的标签。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-dockerfile data-lang=dockerfile><span style=color:#204a87;font-weight:700>LABEL</span> multi.label1<span style=color:#ce5c00;font-weight:700>=</span><span style=color:#4e9a06>&#34;value1&#34;</span> <span style=color:#4e9a06>\
+</span><span style=color:#4e9a06></span>  multi.label2<span style=color:#ce5c00;font-weight:700>=</span><span style=color:#4e9a06>&#34;value2&#34;</span> <span style=color:#4e9a06>\
+</span><span style=color:#4e9a06></span>  <span style=color:#000>other</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#4e9a06>&#34;value3&#34;</span><span style=color:#a40000>
+</span><span style=color:#a40000></span><span style=color:#8f5902;font-style:italic># 或</span><span style=color:#a40000>
+</span><span style=color:#a40000></span><span style=color:#204a87;font-weight:700>LABEL</span> multi.label1<span style=color:#ce5c00;font-weight:700>=</span><span style=color:#4e9a06>&#34;value1&#34;</span> multi.label2<span style=color:#ce5c00;font-weight:700>=</span><span style=color:#4e9a06>&#34;value2&#34;</span> <span style=color:#000>other</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#4e9a06>&#34;value3&#34;</span><span style=color:#a40000>
+</span></code></pre></div><p>可以使用如下方式查看镜像标签：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>docker image inspect --format<span style=color:#ce5c00;font-weight:700>=</span><span style=color:#4e9a06>&#39;&#39;</span> myimage
+</code></pre></div><p>查看结果实例：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-json data-lang=json><span style=color:#000;font-weight:700>{</span>
+ <span style=color:#204a87;font-weight:700>&#34;com.example.vendor&#34;</span><span style=color:#000;font-weight:700>:</span> <span style=color:#4e9a06>&#34;ACME Incorporated&#34;</span><span style=color:#000;font-weight:700>,</span>
+ <span style=color:#204a87;font-weight:700>&#34;com.example.label-with-value&#34;</span><span style=color:#000;font-weight:700>:</span> <span style=color:#4e9a06>&#34;foo&#34;</span><span style=color:#000;font-weight:700>,</span>
+ <span style=color:#204a87;font-weight:700>&#34;version&#34;</span><span style=color:#000;font-weight:700>:</span> <span style=color:#4e9a06>&#34;1.0&#34;</span><span style=color:#000;font-weight:700>,</span>
+ <span style=color:#204a87;font-weight:700>&#34;description&#34;</span><span style=color:#000;font-weight:700>:</span> <span style=color:#4e9a06>&#34;This text illustrates that label-values can span multiple lines.&#34;</span><span style=color:#000;font-weight:700>,</span>
+ <span style=color:#204a87;font-weight:700>&#34;multi.label1&#34;</span><span style=color:#000;font-weight:700>:</span> <span style=color:#4e9a06>&#34;value1&#34;</span><span style=color:#000;font-weight:700>,</span>
+ <span style=color:#204a87;font-weight:700>&#34;multi.label2&#34;</span><span style=color:#000;font-weight:700>:</span> <span style=color:#4e9a06>&#34;value2&#34;</span><span style=color:#000;font-weight:700>,</span>
+ <span style=color:#204a87;font-weight:700>&#34;other&#34;</span><span style=color:#000;font-weight:700>:</span> <span style=color:#4e9a06>&#34;value3&#34;</span>
+<span style=color:#000;font-weight:700>}</span>
+</code></pre></div><h2 id=env>ENV</h2>
+<p><code>ENV</code>命令用来在执行<code>docker run</code>命令运行镜像时指定自动设置的环境变量。这个环境变量可以在后续任何RUN命令中使用，并在容器运行时保持。一般用于软件更便捷的运行，如：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-dockerfile data-lang=dockerfile><span style=color:#204a87;font-weight:700>ENV</span> <span style=color:#000>PATH</span><span style=color:#ce5c00;font-weight:700>=</span>/usr/local/nginx/bin:<span style=color:#000>$PATH</span><span style=color:#a40000>
+</span><span style=color:#a40000></span><span style=color:#204a87;font-weight:700>CMD</span> <span style=color:#000;font-weight:700>[</span><span style=color:#4e9a06>&#34;nginx&#34;</span><span style=color:#000;font-weight:700>]</span><span style=color:#a40000>
+</span></code></pre></div><p>设置的环境变量将持续存在，可以使用<code>docker inspect</code>来查看。这些环境变量可以通过<code>docker run --env &lt;key>=&lt;value></code>命令的参数来修改。</p>
+<h2 id=arg>ARG</h2>
+<p>ARG命令定义用户只在构建时使用的变量，效果和<code>docker build --build-arg &lt;varname>=&lt;value></code>一样，这个参数只会在构建时存在，不会保留在镜像中。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-dockerfile data-lang=dockerfile><span style=color:#204a87;font-weight:700>ARG</span> &lt;name&gt;<span style=color:#ce5c00;font-weight:700>[=</span>&lt;default value&gt;<span style=color:#ce5c00;font-weight:700>]</span><span style=color:#a40000>
+</span></code></pre></div><p>ARG与ENV类似，不同的是ENV会在镜像构建结束后一直保存在容器中，而ARG会在镜像构建结束狗消失。一般运用在希望整个构建过程是无交互的，那么可以使用ARG命令（仅限Debian发行版）。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-dockerfile data-lang=dockerfile><span style=color:#204a87;font-weight:700>ARG</span> <span style=color:#000>DEBIAN_FRONTEND</span><span style=color:#ce5c00;font-weight:700>=</span>noninteractive
+<span style=color:#204a87;font-weight:700>RUN</span> apt-get update <span style=color:#ce5c00;font-weight:700>&amp;&amp;</span> apt-get install -y ...<span style=color:#a40000>
+</span></code></pre></div><p>Docker 有一组预定义的 ARG 变量，您可以在 Dockerfile 中没有相应指令的情况下使用这些变量。</p>
+<ul>
+<li>HTTP_PROXY</li>
+<li>http_proxy</li>
+<li>HTTPS_PROXY</li>
+<li>https_proxy</li>
+<li>FTP_PROXY</li>
+<li>ftp_proxy</li>
+<li>NO_PROXY</li>
+<li>no_proxy</li>
+</ul>
+<p>要使用这些，请使用 &ndash;build-arg 标志在命令行上传递它们，例如：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>docker build --build-arg <span style=color:#000>HTTPS_PROXY</span><span style=color:#ce5c00;font-weight:700>=</span>https://my-proxy.example.com .
+</code></pre></div><h2 id=add>ADD</h2>
+<p><code>ADD</code>指令用于复制新文件、目录或远程文件 URL到容器<dest>路径中。可以指定多个资源，但如果它们是文件或目录，则它们的路径被解释为相对于构建上下文的源，也就是 WORKDIR。</p>
+<p><code>ADD</code>指令有两种形式：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-dockerfile data-lang=dockerfile><span style=color:#204a87;font-weight:700>ADD</span> <span style=color:#ce5c00;font-weight:700>[</span>--chown<span style=color:#ce5c00;font-weight:700>=</span>&lt;user&gt;:&lt;group&gt;<span style=color:#ce5c00;font-weight:700>]</span> &lt;src&gt;... &lt;dest&gt;<span style=color:#a40000>
+</span><span style=color:#a40000></span><span style=color:#204a87;font-weight:700>ADD</span> <span style=color:#ce5c00;font-weight:700>[</span>--chown<span style=color:#ce5c00;font-weight:700>=</span>&lt;user&gt;:&lt;group&gt;<span style=color:#ce5c00;font-weight:700>]</span> <span style=color:#ce5c00;font-weight:700>[</span><span style=color:#4e9a06>&#34;&lt;src&gt;&#34;</span>,... <span style=color:#4e9a06>&#34;&lt;dest&gt;&#34;</span><span style=color:#ce5c00;font-weight:700>]</span><span style=color:#a40000>
+</span></code></pre></div><p>每个都 <src> 可能包含通配符，匹配将使用 Go 的 filepath.Match 规则。<dest> 是一个绝对路径，或相对 WORKDIR 的相对路径。例如：</p>
+<p>添加所有以“hom”开头的文件：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-dockerfile data-lang=dockerfile><span style=color:#204a87;font-weight:700>ADD</span> hom* /mydir/<span style=color:#a40000>
+</span></code></pre></div><p>在下面的示例中，? 被替换为任何单个字符，例如“home.txt”。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-dockerfile data-lang=dockerfile><span style=color:#204a87;font-weight:700>ADD</span> hom?.txt /mydir/<span style=color:#a40000>
+</span></code></pre></div><p>所有新创建的文件和目录的UID和GID都为0，除非使用<code>--chown</code>指定UID/GID以及权限。<code>-chown</code>特性仅在用于构建Linux容器。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-dockerfile data-lang=dockerfile><span style=color:#204a87;font-weight:700>ADD</span> --chown<span style=color:#ce5c00;font-weight:700>=</span>55:mygroup files* /somedir/<span style=color:#a40000>
+</span><span style=color:#a40000></span><span style=color:#204a87;font-weight:700>ADD</span> --chown<span style=color:#ce5c00;font-weight:700>=</span>bin files* /somedir/<span style=color:#a40000>
+</span><span style=color:#a40000></span><span style=color:#204a87;font-weight:700>ADD</span> --chown<span style=color:#ce5c00;font-weight:700>=</span><span style=color:#0000cf;font-weight:700>1</span> files* /somedir/<span style=color:#a40000>
+</span><span style=color:#a40000></span><span style=color:#204a87;font-weight:700>ADD</span> --chown<span style=color:#ce5c00;font-weight:700>=</span>10:11 files* /somedir/<span style=color:#a40000>
+</span></code></pre></div><p>如果<src>是一个可识别压缩格式（identity、gzip、bzip2或xz）的本地tar存档，那么它将被解包为一个目录。远程URL中的资源不会解压缩。当一个目录被复制或解包时，它的行为与<code>tar -x</code>相同。</p>
+<h2 id=copy>COPY</h2>
+<p>COPY 指令和 ADD 指令的唯一区别在于：是否支持从远程URL获取资源。COPY 指令只能从执行 docker build 所在的主机上读取资源并复制到镜像中。而 ADD 指令还支持通过 URL 从远程服务器读取资源并复制到镜像中。</p>
+<p>相同复制命令下，使用ADD构建的镜像比COPY命令构建的体积大，所以如果只是复制文件使用COPY命令。ADD 指令更擅长读取本地tar文件并解压缩。</p>
+<h2 id=entrypoint>ENTRYPOINT</h2>
+<p><code>ENTRYPOINT</code>和<code>CMD</code>一样，都是在指定容器启动程序以及参数，不会它不会被<code>docker run</code>的命令行指令所覆盖。如果要覆盖的话需要通过<code>docker run --entrypoint</code>来指定。</p>
+<p>ENTRYPOINT有两种形式：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-dockerfile data-lang=dockerfile><span style=color:#204a87;font-weight:700>ENTRYPOINT</span> <span style=color:#000;font-weight:700>[</span><span style=color:#4e9a06>&#34;exec&#34;</span><span style=color:#000;font-weight:700>,</span><span style=color:#4e9a06>&#34;param1&#34;</span><span style=color:#000;font-weight:700>,</span><span style=color:#4e9a06>&#34;param1&#34;</span><span style=color:#000;font-weight:700>]</span><span style=color:#a40000>
+</span><span style=color:#a40000></span><span style=color:#204a87;font-weight:700>ENTRYPOINT</span> <span style=color:#204a87>command</span> param1 param2<span style=color:#a40000>
+</span></code></pre></div><p>指定了ENTRYPOINT后，CMD的内容作为参数传递给ENTRYPOINT指令，实际执行时将变为：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>&lt;ENTRYPOINT&gt;&lt;CMD&gt;
+</code></pre></div><h2 id=volume>VOLUME</h2>
+<p>创建一个具有指定名称的挂载数据卷。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-dockerfile data-lang=dockerfile><span style=color:#204a87;font-weight:700>VOLUME</span> <span style=color:#000;font-weight:700>[</span><span style=color:#4e9a06>&#34;/var/log/&#34;</span><span style=color:#000;font-weight:700>]</span><span style=color:#a40000>
+</span><span style=color:#a40000></span><span style=color:#204a87;font-weight:700>VOLUME</span><span style=color:#4e9a06> /var/log</span><span style=color:#a40000>
+</span></code></pre></div><p>VOLUME的主要作用是：</p>
+<ul>
+<li>避免重要的数据因容器重启而丢失。</li>
+<li>避免容器不断变大。</li>
+<li>保留配置文件。</li>
+</ul>
+<h2 id=onbuild>ONBUILD</h2>
+<p><code>ONBUILD</code>指令作为触发指令添加到镜像中，只有在该镜像作为基础镜像时执行。触发器将在下游构建的Dockerfile中的<code>FROM</code>指令之后执行。如果任何触发器失败，<code>FROM</code>指令将中止，从而导致生成失败。如果所有触发器都成功，<code>FROM</code>指令将完成，构建将照常继续。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-dockerfile data-lang=dockerfile><span style=color:#204a87;font-weight:700>ONBUILD</span> <span style=color:#204a87;font-weight:700>ADD</span> . /app/src<span style=color:#a40000>
+</span><span style=color:#a40000></span><span style=color:#204a87;font-weight:700>ONBUILD</span> <span style=color:#204a87;font-weight:700>RUN</span> /usr/local/bin/python-build --dir /app/src<span style=color:#a40000>
+</span></code></pre></div><blockquote>
+<p>注意，ONBUILD指令不能触发FORM和MAINTAINER指令。</p>
+</blockquote>
+<h2 id=stopsignal>STOPSIGNAL</h2>
+<p>设置容器退出时唤起的系统调用信号。该信号可以是与内核系统调用表中的位置匹配的有效无符号数字，例如9，或格式为SIGNAME的信号名称，如SIGKILL。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-dockerfile data-lang=dockerfile><span style=color:#204a87;font-weight:700>STOPSIGNAL</span><span style=color:#4e9a06> signal</span><span style=color:#a40000>
+</span></code></pre></div><p>默认的stop-signal是SIGTERM，在<code>docker stop</code>的时候会给容器内PID为1的进程发送这个信号，通过<code>--stop-signal</code>可以设置需要的signal，主要用于让容器内的程序在接收到signal之后可以先处理些未完成的事务，实现优雅结束进程后退出容器。如果不做任何处理，容器将在一段时间后强制退出，可能会造成业务强制中断，默认时间是10s。</p>
+<h2 id=healthcheck>HEALTHCHECK</h2>
+<p><code>HEALTHCHECK</code>指令告诉容器如何检查它是否保持运行。当容器具有指定的<code>HEALTHCHECK</code>时，除了其正常状态外，还具有健康状态。容器的状态最初是<code>starting</code>，只要通过健康检查，容器的状态就变成<code>healthy</code>（无论之前处于什么状态）。如果经过一定数量的失败检查，容器的状态会变成<code>unhealthy</code>。</p>
+<p>该<code>HEALTHCHECK</code>指令有两种形式：</p>
+<ul>
+<li>
+<p>HEALTHCHECK [OPTIONS] CMD command：通过容器内运行命令来检查容器健康状况。后面命令的退出状态会影响容器的健康状态，如：</p>
+</li>
+<li>
+<ul>
+<li>0: success - 容器是健康的，并且准备使用</li>
+<li>1: unhealthy - 容器没有正确工作</li>
+<li>2: reserved - 没有使用退出状态</li>
+</ul>
+</li>
+<li>
+<p>HEALTHCHECK NONE：禁用从基础镜像继承的任何健康检查。</p>
+</li>
+</ul>
+<p><code>HEALTHCHECK</code>选项（应处于<code>CMD</code>之前）：</p>
+<ul>
+<li><code>--interval=DURATION</code>：检查间隔，default: <code>30s</code>。</li>
+<li><code>--timeout=DURATION</code>：检查超时时间，超出此范围认为检查失败，default: <code>30s</code>。</li>
+<li><code>--start-period=DURATION</code>：容器初始化阶段的时间，此阶段健康检查失败不计入最大重试次数，如果检查成功则认为容器已启动，default: <code>0s</code>。</li>
+<li><code>--retries=N</code>：健康检查连续失败次数，default: <code>3</code>。</li>
+</ul>
+<p>举例：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-dockerfile data-lang=dockerfile><span style=color:#a40000>HEALTHCHECK --interval=5m --timeout=3s \
+</span><span style=color:#a40000> </span><span style=color:#204a87;font-weight:700>CMD</span> curl -f http://localhost/ <span style=color:#ce5c00;font-weight:700>||</span> <span style=color:#204a87>exit</span> <span style=color:#0000cf;font-weight:700>1</span><span style=color:#a40000>
+</span></code></pre></div><h2 id=shell>SHELL</h2>
+<p><code>SHELL</code>指令用于设置默认shell。Linux上默认shell是<code>["/bin/sh","-c"]</code>，Windows上是<code>["cmd","/S","/C"]</code>。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-dockerfile data-lang=dockerfile><span style=color:#204a87;font-weight:700>SHELL</span> <span style=color:#000;font-weight:700>[</span><span style=color:#4e9a06>&#34;exec&#34;</span><span style=color:#000;font-weight:700>,</span><span style=color:#4e9a06>&#34;param1&#34;</span><span style=color:#000;font-weight:700>]</span><span style=color:#a40000>
+</span></code></pre></div><p><code>SHELL</code>指令在Windows上特别有用，因为Windows有两种截然不同的本机SHELL：CMD和powershell，以及备用的sh。该SHELL指令可以出现多次。每条SHELL指令都会覆盖所有先前的SHELL指令，并影响后续指令。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-dockerfile data-lang=dockerfile><span style=color:#204a87;font-weight:700>FROM</span><span style=color:#a40000>
+</span><span style=color:#a40000></span>Learn more about the <span style=color:#4e9a06>&#34;FROM&#34;</span> Dockerfile command.<span style=color:#a40000>
+</span><span style=color:#a40000></span> microsoft/windowsservercore<span style=color:#a40000>
+</span><span style=color:#a40000>
+</span><span style=color:#a40000></span><span style=color:#8f5902;font-style:italic># Executed as cmd /S /C echo default</span><span style=color:#a40000>
+</span><span style=color:#a40000></span><span style=color:#204a87;font-weight:700>RUN</span> <span style=color:#204a87>echo</span> default<span style=color:#a40000>
+</span><span style=color:#a40000>
+</span><span style=color:#a40000></span><span style=color:#8f5902;font-style:italic># Executed as cmd /S /C powershell -command Write-Host default</span><span style=color:#a40000>
+</span><span style=color:#a40000></span><span style=color:#204a87;font-weight:700>RUN</span> powershell -command Write-Host default<span style=color:#a40000>
+</span><span style=color:#a40000>
+</span><span style=color:#a40000></span><span style=color:#8f5902;font-style:italic># Executed as powershell -command Write-Host hello</span><span style=color:#a40000>
+</span><span style=color:#a40000></span><span style=color:#204a87;font-weight:700>SHELL</span> <span style=color:#000;font-weight:700>[</span><span style=color:#4e9a06>&#34;powershell&#34;</span><span style=color:#000;font-weight:700>,</span> <span style=color:#4e9a06>&#34;-command&#34;</span><span style=color:#000;font-weight:700>]</span><span style=color:#a40000>
+</span><span style=color:#a40000></span><span style=color:#204a87;font-weight:700>RUN</span> Write-Host hello<span style=color:#a40000>
+</span><span style=color:#a40000>
+</span><span style=color:#a40000></span><span style=color:#8f5902;font-style:italic># Executed as cmd /S /C echo hello</span><span style=color:#a40000>
+</span><span style=color:#a40000></span><span style=color:#204a87;font-weight:700>SHELL</span> <span style=color:#000;font-weight:700>[</span><span style=color:#4e9a06>&#34;cmd&#34;</span><span style=color:#000;font-weight:700>,</span> <span style=color:#4e9a06>&#34;/S&#34;</span><span style=color:#000;font-weight:700>,</span> <span style=color:#4e9a06>&#34;/C&#34;</span><span style=color:#000;font-weight:700>]</span><span style=color:#a40000>
+</span><span style=color:#a40000></span><span style=color:#204a87;font-weight:700>RUN</span> <span style=color:#204a87>echo</span> hello<span style=color:#a40000>
+</span></code></pre></div><h2 id=workdir>WORKDIR</h2>
+<p><code>WORKDIR</code>指令为Dockerfile中接下来的<code>RUN</code>、<code>CMD</code>、<code>ENTRYPOINT</code>、<code>ADD</code>、<code>COPY</code>指令设置工作目录。如果<code>WORKDIR</code>不存在，及时它没有在后续Dockerfile指令中使用，它也会被创建。</p>
+<p>Dockerfile中可以多次使用<code>WORKDIR</code>，如果提供了相对路径，它将相对于前一条<code>WORKDIR</code>指令的路径。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-dockerfile data-lang=dockerfile><span style=color:#204a87;font-weight:700>WORKDIR</span><span style=color:#4e9a06> /a</span><span style=color:#a40000>
+</span><span style=color:#a40000></span><span style=color:#204a87;font-weight:700>WORKDIR</span><span style=color:#4e9a06> b</span><span style=color:#a40000>
+</span><span style=color:#a40000></span><span style=color:#204a87;font-weight:700>WORKDIR</span><span style=color:#4e9a06> c</span><span style=color:#a40000>
+</span><span style=color:#a40000></span><span style=color:#204a87;font-weight:700>RUN</span> pwd<span style=color:#a40000>
+</span></code></pre></div><p>最终 pwd 命令的输出是 /a/b/c。</p>
+<p>该 WORKDIR 指令可以解析先前使用 ENV，例如：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-dockerfile data-lang=dockerfile><span style=color:#204a87;font-weight:700>ENV</span> <span style=color:#000>DIRPATH</span><span style=color:#ce5c00;font-weight:700>=</span>/path<span style=color:#a40000>
+</span><span style=color:#a40000></span><span style=color:#204a87;font-weight:700>WORKDIR</span><span style=color:#4e9a06> $DIRPATH/$DIRNAME</span><span style=color:#a40000>
+</span><span style=color:#a40000></span><span style=color:#204a87;font-weight:700>RUN</span> pwd<span style=color:#a40000>
+</span></code></pre></div><p>最终 pwd 命令的输出是 /path/$DIRNAME。</p>
+<blockquote>
+<p>官方推荐WORKDIR始终使用绝对路径。此外，尽量避免使用<code>RUN cd ..&& dosomething</code>，大量的类似指令会降低可读性，令Dockerfile难以维护。</p>
+</blockquote>
+<h2 id=user>USER</h2>
+<p><code>RUN</code>指令设置用户名或（UID）和可选用户组（或GID），用于运行<code>Dockerfile</code>中接下来的<code>RUN</code>、<code>CMD</code>、<code>ENTRYPOINT</code>指令。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-dockerfile data-lang=dockerfile><span style=color:#204a87;font-weight:700>USER</span><span style=color:#4e9a06> &lt;user&gt;[:&lt;group&gt;]</span><span style=color:#a40000>
+</span><span style=color:#a40000></span><span style=color:#204a87;font-weight:700>USER</span><span style=color:#4e9a06> &lt;UID&gt;[:&lt;GID&gt;]</span><span style=color:#a40000>
+</span></code></pre></div><blockquote>
+<p>注意，在Linux上，当用户没有主组时，镜像（或指令）将与根组一起运行。在Windows上，如果用户不是内置帐户，则必须首先创建该用户。也可以先通通过<code>net user</code>创建用户，再指定用户。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-dockerfile data-lang=dockerfile><span style=color:#204a87;font-weight:700>FROM</span><span style=color:#4e9a06> microsoft/windowsservercore</span><span style=color:#a40000>
+</span><span style=color:#a40000></span><span style=color:#8f5902;font-style:italic># Create Windows user in the container</span><span style=color:#a40000>
+</span><span style=color:#a40000></span><span style=color:#204a87;font-weight:700>RUN</span> net user /add patrick<span style=color:#a40000>
+</span><span style=color:#a40000></span><span style=color:#8f5902;font-style:italic># Set it for subsequent commands</span><span style=color:#a40000>
+</span><span style=color:#a40000></span><span style=color:#204a87;font-weight:700>USER</span><span style=color:#4e9a06> patrick</span><span style=color:#a40000>
+</span></code></pre></div></blockquote>
+<h2 id=maintainer>MAINTAINER</h2>
+<p>MAINTAINER指令设置生成镜像的作者。如：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-dockerfile data-lang=dockerfile><span style=color:#204a87;font-weight:700>MAINTAINER</span><span style=color:#4e9a06> &lt;name&gt;</span><span style=color:#a40000>
+</span></code></pre></div>
+</div>
+<div class=td-content style=page-break-before:always>
+<h1 id=pg-b5b32ea2a8d7a0858812be1d0a7ffaa7>2.2 - Docker 实战</h1>
+<blockquote>
+<p><a href=https://yeasy.gitbook.io/docker_practice/>https://yeasy.gitbook.io/docker_practice/</a></p>
+</blockquote>
 </div>
 </main>
 </div>
