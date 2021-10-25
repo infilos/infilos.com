@@ -1,9 +1,8 @@
-
 ---
 type: docs
-title: "TypeScript 编程"
-linkTitle: "TypeScript 编程"
-weight: 8
+title: "TypeScript"
+linkTitle: "TypeScript"
+weight: 10
 ---
 
 > - [TypeScript CN](https://www.tslang.cn/docs/home.html)
