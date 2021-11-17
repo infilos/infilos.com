@@ -2,7 +2,7 @@
 <head>
 <meta charset=utf-8>
 <meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no">
-<meta name=generator content="Hugo 0.88.1">
+<meta name=generator content="Hugo 0.89.3">
 <meta name=ROBOTS content="INDEX, FOLLOW">
 <link rel="shortcut icon" href=/favicons/favicon.ico>
 <link rel=apple-touch-icon href=/favicons/apple-touch-icon-180x180.png sizes=180x180>
@@ -14,17 +14,56 @@
 <link rel=icon type=image/png href=/favicons/android-96x96.png sizes=96x96>
 <link rel=icon type=image/png href=/favicons/android-144x144.png sizes=144x144>
 <link rel=icon type=image/png href=/favicons/android-192x192.png sizes=192x192>
-<title>MySQL | infilos.com</title><meta property="og:title" content="MySQL">
-<meta property="og:description" content>
+<title>CH10-优化器 | infilos.com</title><meta property="og:title" content="CH10-优化器">
+<meta property="og:description" content="前面我们介绍过索引，你已经知道了在MySQL中一张表其实是可以支持多个索引的。但是，你写SQL语句的时候，并没有主动指定使用哪个索引。也就是说，使用哪个索引是由MySQL来确定的。
+不知道你有没有碰到过这种情况，一条本来可以执行得很快的语句，却由于MySQL选错了索引，而导致执行速度变得很慢？
+我们一起来看一个例子吧。
+我们先建一个简单的表，表里有a、b两个字段，并分别建上索引：
+CREATETABLE`t`(`id`int(11)NOTNULL,`a`int(11)DEFAULTNULL,`b`int(11)DEFAULTNULL,PRIMARYKEY(`id`),KEY`a`(`a`),KEY`b`(`b`))ENGINE=InnoDB；然后，我们往表t中插入10万行记录，取值按整数递增，即：(1,1,1)，(2,2,2)，(3,3,3) 直到(100000,100000,100000)。
+我是用存储过程来插入数据的，这里我贴出来方便你复现：
+delimiter ;; create procedure idata() begin declare i int; set i=1; while(i<=100000)do insert into t values(i, i, i); set i=i+1; end while; end;; delimiter ; call idata(); 接下来，我们分析一条SQL语句：
+mysql> select * from t where a between 10000 and 20000; 你一定会说，这个语句还用分析吗，很简单呀，a上有索引，肯定是要使用索引a的。
+你说得没错，图1显示的就是使用explain命令看到的这条语句的执行情况。
+ 从图1看上去，这条查询语句的执行也确实符合预期，key这个字段值是’a’，表示优化器选择了索引a。
+不过别急，这个案例不会这么简单。在我们已经准备好的包含了10万行数据的表上，我们再做如下操作。
+ 这里，session A的操作你已经很熟悉了，它就是开启了一个事务。随后，session B把数据都删除后，又调用了 idata这个存储过程，插入了10万行数据。
+这时候，session B的查询语句select * from t where a between 10000 and 20000就不会再选择索引a了。我们可以通过慢查询日志（slow log）来查看一下具体的执行情况。
+为了说明优化器选择的结果是否正确，我增加了一个对照，即：使用force index(a)来让优化器强制使用索引a（这部分内容，我还会在这篇文章的后半部分中提到）。">
 <meta property="og:type" content="article">
 <meta property="og:url" content="/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch10/"><meta property="article:section" content="存储系统">
 <meta property="og:site_name" content="infilos.com">
-<meta itemprop=name content="MySQL">
-<meta itemprop=description content>
-<meta itemprop=wordCount content="0">
+<meta itemprop=name content="CH10-优化器">
+<meta itemprop=description content="前面我们介绍过索引，你已经知道了在MySQL中一张表其实是可以支持多个索引的。但是，你写SQL语句的时候，并没有主动指定使用哪个索引。也就是说，使用哪个索引是由MySQL来确定的。
+不知道你有没有碰到过这种情况，一条本来可以执行得很快的语句，却由于MySQL选错了索引，而导致执行速度变得很慢？
+我们一起来看一个例子吧。
+我们先建一个简单的表，表里有a、b两个字段，并分别建上索引：
+CREATETABLE`t`(`id`int(11)NOTNULL,`a`int(11)DEFAULTNULL,`b`int(11)DEFAULTNULL,PRIMARYKEY(`id`),KEY`a`(`a`),KEY`b`(`b`))ENGINE=InnoDB；然后，我们往表t中插入10万行记录，取值按整数递增，即：(1,1,1)，(2,2,2)，(3,3,3) 直到(100000,100000,100000)。
+我是用存储过程来插入数据的，这里我贴出来方便你复现：
+delimiter ;; create procedure idata() begin declare i int; set i=1; while(i<=100000)do insert into t values(i, i, i); set i=i+1; end while; end;; delimiter ; call idata(); 接下来，我们分析一条SQL语句：
+mysql> select * from t where a between 10000 and 20000; 你一定会说，这个语句还用分析吗，很简单呀，a上有索引，肯定是要使用索引a的。
+你说得没错，图1显示的就是使用explain命令看到的这条语句的执行情况。
+ 从图1看上去，这条查询语句的执行也确实符合预期，key这个字段值是’a’，表示优化器选择了索引a。
+不过别急，这个案例不会这么简单。在我们已经准备好的包含了10万行数据的表上，我们再做如下操作。
+ 这里，session A的操作你已经很熟悉了，它就是开启了一个事务。随后，session B把数据都删除后，又调用了 idata这个存储过程，插入了10万行数据。
+这时候，session B的查询语句select * from t where a between 10000 and 20000就不会再选择索引a了。我们可以通过慢查询日志（slow log）来查看一下具体的执行情况。
+为了说明优化器选择的结果是否正确，我增加了一个对照，即：使用force index(a)来让优化器强制使用索引a（这部分内容，我还会在这篇文章的后半部分中提到）。">
+<meta itemprop=wordCount content="282">
 <meta itemprop=keywords content><meta name=twitter:card content="summary">
-<meta name=twitter:title content="MySQL">
-<meta name=twitter:description content>
+<meta name=twitter:title content="CH10-优化器">
+<meta name=twitter:description content="前面我们介绍过索引，你已经知道了在MySQL中一张表其实是可以支持多个索引的。但是，你写SQL语句的时候，并没有主动指定使用哪个索引。也就是说，使用哪个索引是由MySQL来确定的。
+不知道你有没有碰到过这种情况，一条本来可以执行得很快的语句，却由于MySQL选错了索引，而导致执行速度变得很慢？
+我们一起来看一个例子吧。
+我们先建一个简单的表，表里有a、b两个字段，并分别建上索引：
+CREATETABLE`t`(`id`int(11)NOTNULL,`a`int(11)DEFAULTNULL,`b`int(11)DEFAULTNULL,PRIMARYKEY(`id`),KEY`a`(`a`),KEY`b`(`b`))ENGINE=InnoDB；然后，我们往表t中插入10万行记录，取值按整数递增，即：(1,1,1)，(2,2,2)，(3,3,3) 直到(100000,100000,100000)。
+我是用存储过程来插入数据的，这里我贴出来方便你复现：
+delimiter ;; create procedure idata() begin declare i int; set i=1; while(i<=100000)do insert into t values(i, i, i); set i=i+1; end while; end;; delimiter ; call idata(); 接下来，我们分析一条SQL语句：
+mysql> select * from t where a between 10000 and 20000; 你一定会说，这个语句还用分析吗，很简单呀，a上有索引，肯定是要使用索引a的。
+你说得没错，图1显示的就是使用explain命令看到的这条语句的执行情况。
+ 从图1看上去，这条查询语句的执行也确实符合预期，key这个字段值是’a’，表示优化器选择了索引a。
+不过别急，这个案例不会这么简单。在我们已经准备好的包含了10万行数据的表上，我们再做如下操作。
+ 这里，session A的操作你已经很熟悉了，它就是开启了一个事务。随后，session B把数据都删除后，又调用了 idata这个存储过程，插入了10万行数据。
+这时候，session B的查询语句select * from t where a between 10000 and 20000就不会再选择索引a了。我们可以通过慢查询日志（slow log）来查看一下具体的执行情况。
+为了说明优化器选择的结果是否正确，我增加了一个对照，即：使用force index(a)来让优化器强制使用索引a（这部分内容，我还会在这篇文章的后半部分中提到）。">
 <script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga('create','UA-123062585-1','auto'),ga('send','pageview'))</script>
 <script async src=https://www.google-analytics.com/analytics.js></script>
 <link rel=preload href=/scss/main.min.847464b684a6e89d7276700a5c500c17ab494dd1755b2654a7b27d8b59e3347e.css as=style>
@@ -39,42 +78,20 @@
 </a>
 <div class="collapse navbar-collapse" id=navbarSupportedContent>
 <ul class="navbar-nav mr-auto">
-<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
-<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
-基础
-<span>+</span>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86>
+<span>基础</span>
 </a>
-<div class=dropdown-menu aria-labelledby=navbarDropdown>
-<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/%e6%93%8d%e4%bd%9c%e7%b3%bb%e7%bb%9f>操作系统</a>
-<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/%e6%80%a7%e8%83%bd%e4%b9%8b%e6%ae%87>性能之殇</a>
-<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/io%e6%a8%a1%e5%9e%8b>IO 模型</a>
-<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/%e7%bd%91%e7%bb%9c%e5%9f%ba%e7%a1%80>网络基础</a>
-<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/tcp-ip>TCP-IP</a>
-<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/http>HTTP</a>
-</div>
 </li>
-<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
-<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
-语言
-<span>+</span>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80>
+<span>语言</span>
 </a>
-<div class=dropdown-menu aria-labelledby=navbarDropdown>
-<a class=dropdown-item href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/java>Java 编程</a>
-<a class=dropdown-item href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/jvm-core>JVM 核心</a>
-<a class=dropdown-item href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/jvm-concurrent>JVM 并发</a>
-<a class=dropdown-item href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/scala>Scala 编程</a>
-</div>
 </li>
-<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
-<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
-框架库
-<span>+</span>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93>
+<span>框架库</span>
 </a>
-<div class=dropdown-menu aria-labelledby=navbarDropdown>
-<a class=dropdown-item href=/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93/spring>Spring</a>
-<a class=dropdown-item href=/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93/hikari>Hikari</a>
-<a class=dropdown-item href=/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93/parboiled>Parboiled</a>
-</div>
 </li>
 <li class="nav-item dropdown" style=max-width:90px;min-width:10px>
 <a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
@@ -95,7 +112,7 @@
 <a class=dropdown-item href=/%e6%9f%a5%e8%af%a2%e7%b3%bb%e7%bb%9f>查询系统</a>
 <a class=dropdown-item href=/%e6%b6%88%e6%81%af%e7%b3%bb%e7%bb%9f>消息系统</a>
 <a class=dropdown-item href=/%e5%a4%84%e7%90%86%e7%b3%bb%e7%bb%9f>处理系统</a>
-<a class=dropdown-item href=/%e7%ae%a1%e7%90%86%e7%b3%bb%e7%bb%9f>管理系统</a>
+<a class=dropdown-item href=/%e6%95%b0%e6%8d%ae%e6%b2%bb%e7%90%86>数据治理</a>
 </div>
 </li>
 <li class="nav-item dropdown" style=max-width:90px;min-width:10px>
@@ -105,19 +122,15 @@
 </a>
 <div class=dropdown-menu aria-labelledby=navbarDropdown>
 <a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e8%ae%be%e6%96%bd>基础设施</a>
+<a class=dropdown-item href=/%e7%94%a8%e6%88%b7%e7%b3%bb%e7%bb%9f>用户系统</a>
 <a class=dropdown-item href=/%e4%ba%a4%e4%ba%92%e7%95%8c%e9%9d%a2>交互界面</a>
 <a class=dropdown-item href=/%e4%b8%9a%e5%8a%a1%e7%b3%bb%e7%bb%9f>业务系统</a>
 </div>
 </li>
-<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
-<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
-模式架构
-<span>+</span>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e6%a8%a1%e5%bc%8f%e6%9e%b6%e6%9e%84>
+<span>模式架构</span>
 </a>
-<div class=dropdown-menu aria-labelledby=navbarDropdown>
-<a class=dropdown-item href=/%e6%a8%a1%e5%bc%8f%e6%9e%b6%e6%9e%84/design-pattern>设计模式</a>
-<a class=dropdown-item href=/%e6%a8%a1%e5%bc%8f%e6%9e%b6%e6%9e%84/micro-service>微服务架构</a>
-</div>
 </li>
 <li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e9%9d%a2%e8%af%95%e9%97%ae%e7%ad%94>
@@ -174,6 +187,8 @@
 <a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/rdbms/ch04-%E6%A0%B8%E5%BF%83%E7%9F%A5%E8%AF%86/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9frdbmsch04-e6a0b8e5bf83e79fa5e8af86><span>CH04-核心知识</span></a>
 </li>
 </ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fjdbc-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/jdbc/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e5ad98e582a8e7b3bbe7bb9fjdbc><span>JDBC</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e5ad98e582a8e7b3bbe7bb9fsql-li>
 <a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/sql/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e5ad98e582a8e7b3bbe7bb9fsql><span>SQL</span></a>
 <ul class="ul-2 foldable">
@@ -204,6 +219,8 @@
 <a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql/ch06-%E5%A4%8D%E5%88%B6%E5%88%86%E7%A6%BB/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch06-e5a48de588b6e58886e7a6bb><span>CH06-复制分离</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch07-e689a7e8a18ce8bf87e7a88b-li>
 <a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql/ch07-%E6%89%A7%E8%A1%8C%E8%BF%87%E7%A8%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch07-e689a7e8a18ce8bf87e7a88b><span>CH07-执行过程</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch08-e58f82e88083e8a784e7baa6-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql/ch08-%E5%8F%82%E8%80%83%E8%A7%84%E7%BA%A6/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch08-e58f82e88083e8a784e7baa6><span>CH08-参考规约</span></a>
 </li>
 </ul>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practice-li>
@@ -211,26 +228,96 @@
 <ul class="ul-2 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech01-li>
 <a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch01/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech01><span>CH01-基础架构</span></a>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech04-li>
-<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch04/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech04><span>MySQL</span></a>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech05-li>
-<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch05/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech05><span>MySQL</span></a>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech06-li>
-<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch06/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech06><span>MySQL</span></a>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech07-li>
-<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch07/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech07><span>MySQL</span></a>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech08-li>
-<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch08/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech08><span>MySQL</span></a>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech09-li>
-<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch09/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech09><span>MySQL</span></a>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child active-path" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech10-li>
-<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch10/ class="align-left pl-0 active td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech10><span class=td-sidebar-nav-active-item>MySQL</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech02-li>
 <a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch02/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech02><span>CH02-日志系统</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech03-li>
 <a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch03/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech03><span>CH03-事务隔离</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech04-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch04/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech04><span>CH04-索引-上</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech05-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch05/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech05><span>CH05-索引-下</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech06-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch06/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech06><span>CH06-全局锁与表锁</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech07-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch07/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech07><span>CH07-行级锁</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech08-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch08/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech08><span>CH08-MVCC</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech09-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch09/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech09><span>CH09-索引选择</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child active-path" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech10-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch10/ class="align-left pl-0 active td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech10><span class=td-sidebar-nav-active-item>CH10-优化器</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech11-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch11/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech11><span>CH11-字符串索引</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech12-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch12/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech12><span>CH12-刷脏页</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech13-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch13/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech13><span>CH13-空间回收</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech14-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch14/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech14><span>CH14-Count 实现</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech15-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch15/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech15><span>CH15-日志与索引</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech16-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch16/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech16><span>CH16-Orderby 实现</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech17-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch17/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech17><span>CH17-随机查询</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech18-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch18/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech18><span>CH18-性能案例</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech19-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch19/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech19><span>CH19-单行优化</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech20-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch20/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech20><span>CH20-幻读</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech21-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch21/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech21><span>CH21-加锁规则</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech22-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch22/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech22><span>CH22-优化场景</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech23-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch23/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech23><span>CH23-可靠保证</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech24-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch24/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech24><span>CH24-主备一致</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech25-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch25/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech25><span>CH25-高可用</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech26-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch26/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech26><span>CH26-备库延迟</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech27-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch27/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech27><span>CH27-主库故障</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech28-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch28/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech28><span>CH28-读写分离</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech29-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch29/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech29><span>CH29-故障判断</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech30-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch30/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech30><span>CH30-动态观察锁</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech31-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch31/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech31><span>CH31-误删恢复</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech32-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch32/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech32><span>CH32-KILL 语句</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech33-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch33/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech33><span>CH33-内存占用</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech34-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch34/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech34><span>CH34-JOIN 应用</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech35-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch35/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech35><span>CH35-JOIN 优化</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech36-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch36/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech36><span>CH36-临时表重名</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech37-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch37/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech37><span>CH37-内部临时表</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech38-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch38/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech38><span>CH38-Memory 引擎</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech39-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch39/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech39><span>CH39-自增主键连续性</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech40-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch40/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech40><span>INSERT 相关锁</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech41-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch41/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech41><span>CH41-表快速复制</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech42-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch42/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech42><span>CH42-GRANT 授权</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech43-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch43/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech43><span>CH43-分区表</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech44-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch44/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech44><span>CH44-问题答疑</span></a>
 </li>
 </ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-internal-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-internal/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-internal><span>MySQL 内幕</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e5ad98e582a8e7b3bbe7bb9fredis-li>
 <a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/redis/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e5ad98e582a8e7b3bbe7bb9fredis><span>Redis</span></a>
 <ul class="ul-2 foldable">
@@ -257,7 +344,7 @@
 <div class="td-page-meta ml-2 pb-1 pt-2 mb-0">
 <a href=https://github.com/infilos/infilos.com/edit/master/content/zh/%e5%ad%98%e5%82%a8%e7%b3%bb%e7%bb%9f/mysql-practice/CH10.md target=_blank><i class="fa fa-edit fa-fw"></i> 编辑此页</a>
 <a href="https://github.com/infilos/infilos.com/new/master/content/zh/%e5%ad%98%e5%82%a8%e7%b3%bb%e7%bb%9f/mysql-practice/CH10.md?filename=change-me.md&value=---%0Atitle%3A+%22Long+Page+Title%22%0AlinkTitle%3A+%22Short+Nav+Title%22%0Aweight%3A+100%0Adescription%3A+%3E-%0A+++++Page+description+for+heading+and+indexes.%0A---%0A%0A%23%23+Heading%0A%0AEdit+this+template+to+create+your+new+page.%0A%0A%2A+Give+it+a+good+name%2C+ending+in+%60.md%60+-+e.g.+%60getting-started.md%60%0A%2A+Edit+the+%22front+matter%22+section+at+the+top+of+the+page+%28weight+controls+how+its+ordered+amongst+other+pages+in+the+same+directory%3B+lowest+number+first%29.%0A%2A+Add+a+good+commit+message+at+the+bottom+of+the+page+%28%3C80+characters%3B+use+the+extended+description+field+for+more+detail%29.%0A%2A+Create+a+new+branch+so+you+can+preview+your+new+file+and+request+a+review+via+Pull+Request.%0A" target=_blank><i class="fa fa-edit fa-fw"></i> 添加子页面</a>
-<a href="https://github.com/infilos/infilos.com/issues/new?title=MySQL" target=_blank><i class="fab fa-github fa-fw"></i> 提交文档问题</a>
+<a href="https://github.com/infilos/infilos.com/issues/new?title=CH10-%e4%bc%98%e5%8c%96%e5%99%a8" target=_blank><i class="fab fa-github fa-fw"></i> 提交文档问题</a>
 <a id=print href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/_print/><i class="fa fa-print fa-fw"></i> 整节打印</a>
 </div>
 </aside>
@@ -271,14 +358,143 @@
 <a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/>MySQL 实战</a>
 </li>
 <li class="breadcrumb-item active" aria-current=page>
-<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch10/>MySQL</a>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch10/>CH10-优化器</a>
 </li>
 </ol>
 </nav>
 <div class=td-content>
-<h1>MySQL</h1>
+<h1>CH10-优化器</h1>
 <header class=article-meta>
 </header>
+<p>前面我们介绍过索引，你已经知道了在MySQL中一张表其实是可以支持多个索引的。但是，你写SQL语句的时候，并没有主动指定使用哪个索引。也就是说，使用哪个索引是由MySQL来确定的。</p>
+<p>不知道你有没有碰到过这种情况，一条本来可以执行得很快的语句，却由于MySQL选错了索引，而导致执行速度变得很慢？</p>
+<p>我们一起来看一个例子吧。</p>
+<p>我们先建一个简单的表，表里有a、b两个字段，并分别建上索引：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-mysql data-lang=mysql><span style=color:#204a87;font-weight:700>CREATE</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>TABLE</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#ce5c00;font-weight:700>`</span><span style=color:#000>t</span><span style=color:#ce5c00;font-weight:700>`</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#000;font-weight:700>(</span><span style=color:#f8f8f8;text-decoration:underline>
+</span><span style=color:#f8f8f8;text-decoration:underline>  </span><span style=color:#ce5c00;font-weight:700>`</span><span style=color:#000>id</span><span style=color:#ce5c00;font-weight:700>`</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>int</span><span style=color:#000;font-weight:700>(</span><span style=color:#0000cf;font-weight:700>11</span><span style=color:#000;font-weight:700>)</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>NOT</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#000>NULL</span><span style=color:#000;font-weight:700>,</span><span style=color:#f8f8f8;text-decoration:underline>
+</span><span style=color:#f8f8f8;text-decoration:underline>  </span><span style=color:#ce5c00;font-weight:700>`</span><span style=color:#000>a</span><span style=color:#ce5c00;font-weight:700>`</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>int</span><span style=color:#000;font-weight:700>(</span><span style=color:#0000cf;font-weight:700>11</span><span style=color:#000;font-weight:700>)</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>DEFAULT</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#000>NULL</span><span style=color:#000;font-weight:700>,</span><span style=color:#f8f8f8;text-decoration:underline>
+</span><span style=color:#f8f8f8;text-decoration:underline>  </span><span style=color:#ce5c00;font-weight:700>`</span><span style=color:#000>b</span><span style=color:#ce5c00;font-weight:700>`</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>int</span><span style=color:#000;font-weight:700>(</span><span style=color:#0000cf;font-weight:700>11</span><span style=color:#000;font-weight:700>)</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>DEFAULT</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#000>NULL</span><span style=color:#000;font-weight:700>,</span><span style=color:#f8f8f8;text-decoration:underline>
+</span><span style=color:#f8f8f8;text-decoration:underline>  </span><span style=color:#204a87;font-weight:700>PRIMARY</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>KEY</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#000;font-weight:700>(</span><span style=color:#ce5c00;font-weight:700>`</span><span style=color:#000>id</span><span style=color:#ce5c00;font-weight:700>`</span><span style=color:#000;font-weight:700>),</span><span style=color:#f8f8f8;text-decoration:underline>
+</span><span style=color:#f8f8f8;text-decoration:underline>  </span><span style=color:#204a87;font-weight:700>KEY</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#ce5c00;font-weight:700>`</span><span style=color:#000>a</span><span style=color:#ce5c00;font-weight:700>`</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#000;font-weight:700>(</span><span style=color:#ce5c00;font-weight:700>`</span><span style=color:#000>a</span><span style=color:#ce5c00;font-weight:700>`</span><span style=color:#000;font-weight:700>),</span><span style=color:#f8f8f8;text-decoration:underline>
+</span><span style=color:#f8f8f8;text-decoration:underline>  </span><span style=color:#204a87;font-weight:700>KEY</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#ce5c00;font-weight:700>`</span><span style=color:#000>b</span><span style=color:#ce5c00;font-weight:700>`</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#000;font-weight:700>(</span><span style=color:#ce5c00;font-weight:700>`</span><span style=color:#000>b</span><span style=color:#ce5c00;font-weight:700>`</span><span style=color:#000;font-weight:700>)</span><span style=color:#f8f8f8;text-decoration:underline>
+</span><span style=color:#f8f8f8;text-decoration:underline></span><span style=color:#000;font-weight:700>)</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>ENGINE</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#000>InnoDB</span><span style=color:#a40000>；</span><span style=color:#f8f8f8;text-decoration:underline>
+</span></code></pre></div><p>然后，我们往表t中插入10万行记录，取值按整数递增，即：(1,1,1)，(2,2,2)，(3,3,3) 直到(100000,100000,100000)。</p>
+<p>我是用存储过程来插入数据的，这里我贴出来方便你复现：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>delimiter ;;
+create procedure idata()
+begin
+  declare i int;
+  set i=1;
+  while(i&lt;=100000)do
+    insert into t values(i, i, i);
+    set i=i+1;
+  end while;
+end;;
+delimiter ;
+call idata();
+</code></pre></div><p>接下来，我们分析一条SQL语句：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>mysql&gt; select * from t where a between 10000 and 20000;
+</code></pre></div><p>你一定会说，这个语句还用分析吗，很简单呀，a上有索引，肯定是要使用索引a的。</p>
+<p>你说得没错，图1显示的就是使用explain命令看到的这条语句的执行情况。</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211027231729.png style=display:block;width:80% alt=NAME align=center> </div>
+<p>从图1看上去，这条查询语句的执行也确实符合预期，key这个字段值是’a’，表示优化器选择了索引a。</p>
+<p>不过别急，这个案例不会这么简单。在我们已经准备好的包含了10万行数据的表上，我们再做如下操作。</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211027231740.png style=display:block;width:80% alt=NAME align=center> </div>
+<p>这里，session A的操作你已经很熟悉了，它就是开启了一个事务。随后，session B把数据都删除后，又调用了 idata这个存储过程，插入了10万行数据。</p>
+<p>这时候，session B的查询语句select * from t where a between 10000 and 20000就不会再选择索引a了。我们可以通过慢查询日志（slow log）来查看一下具体的执行情况。</p>
+<p>为了说明优化器选择的结果是否正确，我增加了一个对照，即：使用force index(a)来让优化器强制使用索引a（这部分内容，我还会在这篇文章的后半部分中提到）。</p>
+<p>下面的三条SQL语句，就是这个实验过程。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>set long_query_time=0;
+select * from t where a between 10000 and 20000; /*Q1*/
+select * from t force index(a) where a between 10000 and 20000;/*Q2*/
+</code></pre></div><ul>
+<li>第一句，是将慢查询日志的阈值设置为0，表示这个线程接下来的语句都会被记录入慢查询日志中；</li>
+<li>第二句，Q1是session B原来的查询；</li>
+<li>第三句，Q2是加了force index(a)来和session B原来的查询语句执行情况对比。</li>
+</ul>
+<p>如图3所示是这三条SQL语句执行完成后的慢查询日志。</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211027231751.png style=display:block;width:80% alt=NAME align=center> </div>
+<p>可以看到，Q1扫描了10万行，显然是走了全表扫描，执行时间是40毫秒。Q2扫描了10001行，执行了21毫秒。也就是说，我们在没有使用force index的时候，MySQL用错了索引，导致了更长的执行时间。</p>
+<p>这个例子对应的是我们平常不断地删除历史数据和新增数据的场景。这时，MySQL竟然会选错索引，是不是有点奇怪呢？今天，我们就从这个奇怪的结果说起吧。</p>
+<h2 id=优化器的逻辑>优化器的逻辑</h2>
+<p>在第一篇文章中，我们就提到过，选择索引是优化器的工作。</p>
+<p>而优化器选择索引的目的，是找到一个最优的执行方案，并用最小的代价去执行语句。在数据库里面，扫描行数是影响执行代价的因素之一。扫描的行数越少，意味着访问磁盘数据的次数越少，消耗的CPU资源越少。</p>
+<p>当然，扫描行数并不是唯一的判断标准，优化器还会结合是否使用临时表、是否排序等因素进行综合判断。</p>
+<p>我们这个简单的查询语句并没有涉及到临时表和排序，所以MySQL选错索引肯定是在判断扫描行数的时候出问题了。</p>
+<p>那么，问题就是：<strong>扫描行数是怎么判断的？</strong></p>
+<p>MySQL在真正开始执行语句之前，并不能精确地知道满足这个条件的记录有多少条，而只能根据统计信息来估算记录数。</p>
+<p>这个统计信息就是索引的“区分度”。显然，一个索引上不同的值越多，这个索引的区分度就越好。而一个索引上不同的值的个数，我们称之为“基数”（cardinality）。也就是说，这个基数越大，索引的区分度越好。</p>
+<p>我们可以使用show index方法，看到一个索引的基数。如图4所示，就是表t的show index 的结果 。虽然这个表的每一行的三个字段值都是一样的，但是在统计信息中，这三个索引的基数值并不同，而且其实都不准确。</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211027231812.png style=display:block;width:80% alt=NAME align=center> </div>
+<p>那么，**MySQL是怎样得到索引的基数的呢？**这里，我给你简单介绍一下MySQL采样统计的方法。</p>
+<p>为什么要采样统计呢？因为把整张表取出来一行行统计，虽然可以得到精确的结果，但是代价太高了，所以只能选择“采样统计”。</p>
+<p>采样统计的时候，InnoDB默认会选择N个数据页，统计这些页面上的不同值，得到一个平均值，然后乘以这个索引的页面数，就得到了这个索引的基数。</p>
+<p>而数据表是会持续更新的，索引统计信息也不会固定不变。所以，当变更的数据行数超过1/M的时候，会自动触发重新做一次索引统计。</p>
+<p>在MySQL中，有两种存储索引统计的方式，可以通过设置参数innodb_stats_persistent的值来选择：</p>
+<ul>
+<li>设置为on的时候，表示统计信息会持久化存储。这时，默认的N是20，M是10。</li>
+<li>设置为off的时候，表示统计信息只存储在内存中。这时，默认的N是8，M是16。</li>
+</ul>
+<p>由于是采样统计，所以不管N是20还是8，这个基数都是很容易不准的。</p>
+<p>但，这还不是全部。</p>
+<p>你可以从图4中看到，这次的索引统计值（cardinality列）虽然不够精确，但大体上还是差不多的，选错索引一定还有别的原因。</p>
+<p>其实索引统计只是一个输入，对于一个具体的语句来说，优化器还要判断，执行这个语句本身要扫描多少行。</p>
+<p>接下来，我们再一起看看优化器预估的，这两个语句的扫描行数是多少。</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211027231823.png style=display:block;width:80% alt=NAME align=center> </div>
+<p>rows这个字段表示的是预计扫描行数。</p>
+<p>其中，Q1的结果还是符合预期的，rows的值是104620；但是Q2的rows值是37116，偏差就大了。而图1中我们用explain命令看到的rows是只有10001行，是这个偏差误导了优化器的判断。</p>
+<p>到这里，可能你的第一个疑问不是为什么不准，而是优化器为什么放着扫描37000行的执行计划不用，却选择了扫描行数是100000的执行计划呢？</p>
+<p>这是因为，如果使用索引a，每次从索引a上拿到一个值，都要回到主键索引上查出整行数据，这个代价优化器也要算进去的。</p>
+<p>而如果选择扫描10万行，是直接在主键索引上扫描的，没有额外的代价。</p>
+<p>优化器会估算这两个选择的代价，从结果看来，优化器认为直接扫描主键索引更快。当然，从执行时间看来，这个选择并不是最优的。</p>
+<p>使用普通索引需要把回表的代价算进去，在图1执行explain的时候，也考虑了这个策略的代价 ，但图1的选择是对的。也就是说，这个策略并没有问题。</p>
+<p>所以冤有头债有主，MySQL选错索引，这件事儿还得归咎到没能准确地判断出扫描行数。至于为什么会得到错误的扫描行数，这个原因就作为课后问题，留给你去分析了。</p>
+<p>既然是统计信息不对，那就修正。analyze table t 命令，可以用来重新统计索引信息。我们来看一下执行效果。</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211027231835.png style=display:block;width:80% alt=NAME align=center> </div>
+<p>这回对了。</p>
+<p>所以在实践中，如果你发现explain的结果预估的rows值跟实际情况差距比较大，可以采用这个方法来处理。</p>
+<p>其实，如果只是索引统计不准确，通过analyze命令可以解决很多问题，但是前面我们说了，优化器可不止是看扫描行数。</p>
+<p>依然是基于这个表t，我们看看另外一个语句：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>mysql&gt; select * from t where (a between 1 and 1000)  and (b between 50000 and 100000) order by b limit 1;
+</code></pre></div><p>从条件上看，这个查询没有符合条件的记录，因此会返回空集合。</p>
+<p>在开始执行这条语句之前，你可以先设想一下，如果你来选择索引，会选择哪一个呢？</p>
+<p>为了便于分析，我们先来看一下a、b这两个索引的结构图。</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211027231848.png style=display:block;width:80% alt=NAME align=center> </div>
+<p>如果使用索引a进行查询，那么就是扫描索引a的前1000个值，然后取到对应的id，再到主键索引上去查出每一行，然后根据字段b来过滤。显然这样需要扫描1000行。</p>
+<p>如果使用索引b进行查询，那么就是扫描索引b的最后50001个值，与上面的执行过程相同，也是需要回到主键索引上取值再判断，所以需要扫描50001行。</p>
+<p>所以你一定会想，如果使用索引a的话，执行速度明显会快很多。那么，下面我们就来看看到底是不是这么一回事儿。</p>
+<p>图8是执行explain的结果。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>mysql&gt; explain select * from t where (a between 1 and 1000) and (b between 50000 and 100000) order by b limit 1;
+</code></pre></div><div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211027231858.png style=display:block;width:80% alt=NAME align=center> </div>
+<p>可以看到，返回结果中key字段显示，这次优化器选择了索引b，而rows字段显示需要扫描的行数是50198。</p>
+<p>从这个结果中，你可以得到两个结论：</p>
+<ol>
+<li>扫描行数的估计值依然不准确；</li>
+<li>这个例子里MySQL又选错了索引。</li>
+</ol>
+<h2 id=索引选择异常和处理>索引选择异常和处理</h2>
+<p>其实大多数时候优化器都能找到正确的索引，但偶尔你还是会碰到我们上面举例的这两种情况：原本可以执行得很快的SQL语句，执行速度却比你预期的慢很多，你应该怎么办呢？</p>
+<p>**一种方法是，像我们第一个例子一样，采用force index强行选择一个索引。**MySQL会根据词法解析的结果分析出可能可以使用的索引作为候选项，然后在候选列表中依次判断每个索引需要扫描多少行。如果force index指定的索引在候选索引列表中，就直接选择这个索引，不再评估其他索引的执行代价。</p>
+<p>我们来看看第二个例子。刚开始分析时，我们认为选择索引a会更好。现在，我们就来看看执行效果：</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211027231920.png style=display:block;width:80% alt=NAME align=center> </div>
+<p>可以看到，原本语句需要执行2.23秒，而当你使用force index(a)的时候，只用了0.05秒，比优化器的选择快了40多倍。</p>
+<p>也就是说，优化器没有选择正确的索引，force index起到了“矫正”的作用。</p>
+<p>不过很多程序员不喜欢使用force index，一来这么写不优美，二来如果索引改了名字，这个语句也得改，显得很麻烦。而且如果以后迁移到别的数据库的话，这个语法还可能会不兼容。</p>
+<p>但其实使用force index最主要的问题还是变更的及时性。因为选错索引的情况还是比较少出现的，所以开发的时候通常不会先写上force index。而是等到线上出现问题的时候，你才会再去修改SQL语句、加上force index。但是修改之后还要测试和发布，对于生产系统来说，这个过程不够敏捷。</p>
+<p>所以，数据库的问题最好还是在数据库内部来解决。那么，在数据库里面该怎样解决呢？</p>
+<p>既然优化器放弃了使用索引a，说明a还不够合适，所以**第二种方法就是，我们可以考虑修改语句，引导MySQL使用我们期望的索引。**比如，在这个例子里，显然把“order by b limit 1” 改成 “order by b,a limit 1” ，语义的逻辑是相同的。</p>
+<p>我们来看看改之后的效果：</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211027231932.png style=display:block;width:80% alt=NAME align=center> </div>
+<p>之前优化器选择使用索引b，是因为它认为使用索引b可以避免排序（b本身是索引，已经是有序的了，如果选择索引b的话，不需要再做排序，只需要遍历），所以即使扫描行数多，也判定为代价更小。</p>
+<p>现在order by b,a 这种写法，要求按照b,a排序，就意味着使用这两个索引都需要排序。因此，扫描行数成了影响决策的主要条件，于是此时优化器选了只需要扫描1000行的索引a。</p>
+<p>当然，这种修改并不是通用的优化手段，只是刚好在这个语句里面有limit 1，因此如果有满足条件的记录， order by b limit 1和order by b,a limit 1 都会返回b是最小的那一行，逻辑上一致，才可以这么做。</p>
+<p>如果你觉得修改语义这件事儿不太好，这里还有一种改法，图11是执行效果。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>mysql&gt; select * from  (select * from t where (a between 1 and 1000)  and (b between 50000 and 100000) order by b limit 100)alias limit 1;
+</code></pre></div><div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211027231946.png style=display:block;width:80% alt=NAME align=center> </div>
+<p>在这个例子里，我们用limit 100让优化器意识到，使用b索引代价是很高的。其实是我们根据数据特征诱导了一下优化器，也不具备通用性。</p>
+<p><strong>第三种方法是，在有些场景下，我们可以新建一个更合适的索引，来提供给优化器做选择，或删掉误用的索引。</strong></p>
+<p>不过，在这个例子中，我没有找到通过新增索引来改变优化器行为的方法。这种情况其实比较少，尤其是经过DBA索引优化过的库，再碰到这个bug，找到一个更合适的索引一般比较难。</p>
+<p>如果我说还有一个方法是删掉索引b，你可能会觉得好笑。但实际上我碰到过两次这样的例子，最终是DBA跟业务开发沟通后，发现这个优化器错误选择的索引其实根本没有必要存在，于是就删掉了这个索引，优化器也就重新选择到了正确的索引。</p>
 <style>.feedback--answer{display:inline-block}.feedback--answer-no{margin-left:1em}.feedback--response{display:none;margin-top:1em}.feedback--response__visible{display:block}</style>
 <div class=d-print-none>
 <h2 class=feedback--title>Feedback</h2>
