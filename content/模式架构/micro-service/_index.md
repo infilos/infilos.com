@@ -3,6 +3,6 @@
 type: docs
 title: "微服务架构"
 linkTitle: "微服务架构"
-weight: 2
+weight: 3
 ---
 

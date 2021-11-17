@@ -3,6 +3,6 @@
 type: docs
 title: "设计模式"
 linkTitle: "设计模式"
-weight: 1
+weight: 2
 ---
 

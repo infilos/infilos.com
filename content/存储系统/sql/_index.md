@@ -3,6 +3,6 @@
 type: docs
 title: "SQL"
 linkTitle: "SQL"
-weight: 2
+weight: 3
 ---
 
