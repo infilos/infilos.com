@@ -2,7 +2,7 @@
 <head>
 <meta charset=utf-8>
 <meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no">
-<meta name=generator content="Hugo 0.89.3">
+<meta name=generator content="Hugo 0.89.4">
 <meta name=ROBOTS content="INDEX, FOLLOW">
 <link rel=canonical type=text/html href=/%E5%9F%BA%E7%A1%80%E8%AE%BE%E6%96%BD/>
 <link rel="shortcut icon" href=/favicons/favicon.ico>
@@ -148,6 +148,10 @@
 <li>3: <a href=#pg-fbea2d0efa1afcdc303c8f9d4d3ca3f7>Kubernetes</a></li>
 <ul>
 <li>3.1: <a href=#pg-84a2b3d40c15ef635ed6286bfd90ac82>问题排查</a></li>
+</ul>
+<li>4: <a href=#pg-ac6f48021d46699522bc63d3177cdb28>Maven</a></li>
+<ul>
+<li>4.1: <a href=#pg-60983e6ffa073b1ac901861ff6473525>Maven Release</a></li>
 </ul>
 </ul>
 <div class=content>
@@ -975,6 +979,98 @@ c10f740 HEAD@<span style=color:#ce5c00;font-weight:700>{</span>2<span style=colo
 <div class=td-content>
 <h1 id=pg-84a2b3d40c15ef635ed6286bfd90ac82>3.1 - 问题排查</h1>
 <div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211117214631.png style=display:block;width:100% alt=NAME align=center> </div>
+</div>
+<div class=td-content style=page-break-before:always>
+<h1 id=pg-ac6f48021d46699522bc63d3177cdb28>4 - Maven</h1>
+</div>
+<div class=td-content>
+<h1 id=pg-60983e6ffa073b1ac901861ff6473525>4.1 - Maven Release</h1>
+<h2 id=1-设置-ossrh>1. 设置 OSSRH</h2>
+<h3 id=11-创建账户>1.1 创建账户</h3>
+<p><a href=https://issues.sonatype.org/secure/Signup!default.jspa>Sign up for an account here</a></p>
+<h3 id=12-证明域名所有权>1.2 证明域名所有权</h3>
+<p>Now that you have an account the next step in the process is to prove ownership of the domain that matches the group that you’d like to publish to. Usually this is your domain name in reverse, so something like <code>com.company</code> if your domain is <code>company.com</code>. Since our developer community is at <code>solace.community</code> this meant we would publish to the <code>community.solace</code> group.</p>
+<p>To prove that we own this domain I had to execute a few simple steps:</p>
+<ol>
+<li>Open a <a href="https://issues.sonatype.org/secure/CreateIssue.jspa?issuetype=21&pid=10134">New Project Ticket</a> with OSSRH.</li>
+<li>Follow the instructions request in the ticket to addd a DNS TXT record to our domain.</li>
+<li>Wait a few hours (it says it could take up to 2 business days) for the DNS TXT record to be verified.</li>
+<li>Check the ticket for confirmation that domain ownership has been confirmed.</li>
+<li>Make a note to comment on this ticket after your first release to enable syncing to maven central!</li>
+</ol>
+<h3 id=13-创建-token>1.3 创建 Token</h3>
+<p>Now that we have permission to publish to our domain we need to create a user token for publishing. This token will be used as part of the publishing process.</p>
+<p>To get this token do the following:</p>
+<ol>
+<li>Login to the <a href=https://s01.oss.sonatype.org/#welcome>OSSRH Nexus Repository Manager</a> w/ your OSSRH account</li>
+<li>Go to your profile using the menu under your username at the top right.</li>
+<li>You should see a list menu that is on the <code>Summary</code> page; change it to <code>User Token</code>. You can create your token on this page.</li>
+<li>Copy & Paste this token info so you can use it later! <strong>(Keep it private!)</strong></li>
+</ol>
+<h2 id=2-设置-maven>2. 设置 Maven</h2>
+<ol>
+<li>Ensured that my <code>groupId</code> starts with the reverse domain that we have approval to publish to! For example this is what we used, note that the <code>groupId</code> starts with <code>community.solace</code>.</li>
+<li>When publishing maven projects you have releases and you have snapshots. A “release” is the final build for a version which does not change whereas a “snapshot” is a temporary build which can be replaced by another build with the same name.</li>
+<li>Include a description name, description and url pointing to your repository. For example,</li>
+<li>Include a license, source control info <code>scm</code>, developers and organization(I believe this is optional) information.</li>
+<li>Add a profile for OSSRH which includes the <code>snapshotRepository</code> info, the <code>nexus-staging-maven-plugin</code>, and the <code>maven-gpg-plugin</code>. Note in the example below I have this profile <code>activeByDefault</code> so you don’t have to specify it when running maven commands, however you may not want to do this.</li>
+<li>Include the <code>maven-release-plugin</code>, the <code>maven-javadoc-plugin</code>, the <code>maven-source-plugin</code> and the <code>flatten-maven-plugin</code> plugin.</li>
+</ol>
+<h2 id=3-设置-gpg-签名>3. 设置 GPG 签名</h2>
+<h3 id=31-创建私有-key>3.1 创建私有 Key</h3>
+<ol>
+<li>
+<p>Install the gpg tool; on mac you can do this by executing the command below. If you aren’t using a mac check out the instructions <a href=https://www.marcd.dev/articles/2021-03/mvncentral-publish-github>here</a></p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>brew install gpg
+</code></pre></div></li>
+<li>
+<p>Generate your key pair. You will be prompted for a “Real Name” and “Eamil Address” that you want to use with the key</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>gpg --gen-key
+</code></pre></div></li>
+</ol>
+<h3 id=32-共享公共-key>3.2 共享公共 Key</h3>
+<ol>
+<li>
+<p>Get your keypair identifier. To do this you need to list your keys. The key will have an identifier that looks like a random string of characters, something like <em>C48B6G0D63B854H7943892DF0C753FEC18D3F855</em>. In the command below I’ve replaced it with <code>MYIDENTIFIER</code> to show it’s location.</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>MJD-MacBook-Pro.local:~$ gpg --list-keys
+/path/to/keyring/pubring.kbx
+----------------------------------------
+pub   rsa3072 2021-03-11 [SC] [expires: 2023-03-11]
+   MYIDENTIFIER
+uid           [ultimate] solacecommunity &lt;community-github@solace.com&gt;
+sub   rsa3072 2021-03-11 [E] [expires: 2023-03-11]
+</code></pre></div></li>
+<li>
+<p>Distribute to a key server using the identifier found in the previous step. Note that you may want to publish to a different keyserver. The one that worked for me was hkp://keyserver.ubuntu.com:11371</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>gpg --keyserver hkp://pool.sks-keyservers.net --send-keys MYIDENTIFIER
+</code></pre></div></li>
+</ol>
+<h2 id=4-设置-github-密匙>4. 设置 Github 密匙</h2>
+<p>基于前面的操作，在 Github 中设置以下密匙，可以以仓库或组织来设置：</p>
+<ul>
+<li>
+<p>OSSRH_USERNAME：OSSRH 的登录账户名</p>
+</li>
+<li>
+<p>OSSRH_PASSWORD：OSSRH 中获得的 Token</p>
+</li>
+<li>
+<p>OSSRH_GPG_SECRET_KEY：GPG 的私有 Key，可以通过如下命令导出</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>gpg --export-secret-keys -a {KEY-ID} &gt; secret.txt
+</code></pre></div></li>
+<li>
+<p>OSSRH_GPG_SECRET_KEY_PASSWORD：GPG 私有 Key 的密码，即创建 Key 时设置的密码</p>
+</li>
+</ul>
+<h2 id=5-设置-github-action>5. 设置 Github Action</h2>
+<p>参考仓库：<a href=https://github.com/infilos/maven-github-action-demo>infilos/maven-github-action-demo</a></p>
+<p>在该仓库中，推送 main 分支会自动触发 Maven 发布，并创建对应的 Release 日志。</p>
+<h2 id=参考连接>参考连接</h2>
+<ul>
+<li><a href=https://www.marcd.dev/articles/2021-03/mvncentral-publish-github>https://www.marcd.dev/articles/2021-03/mvncentral-publish-github</a></li>
+<li><a href=https://gist.github.com/sualeh/ae78dc16123899d7942bc38baba5203c>https://gist.github.com/sualeh/ae78dc16123899d7942bc38baba5203c</a></li>
+<li><a href=https://github.com/chhh/sonatype-ossrh-parent/blob/master/publishing-to-maven-central.md>https://github.com/chhh/sonatype-ossrh-parent/blob/master/publishing-to-maven-central.md</a></li>
+</ul>
 </div>
 </main>
 </div>
