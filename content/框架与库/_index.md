@@ -50,3 +50,7 @@ Life is too short to depend on unstable software!  [__Read more...](https://blog
 ## ORM
 
 - [ObjectiveSql](https://github.com/braisdom/ObjectiveSql): ORM framework in Java based on ActiveRecord pattern.
+
+## SQL Parser
+
+- [jOOQ SQL Parser](https://www.jooq.org/doc/latest/manual/sql-building/sql-parser/)
