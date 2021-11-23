@@ -1,8 +1,8 @@
 ---
 type: docs
-title: "管理系统"
-linkTitle: "管理系统"
-weight: 1
+title: "用户授权"
+linkTitle: "用户授权"
+weight: 2
 ---
 
 ## Working In Progress

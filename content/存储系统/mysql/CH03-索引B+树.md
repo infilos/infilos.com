@@ -5,8 +5,6 @@ linkTitle: "CH03-索引B+树"
 weight: 3
 ---
 
-<!-- toc -->
-
 ## B+ Tree 原理
 
 ### 1. 数据结构

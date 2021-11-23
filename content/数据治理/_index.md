@@ -1,7 +1,7 @@
 ---
 type: docs
-title: "编程原则"
-linkTitle: "编程原则"
+title: "数据治理"
+linkTitle: "数据治理"
 weight: 1
 ---
 
