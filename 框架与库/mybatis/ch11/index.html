@@ -16,36 +16,21 @@
 <link rel=icon type=image/png href=/favicons/android-192x192.png sizes=192x192>
 <title>CH11-插件机制 | infilos.com</title><meta property="og:title" content="CH11-插件机制">
 <meta property="og:description" content="MyBatis支持用插件对四大核心组件进行拦截，对MyBatis来说插件就是拦截器，用来增强核心组件的功能，增强功能本质上是借助于底层的动态代理实现的，换句话说，MyBatis中的四大对象都是代理对象。
--ParameterHandler：处理SQL的参数的类 -ResultSetHandler：处理SQL的返回结果集的类 -StatementHandler：处理数据库SQL语句的类 -Executor：用于执行增删改查操作的执行器类
-插件原理  MyBatis的插件借助于责任链的模式进行对拦截的处理 使用动态代理对目标对象进行包装，达到拦截的目的  拦截 插件具体是如何拦截并附加额外的功能的呢？以ParameterHandler来说：
-public ParameterHandlernewParameterHandler( MappedStatement mappedStatement, Object object, BoundSql sql, InterceptorChain interceptorChain){ ParameterHandler parameterHandler = mappedStatement.getLang().createParameterHandler(mappedStatement,object,sql); parameterHandler = (ParameterHandler) interceptorChain.pluginAll(parameterHandler); return parameterHandler; } public Object pluginAll(Objecttarget){ for(Interceptorinterceptor:interceptors){ target = interceptor.plugin(target); } return target; } interceptorChain保存了所有的拦截器(interceptors)，是MyBatis初始化的时候创建的。
-调用拦截器链中的拦截器依次的对目标进行拦截或增强。
-interceptor.plugin(target) 中的 target 就可以理解为MyBatis中的四大组件，返回的target是被重重代理后的对象。
-插件接口Interceptor  intercept()方法，插件的核心方法 plugin()方法，生成target的代理对象 setProperties()方法，传递插件所需参数  插件实例 插件开发需要以下步骤
- 自定义插件需要实现上述接口 增加@Intercepts注解（声明是哪个核心组件的插件，以及对哪些方法进行扩展） 在xml文件中配置插件  ** *插件签名，告诉MyBatis插件用来拦截那个对象的哪个方法 **/ @Intercepts({ @Signature(type=StatementHandler.class,method=&#34;parameterize&#34;,args=Statement.class) }) public class MyInterceptsimplementsInterceptor { /** *拦截目标对象的目标方法 * *@paraminvocation *@return *@throwsThrowable */ @Override public Object intercept(Invocation invocation) throws Throwable{ System.">
+ Executor：用于执行增删改查操作的执行器类 StatementHandler：处理数据库SQL语句的类 ParameterHandler：处理SQL的参数的类 ResultSetHandler：处理SQL的返回结果集的类  以下是这四种处理各自能够拦截的方法：
+   对象 描述 可拦截方法 方法作用     Executor 上层对象，包含 SQL 执行全过程 update 执行 update/insert/delete     query 执行 query     flushStatements 在 commit 时自动调用，SimpleExecutor/ReuseExecutor/BatchExecutor 处理不同     commit 提交事务     rollback 回滚事务     getTransaction 获取事务     close 结束事务     isClosed 判断事务是否关闭   StatementHandler 执行 SQL 的过程，常用拦截对象 prepare SQL 预编译     parameterize 设置 SQL 参数     batch 批处理     update 增删改操作     query 查询操作   ParameterHandler SQL 参数组装过程 getParameterObject 获取参数     setParameters 设置参数   ResultSetHandler 执行 SQL 结果的组装 handleResultSets 处理结果集     handleOutputParameters 处理存储过程出参    插件原理  MyBatis的插件借助于责任链的模式进行对拦截的处理 使用动态代理对目标对象进行包装，达到拦截的目的  拦截 插件具体是如何拦截并附加额外的功能的呢？以ParameterHandler来说：">
 <meta property="og:type" content="article">
 <meta property="og:url" content="/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/mybatis/ch11/"><meta property="article:section" content="框架与库">
 <meta property="og:site_name" content="infilos.com">
 <meta itemprop=name content="CH11-插件机制">
 <meta itemprop=description content="MyBatis支持用插件对四大核心组件进行拦截，对MyBatis来说插件就是拦截器，用来增强核心组件的功能，增强功能本质上是借助于底层的动态代理实现的，换句话说，MyBatis中的四大对象都是代理对象。
--ParameterHandler：处理SQL的参数的类 -ResultSetHandler：处理SQL的返回结果集的类 -StatementHandler：处理数据库SQL语句的类 -Executor：用于执行增删改查操作的执行器类
-插件原理  MyBatis的插件借助于责任链的模式进行对拦截的处理 使用动态代理对目标对象进行包装，达到拦截的目的  拦截 插件具体是如何拦截并附加额外的功能的呢？以ParameterHandler来说：
-public ParameterHandlernewParameterHandler( MappedStatement mappedStatement, Object object, BoundSql sql, InterceptorChain interceptorChain){ ParameterHandler parameterHandler = mappedStatement.getLang().createParameterHandler(mappedStatement,object,sql); parameterHandler = (ParameterHandler) interceptorChain.pluginAll(parameterHandler); return parameterHandler; } public Object pluginAll(Objecttarget){ for(Interceptorinterceptor:interceptors){ target = interceptor.plugin(target); } return target; } interceptorChain保存了所有的拦截器(interceptors)，是MyBatis初始化的时候创建的。
-调用拦截器链中的拦截器依次的对目标进行拦截或增强。
-interceptor.plugin(target) 中的 target 就可以理解为MyBatis中的四大组件，返回的target是被重重代理后的对象。
-插件接口Interceptor  intercept()方法，插件的核心方法 plugin()方法，生成target的代理对象 setProperties()方法，传递插件所需参数  插件实例 插件开发需要以下步骤
- 自定义插件需要实现上述接口 增加@Intercepts注解（声明是哪个核心组件的插件，以及对哪些方法进行扩展） 在xml文件中配置插件  ** *插件签名，告诉MyBatis插件用来拦截那个对象的哪个方法 **/ @Intercepts({ @Signature(type=StatementHandler.class,method=&#34;parameterize&#34;,args=Statement.class) }) public class MyInterceptsimplementsInterceptor { /** *拦截目标对象的目标方法 * *@paraminvocation *@return *@throwsThrowable */ @Override public Object intercept(Invocation invocation) throws Throwable{ System.">
-<meta itemprop=wordCount content="171">
+ Executor：用于执行增删改查操作的执行器类 StatementHandler：处理数据库SQL语句的类 ParameterHandler：处理SQL的参数的类 ResultSetHandler：处理SQL的返回结果集的类  以下是这四种处理各自能够拦截的方法：
+   对象 描述 可拦截方法 方法作用     Executor 上层对象，包含 SQL 执行全过程 update 执行 update/insert/delete     query 执行 query     flushStatements 在 commit 时自动调用，SimpleExecutor/ReuseExecutor/BatchExecutor 处理不同     commit 提交事务     rollback 回滚事务     getTransaction 获取事务     close 结束事务     isClosed 判断事务是否关闭   StatementHandler 执行 SQL 的过程，常用拦截对象 prepare SQL 预编译     parameterize 设置 SQL 参数     batch 批处理     update 增删改操作     query 查询操作   ParameterHandler SQL 参数组装过程 getParameterObject 获取参数     setParameters 设置参数   ResultSetHandler 执行 SQL 结果的组装 handleResultSets 处理结果集     handleOutputParameters 处理存储过程出参    插件原理  MyBatis的插件借助于责任链的模式进行对拦截的处理 使用动态代理对目标对象进行包装，达到拦截的目的  拦截 插件具体是如何拦截并附加额外的功能的呢？以ParameterHandler来说：">
+<meta itemprop=wordCount content="553">
 <meta itemprop=keywords content><meta name=twitter:card content="summary">
 <meta name=twitter:title content="CH11-插件机制">
 <meta name=twitter:description content="MyBatis支持用插件对四大核心组件进行拦截，对MyBatis来说插件就是拦截器，用来增强核心组件的功能，增强功能本质上是借助于底层的动态代理实现的，换句话说，MyBatis中的四大对象都是代理对象。
--ParameterHandler：处理SQL的参数的类 -ResultSetHandler：处理SQL的返回结果集的类 -StatementHandler：处理数据库SQL语句的类 -Executor：用于执行增删改查操作的执行器类
-插件原理  MyBatis的插件借助于责任链的模式进行对拦截的处理 使用动态代理对目标对象进行包装，达到拦截的目的  拦截 插件具体是如何拦截并附加额外的功能的呢？以ParameterHandler来说：
-public ParameterHandlernewParameterHandler( MappedStatement mappedStatement, Object object, BoundSql sql, InterceptorChain interceptorChain){ ParameterHandler parameterHandler = mappedStatement.getLang().createParameterHandler(mappedStatement,object,sql); parameterHandler = (ParameterHandler) interceptorChain.pluginAll(parameterHandler); return parameterHandler; } public Object pluginAll(Objecttarget){ for(Interceptorinterceptor:interceptors){ target = interceptor.plugin(target); } return target; } interceptorChain保存了所有的拦截器(interceptors)，是MyBatis初始化的时候创建的。
-调用拦截器链中的拦截器依次的对目标进行拦截或增强。
-interceptor.plugin(target) 中的 target 就可以理解为MyBatis中的四大组件，返回的target是被重重代理后的对象。
-插件接口Interceptor  intercept()方法，插件的核心方法 plugin()方法，生成target的代理对象 setProperties()方法，传递插件所需参数  插件实例 插件开发需要以下步骤
- 自定义插件需要实现上述接口 增加@Intercepts注解（声明是哪个核心组件的插件，以及对哪些方法进行扩展） 在xml文件中配置插件  ** *插件签名，告诉MyBatis插件用来拦截那个对象的哪个方法 **/ @Intercepts({ @Signature(type=StatementHandler.class,method=&#34;parameterize&#34;,args=Statement.class) }) public class MyInterceptsimplementsInterceptor { /** *拦截目标对象的目标方法 * *@paraminvocation *@return *@throwsThrowable */ @Override public Object intercept(Invocation invocation) throws Throwable{ System.">
+ Executor：用于执行增删改查操作的执行器类 StatementHandler：处理数据库SQL语句的类 ParameterHandler：处理SQL的参数的类 ResultSetHandler：处理SQL的返回结果集的类  以下是这四种处理各自能够拦截的方法：
+   对象 描述 可拦截方法 方法作用     Executor 上层对象，包含 SQL 执行全过程 update 执行 update/insert/delete     query 执行 query     flushStatements 在 commit 时自动调用，SimpleExecutor/ReuseExecutor/BatchExecutor 处理不同     commit 提交事务     rollback 回滚事务     getTransaction 获取事务     close 结束事务     isClosed 判断事务是否关闭   StatementHandler 执行 SQL 的过程，常用拦截对象 prepare SQL 预编译     parameterize 设置 SQL 参数     batch 批处理     update 增删改操作     query 查询操作   ParameterHandler SQL 参数组装过程 getParameterObject 获取参数     setParameters 设置参数   ResultSetHandler 执行 SQL 结果的组装 handleResultSets 处理结果集     handleOutputParameters 处理存储过程出参    插件原理  MyBatis的插件借助于责任链的模式进行对拦截的处理 使用动态代理对目标对象进行包装，达到拦截的目的  拦截 插件具体是如何拦截并附加额外的功能的呢？以ParameterHandler来说：">
 <script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga('create','UA-123062585-1','auto'),ga('send','pageview'))</script>
 <script async src=https://www.google-analytics.com/analytics.js></script>
 <link rel=preload href=/scss/main.min.847464b684a6e89d7276700a5c500c17ab494dd1755b2654a7b27d8b59e3347e.css as=style>
@@ -424,6 +409,11 @@ interceptor.plugin(target) 中的 target 就可以理解为MyBatis中的四大�
 <li><a href=#拦截>拦截</a></li>
 <li><a href=#插件接口interceptor>插件接口Interceptor</a></li>
 <li><a href=#插件实例>插件实例</a></li>
+<li><a href=#分页插件>分页插件</a>
+<ul>
+<li><a href=#实现原理>实现原理</a></li>
+</ul>
+</li>
 <li><a href=#多插件开发>多插件开发</a></li>
 <li><a href=#总结>总结</a></li>
 </ul>
@@ -448,10 +438,127 @@ interceptor.plugin(target) 中的 target 就可以理解为MyBatis中的四大�
 <header class=article-meta>
 </header>
 <p><code>MyBatis</code>支持用插件对四大核心组件进行拦截，对<code>MyBatis</code>来说插件就是拦截器，用来增强核心组件的功能，增强功能本质上是借助于底层的动态代理实现的，换句话说，<code>MyBatis</code>中的四大对象都是代理对象。</p>
-<p>-<code>ParameterHandler</code>：处理SQL的参数的类
--<code>ResultSetHandler</code>：处理SQL的返回结果集的类
--<code>StatementHandler</code>：处理数据库SQL语句的类
--<code>Executor</code>：用于执行增删改查操作的执行器类</p>
+<ul>
+<li><code>Executor</code>：用于执行增删改查操作的执行器类</li>
+<li><code>StatementHandler</code>：处理数据库SQL语句的类</li>
+<li><code>ParameterHandler</code>：处理SQL的参数的类</li>
+<li><code>ResultSetHandler</code>：处理SQL的返回结果集的类</li>
+</ul>
+<p>以下是这四种处理各自能够拦截的方法：</p>
+<table>
+<thead>
+<tr>
+<th>对象</th>
+<th>描述</th>
+<th>可拦截方法</th>
+<th>方法作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Executor</td>
+<td>上层对象，包含 SQL 执行全过程</td>
+<td>update</td>
+<td>执行 update/insert/delete</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>query</td>
+<td>执行 query</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>flushStatements</td>
+<td>在 commit 时自动调用，SimpleExecutor/ReuseExecutor/BatchExecutor 处理不同</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>commit</td>
+<td>提交事务</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>rollback</td>
+<td>回滚事务</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>getTransaction</td>
+<td>获取事务</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>close</td>
+<td>结束事务</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>isClosed</td>
+<td>判断事务是否关闭</td>
+</tr>
+<tr>
+<td>StatementHandler</td>
+<td>执行 SQL 的过程，常用拦截对象</td>
+<td>prepare</td>
+<td>SQL 预编译</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>parameterize</td>
+<td>设置 SQL 参数</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>batch</td>
+<td>批处理</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>update</td>
+<td>增删改操作</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>query</td>
+<td>查询操作</td>
+</tr>
+<tr>
+<td>ParameterHandler</td>
+<td>SQL 参数组装过程</td>
+<td>getParameterObject</td>
+<td>获取参数</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>setParameters</td>
+<td>设置参数</td>
+</tr>
+<tr>
+<td>ResultSetHandler</td>
+<td>执行 SQL 结果的组装</td>
+<td>handleResultSets</td>
+<td>处理结果集</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>handleOutputParameters</td>
+<td>处理存储过程出参</td>
+</tr>
+</tbody>
+</table>
 <h2 id=插件原理>插件原理</h2>
 <ol>
 <li><code>MyBatis</code>的插件借助于<strong>责任链</strong>的模式进行对拦截的处理</li>
@@ -576,7 +683,108 @@ interceptor.plugin(target) 中的 target 就可以理解为MyBatis中的四大�
     <span style=color:#ce5c00;font-weight:700>}</span>
   <span style=color:#ce5c00;font-weight:700>}</span>
 <span style=color:#ce5c00;font-weight:700>}</span>
-</code></pre></div><h2 id=多插件开发>多插件开发</h2>
+</code></pre></div><h2 id=分页插件>分页插件</h2>
+<p>MyBatis 自带的 RowBounds 是一次查询所有结果，然后再内存中计算并提取分页，最终返回指定页数的数据。</p>
+<p>这种分页方式对于数据量小的还好，如果数据量大就有很大性能影响了。因为这种方式是将数据全部查询出来放到内存里，再进行分页长度的截取，是一种伪分页，是一种逻辑分页。</p>
+<p>因此通常会使用 PageHelper 插件：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-xml data-lang=xml><span style=color:#204a87;font-weight:700>&lt;dependency&gt;</span>
+  <span style=color:#204a87;font-weight:700>&lt;groupId&gt;</span>com.github.pagehelper<span style=color:#204a87;font-weight:700>&lt;/groupId&gt;</span>
+  <span style=color:#204a87;font-weight:700>&lt;artifactId&gt;</span>pagehelper<span style=color:#204a87;font-weight:700>&lt;/artifactId&gt;</span>
+  <span style=color:#204a87;font-weight:700>&lt;version&gt;</span>5.3.0<span style=color:#204a87;font-weight:700>&lt;/version&gt;</span>
+<span style=color:#204a87;font-weight:700>&lt;/dependency&gt;</span>
+</code></pre></div><p>在 mybatis-config.xml 中配置插件：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-xml data-lang=xml><span style=color:#204a87;font-weight:700>&lt;plugins&gt;</span>
+	<span style=color:#204a87;font-weight:700>&lt;plugininterceptor</span><span style=color:#a40000>=&#34;com.github.pagehelper.PageInterceptor&#34;</span> <span style=color:#204a87;font-weight:700>/&gt;</span>
+<span style=color:#204a87;font-weight:700>&lt;/plugins&gt;</span>
+</code></pre></div><p>执行分页查询：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#000>PageHelper</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>startPage</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#8f5902;font-style:italic>/*pageNum*/</span> <span style=color:#000>2</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#8f5902;font-style:italic>/*pageSize*/</span> <span style=color:#000>4</span><span style=color:#ce5c00;font-weight:700>);</span>
+<span style=color:#000>List</span><span style=color:#ce5c00;font-weight:700>&lt;</span><span style=color:#000>User</span><span style=color:#ce5c00;font-weight:700>&gt;</span> <span style=color:#000>users</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>userMapper</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>findAll</span><span style=color:#ce5c00;font-weight:700>();</span>
+<span style=color:#000>PageInfo</span><span style=color:#ce5c00;font-weight:700>&lt;</span><span style=color:#000>User</span><span style=color:#ce5c00;font-weight:700>&gt;</span> <span style=color:#000>pageInfo</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>PageInfo</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>list</span><span style=color:#ce5c00;font-weight:700>);</span>
+<span style=color:#8f5902;font-style:italic>// return pageInfo to controller
+</span></code></pre></div><h3 id=实现原理>实现原理</h3>
+<p><code>PageHelper</code>是利用Mybatis的插件原理，对<code>Executor</code>接口的<code>query</code>方法进行了拦截。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#5c35cc;font-weight:700>@Intercepts</span><span style=color:#ce5c00;font-weight:700>({</span>
+	<span style=color:#5c35cc;font-weight:700>@Signature</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>type</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>Executor</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>class</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>method</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#4e9a06>&#34;query&#34;</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>args</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>{</span><span style=color:#000>MappedStatement</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>class</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>Object</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>class</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>RowBounds</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>class</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>ResultHandler</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>class</span><span style=color:#ce5c00;font-weight:700>}),</span>
+	<span style=color:#5c35cc;font-weight:700>@Signature</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>type</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>Executor</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>class</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>method</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#4e9a06>&#34;query&#34;</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>args</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>{</span><span style=color:#000>MappedStatement</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>class</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>Object</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>class</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>RowBounds</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>class</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>ResultHandler</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>class</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>CacheKey</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>class</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>BoundSql</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>class</span><span style=color:#ce5c00;font-weight:700>}),</span>
+<span style=color:#ce5c00;font-weight:700>})</span>
+<span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>PageInterceptor</span> <span style=color:#204a87;font-weight:700>implements</span> <span style=color:#000>Interceptor</span> <span style=color:#ce5c00;font-weight:700>{</span>
+    <span style=color:#8f5902;font-style:italic>//...
+</span><span style=color:#8f5902;font-style:italic></span><span style=color:#ce5c00;font-weight:700>}</span>
+</code></pre></div><p>在创建<code>Executor</code>时，如果有插件对<code>Executor</code>进行拦截，则会对<code>Executor</code>对象生成代理，在执行相对应的方法时进行增强处理。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#204a87;font-weight:700>public</span> <span style=color:#000>Executor</span> <span style=color:#000>newExecutor</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>Transaction</span> <span style=color:#000>transaction</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>ExecutorType</span> <span style=color:#000>executorType</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>
+    <span style=color:#000>executorType</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>executorType</span> <span style=color:#ce5c00;font-weight:700>==</span> <span style=color:#204a87;font-weight:700>null</span> <span style=color:#ce5c00;font-weight:700>?</span> <span style=color:#000>defaultExecutorType</span> <span style=color:#ce5c00;font-weight:700>:</span> <span style=color:#000>executorType</span><span style=color:#ce5c00;font-weight:700>;</span>
+    <span style=color:#000>executorType</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>executorType</span> <span style=color:#ce5c00;font-weight:700>==</span> <span style=color:#204a87;font-weight:700>null</span> <span style=color:#ce5c00;font-weight:700>?</span> <span style=color:#000>ExecutorType</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>SIMPLE</span> <span style=color:#ce5c00;font-weight:700>:</span> <span style=color:#000>executorType</span><span style=color:#ce5c00;font-weight:700>;</span>
+    <span style=color:#000>Executor</span> <span style=color:#000>executor</span><span style=color:#ce5c00;font-weight:700>;</span>
+    <span style=color:#8f5902;font-style:italic>// 根据数据库操作类型创建市级执行器
+</span><span style=color:#8f5902;font-style:italic></span>    <span style=color:#204a87;font-weight:700>if</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>ExecutorType</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>BATCH</span> <span style=color:#ce5c00;font-weight:700>==</span> <span style=color:#000>executorType</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>
+        <span style=color:#000>executor</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>BatchExecutor</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#204a87;font-weight:700>this</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>transaction</span><span style=color:#ce5c00;font-weight:700>);</span>
+    <span style=color:#ce5c00;font-weight:700>}</span> <span style=color:#204a87;font-weight:700>else</span> <span style=color:#204a87;font-weight:700>if</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>ExecutorType</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>REUSE</span> <span style=color:#ce5c00;font-weight:700>==</span> <span style=color:#000>executorType</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>
+        <span style=color:#000>executor</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>ReuseExecutor</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#204a87;font-weight:700>this</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>transaction</span><span style=color:#ce5c00;font-weight:700>);</span>
+    <span style=color:#ce5c00;font-weight:700>}</span> <span style=color:#204a87;font-weight:700>else</span> <span style=color:#ce5c00;font-weight:700>{</span>
+        <span style=color:#000>executor</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>SimpleExecutor</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#204a87;font-weight:700>this</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>transaction</span><span style=color:#ce5c00;font-weight:700>);</span>
+    <span style=color:#ce5c00;font-weight:700>}</span>
+    <span style=color:#8f5902;font-style:italic>// 根据配置文件中的 settings 节点cacheEnabled配置项确定是否启用缓存
+</span><span style=color:#8f5902;font-style:italic></span>    <span style=color:#204a87;font-weight:700>if</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>cacheEnabled</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span> <span style=color:#8f5902;font-style:italic>// 如果配置启用该缓存
+</span><span style=color:#8f5902;font-style:italic></span>        <span style=color:#8f5902;font-style:italic>// 使用CachingExecutor装饰实际的执行器
+</span><span style=color:#8f5902;font-style:italic></span>        <span style=color:#000>executor</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>CachingExecutor</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>executor</span><span style=color:#ce5c00;font-weight:700>);</span>
+    <span style=color:#ce5c00;font-weight:700>}</span>
+    <span style=color:#8f5902;font-style:italic>// 为执行器增加拦截器（插件），以启用各个拦截器的功能
+</span><span style=color:#8f5902;font-style:italic></span>    <span style=color:#000>executor</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>Executor</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#000>interceptorChain</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>pluginAll</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>executor</span><span style=color:#ce5c00;font-weight:700>);</span>
+    <span style=color:#204a87;font-weight:700>return</span> <span style=color:#000>executor</span><span style=color:#ce5c00;font-weight:700>;</span>
+<span style=color:#ce5c00;font-weight:700>}</span>
+</code></pre></div><p>当程序走到<code>DefaultSqlSession</code>中时，会调用<code>Executor</code>的query方法，此时就会触发<code>PageHelper</code>的代理，进入<code>PageHelper</code>的逻辑：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#204a87;font-weight:700>public</span> <span style=color:#ce5c00;font-weight:700>&lt;</span><span style=color:#000>E</span><span style=color:#ce5c00;font-weight:700>&gt;</span> <span style=color:#000>List</span><span style=color:#ce5c00;font-weight:700>&lt;</span><span style=color:#000>E</span><span style=color:#ce5c00;font-weight:700>&gt;</span> <span style=color:#000>selectList</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>String</span> <span style=color:#000>statement</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>Object</span> <span style=color:#000>parameter</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>RowBounds</span> <span style=color:#000>rowBounds</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>
+    <span style=color:#204a87;font-weight:700>try</span> <span style=color:#ce5c00;font-weight:700>{</span>
+        <span style=color:#8f5902;font-style:italic>/**
+</span><span style=color:#8f5902;font-style:italic>         * 获取查询语句
+</span><span style=color:#8f5902;font-style:italic>         * 设置MappedStatement映射，见{@link XMLStatementBuilder#parseStatementNode()}
+</span><span style=color:#8f5902;font-style:italic>         */</span>
+        <span style=color:#000>MappedStatement</span> <span style=color:#000>ms</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>configuration</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>getMappedStatement</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>statement</span><span style=color:#ce5c00;font-weight:700>);</span>
+        <span style=color:#8f5902;font-style:italic>/**
+</span><span style=color:#8f5902;font-style:italic>         * 交由执行器进行查询，由于全局配置cacheEnabled默认是打开的，因此此处的executor通常都是CachingExecutor
+</span><span style=color:#8f5902;font-style:italic>         * 获取executor，见{@link Configuration#newExecutor(org.apache.ibatis.transaction.Transaction, org.apache.ibatis.session.ExecutorType)}
+</span><span style=color:#8f5902;font-style:italic>         */</span>
+        <span style=color:#204a87;font-weight:700>return</span> <span style=color:#000>executor</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>query</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>ms</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>wrapCollection</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>parameter</span><span style=color:#ce5c00;font-weight:700>),</span> <span style=color:#000>rowBounds</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>Executor</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>NO_RESULT_HANDLER</span><span style=color:#ce5c00;font-weight:700>);</span>
+    <span style=color:#ce5c00;font-weight:700>}</span> <span style=color:#204a87;font-weight:700>catch</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>Exception</span> <span style=color:#000>e</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>
+        <span style=color:#204a87;font-weight:700>throw</span> <span style=color:#000>ExceptionFactory</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>wrapException</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;Error querying database.  Cause: &#34;</span> <span style=color:#ce5c00;font-weight:700>+</span> <span style=color:#000>e</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>e</span><span style=color:#ce5c00;font-weight:700>);</span>
+    <span style=color:#ce5c00;font-weight:700>}</span> <span style=color:#204a87;font-weight:700>finally</span> <span style=color:#ce5c00;font-weight:700>{</span>
+        <span style=color:#000>ErrorContext</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>instance</span><span style=color:#ce5c00;font-weight:700>().</span><span style=color:#c4a000>reset</span><span style=color:#ce5c00;font-weight:700>();</span>
+    <span style=color:#ce5c00;font-weight:700>}</span>
+<span style=color:#ce5c00;font-weight:700>}</span>
+</code></pre></div><p><code>PageHelper</code>拦截器<code>PageInterceptor</code>执行流程：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#5c35cc;font-weight:700>@Override</span>
+<span style=color:#204a87;font-weight:700>public</span> <span style=color:#000>Object</span> <span style=color:#000>intercept</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>Invocation</span> <span style=color:#000>invocation</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#204a87;font-weight:700>throws</span> <span style=color:#000>Throwable</span> <span style=color:#ce5c00;font-weight:700>{</span>
+    <span style=color:#204a87;font-weight:700>try</span> <span style=color:#ce5c00;font-weight:700>{</span>
+        <span style=color:#ce5c00;font-weight:700>...</span>
+        <span style=color:#8f5902;font-style:italic>//调用方法判断是否需要进行分页，如果不需要，直接返回结果
+</span><span style=color:#8f5902;font-style:italic></span>        <span style=color:#204a87;font-weight:700>if</span> <span style=color:#ce5c00;font-weight:700>(!</span><span style=color:#000>dialect</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>skip</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>ms</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>parameter</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>rowBounds</span><span style=color:#ce5c00;font-weight:700>))</span> <span style=color:#ce5c00;font-weight:700>{</span>
+            <span style=color:#8f5902;font-style:italic>//判断是否需要进行count查询
+</span><span style=color:#8f5902;font-style:italic></span>            <span style=color:#204a87;font-weight:700>if</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>dialect</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>beforeCount</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>ms</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>parameter</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>rowBounds</span><span style=color:#ce5c00;font-weight:700>))</span> <span style=color:#ce5c00;font-weight:700>{</span>
+                <span style=color:#8f5902;font-style:italic>//查询总数
+</span><span style=color:#8f5902;font-style:italic></span>                <span style=color:#000>Long</span> <span style=color:#000>count</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>count</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>executor</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>ms</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>parameter</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>rowBounds</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#204a87;font-weight:700>null</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>boundSql</span><span style=color:#ce5c00;font-weight:700>);</span>
+                <span style=color:#8f5902;font-style:italic>//处理查询总数，返回true时继续分页查询，false时直接返回
+</span><span style=color:#8f5902;font-style:italic></span>                <span style=color:#204a87;font-weight:700>if</span> <span style=color:#ce5c00;font-weight:700>(!</span><span style=color:#000>dialect</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>afterCount</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>count</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>parameter</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>rowBounds</span><span style=color:#ce5c00;font-weight:700>))</span> <span style=color:#ce5c00;font-weight:700>{</span>
+                    <span style=color:#8f5902;font-style:italic>//当查询总数为0时，直接返回空的结果
+</span><span style=color:#8f5902;font-style:italic></span>                    <span style=color:#204a87;font-weight:700>return</span> <span style=color:#000>dialect</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>afterPage</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>ArrayList</span><span style=color:#ce5c00;font-weight:700>(),</span> <span style=color:#000>parameter</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>rowBounds</span><span style=color:#ce5c00;font-weight:700>);</span>
+                <span style=color:#ce5c00;font-weight:700>}</span>
+            <span style=color:#ce5c00;font-weight:700>}</span>
+          	<span style=color:#8f5902;font-style:italic>// 生成不同方言对应的分页 SQL 并执行
+</span><span style=color:#8f5902;font-style:italic></span>            <span style=color:#000>resultList</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>ExecutorUtil</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>pageQuery</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>dialect</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>executor</span><span style=color:#ce5c00;font-weight:700>,</span>
+                    <span style=color:#000>ms</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>parameter</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>rowBounds</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>resultHandler</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>boundSql</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>cacheKey</span><span style=color:#ce5c00;font-weight:700>);</span>
+        <span style=color:#ce5c00;font-weight:700>}</span> <span style=color:#204a87;font-weight:700>else</span> <span style=color:#ce5c00;font-weight:700>{</span>
+            <span style=color:#8f5902;font-style:italic>//rowBounds有参数值，不使用分页插件处理时，仍然支持默认的内存分页
+</span><span style=color:#8f5902;font-style:italic></span>            <span style=color:#000>resultList</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>executor</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>query</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>ms</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>parameter</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>rowBounds</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>resultHandler</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>cacheKey</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>boundSql</span><span style=color:#ce5c00;font-weight:700>);</span>
+        <span style=color:#ce5c00;font-weight:700>}</span>
+        <span style=color:#8f5902;font-style:italic>// 将查询结果设置到Page对象中
+</span><span style=color:#8f5902;font-style:italic></span>        <span style=color:#204a87;font-weight:700>return</span> <span style=color:#000>dialect</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>afterPage</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>resultList</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>parameter</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>rowBounds</span><span style=color:#ce5c00;font-weight:700>);</span>
+    <span style=color:#ce5c00;font-weight:700>}</span> <span style=color:#204a87;font-weight:700>finally</span> <span style=color:#ce5c00;font-weight:700>{</span>
+        <span style=color:#204a87;font-weight:700>if</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>dialect</span> <span style=color:#ce5c00;font-weight:700>!=</span> <span style=color:#204a87;font-weight:700>null</span><span style=color:#ce5c00;font-weight:700>){</span>
+            <span style=color:#000>dialect</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>afterAll</span><span style=color:#ce5c00;font-weight:700>();</span>
+        <span style=color:#ce5c00;font-weight:700>}</span>
+    <span style=color:#ce5c00;font-weight:700>}</span>
+<span style=color:#ce5c00;font-weight:700>}</span>
+</code></pre></div><p><code>ExecutorUtil.pageQuery</code>主要是基于不同的数据库方言生成分页查询 SQL，比如最简单的是在原 SQL 后追加 <code>LIMIT ? OFFSET ?</code>。</p>
+<h2 id=多插件开发>多插件开发</h2>
 <ol>
 <li>创建代理对象时，按照插件配置的顺序进行包装</li>
 <li>执行目标方法后，是按照代理的逆向进行执行</li>
