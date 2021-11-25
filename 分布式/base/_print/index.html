@@ -148,9 +148,10 @@
 <li>12: <a href=#pg-26ac83d880caeb19690c75cfe250a72e>Raft</a></li>
 <li>13: <a href=#pg-898151233fb238dfbda40e8b0930717c>分布式一致性</a></li>
 <li>14: <a href=#pg-0abcc623d68d4f0a690005a87e3bea4d>分布式事务</a></li>
-<li>15: <a href=#pg-32e7ec0298beb63dbf02b847a8c13b0a>分布式锁</a></li>
+<li>15: <a href=#pg-d91e4de6f28d72af9ac7c219d53899b8>分布式事务</a></li>
 <li>16: <a href=#pg-cd6eab4d11b89cc125c95366a63cbaa1>一致性与共识算法</a></li>
-<li>17: <a href=#pg-5972a917bbf5042578567f6c7c1d5c11>一致性哈希算法</a></li>
+<li>17: <a href=#pg-32e7ec0298beb63dbf02b847a8c13b0a>分布式锁</a></li>
+<li>18: <a href=#pg-5972a917bbf5042578567f6c7c1d5c11>一致性哈希算法</a></li>
 </ul>
 <div class=content>
 </div>
@@ -1087,11 +1088,309 @@ Second, it is not enough to know that a given instance number has been committed
 <h3 id=google-spanner-赏析>Google Spanner 赏析</h3>
 <h3 id=阿里分布式事务模型>阿里分布式事务模型</h3>
 <h3 id=drdstddl-实战>DRDS/TDDL 实战</h3>
-<p>《youku：事务与分布式事务原理与实现》</p>
-<p><a href=https://draveness.me/distributed-transaction-principle>https://draveness.me/distributed-transaction-principle</a></p>
 </div>
 <div class=td-content style=page-break-before:always>
-<h1 id=pg-32e7ec0298beb63dbf02b847a8c13b0a>15 - 分布式锁</h1>
+<h1 id=pg-d91e4de6f28d72af9ac7c219d53899b8>15 - 分布式事务</h1>
+<h2 id=基础理论>基础理论</h2>
+<p>在讲解具体方案之前，我们先了解一下分布式事务所涉及到的基础理论知识。</p>
+<p>我们拿转账作为例子，A需要转100元给B，那么需要给A的余额-100元，给B的余额+100元，整个转账要保证，A-100和B+100同时成功，或者同时失败。看看在各种场景下，是如何解决这个问题的。</p>
+<h3 id=事务>事务</h3>
+<p>把多条语句作为一个整体进行操作的功能，被称为数据库事务。数据库事务可以确保该事务范围内的所有操作都可以全部成功或者全部失败。</p>
+<p>事务具有 4 个属性：原子性、一致性、隔离性、持久性。这四个属性通常称为 ACID 特性。</p>
+<ul>
+<li>Atomicity（原子性）：一个事务中的所有操作，要么全部完成，要么全部不完成，不会结束在中间某个环节。事务在执行过程中发生错误，会被恢复到事务开始前的状态，就像这个事务从来没有执行过一样。</li>
+<li>Consistency（一致性）：在事务开始之前和事务结束以后，数据库的完整性没有被破坏。完整性包括外键约束、应用定义的等约束不会被破坏。</li>
+<li>Isolation（隔离性）：数据库允许多个并发事务同时对其数据进行读写和修改的能力，隔离性可以防止多个事务并发执行时由于交叉执行而导致数据的不一致。</li>
+<li>Durability（持久性）：事务处理结束后，对数据的修改就是永久的，即便系统故障也不会丢失。</li>
+</ul>
+<h3 id=分布式事务>分布式事务</h3>
+<p>银行跨行转账业务是一个典型分布式事务场景，假设A需要跨行转账给B，那么就涉及两个银行的数据，无法通过一个数据库的本地事务保证转账的ACID，只能够通过分布式事务来解决。</p>
+<p>分布式事务就是指事务的发起者、资源及资源管理器和事务协调者分别位于分布式系统的不同节点之上。在上述转账的业务中，用户A-100操作和用户B+100操作不是位于同一个节点上。本质上来说，分布式事务就是为了保证在分布式场景下，数据操作的正确执行。</p>
+<p>分布式事务在分布式环境下，为了满足可用性、性能与降级服务的需要，降低一致性与隔离性的要求，一方面遵循 BASE 理论（BASE相关理论，涉及内容非常多，感兴趣的同学，可以参考BASE理论）：</p>
+<ul>
+<li>基本业务可用性（Basic Availability）</li>
+<li>柔性状态（Soft state）</li>
+<li>最终一致性（Eventual consistency）</li>
+</ul>
+<p>同样的，分布式事务也部分遵循 ACID 规范：</p>
+<ul>
+<li>原子性：严格遵循</li>
+<li>一致性：事务完成后的一致性严格遵循；事务中的一致性可适当放宽</li>
+<li>隔离性：并行事务间不可影响；事务中间结果可见性允许安全放宽</li>
+<li>持久性：严格遵循</li>
+</ul>
+<h2 id=两阶段提交xa>两阶段提交/XA</h2>
+<p>XA是由X/Open组织提出的分布式事务的规范，XA规范主要定义了(全局)事务管理器(TM)和(局部)资源管理器(RM)之间的接口。本地的数据库如mysql在XA中扮演的是RM角色</p>
+<p>XA一共分为两阶段：</p>
+<p>第一阶段（prepare）：即所有的参与者RM准备执行事务并锁住需要的资源。参与者ready时，向TM报告已准备就绪。
+第二阶段 (commit/rollback)：当事务管理者(TM)确认所有参与者(RM)都ready后，向所有参与者发送commit命令。
+目前主流的数据库基本都支持XA事务，包括mysql、oracle、sqlserver、postgre</p>
+<p>XA 事务由一个或多个资源管理器（RM）、一个事务管理器（TM）和一个应用程序（ApplicationProgram）组成。</p>
+<p>把上面的转账作为例子，一个成功完成的XA事务时序图如下：</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211122000557.png style=display:block;width:80% alt=NAME align=center> </div>
+<p>如果有任何一个参与者prepare失败，那么TM会通知所有完成prepare的参与者进行回滚。</p>
+<p>XA事务的特点是：</p>
+<ul>
+<li>简单易理解，开发较容易</li>
+<li>对资源进行了长时间的锁定，并发度低</li>
+</ul>
+<p>如果读者想要进一步研究XA，go语言可参考github.com/yedf/dtm，java语言可参考github.com/seata/seata</p>
+<h2 id=saga>SAGA</h2>
+<p>Saga是这一篇数据库论文saga提到的一个方案。其核心思想是将长事务拆分为多个本地短事务，由Saga事务协调器协调，如果正常结束那就正常完成，如果某个步骤失败，则根据相反顺序一次调用补偿操作。</p>
+<p>把上面的转账作为例子，一个成功完成的SAGA事务时序图如下：</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211122000623.png style=display:block;width:80% alt=NAME align=center> </div>
+<p>SAGA事务的特点：</p>
+<ul>
+<li>并发度高，不用像XA事务那样长期锁定资源</li>
+<li>需要定义正常操作以及补偿操作，开发量比XA大</li>
+<li>一致性较弱，对于转账，可能发生A用户已扣款，最后转账又失败的情况</li>
+</ul>
+<p>论文里面的SAGA内容较多，包括两种恢复策略，包括分支事务并发执行，我们这里的讨论，仅包括最简单的SAGA</p>
+<p>SAGA适用的场景较多，长事务适用，对中间结果不敏感的业务场景适用</p>
+<p>如果读者想要进一步研究SAGA，go语言可参考DTM，java语言可参考seata</p>
+<h2 id=tcc>TCC</h2>
+<p>关于 TCC（Try-Confirm-Cancel）的概念，最早是由 Pat Helland 于 2007 年发表的一篇名为《Life beyond Distributed Transactions:an Apostate’s Opinion》的论文提出。</p>
+<p>TCC分为3个阶段</p>
+<ul>
+<li>Try 阶段：尝试执行，完成所有业务检查（一致性）, 预留必须业务资源（准隔离性）</li>
+<li>Confirm 阶段：确认执行真正执行业务，不作任何业务检查，只使用 Try 阶段预留的业务资源，Confirm 操作要求具备幂等设计，Confirm 失败后需要进行重试。</li>
+<li>Cancel 阶段：取消执行，释放 Try 阶段预留的业务资源。Cancel 阶段的异常和 Confirm 阶段异常处理方案基本上一致，要求满足幂等设计。</li>
+</ul>
+<p>把上面的转账作为例子，通常会在Try里面冻结金额，但不扣款，Confirm里面扣款，Cancel里面解冻金额，一个成功完成的TCC事务时序图如下：</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211122000647.png style=display:block;width:80% alt=NAME align=center> </div>
+<p>TCC特点如下：</p>
+<ul>
+<li>并发度较高，无长期资源锁定。</li>
+<li>开发量较大，需要提供Try/Confirm/Cancel接口。</li>
+<li>一致性较好，不会发生SAGA已扣款最后又转账失败的情况</li>
+<li>TCC适用于订单类业务，对中间状态有约束的业务</li>
+</ul>
+<p>如果读者想要进一步研究TCC，go语言可参考DTM，java语言可参考seata</p>
+<h2 id=本地消息表>本地消息表</h2>
+<p>本地消息表这个方案最初是 ebay 架构师 Dan Pritchett 在 2008 年发表给 ACM 的文章。设计核心是将需要分布式处理的任务通过消息的方式来异步确保执行。</p>
+<p>大致流程如下：</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211122000713.png style=display:block;width:80% alt=NAME align=center> </div>
+<p>写本地消息和业务操作放在一个事务里，保证了业务和发消息的原子性，要么他们全都成功，要么全都失败。</p>
+<p>容错机制：</p>
+<ul>
+<li>扣减余额事务 失败时，事务直接回滚，无后续步骤</li>
+<li>轮序生产消息失败， 增加余额事务失败都会进行重试</li>
+</ul>
+<p>本地消息表的特点：</p>
+<ul>
+<li>长事务仅需要分拆成多个任务，使用简单</li>
+<li>生产者需要额外的创建消息表</li>
+<li>每个本地消息表都需要进行轮询</li>
+<li>消费者的逻辑如果无法通过重试成功，那么还需要更多的机制，来回滚操作</li>
+</ul>
+<p>适用于可异步执行的业务，且后续操作无需回滚的业务</p>
+<h2 id=事务消息>事务消息</h2>
+<p>在上述的本地消息表方案中，生产者需要额外创建消息表，还需要对本地消息表进行轮询，业务负担较重。阿里开源的RocketMQ 4.3之后的版本正式支持事务消息，该事务消息本质上是把本地消息表放到RocketMQ上，解决生产端的消息发送与本地事务执行的原子性问题。</p>
+<p>事务消息发送及提交：</p>
+<ul>
+<li>发送消息（half消息）</li>
+<li>服务端存储消息，并响应消息的写入结果</li>
+<li>根据发送结果执行本地事务（如果写入失败，此时half消息对业务不可见，本地逻辑不执行）</li>
+<li>根据本地事务状态执行Commit或者Rollback（Commit操作发布消息，消息对消费者可见）</li>
+</ul>
+<p>正常发送的流程图如下：</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211122000805.png style=display:block;width:80% alt=NAME align=center> </div>
+<p>补偿流程：</p>
+<p>对没有Commit/Rollback的事务消息（pending状态的消息），从服务端发起一次“回查”
+Producer收到回查消息，返回消息对应的本地事务的状态，为Commit或者Rollback
+事务消息方案与本地消息表机制非常类似，区别主要在于原先相关的本地表操作替换成了一个反查接口</p>
+<p>事务消息特点如下：</p>
+<ul>
+<li>长事务仅需要分拆成多个任务，并提供一个反查接口，使用简单</li>
+<li>消费者的逻辑如果无法通过重试成功，那么还需要更多的机制，来回滚操作</li>
+</ul>
+<p>适用于可异步执行的业务，且后续操作无需回滚的业务</p>
+<p>如果读者想要进一步研究事务消息，可参考github.com/apache/rocketmq，为了方便一站式解决分布式事务问题，github.com/yedf/dtm也提供了实现</p>
+<h2 id=最大努力通知>最大努力通知</h2>
+<p>发起通知方通过一定的机制最大努力将业务处理结果通知到接收方。具体包括：</p>
+<p>有一定的消息重复通知机制。因为接收通知方可能没有接收到通知，此时要有一定的机制对消息重复通知。
+消息校对机制。如果尽最大努力也没有通知到接收方，或者接收方消费消息后要再次消费，此时可由接收方主动向通知方查询消息信息来满足需求。
+前面介绍的的本地消息表和事务消息都属于可靠消息，与这里介绍的最大努力通知有什么不同？</p>
+<p>可靠消息一致性，发起通知方需要保证将消息发出去，并且将消息发到接收通知方，消息的可靠性关键由发起通知方来保证。</p>
+<p>最大努力通知，发起通知方尽最大的努力将业务处理结果通知为接收通知方，但是可能消息接收不到，此时需要接收通知方主动调用发起通知方的接口查询业务处理结果，通知的可靠性关键在接收通知方。</p>
+<p>解决方案上，最大努力通知需要：</p>
+<ul>
+<li>提供接口，让接受通知放能够通过接口查询业务处理结果</li>
+<li>消息队列ACK机制，消息队列按照间隔1min、5min、10min、30min、1h、2h、5h、10h的方式，逐步拉大通知间隔 ，直到达到通知要求的时间窗口上限。之后不再通知</li>
+</ul>
+<p>最大努力通知适用于业务通知类型，例如微信交易的结果，就是通过最大努力通知方式通知各个商户，既有回调通知，也有交易查询接口</p>
+<h2 id=at-事务模式>AT 事务模式</h2>
+<p>这是阿里开源项目seata中的一种事务模式，在蚂蚁金服也被称为FMT。优点是该事务模式使用方式，类似XA模式，业务无需编写各类补偿操作，回滚由框架自动完成，缺点也类似AT，存在较长时间的锁，不满足高并发的场景。有兴趣的同学可以参考seata-AT</p>
+<h2 id=异常处理>异常处理</h2>
+<p>在分布式事务的各个环节都有可能出现网络以及业务故障等问题，这些问题需要分布式事务的业务方做到防空回滚，幂等，防悬挂三个特性。</p>
+<h3 id=异常情况>异常情况</h3>
+<p>下面以TCC事务说明这些异常情况：</p>
+<p><strong>空回滚：</strong></p>
+<p>　　在没有调用 TCC 资源 Try 方法的情况下，调用了二阶段的 Cancel 方法，Cancel 方法需要识别出这是一个空回滚，然后直接返回成功。</p>
+<p>　　出现原因是当一个分支事务所在服务宕机或网络异常，分支事务调用记录为失败，这个时候其实是没有执行Try阶段，当故障恢复后，分布式事务进行回滚则会调用二阶段的Cancel方法，从而形成空回滚。</p>
+<p><strong>幂等</strong>：</p>
+<p>　　由于任何一个请求都可能出现网络异常，出现重复请求，所以所有的分布式事务分支，都需要保证幂等性</p>
+<p><strong>悬挂：</strong></p>
+<p>　　悬挂就是对于一个分布式事务，其二阶段 Cancel 接口比 Try 接口先执行。</p>
+<p>　　出现原因是在 RPC 调用分支事务try时，先注册分支事务，再执行RPC调用，如果此时 RPC 调用的网络发生拥堵，RPC 超时以后，TM就会通知RM回滚该分布式事务，可能回滚完成后，RPC 请求才到达参与者真正执行。</p>
+<p>下面看一个网络异常的时序图，更好的理解上述几种问题</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211122000907.png style=display:block;width:80% alt=NAME align=center> </div>
+<p>业务处理请求4的时候，Cancel在Try之前执行，需要处理空回滚
+业务处理请求6的时候，Cancel重复执行，需要幂等
+业务处理请求8的时候，Try在Cancel后执行，需要处理悬挂</p>
+<p>面对上述复杂的网络异常情况，目前看到各家建议的方案都是业务方通过唯一键，去查询相关联的操作是否已完成，如果已完成则直接返回成功。相关的判断逻辑较复杂，易出错，业务负担重。</p>
+<h2 id=子事务屏障>子事务屏障</h2>
+<p>在项目https://github.com/yedf/dtm中，首创了一种子事务屏障技术，使用该技术，能够达到这个效果，看示意图：</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/640.png style=display:block;width:80% alt=NAME align=center> </div>
+<p>所有这些请求，到了子事务屏障后：不正常的请求，会被过滤；正常请求，通过屏障。开发者使用子事务屏障之后，前面所说的各种异常全部被妥善处理，业务开发人员只需要关注实际的业务逻辑，负担大大降低。
+子事务屏障提供了方法ThroughBarrierCall，方法的原型为：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>func ThroughBarrierCall(db *sql.DB, transInfo *TransInfo, busiCall BusiFunc)
+</code></pre></div><p>业务开发人员，在busiCall里面编写自己的相关逻辑，调用该函数。ThroughBarrierCall保证，在空回滚、悬挂等场景下，busiCall不会被调用；在业务被重复调用时，有幂等控制，保证只被提交一次。</p>
+<p>子事务屏障会管理TCC、SAGA、XA、事务消息等，也可以扩展到其他领域。</p>
+<h3 id=子事务屏障原理>子事务屏障原理</h3>
+<p>子事务屏障技术的原理是，在本地数据库，建立分支事务状态表sub_trans_barrier，唯一键为全局事务id-子事务id-子事务分支名称（try|confirm|cancel）</p>
+<ul>
+<li>开启事务</li>
+<li>如果是Try分支，则那么insert ignore插入gid-branchid-try，如果成功插入，则调用屏障内逻辑</li>
+<li>如果是Confirm分支，那么insert ignore插入gid-branchid-confirm，如果成功插入，则调用屏障内逻辑</li>
+<li>如果是Cancel分支，那么insert ignore插入gid-branchid-try，再插入gid-branchid-cancel，如果try未插入并且cancel插入成功，则调用屏障内逻辑</li>
+<li>屏障内逻辑返回成功，提交事务，返回成功</li>
+<li>屏障内逻辑返回错误，回滚事务，返回错误</li>
+</ul>
+<p>在此机制下，解决了网络异常相关的问题</p>
+<ul>
+<li>空补偿控制&ndash;如果Try没有执行，直接执行了Cancel，那么Cancel插入gid-branchid-try会成功，不走屏障内的逻辑，保证了空补偿控制</li>
+<li>幂等控制&ndash;任何一个分支都无法重复插入唯一键，保证了不会重复执行</li>
+<li>防悬挂控制&ndash;Try在Cancel之后执行，那么插入的gid-branchid-try不成功，就不执行，保证了防悬挂控制</li>
+</ul>
+<p>对于SAGA事务，也是类似的机制。</p>
+<h3 id=子事务屏障小结>子事务屏障小结</h3>
+<p>子事务屏障技术，为https://github.com/yedf/dtm首创，它的意义在于设计简单易实现的算法，提供了简单易用的接口，在首创，它的意义在于设计简单易实现的算法，提供了简单易用的接口，在这两项的帮助下，开发人员彻底的从网络异常的处理中解放出来。</p>
+<p>该技术目前需要搭配yedf/dtm事务管理器，目前SDK已经提供给go语言的开发者。其他语言的sdk正在规划中。对于其他的分布式事务框架，只要提供了合适的分布式事务信息，能够按照上述原理，快速实现该技术。</p>
+</div>
+<div class=td-content style=page-break-before:always>
+<h1 id=pg-cd6eab4d11b89cc125c95366a63cbaa1>16 - 一致性与共识算法</h1>
+<h2 id=分布式一致性>分布式一致性</h2>
+<p>在一个分布式系统中，如何保证集群中所有节点中的数据完全相同，并且能够对某个提案(Proposal)达成一致，是分布式系统正常工作的核心问题，而共识算法就是用来保证分布式系统一致性的方法。</p>
+<p>然而分布式系统中由于引入了多个节点，所以系统中会出现各种非常复杂的情况；随着节点数量增加，节点失效、故障或者宕机就变成了非常常见的事情，解决分布式系统中的各种边界条件和意外情况也增加了解决分布式一致性问题的难度。</p>
+<p>在一个分布式系统中，除了节点的失效会是会导致一致性不容易达成的主要原因之外，节点之间的网络通信受到干扰甚至阻断，以及分布式系统的运行速度的差异都是解决分布式系统一致性所面临的难题。</p>
+<h3 id=cap>CAP</h3>
+<p>在 1998 年秋，加州伯克利大学的教授 Eric Brewer 第一次发布了 CAP 理论，在 1999 年论文 “<a href="http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.67.6951&rep=rep1&type=pdf">Brewer&rsquo;s Conjecture and the Feasibility of Consitent, Available, Partition-Tolerant Web Service</a>” 正式发布，其中总结了 Eric Brewer 提出的 CAP 理论。</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/2018021615187855658956.png style=display:block;width:50% alt=NAME align=center> </div>
+<p>该论文证明了两个非常有意思的理论：首先是在异步网络模型中，所有的节点都是由于没有时钟，仅能根据接收到的消息做出判断，这时完全不能保证一致性、可用性、分区容错性，<strong>每个系统仅能在这三种特性中选择两种。</strong></p>
+<p>这里讨论的一致性都是<strong>强一致性</strong>，即所有节点接收到同样的操作时会按照完全相同的顺序执行，被一个节点提交的更新操作会立即反映在其他<strong>通过异步或部分同步网络连接的节点上，<strong>如果想要同时满足一致性和分区容错性，在异步网络中，我们只能</strong>中心化存储所有数据</strong>，通过其他节点将请求路由给中心节点达到这两个目的。</p>
+<p>但是在现实世界中其实并不存在<strong>绝对异步</strong>的网络环境，如果我们允许每个节点拥有自己的时钟，这些时钟虽然有着各自不同的时间，但他们的**更新频率是完全相同的，**所以我们可以通过时钟得知接收消息的间隔时间，在这种更宽松的前提下，我们能够得到更加强大的服务。</p>
+<p>然而在部分同步的网络环境中，仍然没有办法同时保证三种特性，证明的过程其实非常简单，可以直接阅读 <a href="http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.67.6951&rep=rep1&type=pdf">论文的 4.2 节</a>，然而时钟的出现能够让我们知道当前消息有多久没有得到回应，通过超时时间就能在一定程度上解决信息丢失的问题。</p>
+<p>由于网络一定会存在延时，所以没有办法在分布式系统中做到强一致性的同时保证可用性，不过我们可以通过降低对一致性的要求，在一致性和可用性之间做出权衡，而这其实也是设计分布式系统首先要考虑的问题，由于强一致性的系统会导致系统的可用性降低，仅仅将接受请求的工作交给其他节点对于高并发的服务并不能解决问题，所以在目前主流的分布式系统中都选择<strong>最终一致性</strong>。</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180217151884412972134.png style=display:block;width:50% alt=NAME align=center> </div>
+<p>最终一致性允许多个节点间的状态出现冲突，但是所有能够沟通的节点都能够在有限的时间内解决冲突，从不一致的状态恢复到一致。这里列出的两个条件比较重要：一是<strong>节点直接可以正常通信</strong>，而是冲突<strong>需要在有限时间内解决</strong>，只有在两个条件均成立时才能达到最终一致性。</p>
+<h3 id=拜占庭将军问题>拜占庭将军问题</h3>
+<p>该问题是 Leslie Lamport 在 <a href=https://web.archive.org/web/20170205142845/http://lamport.azurewebsites.net/pubs/byz.pdf>The Byzantine Generals Problem</a> 论文中提出的分布式领域的<strong>容错问题</strong>，它是分布式领域中最复杂、最严格的容错模型。</p>
+<p>在该模型下，系统不会对集群中的节点做任何的限制，它们可以向其他节点发送随机数据、错误数据，也可以选择不响应其他节点的请求，这些无法预测的行为使得容错这一问题变得更加复杂。</p>
+<p>拜占庭将军问题描述了如下的场景，有一组将军分别指挥一部分军队，每个将军都不知道其他将军是否是可靠的，也不知道其他将军传递的信息是否可靠，但是他们需要通过投票选择是否要进攻或撤退：</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180217151884457569865.png style=display:block;width:50% alt=NAME align=center> </div>
+<blockquote>
+<p>本节中，黄色代表状态未知，绿色代表进攻，蓝色代表撤退，红色代表当前将军的信息不可靠。</p>
+</blockquote>
+<p>这时，无论将军是否可靠，只要所有的将军达成了统一的方案，选择进攻或撤退其实是没有任何问题的：</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180217151884479414231.png style=display:block;width:50% alt=NAME align=center> </div>
+<p>上述的情况不会对当前的战局造成太大影响，但是如果其中一个将军告诉其中一部分将军选择进攻，告诉另一部分将军选择撤退，就会出现非常严重的问题了。</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/2018021715188449147423.png style=display:block;width:50% alt=NAME align=center> </div>
+<p>由于将军的队伍中出现了一个叛徒或者信息在传递的过程中被拦截，会导致一部分将军会选择进攻，剩下的一份会选择撤退，他们都认为自己的选择是大多数人的选择，这时会出现严重的不一致问题。</p>
+<p>拜占庭将军问题是对分布式系统容错的最高要求，然而这不是日常工作中使用的大多数分布式系统中会面对的问题，我们遇到更多的还是节点故障宕机或者不响应等情况，这就大大简化了系统对容错的要求；不过类似 Bitcoin、Ethereum 等分布式系统确实需要考虑拜占庭容错的问题，我们会在下面介绍它们是如何解决的。</p>
+<h3 id=flp>FLP</h3>
+<p>FLP 不可能定理是分布式系统领域最重要的定理之一，它给出了一个非常重要的结论：<strong>在网络可靠且存在节点失效的异步模型系统中，不存在一个可以解决一致性问题的确定性算法。</strong></p>
+<blockquote>
+<p>In this paper, we show the surprising result that no completely asynchronous consensus protocol can tolerate even a single unannounced process death. We do not consider Byzantine failures, and we assume that the message system is reliable it delivers all messages correctly and exactly once.</p>
+</blockquote>
+<p>这个定理其实也就是告诉我们不要浪费时间去为异步分布式系统设计在任意场景上都能实现的共识算法，异步系统完全没办法保证在有限时间内达成一致，在这里作者并不会去尝试证明 FLP 不可能定理，读者可以阅读相关论文 <a href=https://groups.csail.mit.edu/tds/papers/Lynch/jacm85.pdf>Impossibility of Distributed Consensuswith One Faulty Process</a> 了解更多内容。</p>
+<h2 id=共识算法>共识算法</h2>
+<p>在上节中，我们已经简单了解了分布式系统中面对的问题与挑战，在这里我们会介绍不同共识算法的实现原理，包括传统分布式领域的 Paxos、Raft，以及加密货币中使用的工作量证明(POW)、权益证明(POS)和委托权益证明(DPOS)，通过对这些共识算法原理的介绍和分析，我相信各位读者能对分布式一致性和共识算法有更深的理解。</p>
+<h3 id=paxos-与-raft>Paxos 与 Raft</h3>
+<p>Paxos 和 Raft 是目前分布式系统领域中两种非常著名的解决一致性问题的共识算法，两者都能解决分布式系统中的一致性问题，但是前者的实现与证明非常难以理解，后者的实现比较简洁并且遵循人类的直觉，它的出现就是为了解决 Paxos 难以理解并难以实现的问题。</p>
+<p>我们先来简单介绍一下 <a href=https://en.wikipedia.org/wiki/Paxos_(computer_science)>Paxos</a> 究竟是什么。Paxos 其实是<strong>一类</strong>能够解决分布式一致性问题的协议，它能够让分布式网络中的节点在出现错误时仍然保持一致；Leslie Lamport 提出的 Paxos 可以在没有恶意节点的前提下保证系统中节点的一致性，也是第一个被证明完备的共识算法，目前<strong>完备</strong>的共识算法包括 Raft 本质上都是 Paxos 的变种。</p>
+<p>作为一类协议，Paxos 中包括 Bais Paxos、Multi-Paxos、Cheap Paxos 和其他变种，这里我们会简单介绍 Basic Paxos 和 Multi-Paxos 这两种协议。</p>
+<h4 id=basic-paxos>Basic Paxos</h4>
+<p>Basic Paxos 是 Paxos 中最为基础的协议，每个 Basic Paxos 的协议实例最终都会选择唯一一个结果；使用 Paxos 作为共识算法的分布式系统中，节点都会有三种身份，分别是 Proposer、Acceptor、Learner。</p>
+<p>我们在这里会忽略最后一种身份 Learner 以简化协议的运行过程、便于理解；Paxos 的运行过程分为两个阶段，分别是准备阶段(Prepare) 和接受阶段(Accept)，当 Proposer 接收到来自客户端的请求时，就会进入如下流程：</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180217151884849371114.png style=display:block;width:50% alt=NAME align=center> </div>
+<blockquote>
+<p>图片来自 <a href=https://ramcloud.stanford.edu/~ongaro/userstudy/paxos.pdf>Paxos lecture (Raft user study)</a> 第 12 页。</p>
+</blockquote>
+<p>在整个共识算法运行的过程中，Proposer 负责提出提案并向 Acceptor 分别发出两次 RPC 请求，Prepare 和 Accept；Acceptor 会根据其持有的信息 minProposal、acceptedProposal、acceptValue，来选择接受或拒绝当前的提案，当某一个提案被过半数的 Acceptor 接受之后，我们就认为当前提案被整个集群接受了。</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/2018021715188487332940.png style=display:block;width:50% alt=NAME align=center> </div>
+<p>我们简单举一个例子来介绍 Paxos 是如何在多个提案下保证最终能够达到一致性的，上图中 S1 和 S5 分别接收到了来自客户端的请求 X 和 Y，S1 首先向 S2 和 S3 发出 Prepare RPC 和 Accept RPC，三个服务器都接受了 S1 的提案；之后，S5 向 S3 和 S4 服务器发出 Prepare(2.5) 的请求，S3 由于已经接受了 X，所以他会返回接受的提案和值 (1.1, X)，这时服务器使用接收到的提案代替自己的提案 Y，重新向其他服务器发送 Accept(2.5 X) 的 RPC，最终所有的服务器会达成一致并选择相同的值。</p>
+<h4 id=multi-paxos>Multi-Paxos</h4>
+<p>由于大多数分布式服务器都要接受一系列的值，如果使用 Basic Paxos 来处理数据流，那么就会导致非常明显的性能损失，而 Multi-Paxos 是前者的加强版，如果集群中的 Leader 是非常稳定的，那么我们往往不需要准备阶段的工作，这样就能将 RPC 的次数减少一半。</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180217151884920428994.png style=display:block;width:50% alt=NAME align=center> </div>
+<p>上图中描述的就是稳定阶段 Multi-Paxos 的处理过程，S1 是整个集群的 Leader，当其他的节点接收到来自客户端的请求时，都会将请求转发给 Leader 进行处理。</p>
+<p>当然，Leader 角色的出现自然会带来另一个问题，也就是 Leader 究竟应该如何选举，在 <a href=http://140.123.102.14:8080/reportSys/file/paper/lei/lei_5_paper.pdf>Paxos Made Simple</a> 一文中并没有给出 Multi-Paxos 的具体实现方法和细节，所以不同的 Multi-Paxos 实现会有各种细微的差别。</p>
+<h4 id=raft>Raft</h4>
+<p>Raft 其实就是 Multi-Paxos 的一个变种，Raft 通过简化 Multi-Paxos 模型，实现了一种更易让人理解的共识算法，它们两者都能够对一系列连续的问题达成一致。</p>
+<p>Raft 在 Multi-Paxos 的基础上做了两个限制，首先是 Raft 中追加日志的操作必须是连续的，而 Multi-Paxos 中追加日志的操作是并发的，但是对于节点内部的状态机来说两者都是有序的；第二就是 Raft 对 Leader 选举的条件做了限制，只有拥有最新、最全日志的节点才能够当选 Leader，但是 Multi-Paxos 由于任意节点都可以写日志，所以在选择 Leader 上么有什么限制，只是在选择 Leader 之后需要将 Leader 中的日志补全。</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180217151885257638482.png style=display:block;width:50% alt=NAME align=center> </div>
+<p>在 Raft 中，所有 Follower 的日志都是 Leader 的子集，而 Multi-Paxos 中的日志并不会做这个保证，由于 Raft 对日志追加的方式和选举过程进行了限制，所以在实现上会更加容易和简单。</p>
+<p>从理论上来讲，支持并发日志追加的 Paxos 会比 Raft 拥有更加优秀的性能，不过其理解和实现上还是比较复杂的，很多人都会说 Paxos 是科学，而 Raft 是工程，当作者需要去实现一个共识算法，会选择使用 Raft 和更简洁的实现，避免因为一些边界条件带来的复杂问题。</p>
+<p>可以查看 <a href=https://raft.github.io/>The Raft Consensus Algorithm</a> 了解更多 Raft 的细节。</p>
+<h3 id=powproof-of-work>POW：Proof-of-Work</h3>
+<p>上一节介绍的共识算法，无论是 Paxos 还是 Raft 其实都只能解决拜占庭将军问题的一致性问题，不能够应对分布式网络中出现的极端情况，但是这在传统的分布式系统都不是什么问题，无论分布式数据库还是消息队列集群，它们内部的节点并不会故意发送错误信息，在类似系统中，最常见的问题就是节点失去响应或失效，所以它们在这种情况下是有效可行的，也是充分的。</p>
+<p>这一节介绍的 <a href=https://en.wikipedia.org/wiki/Proof-of-work_system>工作量证明</a> 是一个用于阻止拒绝服务攻击(DDOS)和类似垃圾邮件等服务错误问题的协议，它在 1993 年被 Cynthia Dwork 和 Moni Naor 提出，它能够帮助分布式系统达到拜占庭容错。</p>
+<p>工作量证明的关键特点就是，分布式系统中的请求服务的节点必须解决一个<strong>一般难度但是可行(feasible)的问题</strong>，但是验证问题答案的过程对于服务提供者来说却非常容易，也就是一个不容易解答但是容易验证的问题。</p>
+<p>这种问题通常需要消耗一定的 CPU 时间来计算某个问题的答案，目前最大的区块链网络-比特币(Bitcoin) 就使用了工作量证明的分布式一致性算法，在网络中的所有节点计算通过以下的谜题来获得当前区块的记账权：</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180217151885399218765.png style=display:block;width:50% alt=NAME align=center> </div>
+<p>SHA-256 作为一个哈希函数，想要通过 SHA-256 函数的输出推断输入在目前来看可能性是可以忽略不计的，比特币网络就需要每一个及诶单不断改变 NONCE 来得到不同的 HASH，如果得到的 HASH 结果在小于某个范围，目前(2017-12-17)的难度是：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>0x0000000000000000000000000000000000000000000000000000017268d8a21a
+</code></pre></div><p>也就是说如果只计算一次 SHA-256 的值能够小于上述结果的可能性是 1.37 ∗ 10^-65，当前的全网算力也达到了 13,919 PH/s，这是个非常恐怖的数字，随着网络算力的不断改变，比特币也会不断改变当前问题的难度，保证每个区块被发现的时间在 10min 左右；整个比特币网络中，谁先得到当前问题的答案就能获得这个区块的记账权，并将当前区块通过 Gossip 协议发送给尽可能多的比特币节点。</p>
+<p>工作量证明的原理其实非常简单，比特币网络选择的谜题非常好的适应了工作量证明定义中的问题，比较难以计算同时又易于验证，我们可以简单理解为工作量证明防止错误或者无效请求的原理就是增加客户端请求服务的工作量，而适合难度的谜题又能保证合法的请求不会受影响。</p>
+<p>由于工作量证明需要消耗大量的算力，同时比特币大约 10min 才会产生一个区块，区块的大小也只有 1MB，仅仅能够包含 3-4000 笔交易，平均下来每秒只能够处理 5~7 笔交易，所以比特币网络的拥堵非常严重。</p>
+<h3 id=posproof-of-stake>POS：Proof-of-Stake</h3>
+<p>权益证明是区块链网络中使用的另一种共识算法，在基于权益证明的加密货币中，下一个区块的选择是根据不同节点的股份和时间随机进行的。</p>
+<p>由于创造新的区块不会消耗大量的 CPU，如果它不诚实也不会造成什么损失，这也就给了很多节点作弊的理由，每个节点为了最大化利益会在多条链上同时挖矿。</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180217151885486336299.png style=display:block;width:50% alt=NAME align=center> </div>
+<p>在早期的所有权证明算法中，整个网络只会奖励创建区块的节点，不存在任何惩罚，这时每个节点在创造的多条链上同时投票才能够最大化利益，在这种情况下网络中的节点很难对一条链达成共识。</p>
+<p>有两种办法能够解决缺乏厉害关系(nothing-at-stake)造成的问题，一种是使用 <a href=https://blog.ethereum.org/2014/01/15/slasher-a-punitive-proof-of-stake-algorithm/>Slasher</a> 协议，惩罚同时在多条链上投票的节点；第二种方法是直接惩罚在错误的链上创建块的节点，总而言之就是通过算法之外的手段来解决这个问题，引入激励和惩罚。</p>
+<p>与工作量证明相比，权益证明不需要消耗大量的电力就能保证区块链网络的安全性，同时也不需要在每个区块中创建新的货币来激励旷工参与当前网络的运行，这也就在一定程度上缩短了达成共识所需要的时间，基于权益证明的 Ethereum 每秒大概处理 30 笔交易左右。</p>
+<h3 id=dposdelegated-proof-of-stake>DPOS：Delegated Proof-of-Stake</h3>
+<p>前面介绍的权益证明算法可以将整个区块链网络理解为一家公司，出资最多、占比最大的人又更多的机会得到话语权(记账权)；对于小股东来说，千分之几甚至万分之几的股份很难有什么作为，只能得到股份带来的分红和收益。</p>
+<p>但是在这里介绍的委托权益证明能够让每个人选出可以代表自己利益的人参与到记账权的争夺中，这样多个小股东就能够通过投票选出自己的代理人，保障自己的利益。整个网络中选举出的多个节点能够在 1s 之内对 99.9% 的交易进行确认，使用委托权益证明的 EOS 能够每秒处理几十万笔交易，同时也能够比较监管的干预。</p>
+<p>在委托权益证明中，每个参与者都能够选举任意数量的节点生成下一个区块，得票最多的前 N 个节点会被选择成为区块的创建者，下一个区块的创建者就会从这样一组当选者中随机选取，除此之外，N 的数量也是整个网络投票决定的，所以可以尽可能的保证网络的去中心化。</p>
+<h2 id=reference>Reference</h2>
+<ul>
+<li><a href=https://en.wikipedia.org/wiki/Consensus_(computer_science)>Consensus (computer science)</a></li>
+<li><a href=http://blog.csdn.net/lsttoy/article/details/61624287>区块链共识算法（POW,POS,DPOS,PBFT）介绍和心得</a></li>
+<li><a href=https://yeasy.gitbooks.io/blockchain_guide/content/distribute_system/paxos.html>Paxos 与 Raft</a></li>
+<li><a href=https://en.wikipedia.org/wiki/Proof-of-work_system>Proof-of-work system</a></li>
+<li><a href=https://en.wikipedia.org/wiki/Proof-of-stake>Proof-of-stake</a></li>
+<li><a href=https://github.com/ethereum/wiki/wiki/Proof-of-Stake-FAQ>Proof of Stake FAQ · Ethereum Wiki</a></li>
+<li><a href=http://docs.bitshares.org/bitshares/dpos.html>Delegated Proof of Stake</a></li>
+<li><a href=https://bitshares.org/technology/delegated-proof-of-stake-consensus/>Delegated Proof-of-Stake Consensus</a></li>
+<li><a href=https://steemit.com/dpos/@legendx/dpos>DPOS共识算法 – 缺失的白皮书</a></li>
+<li><a href=https://yeasy.gitbooks.io/blockchain_guide/content/distribute_system/consensus.html>共识算法</a></li>
+<li><a href=https://en.wikipedia.org/wiki/CAP_theorem>CAP theorem</a></li>
+<li><a href=http://140.123.102.14:8080/reportSys/file/paper/lei/lei_5_paper.pdf>Paxos Made Simple</a></li>
+<li><a href=https://raft.github.io/>The Raft Consensus Algorithm</a></li>
+<li><a href=https://raft.github.io/raft.pdf>In Search of an Understandable Consensus Algorithm</a></li>
+<li><a href=https://baotiao.github.io/2016/05/05/paxos-raft/>谈谈 paxos, multi-paxos, raft</a></li>
+<li><a href="http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.67.6951&rep=rep1&type=pdf">Brewer’s Conjecture and the Feasibility of Consistent, Available, Partition-Tolerant Web Services</a></li>
+<li><a href=https://stackoverflow.com/questions/29381442/eventual-consistency-vs-strong-eventual-consistency-vs-strong-consistency>“Eventual Consistency” vs “Strong Eventual Consistency” vs “Strong Consistency”?</a></li>
+<li><a href=https://groups.csail.mit.edu/tds/papers/Lynch/jacm85.pdf>Impossibility of Distributed Consensuswith One Faulty Process</a></li>
+<li><a href=https://web.archive.org/web/20170205142845/http://lamport.azurewebsites.net/pubs/byz.pdf>The Byzantine Generals Problem</a></li>
+<li><a href=https://en.wikipedia.org/wiki/Byzantine_fault_tolerance>Byzantine fault tolerance</a></li>
+<li><a href=http://the-paper-trail.org/blog/a-brief-tour-of-flp-impossibility/>A Brief Tour of FLP Impossibility</a></li>
+<li><a href=http://140.123.102.14:8080/reportSys/file/paper/lei/lei_5_paper.pdf>Paxos Made Simple</a></li>
+<li><a href=http://harry.me/blog/2014/12/27/neat-algorithms-paxos/>Neat Algorithms - Paxos</a></li>
+<li><a href=http://danielw.cn/FLP-proof>FLP Impossibility 的证明</a></li>
+<li><a href=https://read.douban.com/ebook/42852957/>白话区块链</a></li>
+<li><a href=https://en.wikipedia.org/wiki/Paxos_(computer_science)>Paxos</a></li>
+<li><a href="https://www.youtube.com/watch?v=JEpsBg0AO6o">Paxos lecture (Raft user study)</a></li>
+<li><a href=https://bitcoin.org/bitcoin.pdf>Bitcoin: A Peer-to-Peer Electronic Cash System</a></li>
+<li><a href=https://en.bitcoin.it/wiki/Proof_of_Stake>Proof of Stake · Bitcoin Wiki</a></li>
+<li><a href=https://blog.ethereum.org/2014/01/15/slasher-a-punitive-proof-of-stake-algorithm/>Slasher</a></li>
+<li><a href=https://github.com/ethereum/wiki/wiki/Proof-of-Stake-FAQ>Proof of Stake FAQ</a></li>
+</ul>
+</div>
+<div class=td-content style=page-break-before:always>
+<h1 id=pg-32e7ec0298beb63dbf02b847a8c13b0a>17 - 分布式锁</h1>
 <h2 id=前情提要>前情提要</h2>
 <p>基于分布式的 CAP (一致性、可用性、容错性)原理，系统在设计之初必须要考虑取舍，在互联网领域的绝大多数场景中，一般会牺牲强一致性来换取高可用性，只需要保证最终一致性即可，而这个最终一致的时间是用户可接受的范围即可。</p>
 <p>为了保证最终一致性，一般会使用分布式事务、分布式锁等，分布式锁也有多种实现方案：</p>
@@ -1240,128 +1539,7 @@ Second, it is not enough to know that a given instance number has been committed
 </ul>
 </div>
 <div class=td-content style=page-break-before:always>
-<h1 id=pg-cd6eab4d11b89cc125c95366a63cbaa1>16 - 一致性与共识算法</h1>
-<h2 id=分布式一致性>分布式一致性</h2>
-<p>在一个分布式系统中，如何保证集群中所有节点中的数据完全相同，并且能够对某个提案(Proposal)达成一致，是分布式系统正常工作的核心问题，而共识算法就是用来保证分布式系统一致性的方法。</p>
-<p>然而分布式系统中由于引入了多个节点，所以系统中会出现各种非常复杂的情况；随着节点数量增加，节点失效、故障或者宕机就变成了非常常见的事情，解决分布式系统中的各种边界条件和意外情况也增加了解决分布式一致性问题的难度。</p>
-<p>在一个分布式系统中，除了节点的失效会是会导致一致性不容易达成的主要原因之外，节点之间的网络通信受到干扰甚至阻断，以及分布式系统的运行速度的差异都是解决分布式系统一致性所面临的难题。</p>
-<h3 id=cap>CAP</h3>
-<p>在 1998 年秋，加州伯克利大学的教授 Eric Brewer 第一次发布了 CAP 理论，在 1999 年论文 “<a href="http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.67.6951&rep=rep1&type=pdf">Brewer&rsquo;s Conjecture and the Feasibility of Consitent, Available, Partition-Tolerant Web Service</a>” 正式发布，其中总结了 Eric Brewer 提出的 CAP 理论。</p>
-<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/2018021615187855658956.png style=display:block;width:50% alt=NAME align=center> </div>
-<p>该论文证明了两个非常有意思的理论：首先是在异步网络模型中，所有的节点都是由于没有时钟，仅能根据接收到的消息做出判断，这时完全不能保证一致性、可用性、分区容错性，<strong>每个系统仅能在这三种特性中选择两种。</strong></p>
-<p>这里讨论的一致性都是<strong>强一致性</strong>，即所有节点接收到同样的操作时会按照完全相同的顺序执行，被一个节点提交的更新操作会立即反映在其他<strong>通过异步或部分同步网络连接的节点上，<strong>如果想要同时满足一致性和分区容错性，在异步网络中，我们只能</strong>中心化存储所有数据</strong>，通过其他节点将请求路由给中心节点达到这两个目的。</p>
-<p>但是在现实世界中其实并不存在<strong>绝对异步</strong>的网络环境，如果我们允许每个节点拥有自己的时钟，这些时钟虽然有着各自不同的时间，但他们的**更新频率是完全相同的，**所以我们可以通过时钟得知接收消息的间隔时间，在这种更宽松的前提下，我们能够得到更加强大的服务。</p>
-<p>然而在部分同步的网络环境中，仍然没有办法同时保证三种特性，证明的过程其实非常简单，可以直接阅读 <a href="http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.67.6951&rep=rep1&type=pdf">论文的 4.2 节</a>，然而时钟的出现能够让我们知道当前消息有多久没有得到回应，通过超时时间就能在一定程度上解决信息丢失的问题。</p>
-<p>由于网络一定会存在延时，所以没有办法在分布式系统中做到强一致性的同时保证可用性，不过我们可以通过降低对一致性的要求，在一致性和可用性之间做出权衡，而这其实也是设计分布式系统首先要考虑的问题，由于强一致性的系统会导致系统的可用性降低，仅仅将接受请求的工作交给其他节点对于高并发的服务并不能解决问题，所以在目前主流的分布式系统中都选择<strong>最终一致性</strong>。</p>
-<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180217151884412972134.png style=display:block;width:50% alt=NAME align=center> </div>
-<p>最终一致性允许多个节点间的状态出现冲突，但是所有能够沟通的节点都能够在有限的时间内解决冲突，从不一致的状态恢复到一致。这里列出的两个条件比较重要：一是<strong>节点直接可以正常通信</strong>，而是冲突<strong>需要在有限时间内解决</strong>，只有在两个条件均成立时才能达到最终一致性。</p>
-<h3 id=拜占庭将军问题>拜占庭将军问题</h3>
-<p>该问题是 Leslie Lamport 在 <a href=https://web.archive.org/web/20170205142845/http://lamport.azurewebsites.net/pubs/byz.pdf>The Byzantine Generals Problem</a> 论文中提出的分布式领域的<strong>容错问题</strong>，它是分布式领域中最复杂、最严格的容错模型。</p>
-<p>在该模型下，系统不会对集群中的节点做任何的限制，它们可以向其他节点发送随机数据、错误数据，也可以选择不响应其他节点的请求，这些无法预测的行为使得容错这一问题变得更加复杂。</p>
-<p>拜占庭将军问题描述了如下的场景，有一组将军分别指挥一部分军队，每个将军都不知道其他将军是否是可靠的，也不知道其他将军传递的信息是否可靠，但是他们需要通过投票选择是否要进攻或撤退：</p>
-<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180217151884457569865.png style=display:block;width:50% alt=NAME align=center> </div>
-<blockquote>
-<p>本节中，黄色代表状态未知，绿色代表进攻，蓝色代表撤退，红色代表当前将军的信息不可靠。</p>
-</blockquote>
-<p>这时，无论将军是否可靠，只要所有的将军达成了统一的方案，选择进攻或撤退其实是没有任何问题的：</p>
-<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180217151884479414231.png style=display:block;width:50% alt=NAME align=center> </div>
-<p>上述的情况不会对当前的战局造成太大影响，但是如果其中一个将军告诉其中一部分将军选择进攻，告诉另一部分将军选择撤退，就会出现非常严重的问题了。</p>
-<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/2018021715188449147423.png style=display:block;width:50% alt=NAME align=center> </div>
-<p>由于将军的队伍中出现了一个叛徒或者信息在传递的过程中被拦截，会导致一部分将军会选择进攻，剩下的一份会选择撤退，他们都认为自己的选择是大多数人的选择，这时会出现严重的不一致问题。</p>
-<p>拜占庭将军问题是对分布式系统容错的最高要求，然而这不是日常工作中使用的大多数分布式系统中会面对的问题，我们遇到更多的还是节点故障宕机或者不响应等情况，这就大大简化了系统对容错的要求；不过类似 Bitcoin、Ethereum 等分布式系统确实需要考虑拜占庭容错的问题，我们会在下面介绍它们是如何解决的。</p>
-<h3 id=flp>FLP</h3>
-<p>FLP 不可能定理是分布式系统领域最重要的定理之一，它给出了一个非常重要的结论：<strong>在网络可靠且存在节点失效的异步模型系统中，不存在一个可以解决一致性问题的确定性算法。</strong></p>
-<blockquote>
-<p>In this paper, we show the surprising result that no completely asynchronous consensus protocol can tolerate even a single unannounced process death. We do not consider Byzantine failures, and we assume that the message system is reliable it delivers all messages correctly and exactly once.</p>
-</blockquote>
-<p>这个定理其实也就是告诉我们不要浪费时间去为异步分布式系统设计在任意场景上都能实现的共识算法，异步系统完全没办法保证在有限时间内达成一致，在这里作者并不会去尝试证明 FLP 不可能定理，读者可以阅读相关论文 <a href=https://groups.csail.mit.edu/tds/papers/Lynch/jacm85.pdf>Impossibility of Distributed Consensuswith One Faulty Process</a> 了解更多内容。</p>
-<h2 id=共识算法>共识算法</h2>
-<p>在上节中，我们已经简单了解了分布式系统中面对的问题与挑战，在这里我们会介绍不同共识算法的实现原理，包括传统分布式领域的 Paxos、Raft，以及加密货币中使用的工作量证明(POW)、权益证明(POS)和委托权益证明(DPOS)，通过对这些共识算法原理的介绍和分析，我相信各位读者能对分布式一致性和共识算法有更深的理解。</p>
-<h3 id=paxos-与-raft>Paxos 与 Raft</h3>
-<p>Paxos 和 Raft 是目前分布式系统领域中两种非常著名的解决一致性问题的共识算法，两者都能解决分布式系统中的一致性问题，但是前者的实现与证明非常难以理解，后者的实现比较简洁并且遵循人类的直觉，它的出现就是为了解决 Paxos 难以理解并难以实现的问题。</p>
-<p>我们先来简单介绍一下 <a href=https://en.wikipedia.org/wiki/Paxos_(computer_science)>Paxos</a> 究竟是什么。Paxos 其实是<strong>一类</strong>能够解决分布式一致性问题的协议，它能够让分布式网络中的节点在出现错误时仍然保持一致；Leslie Lamport 提出的 Paxos 可以在没有恶意节点的前提下保证系统中节点的一致性，也是第一个被证明完备的共识算法，目前<strong>完备</strong>的共识算法包括 Raft 本质上都是 Paxos 的变种。</p>
-<p>作为一类协议，Paxos 中包括 Bais Paxos、Multi-Paxos、Cheap Paxos 和其他变种，这里我们会简单介绍 Basic Paxos 和 Multi-Paxos 这两种协议。</p>
-<h4 id=basic-paxos>Basic Paxos</h4>
-<p>Basic Paxos 是 Paxos 中最为基础的协议，每个 Basic Paxos 的协议实例最终都会选择唯一一个结果；使用 Paxos 作为共识算法的分布式系统中，节点都会有三种身份，分别是 Proposer、Acceptor、Learner。</p>
-<p>我们在这里会忽略最后一种身份 Learner 以简化协议的运行过程、便于理解；Paxos 的运行过程分为两个阶段，分别是准备阶段(Prepare) 和接受阶段(Accept)，当 Proposer 接收到来自客户端的请求时，就会进入如下流程：</p>
-<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180217151884849371114.png style=display:block;width:50% alt=NAME align=center> </div>
-<blockquote>
-<p>图片来自 <a href=https://ramcloud.stanford.edu/~ongaro/userstudy/paxos.pdf>Paxos lecture (Raft user study)</a> 第 12 页。</p>
-</blockquote>
-<p>在整个共识算法运行的过程中，Proposer 负责提出提案并向 Acceptor 分别发出两次 RPC 请求，Prepare 和 Accept；Acceptor 会根据其持有的信息 minProposal、acceptedProposal、acceptValue，来选择接受或拒绝当前的提案，当某一个提案被过半数的 Acceptor 接受之后，我们就认为当前提案被整个集群接受了。</p>
-<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/2018021715188487332940.png style=display:block;width:50% alt=NAME align=center> </div>
-<p>我们简单举一个例子来介绍 Paxos 是如何在多个提案下保证最终能够达到一致性的，上图中 S1 和 S5 分别接收到了来自客户端的请求 X 和 Y，S1 首先向 S2 和 S3 发出 Prepare RPC 和 Accept RPC，三个服务器都接受了 S1 的提案；之后，S5 向 S3 和 S4 服务器发出 Prepare(2.5) 的请求，S3 由于已经接受了 X，所以他会返回接受的提案和值 (1.1, X)，这时服务器使用接收到的提案代替自己的提案 Y，重新向其他服务器发送 Accept(2.5 X) 的 RPC，最终所有的服务器会达成一致并选择相同的值。</p>
-<h4 id=multi-paxos>Multi-Paxos</h4>
-<p>由于大多数分布式服务器都要接受一系列的值，如果使用 Basic Paxos 来处理数据流，那么就会导致非常明显的性能损失，而 Multi-Paxos 是前者的加强版，如果集群中的 Leader 是非常稳定的，那么我们往往不需要准备阶段的工作，这样就能将 RPC 的次数减少一半。</p>
-<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180217151884920428994.png style=display:block;width:50% alt=NAME align=center> </div>
-<p>上图中描述的就是稳定阶段 Multi-Paxos 的处理过程，S1 是整个集群的 Leader，当其他的节点接收到来自客户端的请求时，都会将请求转发给 Leader 进行处理。</p>
-<p>当然，Leader 角色的出现自然会带来另一个问题，也就是 Leader 究竟应该如何选举，在 <a href=http://140.123.102.14:8080/reportSys/file/paper/lei/lei_5_paper.pdf>Paxos Made Simple</a> 一文中并没有给出 Multi-Paxos 的具体实现方法和细节，所以不同的 Multi-Paxos 实现会有各种细微的差别。</p>
-<h4 id=raft>Raft</h4>
-<p>Raft 其实就是 Multi-Paxos 的一个变种，Raft 通过简化 Multi-Paxos 模型，实现了一种更易让人理解的共识算法，它们两者都能够对一系列连续的问题达成一致。</p>
-<p>Raft 在 Multi-Paxos 的基础上做了两个限制，首先是 Raft 中追加日志的操作必须是连续的，而 Multi-Paxos 中追加日志的操作是并发的，但是对于节点内部的状态机来说两者都是有序的；第二就是 Raft 对 Leader 选举的条件做了限制，只有拥有最新、最全日志的节点才能够当选 Leader，但是 Multi-Paxos 由于任意节点都可以写日志，所以在选择 Leader 上么有什么限制，只是在选择 Leader 之后需要将 Leader 中的日志补全。</p>
-<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180217151885257638482.png style=display:block;width:50% alt=NAME align=center> </div>
-<p>在 Raft 中，所有 Follower 的日志都是 Leader 的子集，而 Multi-Paxos 中的日志并不会做这个保证，由于 Raft 对日志追加的方式和选举过程进行了限制，所以在实现上会更加容易和简单。</p>
-<p>从理论上来讲，支持并发日志追加的 Paxos 会比 Raft 拥有更加优秀的性能，不过其理解和实现上还是比较复杂的，很多人都会说 Paxos 是科学，而 Raft 是工程，当作者需要去实现一个共识算法，会选择使用 Raft 和更简洁的实现，避免因为一些边界条件带来的复杂问题。</p>
-<p>可以查看 <a href=https://raft.github.io/>The Raft Consensus Algorithm</a> 了解更多 Raft 的细节。</p>
-<h3 id=powproof-of-work>POW：Proof-of-Work</h3>
-<p>上一节介绍的共识算法，无论是 Paxos 还是 Raft 其实都只能解决拜占庭将军问题的一致性问题，不能够应对分布式网络中出现的极端情况，但是这在传统的分布式系统都不是什么问题，无论分布式数据库还是消息队列集群，它们内部的节点并不会故意发送错误信息，在类似系统中，最常见的问题就是节点失去响应或失效，所以它们在这种情况下是有效可行的，也是充分的。</p>
-<p>这一节介绍的 <a href=https://en.wikipedia.org/wiki/Proof-of-work_system>工作量证明</a> 是一个用于阻止拒绝服务攻击(DDOS)和类似垃圾邮件等服务错误问题的协议，它在 1993 年被 Cynthia Dwork 和 Moni Naor 提出，它能够帮助分布式系统达到拜占庭容错。</p>
-<p>工作量证明的关键特点就是，分布式系统中的请求服务的节点必须解决一个<strong>一般难度但是可行(feasible)的问题</strong>，但是验证问题答案的过程对于服务提供者来说却非常容易，也就是一个不容易解答但是容易验证的问题。</p>
-<p>这种问题通常需要消耗一定的 CPU 时间来计算某个问题的答案，目前最大的区块链网络-比特币(Bitcoin) 就使用了工作量证明的分布式一致性算法，在网络中的所有节点计算通过以下的谜题来获得当前区块的记账权：</p>
-<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180217151885399218765.png style=display:block;width:50% alt=NAME align=center> </div>
-<p>SHA-256 作为一个哈希函数，想要通过 SHA-256 函数的输出推断输入在目前来看可能性是可以忽略不计的，比特币网络就需要每一个及诶单不断改变 NONCE 来得到不同的 HASH，如果得到的 HASH 结果在小于某个范围，目前(2017-12-17)的难度是：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>0x0000000000000000000000000000000000000000000000000000017268d8a21a
-</code></pre></div><p>也就是说如果只计算一次 SHA-256 的值能够小于上述结果的可能性是 1.37 ∗ 10^-65，当前的全网算力也达到了 13,919 PH/s，这是个非常恐怖的数字，随着网络算力的不断改变，比特币也会不断改变当前问题的难度，保证每个区块被发现的时间在 10min 左右；整个比特币网络中，谁先得到当前问题的答案就能获得这个区块的记账权，并将当前区块通过 Gossip 协议发送给尽可能多的比特币节点。</p>
-<p>工作量证明的原理其实非常简单，比特币网络选择的谜题非常好的适应了工作量证明定义中的问题，比较难以计算同时又易于验证，我们可以简单理解为工作量证明防止错误或者无效请求的原理就是增加客户端请求服务的工作量，而适合难度的谜题又能保证合法的请求不会受影响。</p>
-<p>由于工作量证明需要消耗大量的算力，同时比特币大约 10min 才会产生一个区块，区块的大小也只有 1MB，仅仅能够包含 3-4000 笔交易，平均下来每秒只能够处理 5~7 笔交易，所以比特币网络的拥堵非常严重。</p>
-<h3 id=posproof-of-stake>POS：Proof-of-Stake</h3>
-<p>权益证明是区块链网络中使用的另一种共识算法，在基于权益证明的加密货币中，下一个区块的选择是根据不同节点的股份和时间随机进行的。</p>
-<p>由于创造新的区块不会消耗大量的 CPU，如果它不诚实也不会造成什么损失，这也就给了很多节点作弊的理由，每个节点为了最大化利益会在多条链上同时挖矿。</p>
-<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180217151885486336299.png style=display:block;width:50% alt=NAME align=center> </div>
-<p>在早期的所有权证明算法中，整个网络只会奖励创建区块的节点，不存在任何惩罚，这时每个节点在创造的多条链上同时投票才能够最大化利益，在这种情况下网络中的节点很难对一条链达成共识。</p>
-<p>有两种办法能够解决缺乏厉害关系(nothing-at-stake)造成的问题，一种是使用 <a href=https://blog.ethereum.org/2014/01/15/slasher-a-punitive-proof-of-stake-algorithm/>Slasher</a> 协议，惩罚同时在多条链上投票的节点；第二种方法是直接惩罚在错误的链上创建块的节点，总而言之就是通过算法之外的手段来解决这个问题，引入激励和惩罚。</p>
-<p>与工作量证明相比，权益证明不需要消耗大量的电力就能保证区块链网络的安全性，同时也不需要在每个区块中创建新的货币来激励旷工参与当前网络的运行，这也就在一定程度上缩短了达成共识所需要的时间，基于权益证明的 Ethereum 每秒大概处理 30 笔交易左右。</p>
-<h3 id=dposdelegated-proof-of-stake>DPOS：Delegated Proof-of-Stake</h3>
-<p>前面介绍的权益证明算法可以将整个区块链网络理解为一家公司，出资最多、占比最大的人又更多的机会得到话语权(记账权)；对于小股东来说，千分之几甚至万分之几的股份很难有什么作为，只能得到股份带来的分红和收益。</p>
-<p>但是在这里介绍的委托权益证明能够让每个人选出可以代表自己利益的人参与到记账权的争夺中，这样多个小股东就能够通过投票选出自己的代理人，保障自己的利益。整个网络中选举出的多个节点能够在 1s 之内对 99.9% 的交易进行确认，使用委托权益证明的 EOS 能够每秒处理几十万笔交易，同时也能够比较监管的干预。</p>
-<p>在委托权益证明中，每个参与者都能够选举任意数量的节点生成下一个区块，得票最多的前 N 个节点会被选择成为区块的创建者，下一个区块的创建者就会从这样一组当选者中随机选取，除此之外，N 的数量也是整个网络投票决定的，所以可以尽可能的保证网络的去中心化。</p>
-<h2 id=reference>Reference</h2>
-<ul>
-<li><a href=https://en.wikipedia.org/wiki/Consensus_(computer_science)>Consensus (computer science)</a></li>
-<li><a href=http://blog.csdn.net/lsttoy/article/details/61624287>区块链共识算法（POW,POS,DPOS,PBFT）介绍和心得</a></li>
-<li><a href=https://yeasy.gitbooks.io/blockchain_guide/content/distribute_system/paxos.html>Paxos 与 Raft</a></li>
-<li><a href=https://en.wikipedia.org/wiki/Proof-of-work_system>Proof-of-work system</a></li>
-<li><a href=https://en.wikipedia.org/wiki/Proof-of-stake>Proof-of-stake</a></li>
-<li><a href=https://github.com/ethereum/wiki/wiki/Proof-of-Stake-FAQ>Proof of Stake FAQ · Ethereum Wiki</a></li>
-<li><a href=http://docs.bitshares.org/bitshares/dpos.html>Delegated Proof of Stake</a></li>
-<li><a href=https://bitshares.org/technology/delegated-proof-of-stake-consensus/>Delegated Proof-of-Stake Consensus</a></li>
-<li><a href=https://steemit.com/dpos/@legendx/dpos>DPOS共识算法 – 缺失的白皮书</a></li>
-<li><a href=https://yeasy.gitbooks.io/blockchain_guide/content/distribute_system/consensus.html>共识算法</a></li>
-<li><a href=https://en.wikipedia.org/wiki/CAP_theorem>CAP theorem</a></li>
-<li><a href=http://140.123.102.14:8080/reportSys/file/paper/lei/lei_5_paper.pdf>Paxos Made Simple</a></li>
-<li><a href=https://raft.github.io/>The Raft Consensus Algorithm</a></li>
-<li><a href=https://raft.github.io/raft.pdf>In Search of an Understandable Consensus Algorithm</a></li>
-<li><a href=https://baotiao.github.io/2016/05/05/paxos-raft/>谈谈 paxos, multi-paxos, raft</a></li>
-<li><a href="http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.67.6951&rep=rep1&type=pdf">Brewer’s Conjecture and the Feasibility of Consistent, Available, Partition-Tolerant Web Services</a></li>
-<li><a href=https://stackoverflow.com/questions/29381442/eventual-consistency-vs-strong-eventual-consistency-vs-strong-consistency>“Eventual Consistency” vs “Strong Eventual Consistency” vs “Strong Consistency”?</a></li>
-<li><a href=https://groups.csail.mit.edu/tds/papers/Lynch/jacm85.pdf>Impossibility of Distributed Consensuswith One Faulty Process</a></li>
-<li><a href=https://web.archive.org/web/20170205142845/http://lamport.azurewebsites.net/pubs/byz.pdf>The Byzantine Generals Problem</a></li>
-<li><a href=https://en.wikipedia.org/wiki/Byzantine_fault_tolerance>Byzantine fault tolerance</a></li>
-<li><a href=http://the-paper-trail.org/blog/a-brief-tour-of-flp-impossibility/>A Brief Tour of FLP Impossibility</a></li>
-<li><a href=http://140.123.102.14:8080/reportSys/file/paper/lei/lei_5_paper.pdf>Paxos Made Simple</a></li>
-<li><a href=http://harry.me/blog/2014/12/27/neat-algorithms-paxos/>Neat Algorithms - Paxos</a></li>
-<li><a href=http://danielw.cn/FLP-proof>FLP Impossibility 的证明</a></li>
-<li><a href=https://read.douban.com/ebook/42852957/>白话区块链</a></li>
-<li><a href=https://en.wikipedia.org/wiki/Paxos_(computer_science)>Paxos</a></li>
-<li><a href="https://www.youtube.com/watch?v=JEpsBg0AO6o">Paxos lecture (Raft user study)</a></li>
-<li><a href=https://bitcoin.org/bitcoin.pdf>Bitcoin: A Peer-to-Peer Electronic Cash System</a></li>
-<li><a href=https://en.bitcoin.it/wiki/Proof_of_Stake>Proof of Stake · Bitcoin Wiki</a></li>
-<li><a href=https://blog.ethereum.org/2014/01/15/slasher-a-punitive-proof-of-stake-algorithm/>Slasher</a></li>
-<li><a href=https://github.com/ethereum/wiki/wiki/Proof-of-Stake-FAQ>Proof of Stake FAQ</a></li>
-</ul>
-</div>
-<div class=td-content style=page-break-before:always>
-<h1 id=pg-5972a917bbf5042578567f6c7c1d5c11>17 - 一致性哈希算法</h1>
+<h1 id=pg-5972a917bbf5042578567f6c7c1d5c11>18 - 一致性哈希算法</h1>
 <p>当我们在做数据库分库分表或者是分布式缓存时，不可避免的都会遇到一个问题: <strong>如何将数据均匀的分散到各个节点中，并且尽量的在加减节点时能使受影响的数据最少。</strong></p>
 <h2 id=hash-取模>Hash 取模</h2>
 <p>随机放置就不说了，会带来很多问题。通常最容易想到的方案就是 hash 取模了。</p>
