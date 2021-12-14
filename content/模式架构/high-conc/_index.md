@@ -7,5 +7,5 @@ weight: 4
 ---
 
 {{% pageinfo color="primary" %}}
-高并发系统设计
+原文链接：[高并发系统设计](https://zq99299.github.io/note-architect/hc/)
 {{% /pageinfo %}}
