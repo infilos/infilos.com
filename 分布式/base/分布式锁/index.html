@@ -2,7 +2,7 @@
 <head>
 <meta charset=utf-8>
 <meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no">
-<meta name=generator content="Hugo 0.89.4">
+<meta name=generator content="Hugo 0.90.1">
 <meta name=ROBOTS content="INDEX, FOLLOW">
 <link rel="shortcut icon" href=/favicons/favicon.ico>
 <link rel=apple-touch-icon href=/favicons/apple-touch-icon-180x180.png sizes=180x180>
@@ -41,7 +41,7 @@ deletefrommethodLockwheremethod_name='method_name';缺点：
  这把锁强依赖于数据库的高可用性； 锁没有失效时间，一旦解锁操作失败，将导致其他线程无法再获得锁； 这把锁只能是非阻塞的，因为数据的插入操作一旦失败就会返回报错。没有获得锁的线程并不会排队进入队列，想要再次获得锁就要再次出发获得锁操作； 这把锁是非重入的，同一个线程在没有释放锁之前无法再次获得该锁。因为表中数据已经存在了。  解决方法：
  使用分布式数据库； 使用定时任务，按时清理超时的锁； 通过 while 循环直到插入成功； 添加字段，记录当前获得锁的主机的信息和线程信息，然后在下次获取锁时先查询，如果信息匹配则分配锁。  基于数据库排它锁 基于 MySQL 中 InnoDB 自带的排它锁实现加锁：
 public boolean lock(){ connection.setAutoCommit(false) while(true){ try{ result = select * from methodLock where method_name=xxx for update; if(result==null){ return true; } }catch(Exception e){ } sleep(1000); } return false; } 在查询语句后面增加for update，数据库会在查询过程中给数据库表增加排它锁，当某条记录被加上排它锁之后，其他线程则无法再在该记录上增加排它锁。">
-<meta itemprop=wordCount content="254">
+<meta itemprop=wordCount content="252">
 <meta itemprop=keywords content><meta name=twitter:card content="summary">
 <meta name=twitter:title content="分布式锁">
 <meta name=twitter:description content="前情提要 基于分布式的 CAP (一致性、可用性、容错性)原理，系统在设计之初必须要考虑取舍，在互联网领域的绝大多数场景中，一般会牺牲强一致性来换取高可用性，只需要保证最终一致性即可，而这个最终一致的时间是用户可接受的范围即可。
@@ -204,6 +204,10 @@ public boolean lock(){ connection.setAutoCommit(false) while(true){ try{ result 
 <a href=/%E5%88%86%E5%B8%83%E5%BC%8F/base/%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/ class="align-left pl-0 active td-sidebar-link td-sidebar-link__page" id=m-e58886e5b883e5bc8fbasee58886e5b883e5bc8fe99481><span class=td-sidebar-nav-active-item>分布式锁</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e58886e5b883e5bc8fbasee4b880e887b4e680a7e59388e5b88c-li>
 <a href=/%E5%88%86%E5%B8%83%E5%BC%8F/base/%E4%B8%80%E8%87%B4%E6%80%A7%E5%93%88%E5%B8%8C/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e58886e5b883e5bc8fbasee4b880e887b4e680a7e59388e5b88c><span>一致性哈希算法</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e58886e5b883e5bc8fbasee585a8e5b180e594afe4b880e6a087e8af86-li>
+<a href=/%E5%88%86%E5%B8%83%E5%BC%8F/base/%E5%85%A8%E5%B1%80%E5%94%AF%E4%B8%80%E6%A0%87%E8%AF%86/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e58886e5b883e5bc8fbasee585a8e5b180e594afe4b880e6a087e8af86><span>全局唯一标识</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e58886e5b883e5bc8fbasee58886e5b883e5bc8fe8b0ace8afaf-li>
+<a href=/%E5%88%86%E5%B8%83%E5%BC%8F/base/%E5%88%86%E5%B8%83%E5%BC%8F%E8%B0%AC%E8%AF%AF/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e58886e5b883e5bc8fbasee58886e5b883e5bc8fe8b0ace8afaf><span>分布式谬误</span></a>
 </li>
 </ul>
 </li>
@@ -232,7 +236,6 @@ public boolean lock(){ connection.setAutoCommit(false) while(true){ try{ result 
 <li><a href=#基于缓存>基于缓存</a></li>
 <li><a href=#基于-zk>基于 ZK</a></li>
 <li><a href=#总结>总结</a></li>
-<li><a href=#todo>TODO</a></li>
 </ul>
 </nav></div>
 </aside>
@@ -396,10 +399,6 @@ public boolean lock(){ connection.setAutoCommit(false) while(true){ try{ result 
 <p>从实现复杂度(由低到高)：ZK -= 缓存 - 数据库</p>
 <p>性能角度(由高到低)：缓存 - ZK -= 数据库</p>
 <p>可靠性(由高到低)：ZK - 缓存 - 数据库</p>
-<h2 id=todo>TODO</h2>
-<ul>
-<li><a href="https://mp.weixin.qq.com/s?__biz=MzI4MTY5NTk4Ng==&mid=2247488964&amp;amp;idx=1&amp;amp;sn=f9a39b244202656a2dcc2c9705190a74&source=41#wechat_redirect">https://mp.weixin.qq.com/s?__biz=MzI4MTY5NTk4Ng==&mid=2247488964&amp;amp;idx=1&amp;amp;sn=f9a39b244202656a2dcc2c9705190a74&source=41#wechat_redirect</a></li>
-</ul>
 <style>.feedback--answer{display:inline-block}.feedback--answer-no{margin-left:1em}.feedback--response{display:none;margin-top:1em}.feedback--response__visible{display:block}</style>
 <div class=d-print-none>
 <h2 class=feedback--title>Feedback</h2>

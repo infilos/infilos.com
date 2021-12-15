@@ -2,7 +2,7 @@
 <head>
 <meta charset=utf-8>
 <meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no">
-<meta name=generator content="Hugo 0.89.4">
+<meta name=generator content="Hugo 0.90.1">
 <meta name=ROBOTS content="INDEX, FOLLOW">
 <link rel=canonical type=text/html href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql/>
 <link rel="shortcut icon" href=/favicons/favicon.ico>
@@ -587,7 +587,67 @@
 </span></code></pre></div><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sql data-lang=sql><span style=color:#204a87;font-weight:700>SELECT</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#ce5c00;font-weight:700>*</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>FROM</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#000>tag</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>WHERE</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#000>tag</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#4e9a06>&#39;mysql&#39;</span><span style=color:#000;font-weight:700>;</span><span style=color:#f8f8f8;text-decoration:underline>
 </span><span style=color:#f8f8f8;text-decoration:underline></span><span style=color:#204a87;font-weight:700>SELECT</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#ce5c00;font-weight:700>*</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>FROM</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#000>tag_post</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>WHERE</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#000>tag_id</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#0000cf;font-weight:700>1234</span><span style=color:#000;font-weight:700>;</span><span style=color:#f8f8f8;text-decoration:underline>
 </span><span style=color:#f8f8f8;text-decoration:underline></span><span style=color:#204a87;font-weight:700>SELECT</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#ce5c00;font-weight:700>*</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>FROM</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#000>post</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>WHERE</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#000>post</span><span style=color:#000;font-weight:700>.</span><span style=color:#000>id</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>IN</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#000;font-weight:700>(</span><span style=color:#0000cf;font-weight:700>123</span><span style=color:#000;font-weight:700>,</span><span style=color:#0000cf;font-weight:700>456</span><span style=color:#000;font-weight:700>,</span><span style=color:#0000cf;font-weight:700>567</span><span style=color:#000;font-weight:700>,</span><span style=color:#0000cf;font-weight:700>9098</span><span style=color:#000;font-weight:700>,</span><span style=color:#0000cf;font-weight:700>8904</span><span style=color:#000;font-weight:700>);</span><span style=color:#f8f8f8;text-decoration:underline>
-</span></code></pre></div>
+</span></code></pre></div><h2 id=语句执行顺序>语句执行顺序</h2>
+<p>以下是 SQL 中各个子句的语法顺序，前面括号内的数字代表了它们的逻辑执行顺序：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>(6)SELECT [DISTINCT | ALL] col1, col2, agg_func(col3) AS alias
+(1)  FROM t1 JOIN t2
+(2)    ON (join_conditions)
+(3) WHERE where_conditions
+(4) GROUP BY col1, col2
+(5)HAVING having_condition
+(7) UNION [ALL]
+   ...
+(8) ORDER BY col1 ASC,col2 DESC
+(9)OFFSET m ROWS FETCH NEXT num_rows ROWS ONLY;
+</code></pre></div><p>也就是说，SQL 并不是按照编写顺序先执行 SELECT，然后再执行 FROM 子句。从逻辑上讲，SQL 语句的执行顺序如下：</p>
+<ol>
+<li>首先，FROM 和 JOIN 是 SQL 语句执行的第一步。它们的逻辑结果是一个笛卡尔积，决定了接下来要操作的数据集。注意逻辑执行顺序并不代表物理执行顺序，实际上数据库在获取表中的数据之前会使用 ON 和 WHERE 过滤条件进行优化访问；</li>
+<li>其次，应用 ON 条件对上一步的结果进行过滤并生成新的数据集；</li>
+<li>然后，执行 WHERE 子句对上一步的数据集再次进行过滤。WHERE 和 ON 大多数情况下的效果相同，但是外连接查询有所区别，我们将会在下文给出示例；</li>
+<li>接着，基于 GROUP BY 子句指定的表达式进行分组；同时，对于每个分组计算聚合函数 agg_func 的结果。经过 GROUP BY 处理之后，数据集的结构就发生了变化，只保留了分组字段和聚合函数的结果；</li>
+<li>如果存在 GROUP BY 子句，可以利用 HAVING 针对分组后的结果进一步进行过滤，通常是针对聚合函数的结果进行过滤；</li>
+<li>接下来，SELECT 可以指定要返回的列；如果指定了 DISTINCT 关键字，需要对结果集进行去重操作。另外还会为指定了 AS 的字段生成别名；</li>
+<li>如果还有集合操作符（UNION、INTERSECT、EXCEPT）和其他的 SELECT 语句，执行该查询并且合并两个结果集。对于集合操作中的多个 SELECT 语句，数据库通常可以支持并发执行；</li>
+<li>然后，应用 ORDER BY 子句对结果进行排序。如果存在 GROUP BY 子句或者 DISTINCT 关键字，只能使用分组字段和聚合函数进行排序；否则，可以使用 FROM 和 JOIN 表中的任何字段排序；</li>
+<li>最后，OFFSET 和 FETCH（LIMIT、TOP）限定了最终返回的行数。</li>
+</ol>
+<p>了解 SQL 逻辑执行顺序可以帮助我们进行 SQL 优化。例如 WHERE 子句在 HAVING 子句之前执行，因此我们应该尽量使用 WHERE 进行数据过滤，避免无谓的操作；除非业务需要针对聚合函数的结果进行过滤。</p>
+<p>除此之外，理解 SQL 的逻辑执行顺序还可以帮助我们避免一些常见的错误，例如以下语句：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>-- 错误示例
+SELECT emp_name AS empname
+  FROM employee
+ WHERE empname =&#39;张飞&#39;;
+</code></pre></div><p>该语句的错误在于 WHERE 条件中引用了列别名；从上面的逻辑顺序可以看出，执行 WHERE 条件时还没有执行 SELECT 子句，也就没有生成字段的别名。</p>
+<p>另外一个需要注意的操作就是 GROUP BY，例如：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>-- GROUP BY 错误示例
+SELECT dept_id, emp_name, AVG(salary)
+  FROM employee
+ GROUP BY dept_id;
+</code></pre></div><p>由于经过 GROUP BY 处理之后结果集只保留了分组字段和聚合函数的结果，示例中的 emp_name 字段已经不存在；从业务逻辑上来说，按照部门分组统计之后再显示某个员工的姓名没有意义。如果需要同时显示员工信息和所在部门的汇总，可以使用窗口函数。</p>
+<blockquote>
+<p>如果使用了 GROUP BY 分组，之后的 SELECT、ORDER BY 等只能引用分组字段或者聚合函数；否则，可以引用 FROM 和 JOIN 表中的任何字段。</p>
+</blockquote>
+<p>还有一些逻辑问题可能不会直接导致查询出错，但是会返回不正确的结果；例如外连接查询中的 ON 和 WHERE 条件。以下是一个左外连接查询的示例：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>SELECT e.emp_name, d.dept_name
+  FROM employee e
+  LEFT JOIN department d ON (e.dept_id = d.dept_id)
+ WHERE e.emp_name =&#39;张飞&#39;;
+emp_name|dept_name|
+--------|---------|
+张飞     |行政管理部|
+
+SELECT e.emp_name, d.dept_name
+  FROM employee e
+  LEFT JOIN department d ON (e.dept_id = d.dept_id AND e.emp_name =&#39;张飞&#39;);
+emp_name|dept_name|
+--------|---------|
+刘备     |   [NULL]|
+关羽     |   [NULL]|
+张飞     |行政管理部|
+诸葛亮   |   [NULL]|
+...
+</code></pre></div><p>第一个查询在 ON 子句中指定了连接的条件，同时通过 WHERE 子句找出了“张飞”的信息。</p>
+<p>第二个查询将所有的过滤条件都放在 ON 子句中，结果返回了所有的员工信息。这是因为左外连接会返回左表中的全部数据，即使 ON 子句中指定了员工姓名也不会生效；而 WHERE 条件在逻辑上是对连接操作之后的结果进行过滤。</p>
 </div>
 <div class=td-content style=page-break-before:always>
 <h1 id=pg-29d040819faa80f395ba725e176690a3>5 - CH05-分库分表</h1>

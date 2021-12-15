@@ -1,0 +1,557 @@
+<!doctype html><html lang=zh class=no-js>
+<head>
+<meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no">
+<meta name=generator content="Hugo 0.90.1">
+<meta name=ROBOTS content="INDEX, FOLLOW">
+<link rel="shortcut icon" href=/favicons/favicon.ico>
+<link rel=apple-touch-icon href=/favicons/apple-touch-icon-180x180.png sizes=180x180>
+<link rel=icon type=image/png href=/favicons/favicon-16x16.png sizes=16x16>
+<link rel=icon type=image/png href=/favicons/favicon-32x32.png sizes=32x32>
+<link rel=icon type=image/png href=/favicons/android-36x36.png sizes=36x36>
+<link rel=icon type=image/png href=/favicons/android-48x48.png sizes=48x48>
+<link rel=icon type=image/png href=/favicons/android-72x72.png sizes=72x72>
+<link rel=icon type=image/png href=/favicons/android-96x96.png sizes=96x96>
+<link rel=icon type=image/png href=/favicons/android-144x144.png sizes=144x144>
+<link rel=icon type=image/png href=/favicons/android-192x192.png sizes=192x192>
+<title>CH30-维护-后端监控 | infilos.com</title><meta property="og:title" content="CH30-维护-后端监控">
+<meta property="og:description" content="在一个项目的生命周期里，运行维护占据着很大的比重，在重要性上，它几乎与项目研发并驾齐驱。而在系统运维过程中，能够及时地发现问题并解决问题，是每一个团队的本职工作。所以，你的垂直电商系统在搭建之初，运维团队肯定完成了对于机器 CPU、内存、磁盘、网络等基础监控，期望能在出现问题时，及时地发现并且处理。你本以为万事大吉，却没想到系统在运行过程中，频频得到用户的投诉，原因是：
+ 使用的数据库主从延迟变长，导致业务功能上出现了问题； 接口的响应时间变长，用户反馈商品页面出现空白页； 系统中出现大量错误，影响了用户的正常使用。  这些问题，你本应该及时发现并处理的。但现实是，你只能被动地在问题被用户反馈后，手忙脚乱地修复。这时，你的团队才意识到，要想快速地发现和定位业务系统中出现的问题，必须搭建一套完善的服务端监控体系。正所谓「道路千万条，监控第一条，监控不到位，领导两行泪」。不过，在搭建的过程中，你的团队又陷入了困境：
+ 首先，监控的指标要如何选择呢？ 采集这些指标可以有哪些方法和途径呢？ 指标采集到之后又要如何处理和展示呢？  这些问题，一环扣一环，关乎着系统的稳定性和可用性，而本节课，我就带你解决这些问题，搭建一套服务端监控体系。
+监控指标如何选择 你在搭建监控系统时，所面临的第一个问题就是，选择什么样的监控指标，也就是监控什么。有些同学在给一个新的系统，设定监控指标的时候，会比较迷茫，不知道从哪方面入手。其实，有一些成熟的理论和套路，你可以直接拿来使用。比如，谷歌针对分布式系统监控的经验总结，四个黄金信号（Four Golden Signals）。它指的是，在服务层面一般需要监控四个指标， 分别是延迟，通信量、错误和饱和度。
+ 延迟指的是请求的响应时间。比如，接口的响应时间、访问数据库和缓存的响应时间。 通信量可以理解为吞吐量，也就是单位时间内，请求量的大小。比如，访问第三方服务的请求量，访问消息队列的请求量。 错误表示当前系统发生的错误数量。这里需要注意的是， 我们需要监控的错误既有显示的，比如在监控 Web 服务时，出现 4xx 和 5xx 的响应码；也有隐示的，比如，Web 服务虽然返回的响应码是 200，但是却发生了一些和业务相关的错误（出现了数组越界的异常或者空指针异常等），这些都是错误的范畴。 饱和度指的是服务或者资源到达上限的程度（也可以说是服务或者资源的利用率），比如说 CPU 的使用率，内存使用率，磁盘使用率，缓存数据库的连接数等等。  这四个黄金信号提供了通用的监控指标，除此之外，你还可以借鉴 RED 指标体系。 这个体系，是四个黄金信号中衍生出来的，其中，R 代表请求量（Request rate），E 代表错误（Error），D 代表响应时间（Duration），少了饱和度的指标。你可以把它当作一种简化版的通用监控指标体系。
+当然，一些组件或者服务还有独特的指标，这些指标也是需要你特殊关注的。比如，课程中提到的数据库主从延迟数据、消息队列的堆积情况、缓存的命中率等等。我把高并发系统中常见组件的监控指标，整理成了一张表格，其中没有包含诸如 CPU、内存、网络、磁盘等基础监控指标，只是业务上监控指标，主要方便你在实际工作中参考使用。
+ 选择好了监控指标之后，你接下来要考虑的，是如何从组件或者服务中，采集到这些指标，也就是指标数据采集的问题。
+如何采集数据指标 说到监控指标的采集，我们一般会依据采集数据源的不同，选用不同的采集方式，总结起来，大概有以下几种类型：
+首先， Agent 是一种比较常见的，采集数据指标的方式。
+我们通过在数据源的服务器上，部署自研或者开源的 Agent，来收集收据，发送给监控系统，实现数据的采集。在采集数据源上的信息时，Agent 会依据数据源上，提供的一些接口获取数据，我给你举两个典型的例子。
+比如，你要从 Memcached 服务器上，获取它的性能数据，那么，你就可以在 Agent 中，连接这个 Memcached 服务器，并且发送一个 stats 命令，获取服务器的统计信息。然后，你就可以从返回的信息中，挑选重要的监控指标，发送给监控服务器，形成 Memcached 服务的监控报表。你也可以从这些统计信息中，看出当前 Memcached 服务器，是否存在潜在的问题。下面是我推荐的，一些重要的状态项，你可以参考使用。
+STAT cmd_get 201809037423 // 计算查询的 QPS STAT cmd_set 16174920166 // 计算写入的 QPS STAT get_hits 175226700643 // 用来计算命中率，命中率 = get_hits/cmd_get STAT curr_connections 1416 // 当前连接数 STAT bytes 3738857307 // 当前内存占用量 STAT evictions 11008640149 // 当前被 memcached 服务器剔除的 item 数量，如果这个数量过大 (比如例子中的这个数值），那么代表当前 Memcached 容量不足或者 Memcached Slab Class 分配有问题 另外，如果你是 Java 的开发者，那么一般使用 Java 语言开发的中间件，或者组件，都可以通过 JMX 获取统计或者监控信息。比如，在 19 讲中，我提到可以使用 JMX，监控 Kafka 队列的堆积数，再比如，你也可以通过 JMX 监控 JVM 内存信息和 GC 相关的信息。">
+<meta property="og:type" content="article">
+<meta property="og:url" content="/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch30/"><meta property="article:section" content="模式架构">
+<meta property="og:site_name" content="infilos.com">
+<meta itemprop=name content="CH30-维护-后端监控">
+<meta itemprop=description content="在一个项目的生命周期里，运行维护占据着很大的比重，在重要性上，它几乎与项目研发并驾齐驱。而在系统运维过程中，能够及时地发现问题并解决问题，是每一个团队的本职工作。所以，你的垂直电商系统在搭建之初，运维团队肯定完成了对于机器 CPU、内存、磁盘、网络等基础监控，期望能在出现问题时，及时地发现并且处理。你本以为万事大吉，却没想到系统在运行过程中，频频得到用户的投诉，原因是：
+ 使用的数据库主从延迟变长，导致业务功能上出现了问题； 接口的响应时间变长，用户反馈商品页面出现空白页； 系统中出现大量错误，影响了用户的正常使用。  这些问题，你本应该及时发现并处理的。但现实是，你只能被动地在问题被用户反馈后，手忙脚乱地修复。这时，你的团队才意识到，要想快速地发现和定位业务系统中出现的问题，必须搭建一套完善的服务端监控体系。正所谓「道路千万条，监控第一条，监控不到位，领导两行泪」。不过，在搭建的过程中，你的团队又陷入了困境：
+ 首先，监控的指标要如何选择呢？ 采集这些指标可以有哪些方法和途径呢？ 指标采集到之后又要如何处理和展示呢？  这些问题，一环扣一环，关乎着系统的稳定性和可用性，而本节课，我就带你解决这些问题，搭建一套服务端监控体系。
+监控指标如何选择 你在搭建监控系统时，所面临的第一个问题就是，选择什么样的监控指标，也就是监控什么。有些同学在给一个新的系统，设定监控指标的时候，会比较迷茫，不知道从哪方面入手。其实，有一些成熟的理论和套路，你可以直接拿来使用。比如，谷歌针对分布式系统监控的经验总结，四个黄金信号（Four Golden Signals）。它指的是，在服务层面一般需要监控四个指标， 分别是延迟，通信量、错误和饱和度。
+ 延迟指的是请求的响应时间。比如，接口的响应时间、访问数据库和缓存的响应时间。 通信量可以理解为吞吐量，也就是单位时间内，请求量的大小。比如，访问第三方服务的请求量，访问消息队列的请求量。 错误表示当前系统发生的错误数量。这里需要注意的是， 我们需要监控的错误既有显示的，比如在监控 Web 服务时，出现 4xx 和 5xx 的响应码；也有隐示的，比如，Web 服务虽然返回的响应码是 200，但是却发生了一些和业务相关的错误（出现了数组越界的异常或者空指针异常等），这些都是错误的范畴。 饱和度指的是服务或者资源到达上限的程度（也可以说是服务或者资源的利用率），比如说 CPU 的使用率，内存使用率，磁盘使用率，缓存数据库的连接数等等。  这四个黄金信号提供了通用的监控指标，除此之外，你还可以借鉴 RED 指标体系。 这个体系，是四个黄金信号中衍生出来的，其中，R 代表请求量（Request rate），E 代表错误（Error），D 代表响应时间（Duration），少了饱和度的指标。你可以把它当作一种简化版的通用监控指标体系。
+当然，一些组件或者服务还有独特的指标，这些指标也是需要你特殊关注的。比如，课程中提到的数据库主从延迟数据、消息队列的堆积情况、缓存的命中率等等。我把高并发系统中常见组件的监控指标，整理成了一张表格，其中没有包含诸如 CPU、内存、网络、磁盘等基础监控指标，只是业务上监控指标，主要方便你在实际工作中参考使用。
+ 选择好了监控指标之后，你接下来要考虑的，是如何从组件或者服务中，采集到这些指标，也就是指标数据采集的问题。
+如何采集数据指标 说到监控指标的采集，我们一般会依据采集数据源的不同，选用不同的采集方式，总结起来，大概有以下几种类型：
+首先， Agent 是一种比较常见的，采集数据指标的方式。
+我们通过在数据源的服务器上，部署自研或者开源的 Agent，来收集收据，发送给监控系统，实现数据的采集。在采集数据源上的信息时，Agent 会依据数据源上，提供的一些接口获取数据，我给你举两个典型的例子。
+比如，你要从 Memcached 服务器上，获取它的性能数据，那么，你就可以在 Agent 中，连接这个 Memcached 服务器，并且发送一个 stats 命令，获取服务器的统计信息。然后，你就可以从返回的信息中，挑选重要的监控指标，发送给监控服务器，形成 Memcached 服务的监控报表。你也可以从这些统计信息中，看出当前 Memcached 服务器，是否存在潜在的问题。下面是我推荐的，一些重要的状态项，你可以参考使用。
+STAT cmd_get 201809037423 // 计算查询的 QPS STAT cmd_set 16174920166 // 计算写入的 QPS STAT get_hits 175226700643 // 用来计算命中率，命中率 = get_hits/cmd_get STAT curr_connections 1416 // 当前连接数 STAT bytes 3738857307 // 当前内存占用量 STAT evictions 11008640149 // 当前被 memcached 服务器剔除的 item 数量，如果这个数量过大 (比如例子中的这个数值），那么代表当前 Memcached 容量不足或者 Memcached Slab Class 分配有问题 另外，如果你是 Java 的开发者，那么一般使用 Java 语言开发的中间件，或者组件，都可以通过 JMX 获取统计或者监控信息。比如，在 19 讲中，我提到可以使用 JMX，监控 Kafka 队列的堆积数，再比如，你也可以通过 JMX 监控 JVM 内存信息和 GC 相关的信息。">
+<meta itemprop=wordCount content="197">
+<meta itemprop=keywords content><meta name=twitter:card content="summary">
+<meta name=twitter:title content="CH30-维护-后端监控">
+<meta name=twitter:description content="在一个项目的生命周期里，运行维护占据着很大的比重，在重要性上，它几乎与项目研发并驾齐驱。而在系统运维过程中，能够及时地发现问题并解决问题，是每一个团队的本职工作。所以，你的垂直电商系统在搭建之初，运维团队肯定完成了对于机器 CPU、内存、磁盘、网络等基础监控，期望能在出现问题时，及时地发现并且处理。你本以为万事大吉，却没想到系统在运行过程中，频频得到用户的投诉，原因是：
+ 使用的数据库主从延迟变长，导致业务功能上出现了问题； 接口的响应时间变长，用户反馈商品页面出现空白页； 系统中出现大量错误，影响了用户的正常使用。  这些问题，你本应该及时发现并处理的。但现实是，你只能被动地在问题被用户反馈后，手忙脚乱地修复。这时，你的团队才意识到，要想快速地发现和定位业务系统中出现的问题，必须搭建一套完善的服务端监控体系。正所谓「道路千万条，监控第一条，监控不到位，领导两行泪」。不过，在搭建的过程中，你的团队又陷入了困境：
+ 首先，监控的指标要如何选择呢？ 采集这些指标可以有哪些方法和途径呢？ 指标采集到之后又要如何处理和展示呢？  这些问题，一环扣一环，关乎着系统的稳定性和可用性，而本节课，我就带你解决这些问题，搭建一套服务端监控体系。
+监控指标如何选择 你在搭建监控系统时，所面临的第一个问题就是，选择什么样的监控指标，也就是监控什么。有些同学在给一个新的系统，设定监控指标的时候，会比较迷茫，不知道从哪方面入手。其实，有一些成熟的理论和套路，你可以直接拿来使用。比如，谷歌针对分布式系统监控的经验总结，四个黄金信号（Four Golden Signals）。它指的是，在服务层面一般需要监控四个指标， 分别是延迟，通信量、错误和饱和度。
+ 延迟指的是请求的响应时间。比如，接口的响应时间、访问数据库和缓存的响应时间。 通信量可以理解为吞吐量，也就是单位时间内，请求量的大小。比如，访问第三方服务的请求量，访问消息队列的请求量。 错误表示当前系统发生的错误数量。这里需要注意的是， 我们需要监控的错误既有显示的，比如在监控 Web 服务时，出现 4xx 和 5xx 的响应码；也有隐示的，比如，Web 服务虽然返回的响应码是 200，但是却发生了一些和业务相关的错误（出现了数组越界的异常或者空指针异常等），这些都是错误的范畴。 饱和度指的是服务或者资源到达上限的程度（也可以说是服务或者资源的利用率），比如说 CPU 的使用率，内存使用率，磁盘使用率，缓存数据库的连接数等等。  这四个黄金信号提供了通用的监控指标，除此之外，你还可以借鉴 RED 指标体系。 这个体系，是四个黄金信号中衍生出来的，其中，R 代表请求量（Request rate），E 代表错误（Error），D 代表响应时间（Duration），少了饱和度的指标。你可以把它当作一种简化版的通用监控指标体系。
+当然，一些组件或者服务还有独特的指标，这些指标也是需要你特殊关注的。比如，课程中提到的数据库主从延迟数据、消息队列的堆积情况、缓存的命中率等等。我把高并发系统中常见组件的监控指标，整理成了一张表格，其中没有包含诸如 CPU、内存、网络、磁盘等基础监控指标，只是业务上监控指标，主要方便你在实际工作中参考使用。
+ 选择好了监控指标之后，你接下来要考虑的，是如何从组件或者服务中，采集到这些指标，也就是指标数据采集的问题。
+如何采集数据指标 说到监控指标的采集，我们一般会依据采集数据源的不同，选用不同的采集方式，总结起来，大概有以下几种类型：
+首先， Agent 是一种比较常见的，采集数据指标的方式。
+我们通过在数据源的服务器上，部署自研或者开源的 Agent，来收集收据，发送给监控系统，实现数据的采集。在采集数据源上的信息时，Agent 会依据数据源上，提供的一些接口获取数据，我给你举两个典型的例子。
+比如，你要从 Memcached 服务器上，获取它的性能数据，那么，你就可以在 Agent 中，连接这个 Memcached 服务器，并且发送一个 stats 命令，获取服务器的统计信息。然后，你就可以从返回的信息中，挑选重要的监控指标，发送给监控服务器，形成 Memcached 服务的监控报表。你也可以从这些统计信息中，看出当前 Memcached 服务器，是否存在潜在的问题。下面是我推荐的，一些重要的状态项，你可以参考使用。
+STAT cmd_get 201809037423 // 计算查询的 QPS STAT cmd_set 16174920166 // 计算写入的 QPS STAT get_hits 175226700643 // 用来计算命中率，命中率 = get_hits/cmd_get STAT curr_connections 1416 // 当前连接数 STAT bytes 3738857307 // 当前内存占用量 STAT evictions 11008640149 // 当前被 memcached 服务器剔除的 item 数量，如果这个数量过大 (比如例子中的这个数值），那么代表当前 Memcached 容量不足或者 Memcached Slab Class 分配有问题 另外，如果你是 Java 的开发者，那么一般使用 Java 语言开发的中间件，或者组件，都可以通过 JMX 获取统计或者监控信息。比如，在 19 讲中，我提到可以使用 JMX，监控 Kafka 队列的堆积数，再比如，你也可以通过 JMX 监控 JVM 内存信息和 GC 相关的信息。">
+<script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga('create','UA-123062585-1','auto'),ga('send','pageview'))</script>
+<script async src=https://www.google-analytics.com/analytics.js></script>
+<link rel=preload href=/scss/main.min.847464b684a6e89d7276700a5c500c17ab494dd1755b2654a7b27d8b59e3347e.css as=style>
+<link href=/scss/main.min.847464b684a6e89d7276700a5c500c17ab494dd1755b2654a7b27d8b59e3347e.css rel=stylesheet integrity>
+<script src=/js/jquery-3.5.1.min.js integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin=anonymous></script>
+</head>
+<body class=td-page>
+<header>
+<nav class="js-navbar-scroll navbar navbar-expand navbar-dark flex-column flex-md-row td-navbar">
+<a class=navbar-brand href=/>
+<span class=navbar-logo><svg id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512" style="enable-background:new 0 0 512 512"><path style="fill:#ffc107" d="M432.384 143.616c-4.165-4.164-10.917-4.164-15.083.0l-60.352 60.352c-4.164 4.165-4.164 10.917.0 15.083 21.187 20.463 54.951 19.876 75.413-1.311 19.962-20.668 19.962-53.435.0-74.102L432.384 143.616z"/><path style="fill:#607d8b" d="M42.667 277.334c-5.891.003-10.669-4.771-10.672-10.662-.002-4.338 2.623-8.245 6.64-9.882l234.667-96c5.455-2.233 11.687.38 13.92 5.835s-.38 11.687-5.835 13.92l-234.667 96C45.433 277.069 44.056 277.337 42.667 277.334z"/><path style="fill:#546e7a" d="M391.552 56.448l-32-32C343.938 8.745 322.689-.059 300.544.0h-3.755c-46.082.024-83.432 37.374-83.456 83.456v3.755c-.053 22.138 8.75 43.377 24.448 58.987l32 32c4.165 4.164 10.917 4.164 15.083.0L391.531 71.531C395.701 67.372 395.71 60.62 391.552 56.448z"/><path style="fill:#607d8b" d="M160 469.334c-3.279.006-6.379-1.497-8.405-4.075L34.261 315.926c-3.635-4.636-2.823-11.341 1.813-14.976s11.341-2.823 14.976 1.813l117.333 149.333c3.629 4.641 2.809 11.344-1.832 14.973C164.681 468.533 162.375 469.329 160 469.334z"/><path style="fill:#455a64" d="M487.467 86.848l-3.669-3.648c-37.687-36.557-97.71-36.197-134.955.811l-51.413 51.413c-36.996 37.25-37.357 97.263-.811 134.955l3.584 3.669c1.7 2.457 4.671 3.706 7.616 3.2 2.831.005 5.548-1.115 7.552-3.115l172.181-172.181c4.189-4.143 4.226-10.896.083-15.085-.028-.028-.055-.056-.083-.083L487.467 86.848z"/><g><path style="fill:#ffc107" d="M501.333 192H480c-5.891.0-10.667-4.776-10.667-10.667s4.776-10.667 10.667-10.667h21.333c5.891.0 10.667 4.776 10.667 10.667S507.225 192 501.333 192z"/><path style="fill:#ffc107" d="M394.667 298.667c-5.891.0-10.667-4.776-10.667-10.667v-21.333c0-5.891 4.776-10.667 10.667-10.667 5.891.0 10.667 4.776 10.667 10.667V288C405.333 293.891 400.558 298.667 394.667 298.667z"/><path style="fill:#ffc107" d="M480 277.334c-2.831.005-5.548-1.115-7.552-3.115l-21.333-21.333c-4.093-4.237-3.975-10.99.262-15.083 4.134-3.993 10.687-3.993 14.821.0l21.333 21.333c4.159 4.172 4.148 10.926-.024 15.085C485.514 276.209 482.815 277.327 480 277.334z"/></g><g><path style="fill:#455a64" d="M266.667 448H96c-29.455.0-53.333 23.878-53.333 53.333.0 5.891 4.776 10.667 10.667 10.667h256c5.891.0 10.667-4.776 10.667-10.667C320 471.878 296.122 448 266.667 448z"/><circle style="fill:#455a64" cx="32" cy="288" r="32"/></g><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/></svg></span><span class=font-weight-bold>infilos.com</span>
+</a>
+<div class="collapse navbar-collapse" id=navbarSupportedContent>
+<ul class="navbar-nav mr-auto">
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86>
+<span>基础</span>
+</a>
+</li>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80>
+<span>语言</span>
+</a>
+</li>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93>
+<span>框架库</span>
+</a>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+分布式
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%88%86%e5%b8%83%e5%bc%8f/base>基本构成</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+大数据
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%ad%98%e5%82%a8%e7%b3%bb%e7%bb%9f>存储系统</a>
+<a class=dropdown-item href=/%e6%9f%a5%e8%af%a2%e7%b3%bb%e7%bb%9f>查询系统</a>
+<a class=dropdown-item href=/%e6%b6%88%e6%81%af%e7%b3%bb%e7%bb%9f>消息系统</a>
+<a class=dropdown-item href=/%e5%a4%84%e7%90%86%e7%b3%bb%e7%bb%9f>处理系统</a>
+<a class=dropdown-item href=/%e6%95%b0%e6%8d%ae%e6%b2%bb%e7%90%86>数据治理</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+中后台
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e8%ae%be%e6%96%bd>基础设施</a>
+<a class=dropdown-item href=/%e7%94%a8%e6%88%b7%e7%b3%bb%e7%bb%9f>用户系统</a>
+<a class=dropdown-item href=/%e4%ba%a4%e4%ba%92%e7%95%8c%e9%9d%a2>交互界面</a>
+<a class=dropdown-item href=/%e4%b8%9a%e5%8a%a1%e7%b3%bb%e7%bb%9f>业务系统</a>
+</div>
+</li>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e6%a8%a1%e5%bc%8f%e6%9e%b6%e6%9e%84>
+<span>模式架构</span>
+</a>
+</li>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e9%9d%a2%e8%af%95%e9%97%ae%e7%ad%94>
+<span>面试</span>
+</a>
+</li>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e7%ae%a1%e7%90%86%e8%b7%af%e5%be%84>
+<span>管理</span>
+</a>
+</li>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e5%bc%80%e6%ba%90%e9%a1%b9%e7%9b%ae>
+<span>开源</span>
+</a>
+</li>
+</ul>
+<div class="form-inline my-2 my-lg-0">
+<div class="nav-item nav-search-item my-2 my-md-0">
+<input type=search class="form-control td-search-input" placeholder="&#xf002; 站内搜索…" aria-label=站内搜索… autocomplete=off>
+</div>
+</div>
+</div>
+</nav>
+</header>
+<div class="container-fluid td-outer">
+<div class=td-main>
+<div class="row flex-xl-nowrap">
+<aside class="col-12 col-md-3 col-xl-2 td-sidebar d-print-none">
+<div id=td-sidebar-menu class=td-sidebar__inner>
+<div id=content-mobile>
+<form class="td-sidebar__search d-flex align-items-center">
+<input type=search class="form-control td-search-input" placeholder="&#xf002; 站内搜索…" aria-label=站内搜索… autocomplete=off>
+<button class="btn btn-link td-sidebar__toggle d-md-none p-0 ml-3 fas fa-bars" type=button data-toggle=collapse data-target=#td-section-nav aria-controls=td-docs-nav aria-expanded=false aria-label="Toggle section navigation">
+</button>
+</form>
+</div>
+<div id=content-desktop></div>
+<nav class="collapse td-sidebar-nav" id=td-section-nav>
+<ul class="td-sidebar-nav__section pr-md-3 ul-0">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e6a8a1e5bc8fe69eb6e69e84-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section tree-root" id=m-e6a8a1e5bc8fe69eb6e69e84><span>架构模式</span></a>
+<ul class=ul-1>
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84rules-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/rules/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a8a1e5bc8fe69eb6e69e84rules><span>编程原则</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a8a1e5bc8fe69eb6e69e84design-pattern-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a8a1e5bc8fe69eb6e69e84design-pattern><span>设计模式</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-pattern-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-pattern><span>Java 模式</span></a>
+<ul class="ul-3 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch01-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch01/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch01><span>CH01-创建型-简单工厂</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch02-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch02/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch02><span>CH02-创建型-工厂方法</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch03-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch03/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch03><span>CH03-创建型-抽象工厂</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch04-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch04/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch04><span>CH04-创建型-建造者</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch05-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch05/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch05><span>CH05-创建型-单例</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch06-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch06/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch06><span>CH06-结构型-适配器</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch07-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch07/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch07><span>CH07-结构型-桥接</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch08-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch08/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch08><span>CH08-结构型-装饰器</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch09-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch09/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch09><span>CH09-结构型-外观</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch10-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch10/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch10><span>CH10-结构型-享元</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch11-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch11/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch11><span>CH11-结构型-代理</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch12-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch12/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch12><span>CH12-行为型-命令</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch13-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch13/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch13><span>CH13-行为型-中介者</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch14-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch14/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch14><span>CH14-行为型-观察者</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch15-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch15/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch15><span>CH15-行为型-状态</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch16-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch16/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch16><span>CH16-行为型-策略</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-pattern-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-pattern><span>Scala 模式</span></a>
+<ul class="ul-3 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch01-e6a8a1e5bc8fe58886e7b1bb-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch01-%E6%A8%A1%E5%BC%8F%E5%88%86%E7%B1%BB/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch01-e6a8a1e5bc8fe58886e7b1bb><span>CH01-模式分类</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch02-e789b9e8b4a8e4b88ee6b7b7e585a5e7bb84e59088-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch02-%E7%89%B9%E8%B4%A8%E4%B8%8E%E6%B7%B7%E5%85%A5%E7%BB%84%E5%90%88/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch02-e789b9e8b4a8e4b88ee6b7b7e585a5e7bb84e59088><span>CH02-特质与混入组合</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch03-e7bb9fe4b880e58c96-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch03-%E7%BB%9F%E4%B8%80%E5%8C%96/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch03-e7bb9fe4b880e58c96><span>CH03-统一化</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch04-e68abde8b1a1e4b88ee887aae7b1bbe59e8b-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch04-%E6%8A%BD%E8%B1%A1%E4%B8%8E%E8%87%AA%E7%B1%BB%E5%9E%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch04-e68abde8b1a1e4b88ee887aae7b1bbe59e8b><span>CH04-抽象与自类型</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch05-aop-e4b88ee7bb84e4bbb6-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch05-aop-%E4%B8%8E%E7%BB%84%E4%BB%B6/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch05-aop-e4b88ee7bb84e4bbb6><span>CH05-AOP 与组件</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch06-0-e5889be5bbbae59e8be6a8a1e5bc8f-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch06-0-%E5%88%9B%E5%BB%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch06-0-e5889be5bbbae59e8be6a8a1e5bc8f><span>CH06-创建型模式</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch06-1-e5b7a5e58e82e696b9e6b395-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch06-1-%E5%B7%A5%E5%8E%82%E6%96%B9%E6%B3%95/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch06-1-e5b7a5e58e82e696b9e6b395><span>CH06-1-工厂方法</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch06-2-e68abde8b1a1e5b7a5e58e82-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch06-2-%E6%8A%BD%E8%B1%A1%E5%B7%A5%E5%8E%82/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch06-2-e68abde8b1a1e5b7a5e58e82><span>CH06-2-抽象工厂</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch06-3-e585b6e4bb96e5b7a5e58e82e6a8a1e5bc8f-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch06-3-%E5%85%B6%E4%BB%96%E5%B7%A5%E5%8E%82%E6%A8%A1%E5%BC%8F/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch06-3-e585b6e4bb96e5b7a5e58e82e6a8a1e5bc8f><span>CH06-3-其他工厂模式</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch06-4-e68792e5889de5a78be58c96-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch06-4-%E6%87%92%E5%88%9D%E5%A7%8B%E5%8C%96/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch06-4-e68792e5889de5a78be58c96><span>CH06-4-懒初始化</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch06-5-e58d95e4be8be6a8a1e5bc8f-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch06-5-%E5%8D%95%E4%BE%8B%E6%A8%A1%E5%BC%8F/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch06-5-e58d95e4be8be6a8a1e5bc8f><span>CH06-5-单例模式</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch06-6-e69e84e5bbbae599a8e6a8a1e5bc8f-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch06-6-%E6%9E%84%E5%BB%BA%E5%99%A8%E6%A8%A1%E5%BC%8F/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch06-6-e69e84e5bbbae599a8e6a8a1e5bc8f><span>CH06-6-构建器模式</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch06-7-e58e9fe59e8be6a8a1e5bc8f-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch06-7-%E5%8E%9F%E5%9E%8B%E6%A8%A1%E5%BC%8F/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch06-7-e58e9fe59e8be6a8a1e5bc8f><span>CH06-7-原型模式</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch07-0-e7bb93e69e84e59e8be6a8a1e5bc8f-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch07-0-%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch07-0-e7bb93e69e84e59e8be6a8a1e5bc8f><span>CH07-结构型模式</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch07-1-e98082e9858de599a8e6a8a1e5bc8f-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch07-1-%E9%80%82%E9%85%8D%E5%99%A8%E6%A8%A1%E5%BC%8F/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch07-1-e98082e9858de599a8e6a8a1e5bc8f><span>CH07-1-适配器模式</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch07-2-e8a385e9a5b0e599a8e6a8a1e5bc8f-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch07-2-%E8%A3%85%E9%A5%B0%E5%99%A8%E6%A8%A1%E5%BC%8F/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch07-2-e8a385e9a5b0e599a8e6a8a1e5bc8f><span>CH07-2-装饰器模式</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch07-3-e6a1a5e68ea5e6a8a1e5bc8f-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch07-3-%E6%A1%A5%E6%8E%A5%E6%A8%A1%E5%BC%8F/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch07-3-e6a1a5e68ea5e6a8a1e5bc8f><span>CH07-3-桥接模式</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch07-4-e7bb84e59088e6a8a1e5bc8f-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch07-4-%E7%BB%84%E5%90%88%E6%A8%A1%E5%BC%8F/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch07-4-e7bb84e59088e6a8a1e5bc8f><span>CH07-4-组合模式</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch07-5-e5a496e8a782e6a8a1e5bc8f-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch07-5-%E5%A4%96%E8%A7%82%E6%A8%A1%E5%BC%8F/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch07-5-e5a496e8a782e6a8a1e5bc8f><span>CH07-5-外观模式</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch07-6-e4baabe58583e6a8a1e5bc8f-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch07-6-%E4%BA%AB%E5%85%83%E6%A8%A1%E5%BC%8F/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch07-6-e4baabe58583e6a8a1e5bc8f><span>CH07-6-享元模式</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch07-7-e4bba3e79086e6a8a1e5bc8f-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch07-7-%E4%BB%A3%E7%90%86%E6%A8%A1%E5%BC%8F/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch07-7-e4bba3e79086e6a8a1e5bc8f><span>CH07-7-代理模式</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch08-e8a18ce4b8bae59e8be6a8a1e5bc8f-1-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch08-%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F-1/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch08-e8a18ce4b8bae59e8be6a8a1e5bc8f-1><span>CH08-行为型模式-1</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch09-e8a18ce4b8bae59e8be6a8a1e5bc8f-2-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch09-%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F-2/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch09-e8a18ce4b8bae59e8be6a8a1e5bc8f-2><span>CH09-行为型模式-2</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch10-e587bde695b0e5bc8fe6a8a1e5bc8fe79086e8aeba-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch10-%E5%87%BD%E6%95%B0%E5%BC%8F%E6%A8%A1%E5%BC%8F%E7%90%86%E8%AE%BA/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch10-e587bde695b0e5bc8fe6a8a1e5bc8fe79086e8aeba><span>CH10-函数式模式理论</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch11-e587bde695b0e5bc8fe6a8a1e5bc8fe5ba94e794a8-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch11-%E5%87%BD%E6%95%B0%E5%BC%8F%E6%A8%A1%E5%BC%8F%E5%BA%94%E7%94%A8/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch11-e587bde695b0e5bc8fe6a8a1e5bc8fe5ba94e794a8><span>CH11-函数式模式应用</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch12-e5ae9ee99985e5ba94e794a8-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch12-%E5%AE%9E%E9%99%85%E5%BA%94%E7%94%A8/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch12-e5ae9ee99985e5ba94e794a8><span>CH12-实际应用</span></a>
+</li>
+</ul>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a8a1e5bc8fe69eb6e69e84micro-service-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/micro-service/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a8a1e5bc8fe69eb6e69e84micro-service><span>微服务架构</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84micro-servicepattern-overview-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/micro-service/pattern-overview/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84micro-servicepattern-overview><span>模式概览</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84micro-servicems-disasters-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/micro-service/ms-disasters/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84micro-servicems-disasters><span>微服务灾难</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e6a8a1e5bc8fe69eb6e69e84high-conc-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a8a1e5bc8fe69eb6e69e84high-conc><span>高并发系统</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch01-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch01/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch01><span>CH01-基础-设计方法</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch02-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch02/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch02><span>CH02-基础-架构分层</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch03-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch03/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch03><span>CH03-基础-高性能</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch04-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch04/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch04><span>CH04-基础-高可用</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch05-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch05/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch05><span>CH05-基础-易扩展</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch07-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch07/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch07><span>CH07-数据库-池化</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch08-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch08/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch08><span>CH08-数据库-主从分离</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch09-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch09/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch09><span>CH09-数据库-分库分表</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch10-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch10/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch10><span>CH10-数据库-发号器</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch11-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch11/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch11><span>CH11-数据库-NoSQL</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch12-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch12/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch12><span>CH12-缓存-基础</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch13-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch13/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch13><span>CH13-缓存-读写策略</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch14-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch14/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch14><span>CH14-缓存-高可用</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch15-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch15/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch15><span>CH15-缓存-穿透</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch16-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch16/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch16><span>CH16-缓存-CDN</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch17-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch17/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch17><span>CH17-缓存-数据迁移</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch18-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch18/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch18><span>CH18-消息-基础</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch19-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch19/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch19><span>CH19-消息-投递</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch20-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch20/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch20><span>CH20-消息-延迟</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch21-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch21/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch21><span>CH21-分布式-服务拆分</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch22-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch22/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch22><span>CH22-分布式-微服务</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch23-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch23/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch23><span>CH23-分布式-RPC</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch24-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch24/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch24><span>CH24-分布式-注册中心</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch25-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch25/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch25><span>CH25-分布式-追踪</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch26-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch26/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch26><span>CH26-分布式-负载均衡</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch27-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch27/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch27><span>CH27-分布式-接口网关</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch28-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch28/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch28><span>CH28-分布式-跨地域</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch29-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch29/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch29><span>CH29-分布式-服务网格</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child active-path" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch30-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch30/ class="align-left pl-0 active td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch30><span class=td-sidebar-nav-active-item>CH30-维护-后端监控</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch31-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch31/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch31><span>CH31-维护-应用监控</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch32-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch32/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch32><span>CH32-维护-链路压测</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch33-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch33/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch33><span>CH33-维护-配置管理</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch34-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch34/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch34><span>CH34-维护-降级熔断</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch35-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch35/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch35><span>CH35-维护-流量控制</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch37-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch37/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch37><span>CH37-实战-计数系统-1</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch38-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch38/ title=CH38-实战-计数系统-2 class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch38><span>CH37-实战-计数系统-2</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch39-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch39/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch39><span>CH39-实战-信息流-1</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch40-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch40/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch40><span>CH40-实战-信息流-2</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84ddia-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/ddia/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a8a1e5bc8fe69eb6e69e84ddia><span>数据密集系统</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a8a1e5bc8fe69eb6e69e84rpc-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/rpc/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a8a1e5bc8fe69eb6e69e84rpc><span>远程过程调用</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84rpcrpc-overview-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/rpc/rpc-overview/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84rpcrpc-overview><span>RPC 概览</span></a>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</div>
+</aside>
+<aside class="d-none d-xl-block col-xl-2 td-sidebar-toc d-print-none">
+<div class="td-page-meta ml-2 pb-1 pt-2 mb-0">
+<a href=https://github.com/infilos/infilos.com/edit/master/content/zh/%e6%a8%a1%e5%bc%8f%e6%9e%b6%e6%9e%84/high-conc/CH30.md target=_blank><i class="fa fa-edit fa-fw"></i> 编辑此页</a>
+<a href="https://github.com/infilos/infilos.com/new/master/content/zh/%e6%a8%a1%e5%bc%8f%e6%9e%b6%e6%9e%84/high-conc/CH30.md?filename=change-me.md&value=---%0Atitle%3A+%22Long+Page+Title%22%0AlinkTitle%3A+%22Short+Nav+Title%22%0Aweight%3A+100%0Adescription%3A+%3E-%0A+++++Page+description+for+heading+and+indexes.%0A---%0A%0A%23%23+Heading%0A%0AEdit+this+template+to+create+your+new+page.%0A%0A%2A+Give+it+a+good+name%2C+ending+in+%60.md%60+-+e.g.+%60getting-started.md%60%0A%2A+Edit+the+%22front+matter%22+section+at+the+top+of+the+page+%28weight+controls+how+its+ordered+amongst+other+pages+in+the+same+directory%3B+lowest+number+first%29.%0A%2A+Add+a+good+commit+message+at+the+bottom+of+the+page+%28%3C80+characters%3B+use+the+extended+description+field+for+more+detail%29.%0A%2A+Create+a+new+branch+so+you+can+preview+your+new+file+and+request+a+review+via+Pull+Request.%0A" target=_blank><i class="fa fa-edit fa-fw"></i> 添加子页面</a>
+<a href="https://github.com/infilos/infilos.com/issues/new?title=CH30-%e7%bb%b4%e6%8a%a4-%e5%90%8e%e7%ab%af%e7%9b%91%e6%8e%a7" target=_blank><i class="fab fa-github fa-fw"></i> 提交文档问题</a>
+<a id=print href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/_print/><i class="fa fa-print fa-fw"></i> 整节打印</a>
+</div>
+<div class=td-toc><nav id=TableOfContents>
+<ul>
+<li><a href=#监控指标如何选择>监控指标如何选择</a></li>
+<li><a href=#如何采集数据指标>如何采集数据指标</a></li>
+<li><a href=#监控数据的处理和存储>监控数据的处理和存储</a></li>
+<li><a href=#课程小结>课程小结</a></li>
+</ul>
+</nav></div>
+</aside>
+<main class="col-12 col-md-9 col-xl-8 pl-md-5" role=main>
+<nav aria-label=breadcrumb class="d-none d-md-block d-print-none">
+<ol class="breadcrumb spb-1">
+<li class=breadcrumb-item>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/>架构模式</a>
+</li>
+<li class=breadcrumb-item>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/>高并发系统</a>
+</li>
+<li class="breadcrumb-item active" aria-current=page>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch30/>CH30-维护-后端监控</a>
+</li>
+</ol>
+</nav>
+<div class=td-content>
+<h1>CH30-维护-后端监控</h1>
+<header class=article-meta>
+</header>
+<p>在一个项目的生命周期里，运行维护占据着很大的比重，在重要性上，它几乎与项目研发并驾齐驱。而在系统运维过程中，能够及时地发现问题并解决问题，是每一个团队的本职工作。所以，你的垂直电商系统在搭建之初，运维团队肯定完成了对于机器 CPU、内存、磁盘、网络等基础监控，期望能在出现问题时，及时地发现并且处理。你本以为万事大吉，却没想到系统在运行过程中，频频得到用户的投诉，原因是：</p>
+<ul>
+<li>使用的数据库主从延迟变长，导致业务功能上出现了问题；</li>
+<li>接口的响应时间变长，用户反馈商品页面出现空白页；</li>
+<li>系统中出现大量错误，影响了用户的正常使用。</li>
+</ul>
+<p>这些问题，你本应该及时发现并处理的。但现实是，你只能被动地在问题被用户反馈后，手忙脚乱地修复。这时，你的团队才意识到，要想快速地发现和定位业务系统中出现的问题，必须搭建一套完善的服务端监控体系。正所谓「道路千万条，监控第一条，监控不到位，领导两行泪」。不过，在搭建的过程中，你的团队又陷入了困境：</p>
+<ul>
+<li>首先，监控的指标要如何选择呢？</li>
+<li>采集这些指标可以有哪些方法和途径呢？</li>
+<li>指标采集到之后又要如何处理和展示呢？</li>
+</ul>
+<p>这些问题，一环扣一环，关乎着系统的稳定性和可用性，而本节课，我就带你解决这些问题，搭建一套服务端监控体系。</p>
+<h2 id=监控指标如何选择>监控指标如何选择</h2>
+<p>你在搭建监控系统时，所面临的第一个问题就是，选择什么样的监控指标，也就是监控什么。有些同学在给一个新的系统，设定监控指标的时候，会比较迷茫，不知道从哪方面入手。其实，有一些成熟的理论和套路，你可以直接拿来使用。比如，谷歌针对分布式系统监控的经验总结，四个黄金信号（Four Golden Signals）。它指的是，在服务层面一般需要监控四个指标， <strong>分别是延迟，通信量、错误和饱和度。</strong></p>
+<ul>
+<li>延迟指的是请求的响应时间。比如，接口的响应时间、访问数据库和缓存的响应时间。</li>
+<li>通信量可以理解为吞吐量，也就是单位时间内，请求量的大小。比如，访问第三方服务的请求量，访问消息队列的请求量。</li>
+<li>错误表示当前系统发生的错误数量。<strong>这里需要注意的是，</strong> 我们需要监控的错误既有显示的，比如在监控 Web 服务时，出现 <code>4xx</code> 和 <code>5xx</code> 的响应码；也有隐示的，比如，Web 服务虽然返回的响应码是 200，但是却发生了一些和业务相关的错误（出现了数组越界的异常或者空指针异常等），这些都是错误的范畴。</li>
+<li>饱和度指的是服务或者资源到达上限的程度（也可以说是服务或者资源的利用率），比如说 CPU 的使用率，内存使用率，磁盘使用率，缓存数据库的连接数等等。</li>
+</ul>
+<p>这四个黄金信号提供了通用的监控指标，<strong>除此之外，你还可以借鉴 RED 指标体系。</strong> 这个体系，是四个黄金信号中衍生出来的，其中，R 代表请求量（Request rate），E 代表错误（Error），D 代表响应时间（Duration），少了饱和度的指标。你可以把它当作一种简化版的通用监控指标体系。</p>
+<p>当然，一些组件或者服务还有独特的指标，这些指标也是需要你特殊关注的。比如，课程中提到的数据库主从延迟数据、消息队列的堆积情况、缓存的命中率等等。我把高并发系统中常见组件的监控指标，整理成了一张表格，其中没有包含诸如 CPU、内存、网络、磁盘等基础监控指标，只是业务上监控指标，主要方便你在实际工作中参考使用。</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211212163244.png style=display:block;width:80% alt=NAME align=center> </div>
+<p>选择好了监控指标之后，你接下来要考虑的，是如何从组件或者服务中，采集到这些指标，也就是指标数据采集的问题。</p>
+<h2 id=如何采集数据指标>如何采集数据指标</h2>
+<p>说到监控指标的采集，我们一般会依据采集数据源的不同，选用不同的采集方式，<strong>总结起来，大概有以下几种类型：</strong></p>
+<p><strong>首先，</strong> Agent 是一种比较常见的，采集数据指标的方式。</p>
+<p>我们通过在数据源的服务器上，部署自研或者开源的 Agent，来收集收据，发送给监控系统，实现数据的采集。在采集数据源上的信息时，Agent 会依据数据源上，提供的一些接口获取数据，<strong>我给你举两个典型的例子。</strong></p>
+<p>比如，你要从 Memcached 服务器上，获取它的性能数据，那么，你就可以在 Agent 中，连接这个 Memcached 服务器，并且发送一个 stats 命令，获取服务器的统计信息。然后，你就可以从返回的信息中，挑选重要的监控指标，发送给监控服务器，形成 Memcached 服务的监控报表。你也可以从这些统计信息中，看出当前 Memcached 服务器，是否存在潜在的问题。下面是我推荐的，一些重要的状态项，<strong>你可以参考使用。</strong></p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>STAT cmd_get 201809037423    // 计算查询的 QPS
+STAT cmd_set 16174920166     // 计算写入的 QPS
+STAT get_hits 175226700643   // 用来计算命中率，命中率 = get_hits/cmd_get
+STAT curr_connections 1416   // 当前连接数
+STAT bytes 3738857307        // 当前内存占用量
+STAT evictions 11008640149   // 当前被 memcached 服务器剔除的 item 数量，如果这个数量过大 (比如例子中的这个数值），那么代表当前 Memcached 容量不足或者 Memcached Slab Class 分配有问题
+</code></pre></div><p>另外，如果你是 Java 的开发者，那么一般使用 Java 语言开发的中间件，或者组件，都可以通过 JMX 获取统计或者监控信息。比如，在 19 讲中，我提到可以使用 JMX，监控 Kafka 队列的堆积数，再比如，你也可以通过 JMX 监控 JVM 内存信息和 GC 相关的信息。</p>
+<p>另一种很重要的数据获取方式，<strong>是在代码中埋点。</strong></p>
+<p>这个方式与 Agent 的不同之处在于，Agent 主要收集的是组件服务端的信息，而埋点则是从客户端的角度，来描述所使用的组件，和服务的性能和可用性。<strong>那么埋点的方式怎么选择呢？</strong></p>
+<p>你可以使用 25 讲分布式 Trace 组件中，提到的面向切面编程的方式；也可以在资源客户端中，直接计算调用资源或者服务的耗时、调用量、慢请求数，并且发送给监控服务器。</p>
+<p><strong>这里你需要注意一点，</strong> 由于调用缓存、数据库的请求量会比较高，一般会单机也会达到每秒万次，如果不经过任何优化，把每次请求耗时都发送给监控服务器，那么，监控服务器会不堪重负。所以，我们一般会在埋点时，先做一些汇总。比如，每隔 10 秒汇总这 10 秒内，对同一个资源的请求量总和、响应时间分位值、错误数等，然后发送给监控服务器。这样，就可以大大减少发往监控服务器的请求量了。</p>
+<p><strong>最后，</strong> 日志也是你监控数据的重要来源之一。</p>
+<p>你所熟知的 Tomcat 和 Nginx 的访问日志，都是重要的监控日志。你可以通过开源的日志采集工具，将这些日志中的数据发送给监控服务器。目前，常用的日志采集工具有很多，比如，Apache Flume、Fluentd 和 Filebeat，你可以选择一种熟悉的使用。比如在我的项目中，我会倾向于使用 Filebeat 来收集监控日志数据。</p>
+<h2 id=监控数据的处理和存储>监控数据的处理和存储</h2>
+<p>在采集到监控数据之后，你就可以对它们进行处理和存储了，在此之前，我们一般会先用消息队列来承接数据，主要的作用是削峰填谷，防止写入过多的监控数据，让监控服务产生影响。</p>
+<p>与此同时，我们一般会部署两个队列处理程序，来消费消息队列中的数据。</p>
+<p>一个处理程序接收到数据后，把数据写入到 Elasticsearch，然后通过 Kibana 展示数据，这份数据主要是用来做原始数据的查询；</p>
+<p>另一个处理程序是一些流式处理的中间件，比如，Spark、Storm。它们从消息队列里，接收数据后会做一些处理，这些处理包括：</p>
+<ul>
+<li>
+<p><strong>解析数据格式，尤其是日志格式</strong> 从里面提取诸如请求量、响应时间、请求 URL 等数据；</p>
+</li>
+<li>
+<p><strong>对数据做一些聚合运算</strong></p>
+<p>比如，针对 Tomcat 访问日志，可以计算同一个 URL 一段时间之内的请求量、响应时间分位值、非 200 请求量的大小等等。</p>
+</li>
+<li>
+<p><strong>将数据存储在时间序列数据库中</strong></p>
+<p>这类数据库的特点是，可以对带有时间标签的数据，做更有效的存储，而我们的监控数据恰恰带有时间标签，并且按照时间递增，非常适合存储在时间序列数据库中。目前业界比较常用的时序数据库有 InfluxDB、OpenTSDB、Graphite，各大厂的选择均有不同，你可以选择一种熟悉的来使用。</p>
+</li>
+</ul>
+<p><strong>最后，</strong> 你就可以通过 Grafana 来连接时序数据库，将监控数据绘制成报表，呈现给开发和运维的同学了。</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211212163343.png style=display:block;width:80% alt=NAME align=center> </div>
+<p>至此，你和你的团队，也就完成了垂直电商系统，服务端监控系统搭建的全过程。这里我想再多说一点，我们从不同的数据源中采集了很多的指标，最终在监控系统中一般会形成以下几个报表，你在实际的工作中可以参考借鉴：</p>
+<ol>
+<li>
+<p>访问趋势报表</p>
+<p>这类报表接入的是 Web 服务器，和应用服务器的访问日志，展示了服务整体的访问量、响应时间情况、错误数量、带宽等信息。它主要反映的是，服务的整体运行情况，帮助你来发现问题。</p>
+</li>
+<li>
+<p>性能报表</p>
+<p>这类报表对接的是资源和依赖服务的埋点数据，展示了被埋点资源的访问量和响应时间情况。它反映了资源的整体运行情况，当你从访问趋势报表发现问题后，可以先从性能报表中，找到究竟是哪一个资源或者服务出现了问题。</p>
+</li>
+<li>
+<p>资源报表</p>
+<p>这类报表主要对接的是，使用 Agent 采集的，资源的运行情况数据。当你从性能报表中，发现某一个资源出现了问题，那么就可以进一步从这个报表中，发现资源究竟出现了什么问题，是连接数异常增高，还是缓存命中率下降。这样可以进一步帮你分析问题的根源，找到解决问题的方案。</p>
+</li>
+</ol>
+<h2 id=课程小结>课程小结</h2>
+<p>本节课，我带你了解了，服务端监控搭建的过程，在这里，你需要了解以下几个重点：</p>
+<ol>
+<li>耗时、请求量和错误数是三种最通用的监控指标，不同的组件还有一些特殊的监控指标，你在搭建自己的监控系统的时候可以直接使用；</li>
+<li>Agent、埋点和日志是三种最常见的数据采集方式；</li>
+<li>访问趋势报表用来展示服务的整体运行情况，性能报表用来分析资源或者依赖的服务是否出现问题，资源报表用来追查资源问题的根本原因。这三个报表共同构成了你的服务端监控体系。</li>
+</ol>
+<p>总之，监控系统是你发现问题，排查问题的重要工具，你应该重视它，并且投入足够的精力来不断地完善它。只有这样，才能不断地提高对系统运维的掌控力，降低故障发生的风险。</p>
+<style>.feedback--answer{display:inline-block}.feedback--answer-no{margin-left:1em}.feedback--response{display:none;margin-top:1em}.feedback--response__visible{display:block}</style>
+<div class=d-print-none>
+<h2 class=feedback--title>Feedback</h2>
+<p class=feedback--question>Was this page helpful?</p>
+<button class="btn btn-primary mb-4 feedback--answer feedback--answer-yes">Yes</button>
+<button class="btn btn-primary mb-4 feedback--answer feedback--answer-no">No</button>
+<p class="feedback--response feedback--response-yes">
+Glad to hear it! Please <a href=https://github.com/infilos/infilos.com/issues/new>tell us how we can improve</a>.
+</p>
+<p class="feedback--response feedback--response-no">
+Sorry to hear that. Please <a href=https://github.com/infilos/infilos.com/issues/new>tell us how we can improve</a>.
+</p>
+</div>
+<script>const yesButton=document.querySelector('.feedback--answer-yes'),noButton=document.querySelector('.feedback--answer-no'),yesResponse=document.querySelector('.feedback--response-yes'),noResponse=document.querySelector('.feedback--response-no'),disableButtons=()=>{yesButton.disabled=!0,noButton.disabled=!0},sendFeedback=b=>{if(typeof ga!='function')return;const a={command:'send',hitType:'event',category:'Helpful',action:'click',label:window.location.pathname,value:b};ga(a.command,a.hitType,a.category,a.action,a.label,a.value)};yesButton.addEventListener('click',()=>{yesResponse.classList.add('feedback--response__visible'),disableButtons(),sendFeedback(1)}),noButton.addEventListener('click',()=>{noResponse.classList.add('feedback--response__visible'),disableButtons(),sendFeedback(0)})</script>
+<br>
+</div>
+</main>
+</div>
+</div>
+<footer class="bg-dark py-5 row d-print-none">
+<div class="container-fluid mx-sm-5">
+<div class=row>
+<div class="col-6 col-sm-4 text-xs-center order-sm-2">
+</div>
+<div class="col-6 col-sm-4 text-right text-xs-center order-sm-3">
+<ul class="list-inline mb-0">
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Weibo aria-label=Weibo>
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://weibo.com/u/3848950217>
+<i class="fab fa-weibo"></i>
+</a>
+</li>
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Twitter aria-label=Twitter>
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://twitter.com/zhange_zzg>
+<i class="fab fa-twitter"></i>
+</a>
+</li>
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title="Stack Overflow" aria-label="Stack Overflow">
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://stackoverflow.com>
+<i class="fab fa-stack-overflow"></i>
+</a>
+</li>
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=GitHub aria-label=GitHub>
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://github.com/infilos/infilos.com>
+<i class="fab fa-github"></i>
+</a>
+</li>
+</ul>
+</div>
+<div class="col-12 col-sm-4 text-center py-2 order-sm-2">
+<small class=text-white>&copy; 2021 infilos.com All Rights Reserved</small>
+</div>
+</div>
+</div>
+</footer>
+</div>
+<script src=/js/popper.min.js integrity=sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49 crossorigin=anonymous></script>
+<script src=/js/bootstrap.min.js integrity=sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy crossorigin=anonymous></script>
+<script src=/js/main.min.5c74b870c6953931a705f390a49c7e4c0a842ec5c83b24354758dd674343ed0d.js integrity="sha256-XHS4cMaVOTGnBfOQpJx+TAqELsXIOyQ1R1jdZ0ND7Q0=" crossorigin=anonymous></script>
+</body>
+</html>

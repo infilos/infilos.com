@@ -2,7 +2,7 @@
 <head>
 <meta charset=utf-8>
 <meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no">
-<meta name=generator content="Hugo 0.89.4">
+<meta name=generator content="Hugo 0.90.1">
 <meta name=ROBOTS content="INDEX, FOLLOW">
 <link rel=canonical type=text/html href=/%E5%88%86%E5%B8%83%E5%BC%8F/>
 <link rel="shortcut icon" href=/favicons/favicon.ico>
@@ -154,6 +154,8 @@
 <li>1.16: <a href=#pg-cd6eab4d11b89cc125c95366a63cbaa1>一致性与共识算法</a></li>
 <li>1.17: <a href=#pg-32e7ec0298beb63dbf02b847a8c13b0a>分布式锁</a></li>
 <li>1.18: <a href=#pg-5972a917bbf5042578567f6c7c1d5c11>一致性哈希算法</a></li>
+<li>1.19: <a href=#pg-272afca548263061d5a0efe0b0655c08>全局唯一标识</a></li>
+<li>1.20: <a href=#pg-c4fb26855eb13e2e8be23c218e33d3c2>分布式谬误</a></li>
 </ul>
 </ul>
 <div class=content>
@@ -1539,10 +1541,6 @@ Producer收到回查消息，返回消息对应的本地事务的状态，为Com
 <p>从实现复杂度(由低到高)：ZK -= 缓存 - 数据库</p>
 <p>性能角度(由高到低)：缓存 - ZK -= 数据库</p>
 <p>可靠性(由高到低)：ZK - 缓存 - 数据库</p>
-<h2 id=todo>TODO</h2>
-<ul>
-<li><a href="https://mp.weixin.qq.com/s?__biz=MzI4MTY5NTk4Ng==&mid=2247488964&amp;amp;idx=1&amp;amp;sn=f9a39b244202656a2dcc2c9705190a74&source=41#wechat_redirect">https://mp.weixin.qq.com/s?__biz=MzI4MTY5NTk4Ng==&mid=2247488964&amp;amp;idx=1&amp;amp;sn=f9a39b244202656a2dcc2c9705190a74&source=41#wechat_redirect</a></li>
-</ul>
 </div>
 <div class=td-content style=page-break-before:always>
 <h1 id=pg-5972a917bbf5042578567f6c7c1d5c11>1.18 - 一致性哈希算法</h1>
@@ -1581,6 +1579,662 @@ Producer收到回查消息，返回消息对应的本地事务的状态，为Com
 <li><a href=http://afghl.github.io/2016/11/19/implement-consistent-hashing.html>实现</a></li>
 <li><a href=https://www.cnblogs.com/xrq730/p/5186728.html>一致性哈希 Java 实现的深入研究</a></li>
 </ul>
+</div>
+<div class=td-content style=page-break-before:always>
+<h1 id=pg-272afca548263061d5a0efe0b0655c08>1.19 - 全局唯一标识</h1>
+<h2 id=为什么需要全局唯一id>为什么需要全局唯一ID</h2>
+<p>传统的单体架构的时候，我们基本是单库然后业务单表的结构。每个业务表的ID一般我们都是从1增，通过AUTO_INCREMENT=1设置自增起始值，但是在分布式服务架构模式下分库分表的设计，使得多个库或多个表存储相同的业务数据。这种情况根据数据库的自增ID就会产生相同ID的情况，不能保证主键的唯一性。</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211215001405.png style=display:block;width:80% alt=NAME align=center> </div>
+<p>如上图，如果第一个订单存储在 DB1 上则订单 ID 为1，当一个新订单又入库了存储在 DB2 上订单 ID 也为1。我们系统的架构虽然是分布式的，但是在用户层应是无感知的，重复的订单主键显而易见是不被允许的。那么针对分布式系统如何做到主键唯一性呢？</p>
+<h2 id=uuid>UUID</h2>
+<p><code>UUID （Universally Unique Identifier）</code>，通用唯一识别码的缩写。UUID是由一组32位数的16进制数字所构成，所以UUID理论上的总数为 <code>16^32=2^128</code>，约等于 <code>3.4 x 10^38</code>。也就是说若每纳秒产生1兆个UUID，要花100亿年才会将所有UUID用完。</p>
+<p>生成的UUID是由 8-4-4-4-12格式的数据组成，其中32个字符和4个连字符' - &lsquo;，一般我们使用的时候会将连字符删除 uuid.<code>toString().replaceAll("-","")</code>。</p>
+<p>目前UUID的产生方式有5种版本，每个版本的算法不同，应用范围也不同。</p>
+<ul>
+<li><code>基于时间的UUID</code> - 版本1： 这个一般是通过当前时间，随机数，和本地Mac地址来计算出来，可以通过 org.apache.logging.log4j.core.util包中的 UuidUtil.getTimeBasedUuid()来使用或者其他包中工具。由于使用了MAC地址，因此能够确保唯一性，但是同时也暴露了MAC地址，私密性不够好。</li>
+<li><code>DCE安全的UUID</code> - 版本2 DCE（Distributed Computing Environment）安全的UUID和基于时间的UUID算法相同，但会把时间戳的前4位置换为POSIX的UID或GID。这个版本的UUID在实际中较少用到。</li>
+<li><code>基于名字的UUID（MD5）</code>- 版本3 基于名字的UUID通过计算名字和名字空间的MD5散列值得到。这个版本的UUID保证了：相同名字空间中不同名字生成的UUID的唯一性；不同名字空间中的UUID的唯一性；相同名字空间中相同名字的UUID重复生成是相同的。</li>
+<li><code>随机UUID</code> - 版本4 根据随机数，或者伪随机数生成UUID。这种UUID产生重复的概率是可以计算出来的，但是重复的可能性可以忽略不计，因此该版本也是被经常使用的版本。JDK中使用的就是这个版本。</li>
+<li><code>基于名字的UUID（SHA1）</code> - 版本5 和基于名字的UUID算法类似，只是散列值计算使用SHA1（Secure Hash Algorithm 1）算法。</li>
+</ul>
+<p>我们 Java中 JDK自带的 UUID产生方式就是版本4根据随机数生成的 UUID 和版本3基于名字的 UUID，有兴趣的可以去看看它的源码。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>static</span> <span style=color:#204a87;font-weight:700>void</span> <span style=color:#000>main</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>String</span><span style=color:#ce5c00;font-weight:700>[]</span> <span style=color:#000>args</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>
+
+    <span style=color:#8f5902;font-style:italic>//获取一个版本4根据随机字节数组的UUID。
+</span><span style=color:#8f5902;font-style:italic></span>    <span style=color:#000>UUID</span> <span style=color:#000>uuid</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>UUID</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>randomUUID</span><span style=color:#ce5c00;font-weight:700>();</span>
+    <span style=color:#000>System</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>out</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>println</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>uuid</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>toString</span><span style=color:#ce5c00;font-weight:700>().</span><span style=color:#c4a000>replaceAll</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;-&#34;</span><span style=color:#ce5c00;font-weight:700>,</span><span style=color:#4e9a06>&#34;&#34;</span><span style=color:#ce5c00;font-weight:700>));</span>
+
+    <span style=color:#8f5902;font-style:italic>//获取一个版本3(基于名称)根据指定的字节数组的UUID。
+</span><span style=color:#8f5902;font-style:italic></span>    <span style=color:#204a87;font-weight:700>byte</span><span style=color:#ce5c00;font-weight:700>[]</span> <span style=color:#000>nbyte</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>{</span><span style=color:#000>10</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>20</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>30</span><span style=color:#ce5c00;font-weight:700>};</span>
+    <span style=color:#000>UUID</span> <span style=color:#000>uuidFromBytes</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>UUID</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>nameUUIDFromBytes</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>nbyte</span><span style=color:#ce5c00;font-weight:700>);</span>
+    <span style=color:#000>System</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>out</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>println</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>uuidFromBytes</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>toString</span><span style=color:#ce5c00;font-weight:700>().</span><span style=color:#c4a000>replaceAll</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;-&#34;</span><span style=color:#ce5c00;font-weight:700>,</span><span style=color:#4e9a06>&#34;&#34;</span><span style=color:#ce5c00;font-weight:700>));</span>
+<span style=color:#ce5c00;font-weight:700>}</span>
+</code></pre></div><p>得到的UUID结果:</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>59f51e7ea5ca453bbfaf2c1579f09f1d
+7f49b84d0bbc38e9a493718013baace6
+</code></pre></div><p>虽然 UUID 生成方便，本地生成没有网络消耗，但是使用起来也有一些缺点，</p>
+<ul>
+<li><strong>不易于存储</strong>：UUID太长，16字节128位，通常以36长度的字符串表示，很多场景不适用。</li>
+<li><strong>信息不安全</strong>：基于MAC地址生成UUID的算法可能会造成MAC地址泄露，暴露使用者的位置。</li>
+<li><strong>对MySQL索引不利</strong>：如果作为数据库主键，在InnoDB引擎下，UUID的无序性可能会引起数据位置频繁变动，严重影响性能，可以查阅 Mysql 索引原理 B+树的知识。</li>
+</ul>
+<h2 id=数据库生成>数据库生成</h2>
+<p>是不是一定要基于外界的条件才能满足分布式唯一ID的需求呢，我们能不能在我们分布式数据库的基础上获取我们需要的ID？</p>
+<p>由于分布式数据库的起始自增值一样所以才会有冲突的情况发生，那么我们将分布式系统中数据库的同一个业务表的自增ID设计成不一样的起始值，然后设置固定的步长，步长的值即为分库的数量或分表的数量。</p>
+<p>以MySQL举例，利用给字段设置<code>auto_increment_increment</code>和<code>auto_increment_offset</code>来保证ID自增。</p>
+<ul>
+<li><code>auto_increment_offset</code>：表示自增长字段从那个数开始，他的取值范围是1 .. 65535。</li>
+<li><code>auto_increment_increment</code>：表示自增长字段每次递增的量，其默认值是1，取值范围是1 .. 65535。</li>
+</ul>
+<p>假设有三台机器，则DB1中order表的起始ID值为1，DB2中order表的起始值为2，DB3中order表的起始值为3，它们自增的步长都为3，则它们的ID生成范围如下图所示：</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211215001500.png style=display:block;width:80% alt=NAME align=center> </div>
+<p>通过这种方式明显的优势就是依赖于数据库自身不需要其他资源，并且ID号单调自增，可以实现一些对ID有特殊要求的业务。</p>
+<p>但是缺点也很明显，首先它<strong>强依赖DB</strong>，当DB异常时整个系统不可用。虽然配置主从复制可以尽可能的增加可用性，但是<strong>数据一致性在特殊情况下难以保证</strong>。主从切换时的不一致可能会导致重复发号。还有就是<strong>ID发号性能瓶颈限制在单台MySQL的读写性能</strong>。</p>
+<h2 id=使用redis实现>使用redis实现</h2>
+<p>Redis实现分布式唯一ID主要是通过提供像 <code>INCR</code> 和 <code>INCRBY</code> 这样的自增原子命令，由于Redis自身的单线程的特点所以能保证生成的 ID 肯定是唯一有序的。</p>
+<p>但是单机存在性能瓶颈，无法满足高并发的业务需求，所以可以采用集群的方式来实现。集群的方式又会涉及到和数据库集群同样的问题，所以也需要设置分段和步长来实现。</p>
+<p>为了避免长期自增后数字过大可以通过与当前时间戳组合起来使用，另外为了保证并发和业务多线程的问题可以采用 Redis + Lua的方式进行编码，保证安全。</p>
+<p>Redis 实现分布式全局唯一ID，它的性能比较高，生成的数据是有序的，对排序业务有利，但是同样它依赖于redis，<strong>需要系统引进redis组件，增加了系统的配置复杂性</strong>。</p>
+<p>当然现在Redis的使用性很普遍，所以如果其他业务已经引进了Redis集群，则可以资源利用考虑使用Redis来实现。</p>
+<h2 id=雪花算法-snowflake>雪花算法-Snowflake</h2>
+<p>Snowflake，雪花算法是由Twitter开源的分布式ID生成算法，以划分命名空间的方式将 64-bit位分割成多个部分，每个部分代表不同的含义。而 Java中64bit的整数是Long类型，所以在 Java 中 SnowFlake 算法生成的 ID 就是 long 来存储的。</p>
+<ul>
+<li><strong>第1位</strong>占用1bit，其值始终是0，可看做是符号位不使用。</li>
+<li><strong>第2位</strong>开始的41位是时间戳，41-bit位可表示2^41个数，每个数代表毫秒，那么雪花算法可用的时间年限是<code>(1L&lt;&lt;41)/(1000L360024*365)</code>=69 年的时间。</li>
+<li><strong>中间的10-bit位</strong>可表示机器数，即2^10 = 1024台机器，但是一般情况下我们不会部署这么台机器。如果我们对IDC（互联网数据中心）有需求，还可以将 10-bit 分 5-bit 给 IDC，分5-bit给工作机器。这样就可以表示32个IDC，每个IDC下可以有32台机器，具体的划分可以根据自身需求定义。</li>
+<li><strong>最后12-bit位</strong>是自增序列，可表示2^12 = 4096个数。</li>
+</ul>
+<p>这样的划分之后相当于<strong>在一毫秒一个数据中心的一台机器上可产生4096个有序的不重复的ID</strong>。但是我们 IDC 和机器数肯定不止一个，所以毫秒内能生成的有序ID数是翻倍的。</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211215001524.png style=display:block;width:80% alt=NAME align=center> </div>
+<p>Snowflake 的Twitter官方原版是用Scala写的，对Scala语言有研究的同学可以去阅读下，以下是 Java 版本的写法。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#204a87;font-weight:700>package</span> <span style=color:#000>com.jajian.demo.distribute</span><span style=color:#ce5c00;font-weight:700>;</span>
+
+<span style=color:#8f5902;font-style:italic>/**
+</span><span style=color:#8f5902;font-style:italic> * Twitter_Snowflake&lt;br&gt;
+</span><span style=color:#8f5902;font-style:italic> * SnowFlake的结构如下(每部分用-分开):&lt;br&gt;
+</span><span style=color:#8f5902;font-style:italic> * 0 - 0000000000 0000000000 0000000000 0000000000 0 - 00000 - 00000 - 000000000000 &lt;br&gt;
+</span><span style=color:#8f5902;font-style:italic> * 1位标识，由于long基本类型在Java中是带符号的，最高位是符号位，正数是0，负数是1，所以id一般是正数，最高位是0&lt;br&gt;
+</span><span style=color:#8f5902;font-style:italic> * 41位时间截(毫秒级)，注意，41位时间截不是存储当前时间的时间截，而是存储时间截的差值（当前时间截 - 开始时间截)
+</span><span style=color:#8f5902;font-style:italic> * 得到的值），这里的的开始时间截，一般是我们的id生成器开始使用的时间，由我们程序来指定的（如下下面程序IdWorker类的startTime属性）。41位的时间截，可以使用69年，年T = (1L &lt;&lt; 41) / (1000L * 60 * 60 * 24 * 365) = 69&lt;br&gt;
+</span><span style=color:#8f5902;font-style:italic> * 10位的数据机器位，可以部署在1024个节点，包括5位datacenterId和5位workerId&lt;br&gt;
+</span><span style=color:#8f5902;font-style:italic> * 12位序列，毫秒内的计数，12位的计数顺序号支持每个节点每毫秒(同一机器，同一时间截)产生4096个ID序号&lt;br&gt;
+</span><span style=color:#8f5902;font-style:italic> * 加起来刚好64位，为一个Long型。&lt;br&gt;
+</span><span style=color:#8f5902;font-style:italic> * SnowFlake的优点是，整体上按照时间自增排序，并且整个分布式系统内不会产生ID碰撞(由数据中心ID和机器ID作区分)，并且效率较高，经测试，SnowFlake每秒能够产生26万ID左右。
+</span><span style=color:#8f5902;font-style:italic> */</span>
+<span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>SnowflakeDistributeId</span> <span style=color:#ce5c00;font-weight:700>{</span>
+
+
+    <span style=color:#8f5902;font-style:italic>// ==============================Fields===========================================
+</span><span style=color:#8f5902;font-style:italic></span>    <span style=color:#8f5902;font-style:italic>/**
+</span><span style=color:#8f5902;font-style:italic>     * 开始时间截 (2015-01-01)
+</span><span style=color:#8f5902;font-style:italic>     */</span>
+    <span style=color:#204a87;font-weight:700>private</span> <span style=color:#204a87;font-weight:700>final</span> <span style=color:#204a87;font-weight:700>long</span> <span style=color:#000>twepoch</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>1420041600000L</span><span style=color:#ce5c00;font-weight:700>;</span>
+
+    <span style=color:#8f5902;font-style:italic>/**
+</span><span style=color:#8f5902;font-style:italic>     * 机器id所占的位数
+</span><span style=color:#8f5902;font-style:italic>     */</span>
+    <span style=color:#204a87;font-weight:700>private</span> <span style=color:#204a87;font-weight:700>final</span> <span style=color:#204a87;font-weight:700>long</span> <span style=color:#000>workerIdBits</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>5L</span><span style=color:#ce5c00;font-weight:700>;</span>
+
+    <span style=color:#8f5902;font-style:italic>/**
+</span><span style=color:#8f5902;font-style:italic>     * 数据标识id所占的位数
+</span><span style=color:#8f5902;font-style:italic>     */</span>
+    <span style=color:#204a87;font-weight:700>private</span> <span style=color:#204a87;font-weight:700>final</span> <span style=color:#204a87;font-weight:700>long</span> <span style=color:#000>datacenterIdBits</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>5L</span><span style=color:#ce5c00;font-weight:700>;</span>
+
+    <span style=color:#8f5902;font-style:italic>/**
+</span><span style=color:#8f5902;font-style:italic>     * 支持的最大机器id，结果是31 (这个移位算法可以很快的计算出几位二进制数所能表示的最大十进制数)
+</span><span style=color:#8f5902;font-style:italic>     */</span>
+    <span style=color:#204a87;font-weight:700>private</span> <span style=color:#204a87;font-weight:700>final</span> <span style=color:#204a87;font-weight:700>long</span> <span style=color:#000>maxWorkerId</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>-</span><span style=color:#000>1L</span> <span style=color:#ce5c00;font-weight:700>^</span> <span style=color:#ce5c00;font-weight:700>(-</span><span style=color:#000>1L</span> <span style=color:#ce5c00;font-weight:700>&lt;&lt;</span> <span style=color:#000>workerIdBits</span><span style=color:#ce5c00;font-weight:700>);</span>
+
+    <span style=color:#8f5902;font-style:italic>/**
+</span><span style=color:#8f5902;font-style:italic>     * 支持的最大数据标识id，结果是31
+</span><span style=color:#8f5902;font-style:italic>     */</span>
+    <span style=color:#204a87;font-weight:700>private</span> <span style=color:#204a87;font-weight:700>final</span> <span style=color:#204a87;font-weight:700>long</span> <span style=color:#000>maxDatacenterId</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>-</span><span style=color:#000>1L</span> <span style=color:#ce5c00;font-weight:700>^</span> <span style=color:#ce5c00;font-weight:700>(-</span><span style=color:#000>1L</span> <span style=color:#ce5c00;font-weight:700>&lt;&lt;</span> <span style=color:#000>datacenterIdBits</span><span style=color:#ce5c00;font-weight:700>);</span>
+
+    <span style=color:#8f5902;font-style:italic>/**
+</span><span style=color:#8f5902;font-style:italic>     * 序列在id中占的位数
+</span><span style=color:#8f5902;font-style:italic>     */</span>
+    <span style=color:#204a87;font-weight:700>private</span> <span style=color:#204a87;font-weight:700>final</span> <span style=color:#204a87;font-weight:700>long</span> <span style=color:#000>sequenceBits</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>12L</span><span style=color:#ce5c00;font-weight:700>;</span>
+
+    <span style=color:#8f5902;font-style:italic>/**
+</span><span style=color:#8f5902;font-style:italic>     * 机器ID向左移12位
+</span><span style=color:#8f5902;font-style:italic>     */</span>
+    <span style=color:#204a87;font-weight:700>private</span> <span style=color:#204a87;font-weight:700>final</span> <span style=color:#204a87;font-weight:700>long</span> <span style=color:#000>workerIdShift</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>sequenceBits</span><span style=color:#ce5c00;font-weight:700>;</span>
+
+    <span style=color:#8f5902;font-style:italic>/**
+</span><span style=color:#8f5902;font-style:italic>     * 数据标识id向左移17位(12+5)
+</span><span style=color:#8f5902;font-style:italic>     */</span>
+    <span style=color:#204a87;font-weight:700>private</span> <span style=color:#204a87;font-weight:700>final</span> <span style=color:#204a87;font-weight:700>long</span> <span style=color:#000>datacenterIdShift</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>sequenceBits</span> <span style=color:#ce5c00;font-weight:700>+</span> <span style=color:#000>workerIdBits</span><span style=color:#ce5c00;font-weight:700>;</span>
+
+    <span style=color:#8f5902;font-style:italic>/**
+</span><span style=color:#8f5902;font-style:italic>     * 时间截向左移22位(5+5+12)
+</span><span style=color:#8f5902;font-style:italic>     */</span>
+    <span style=color:#204a87;font-weight:700>private</span> <span style=color:#204a87;font-weight:700>final</span> <span style=color:#204a87;font-weight:700>long</span> <span style=color:#000>timestampLeftShift</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>sequenceBits</span> <span style=color:#ce5c00;font-weight:700>+</span> <span style=color:#000>workerIdBits</span> <span style=color:#ce5c00;font-weight:700>+</span> <span style=color:#000>datacenterIdBits</span><span style=color:#ce5c00;font-weight:700>;</span>
+
+    <span style=color:#8f5902;font-style:italic>/**
+</span><span style=color:#8f5902;font-style:italic>     * 生成序列的掩码，这里为4095 (0b111111111111=0xfff=4095)
+</span><span style=color:#8f5902;font-style:italic>     */</span>
+    <span style=color:#204a87;font-weight:700>private</span> <span style=color:#204a87;font-weight:700>final</span> <span style=color:#204a87;font-weight:700>long</span> <span style=color:#000>sequenceMask</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>-</span><span style=color:#000>1L</span> <span style=color:#ce5c00;font-weight:700>^</span> <span style=color:#ce5c00;font-weight:700>(-</span><span style=color:#000>1L</span> <span style=color:#ce5c00;font-weight:700>&lt;&lt;</span> <span style=color:#000>sequenceBits</span><span style=color:#ce5c00;font-weight:700>);</span>
+
+    <span style=color:#8f5902;font-style:italic>/**
+</span><span style=color:#8f5902;font-style:italic>     * 工作机器ID(0~31)
+</span><span style=color:#8f5902;font-style:italic>     */</span>
+    <span style=color:#204a87;font-weight:700>private</span> <span style=color:#204a87;font-weight:700>long</span> <span style=color:#000>workerId</span><span style=color:#ce5c00;font-weight:700>;</span>
+
+    <span style=color:#8f5902;font-style:italic>/**
+</span><span style=color:#8f5902;font-style:italic>     * 数据中心ID(0~31)
+</span><span style=color:#8f5902;font-style:italic>     */</span>
+    <span style=color:#204a87;font-weight:700>private</span> <span style=color:#204a87;font-weight:700>long</span> <span style=color:#000>datacenterId</span><span style=color:#ce5c00;font-weight:700>;</span>
+
+    <span style=color:#8f5902;font-style:italic>/**
+</span><span style=color:#8f5902;font-style:italic>     * 毫秒内序列(0~4095)
+</span><span style=color:#8f5902;font-style:italic>     */</span>
+    <span style=color:#204a87;font-weight:700>private</span> <span style=color:#204a87;font-weight:700>long</span> <span style=color:#000>sequence</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>0L</span><span style=color:#ce5c00;font-weight:700>;</span>
+
+    <span style=color:#8f5902;font-style:italic>/**
+</span><span style=color:#8f5902;font-style:italic>     * 上次生成ID的时间截
+</span><span style=color:#8f5902;font-style:italic>     */</span>
+    <span style=color:#204a87;font-weight:700>private</span> <span style=color:#204a87;font-weight:700>long</span> <span style=color:#000>lastTimestamp</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>-</span><span style=color:#000>1L</span><span style=color:#ce5c00;font-weight:700>;</span>
+
+    <span style=color:#8f5902;font-style:italic>//==============================Constructors=====================================
+</span><span style=color:#8f5902;font-style:italic></span>
+    <span style=color:#8f5902;font-style:italic>/**
+</span><span style=color:#8f5902;font-style:italic>     * 构造函数
+</span><span style=color:#8f5902;font-style:italic>     *
+</span><span style=color:#8f5902;font-style:italic>     * @param workerId     工作ID (0~31)
+</span><span style=color:#8f5902;font-style:italic>     * @param datacenterId 数据中心ID (0~31)
+</span><span style=color:#8f5902;font-style:italic>     */</span>
+    <span style=color:#204a87;font-weight:700>public</span> <span style=color:#000>SnowflakeDistributeId</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#204a87;font-weight:700>long</span> <span style=color:#000>workerId</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#204a87;font-weight:700>long</span> <span style=color:#000>datacenterId</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>
+        <span style=color:#204a87;font-weight:700>if</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>workerId</span> <span style=color:#ce5c00;font-weight:700>&gt;</span> <span style=color:#000>maxWorkerId</span> <span style=color:#ce5c00;font-weight:700>||</span> <span style=color:#000>workerId</span> <span style=color:#ce5c00;font-weight:700>&lt;</span> <span style=color:#000>0</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>
+            <span style=color:#204a87;font-weight:700>throw</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>IllegalArgumentException</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>String</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>format</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;worker Id can&#39;t be greater than %d or less than 0&#34;</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>maxWorkerId</span><span style=color:#ce5c00;font-weight:700>));</span>
+        <span style=color:#ce5c00;font-weight:700>}</span>
+        <span style=color:#204a87;font-weight:700>if</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>datacenterId</span> <span style=color:#ce5c00;font-weight:700>&gt;</span> <span style=color:#000>maxDatacenterId</span> <span style=color:#ce5c00;font-weight:700>||</span> <span style=color:#000>datacenterId</span> <span style=color:#ce5c00;font-weight:700>&lt;</span> <span style=color:#000>0</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>
+            <span style=color:#204a87;font-weight:700>throw</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>IllegalArgumentException</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>String</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>format</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;datacenter Id can&#39;t be greater than %d or less than 0&#34;</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>maxDatacenterId</span><span style=color:#ce5c00;font-weight:700>));</span>
+        <span style=color:#ce5c00;font-weight:700>}</span>
+        <span style=color:#204a87;font-weight:700>this</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>workerId</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>workerId</span><span style=color:#ce5c00;font-weight:700>;</span>
+        <span style=color:#204a87;font-weight:700>this</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>datacenterId</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>datacenterId</span><span style=color:#ce5c00;font-weight:700>;</span>
+    <span style=color:#ce5c00;font-weight:700>}</span>
+
+    <span style=color:#8f5902;font-style:italic>// ==============================Methods==========================================
+</span><span style=color:#8f5902;font-style:italic></span>
+    <span style=color:#8f5902;font-style:italic>/**
+</span><span style=color:#8f5902;font-style:italic>     * 获得下一个ID (该方法是线程安全的)
+</span><span style=color:#8f5902;font-style:italic>     *
+</span><span style=color:#8f5902;font-style:italic>     * @return SnowflakeId
+</span><span style=color:#8f5902;font-style:italic>     */</span>
+    <span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>synchronized</span> <span style=color:#204a87;font-weight:700>long</span> <span style=color:#000>nextId</span><span style=color:#ce5c00;font-weight:700>()</span> <span style=color:#ce5c00;font-weight:700>{</span>
+        <span style=color:#204a87;font-weight:700>long</span> <span style=color:#000>timestamp</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>timeGen</span><span style=color:#ce5c00;font-weight:700>();</span>
+
+        <span style=color:#8f5902;font-style:italic>//如果当前时间小于上一次ID生成的时间戳，说明系统时钟回退过这个时候应当抛出异常
+</span><span style=color:#8f5902;font-style:italic></span>        <span style=color:#204a87;font-weight:700>if</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>timestamp</span> <span style=color:#ce5c00;font-weight:700>&lt;</span> <span style=color:#000>lastTimestamp</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>
+            <span style=color:#204a87;font-weight:700>throw</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>RuntimeException</span><span style=color:#ce5c00;font-weight:700>(</span>
+                    <span style=color:#000>String</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>format</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;Clock moved backwards.  Refusing to generate id for %d milliseconds&#34;</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>lastTimestamp</span> <span style=color:#ce5c00;font-weight:700>-</span> <span style=color:#000>timestamp</span><span style=color:#ce5c00;font-weight:700>));</span>
+        <span style=color:#ce5c00;font-weight:700>}</span>
+
+        <span style=color:#8f5902;font-style:italic>//如果是同一时间生成的，则进行毫秒内序列
+</span><span style=color:#8f5902;font-style:italic></span>        <span style=color:#204a87;font-weight:700>if</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>lastTimestamp</span> <span style=color:#ce5c00;font-weight:700>==</span> <span style=color:#000>timestamp</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>
+            <span style=color:#000>sequence</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>sequence</span> <span style=color:#ce5c00;font-weight:700>+</span> <span style=color:#000>1</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>&amp;</span> <span style=color:#000>sequenceMask</span><span style=color:#ce5c00;font-weight:700>;</span>
+            <span style=color:#8f5902;font-style:italic>//毫秒内序列溢出
+</span><span style=color:#8f5902;font-style:italic></span>            <span style=color:#204a87;font-weight:700>if</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>sequence</span> <span style=color:#ce5c00;font-weight:700>==</span> <span style=color:#000>0</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>
+                <span style=color:#8f5902;font-style:italic>//阻塞到下一个毫秒,获得新的时间戳
+</span><span style=color:#8f5902;font-style:italic></span>                <span style=color:#000>timestamp</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>tilNextMillis</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>lastTimestamp</span><span style=color:#ce5c00;font-weight:700>);</span>
+            <span style=color:#ce5c00;font-weight:700>}</span>
+        <span style=color:#ce5c00;font-weight:700>}</span>
+        <span style=color:#8f5902;font-style:italic>//时间戳改变，毫秒内序列重置
+</span><span style=color:#8f5902;font-style:italic></span>        <span style=color:#204a87;font-weight:700>else</span> <span style=color:#ce5c00;font-weight:700>{</span>
+            <span style=color:#000>sequence</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>0L</span><span style=color:#ce5c00;font-weight:700>;</span>
+        <span style=color:#ce5c00;font-weight:700>}</span>
+
+        <span style=color:#8f5902;font-style:italic>//上次生成ID的时间截
+</span><span style=color:#8f5902;font-style:italic></span>        <span style=color:#000>lastTimestamp</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>timestamp</span><span style=color:#ce5c00;font-weight:700>;</span>
+
+        <span style=color:#8f5902;font-style:italic>//移位并通过或运算拼到一起组成64位的ID
+</span><span style=color:#8f5902;font-style:italic></span>        <span style=color:#204a87;font-weight:700>return</span> <span style=color:#ce5c00;font-weight:700>((</span><span style=color:#000>timestamp</span> <span style=color:#ce5c00;font-weight:700>-</span> <span style=color:#000>twepoch</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>&lt;&lt;</span> <span style=color:#000>timestampLeftShift</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#8f5902;font-style:italic>//
+</span><span style=color:#8f5902;font-style:italic></span>                <span style=color:#ce5c00;font-weight:700>|</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>datacenterId</span> <span style=color:#ce5c00;font-weight:700>&lt;&lt;</span> <span style=color:#000>datacenterIdShift</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#8f5902;font-style:italic>//
+</span><span style=color:#8f5902;font-style:italic></span>                <span style=color:#ce5c00;font-weight:700>|</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>workerId</span> <span style=color:#ce5c00;font-weight:700>&lt;&lt;</span> <span style=color:#000>workerIdShift</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#8f5902;font-style:italic>//
+</span><span style=color:#8f5902;font-style:italic></span>                <span style=color:#ce5c00;font-weight:700>|</span> <span style=color:#000>sequence</span><span style=color:#ce5c00;font-weight:700>;</span>
+    <span style=color:#ce5c00;font-weight:700>}</span>
+
+    <span style=color:#8f5902;font-style:italic>/**
+</span><span style=color:#8f5902;font-style:italic>     * 阻塞到下一个毫秒，直到获得新的时间戳
+</span><span style=color:#8f5902;font-style:italic>     *
+</span><span style=color:#8f5902;font-style:italic>     * @param lastTimestamp 上次生成ID的时间截
+</span><span style=color:#8f5902;font-style:italic>     * @return 当前时间戳
+</span><span style=color:#8f5902;font-style:italic>     */</span>
+    <span style=color:#204a87;font-weight:700>protected</span> <span style=color:#204a87;font-weight:700>long</span> <span style=color:#000>tilNextMillis</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#204a87;font-weight:700>long</span> <span style=color:#000>lastTimestamp</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>
+        <span style=color:#204a87;font-weight:700>long</span> <span style=color:#000>timestamp</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>timeGen</span><span style=color:#ce5c00;font-weight:700>();</span>
+        <span style=color:#204a87;font-weight:700>while</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>timestamp</span> <span style=color:#ce5c00;font-weight:700>&lt;=</span> <span style=color:#000>lastTimestamp</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>
+            <span style=color:#000>timestamp</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>timeGen</span><span style=color:#ce5c00;font-weight:700>();</span>
+        <span style=color:#ce5c00;font-weight:700>}</span>
+        <span style=color:#204a87;font-weight:700>return</span> <span style=color:#000>timestamp</span><span style=color:#ce5c00;font-weight:700>;</span>
+    <span style=color:#ce5c00;font-weight:700>}</span>
+
+    <span style=color:#8f5902;font-style:italic>/**
+</span><span style=color:#8f5902;font-style:italic>     * 返回以毫秒为单位的当前时间
+</span><span style=color:#8f5902;font-style:italic>     *
+</span><span style=color:#8f5902;font-style:italic>     * @return 当前时间(毫秒)
+</span><span style=color:#8f5902;font-style:italic>     */</span>
+    <span style=color:#204a87;font-weight:700>protected</span> <span style=color:#204a87;font-weight:700>long</span> <span style=color:#000>timeGen</span><span style=color:#ce5c00;font-weight:700>()</span> <span style=color:#ce5c00;font-weight:700>{</span>
+        <span style=color:#204a87;font-weight:700>return</span> <span style=color:#000>System</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>currentTimeMillis</span><span style=color:#ce5c00;font-weight:700>();</span>
+    <span style=color:#ce5c00;font-weight:700>}</span>
+<span style=color:#ce5c00;font-weight:700>}</span>
+</code></pre></div><p><strong>雪花算法提供了一个很好的设计思想，雪花算法生成的ID是趋势递增，不依赖数据库等第三方系统，以服务的方式部署，稳定性更高，生成ID的性能也是非常高的，而且可以根据自身业务特性分配bit位，非常灵活</strong>。</p>
+<p>但是雪花算法强<strong>依赖机器时钟</strong>，如果机器上时钟回拨，会导致发号重复或者服务会处于不可用状态。如果恰巧回退前生成过一些ID，而时间回退后，生成的ID就有可能重复。官方对于此并没有给出解决方案，而是简单的抛错处理，这样会造成在时间被追回之前的这段时间服务不可用。</p>
+<p>很多其他类雪花算法也是在此思想上的设计然后改进规避它的缺陷，后面介绍的<code>百度 UidGenerator</code> 和 <code>美团分布式ID生成系统 Leaf</code> 中snowflake模式都是在 snowflake 的基础上演进出来的。</p>
+<h2 id=百度-uidgenerator>百度-UidGenerator</h2>
+<blockquote>
+<p>百度的 <code>UidGenerator</code> 是百度开源基于Java语言实现的唯一ID生成器，是在雪花算法 snowflake 的基础上做了一些改进。<code>UidGenerator</code>以组件形式工作在应用项目中, 支持自定义workerId位数和初始化策略，适用于docker等虚拟化环境下实例自动重启、漂移等场景。</p>
+</blockquote>
+<p>在实现上，UidGenerator 提供了两种生成唯一ID方式，分别是 <code>DefaultUidGenerator</code> 和 <code>CachedUidGenerator</code>，官方建议如果有<strong>性能考虑</strong>的话使用 <code>CachedUidGenerator</code> 方式实现。</p>
+<p><code>UidGenerator</code> 依然是以划分命名空间的方式将 64-bit位分割成多个部分，只不过它的默认划分方式有别于雪花算法 snowflake。它默认是由 <code>1-28-22-13</code> 的格式进行划分。可根据你的业务的情况和特点，自己调整各个字段占用的位数。</p>
+<ul>
+<li><strong>第1位</strong>仍然占用1bit，其值始终是0。</li>
+<li><strong>第2位</strong>开始的28位是时间戳，28-bit位可表示2^28个数，这里不再是以毫秒而是以秒为单位，每个数代表秒则可用<code>（1L&lt;&lt;28）/ (360024365) ≈ 8.51</code> 年的时间。</li>
+<li>中间的 workId （数据中心+工作机器，可以其他组成方式）则由 <strong>22-bit位</strong>组成，可表示 2^22 = 4194304个工作ID。</li>
+<li>最后由<strong>13-bit位</strong>构成自增序列，可表示2^13 = 8192个数。</li>
+</ul>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211215001605.png style=display:block;width:80% alt=NAME align=center> </div>
+<p>其中 workId （机器 id），最多可支持约420w次机器启动。<strong>内置实现为在启动时由数据库分配（表名为 WORKER_NODE），默认分配策略为用后即弃，后续可提供复用策略</strong>。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sql data-lang=sql><span style=color:#204a87;font-weight:700>DROP</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>TABLE</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>IF</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>EXISTS</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#000>WORKER_NODE</span><span style=color:#000;font-weight:700>;</span><span style=color:#f8f8f8;text-decoration:underline>
+</span><span style=color:#f8f8f8;text-decoration:underline></span><span style=color:#204a87;font-weight:700>CREATE</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>TABLE</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#000>WORKER_NODE</span><span style=color:#f8f8f8;text-decoration:underline>
+</span><span style=color:#f8f8f8;text-decoration:underline></span><span style=color:#000;font-weight:700>(</span><span style=color:#f8f8f8;text-decoration:underline>
+</span><span style=color:#f8f8f8;text-decoration:underline></span><span style=color:#000>ID</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87>BIGINT</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>NOT</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>NULL</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#000>AUTO_INCREMENT</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>COMMENT</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#4e9a06>&#39;auto increment id&#39;</span><span style=color:#000;font-weight:700>,</span><span style=color:#f8f8f8;text-decoration:underline>
+</span><span style=color:#f8f8f8;text-decoration:underline></span><span style=color:#000>HOST_NAME</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87>VARCHAR</span><span style=color:#000;font-weight:700>(</span><span style=color:#0000cf;font-weight:700>64</span><span style=color:#000;font-weight:700>)</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>NOT</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>NULL</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>COMMENT</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#4e9a06>&#39;host name&#39;</span><span style=color:#000;font-weight:700>,</span><span style=color:#f8f8f8;text-decoration:underline>
+</span><span style=color:#f8f8f8;text-decoration:underline></span><span style=color:#000>PORT</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87>VARCHAR</span><span style=color:#000;font-weight:700>(</span><span style=color:#0000cf;font-weight:700>64</span><span style=color:#000;font-weight:700>)</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>NOT</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>NULL</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>COMMENT</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#4e9a06>&#39;port&#39;</span><span style=color:#000;font-weight:700>,</span><span style=color:#f8f8f8;text-decoration:underline>
+</span><span style=color:#f8f8f8;text-decoration:underline></span><span style=color:#204a87;font-weight:700>TYPE</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87>INT</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>NOT</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>NULL</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>COMMENT</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#4e9a06>&#39;node type: ACTUAL or CONTAINER&#39;</span><span style=color:#000;font-weight:700>,</span><span style=color:#f8f8f8;text-decoration:underline>
+</span><span style=color:#f8f8f8;text-decoration:underline></span><span style=color:#000>LAUNCH_DATE</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87>DATE</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>NOT</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>NULL</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>COMMENT</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#4e9a06>&#39;launch date&#39;</span><span style=color:#000;font-weight:700>,</span><span style=color:#f8f8f8;text-decoration:underline>
+</span><span style=color:#f8f8f8;text-decoration:underline></span><span style=color:#000>MODIFIED</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>TIMESTAMP</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>NOT</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>NULL</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>COMMENT</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#4e9a06>&#39;modified time&#39;</span><span style=color:#000;font-weight:700>,</span><span style=color:#f8f8f8;text-decoration:underline>
+</span><span style=color:#f8f8f8;text-decoration:underline></span><span style=color:#000>CREATED</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>TIMESTAMP</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>NOT</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>NULL</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>COMMENT</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#4e9a06>&#39;created time&#39;</span><span style=color:#000;font-weight:700>,</span><span style=color:#f8f8f8;text-decoration:underline>
+</span><span style=color:#f8f8f8;text-decoration:underline></span><span style=color:#204a87;font-weight:700>PRIMARY</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>KEY</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>ID</span><span style=color:#000;font-weight:700>)</span><span style=color:#f8f8f8;text-decoration:underline>
+</span><span style=color:#f8f8f8;text-decoration:underline></span><span style=color:#000;font-weight:700>)</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>COMMENT</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#4e9a06>&#39;DB WorkerID Assigner for UID Generator&#39;</span><span style=color:#000;font-weight:700>,</span><span style=color:#000>ENGINE</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#000>INNODB</span><span style=color:#000;font-weight:700>;</span><span style=color:#f8f8f8;text-decoration:underline>
+</span></code></pre></div><h3 id=defaultuidgenerator-实现>DefaultUidGenerator 实现</h3>
+<p><code>DefaultUidGenerator</code> 就是正常的根据时间戳和机器位还有序列号的生成方式，和雪花算法很相似，对于时钟回拨也只是抛异常处理。仅有一些不同，如<strong>以秒为为单位</strong>而不再是毫秒和支持Docker等虚拟化环境。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#204a87;font-weight:700>protected</span> <span style=color:#204a87;font-weight:700>synchronized</span> <span style=color:#204a87;font-weight:700>long</span> <span style=color:#000>nextId</span><span style=color:#ce5c00;font-weight:700>()</span> <span style=color:#ce5c00;font-weight:700>{</span>
+    <span style=color:#204a87;font-weight:700>long</span> <span style=color:#000>currentSecond</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>getCurrentSecond</span><span style=color:#ce5c00;font-weight:700>();</span>
+
+    <span style=color:#8f5902;font-style:italic>// Clock moved backwards, refuse to generate uid
+</span><span style=color:#8f5902;font-style:italic></span>    <span style=color:#204a87;font-weight:700>if</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>currentSecond</span> <span style=color:#ce5c00;font-weight:700>&lt;</span> <span style=color:#000>lastSecond</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>
+        <span style=color:#204a87;font-weight:700>long</span> <span style=color:#000>refusedSeconds</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>lastSecond</span> <span style=color:#ce5c00;font-weight:700>-</span> <span style=color:#000>currentSecond</span><span style=color:#ce5c00;font-weight:700>;</span>
+        <span style=color:#204a87;font-weight:700>throw</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>UidGenerateException</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;Clock moved backwards. Refusing for %d seconds&#34;</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>refusedSeconds</span><span style=color:#ce5c00;font-weight:700>);</span>
+    <span style=color:#ce5c00;font-weight:700>}</span>
+
+    <span style=color:#8f5902;font-style:italic>// At the same second, increase sequence
+</span><span style=color:#8f5902;font-style:italic></span>    <span style=color:#204a87;font-weight:700>if</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>currentSecond</span> <span style=color:#ce5c00;font-weight:700>==</span> <span style=color:#000>lastSecond</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>
+        <span style=color:#000>sequence</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>sequence</span> <span style=color:#ce5c00;font-weight:700>+</span> <span style=color:#000>1</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>&amp;</span> <span style=color:#000>bitsAllocator</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>getMaxSequence</span><span style=color:#ce5c00;font-weight:700>();</span>
+        <span style=color:#8f5902;font-style:italic>// Exceed the max sequence, we wait the next second to generate uid
+</span><span style=color:#8f5902;font-style:italic></span>        <span style=color:#204a87;font-weight:700>if</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>sequence</span> <span style=color:#ce5c00;font-weight:700>==</span> <span style=color:#000>0</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>
+            <span style=color:#000>currentSecond</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>getNextSecond</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>lastSecond</span><span style=color:#ce5c00;font-weight:700>);</span>
+        <span style=color:#ce5c00;font-weight:700>}</span>
+
+    <span style=color:#8f5902;font-style:italic>// At the different second, sequence restart from zero
+</span><span style=color:#8f5902;font-style:italic></span>    <span style=color:#ce5c00;font-weight:700>}</span> <span style=color:#204a87;font-weight:700>else</span> <span style=color:#ce5c00;font-weight:700>{</span>
+        <span style=color:#000>sequence</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>0L</span><span style=color:#ce5c00;font-weight:700>;</span>
+    <span style=color:#ce5c00;font-weight:700>}</span>
+
+    <span style=color:#000>lastSecond</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>currentSecond</span><span style=color:#ce5c00;font-weight:700>;</span>
+
+    <span style=color:#8f5902;font-style:italic>// Allocate bits for UID
+</span><span style=color:#8f5902;font-style:italic></span>    <span style=color:#204a87;font-weight:700>return</span> <span style=color:#000>bitsAllocator</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>allocate</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>currentSecond</span> <span style=color:#ce5c00;font-weight:700>-</span> <span style=color:#000>epochSeconds</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>workerId</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>sequence</span><span style=color:#ce5c00;font-weight:700>);</span>
+<span style=color:#ce5c00;font-weight:700>}</span>
+</code></pre></div><p>如果你要使用 DefaultUidGenerator 的实现方式的话，以上划分的占用位数可通过 spring 进行参数配置。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-xml data-lang=xml><span style=color:#204a87;font-weight:700>&lt;bean</span> <span style=color:#c4a000>id=</span><span style=color:#4e9a06>&#34;defaultUidGenerator&#34;</span> <span style=color:#c4a000>class=</span><span style=color:#4e9a06>&#34;com.baidu.fsg.uid.impl.DefaultUidGenerator&#34;</span> <span style=color:#c4a000>lazy-init=</span><span style=color:#4e9a06>&#34;false&#34;</span><span style=color:#204a87;font-weight:700>&gt;</span>
+    <span style=color:#204a87;font-weight:700>&lt;property</span> <span style=color:#c4a000>name=</span><span style=color:#4e9a06>&#34;workerIdAssigner&#34;</span> <span style=color:#c4a000>ref=</span><span style=color:#4e9a06>&#34;disposableWorkerIdAssigner&#34;</span><span style=color:#204a87;font-weight:700>/&gt;</span>
+
+    <span style=color:#8f5902;font-style:italic>&lt;!-- Specified bits &amp; epoch as your demand. No specified the default value will be used --&gt;</span>
+    <span style=color:#204a87;font-weight:700>&lt;property</span> <span style=color:#c4a000>name=</span><span style=color:#4e9a06>&#34;timeBits&#34;</span> <span style=color:#c4a000>value=</span><span style=color:#4e9a06>&#34;29&#34;</span><span style=color:#204a87;font-weight:700>/&gt;</span>
+    <span style=color:#204a87;font-weight:700>&lt;property</span> <span style=color:#c4a000>name=</span><span style=color:#4e9a06>&#34;workerBits&#34;</span> <span style=color:#c4a000>value=</span><span style=color:#4e9a06>&#34;21&#34;</span><span style=color:#204a87;font-weight:700>/&gt;</span>
+    <span style=color:#204a87;font-weight:700>&lt;property</span> <span style=color:#c4a000>name=</span><span style=color:#4e9a06>&#34;seqBits&#34;</span> <span style=color:#c4a000>value=</span><span style=color:#4e9a06>&#34;13&#34;</span><span style=color:#204a87;font-weight:700>/&gt;</span>
+    <span style=color:#204a87;font-weight:700>&lt;property</span> <span style=color:#c4a000>name=</span><span style=color:#4e9a06>&#34;epochStr&#34;</span> <span style=color:#c4a000>value=</span><span style=color:#4e9a06>&#34;2016-09-20&#34;</span><span style=color:#204a87;font-weight:700>/&gt;</span>
+<span style=color:#204a87;font-weight:700>&lt;/bean&gt;</span>
+</code></pre></div><h3 id=cacheduidgenerator-实现>CachedUidGenerator 实现</h3>
+<p>而官方建议的性能较高的 <code>CachedUidGenerator</code> 生成方式，是使用 RingBuffer 缓存生成的id。数组每个元素成为一个slot。RingBuffer容量，默认为Snowflake算法中sequence最大值（2^13 = 8192）。可通过 boostPower 配置进行扩容，以提高 RingBuffer 读写吞吐量。</p>
+<p>Tail指针、Cursor指针用于环形数组上读写slot：</p>
+<ul>
+<li><strong>Tail指针</strong> 表示Producer生产的最大序号(此序号从0开始，持续递增)。Tail不能超过Cursor，即生产者不能覆盖未消费的slot。当Tail已赶上curosr，此时可通过rejectedPutBufferHandler指定PutRejectPolicy</li>
+<li><strong>Cursor指针</strong> 表示Consumer消费到的最小序号(序号序列与Producer序列相同)。Cursor不能超过Tail，即不能消费未生产的slot。当Cursor已赶上tail，此时可通过rejectedTakeBufferHandler指定TakeRejectPolicy</li>
+</ul>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211215001657.png style=display:block;width:80% alt=NAME align=center> </div>
+<p>CachedUidGenerator采用了双RingBuffer，Uid-RingBuffer用于存储Uid、Flag-RingBuffer用于存储Uid状态(是否可填充、是否可消费)。</p>
+<p>由于数组元素在内存中是连续分配的，可最大程度利用CPU cache以提升性能。但同时会带来「伪共享」FalseSharing问题，为此在Tail、Cursor指针、Flag-RingBuffer中采用了CacheLine 补齐方式。</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211215001708.png style=display:block;width:80% alt=NAME align=center> </div>
+<p><strong>RingBuffer填充时机</strong></p>
+<ul>
+<li><strong>初始化预填充</strong> RingBuffer初始化时，预先填充满整个RingBuffer。</li>
+<li><strong>即时填充</strong> Take消费时，即时检查剩余可用slot量(tail - cursor)，如小于设定阈值，则补全空闲slots。阈值可通过paddingFactor来进行配置，请参考Quick Start中CachedUidGenerator配置。</li>
+<li><strong>周期填充</strong> 通过Schedule线程，定时补全空闲slots。可通过scheduleInterval配置，以应用定时填充功能，并指定Schedule时间间隔。</li>
+</ul>
+<h2 id=美团leaf>美团Leaf</h2>
+<blockquote>
+<p>Leaf是美团基础研发平台推出的一个分布式ID生成服务，名字取自德国哲学家、数学家莱布尼茨的著名的一句话：“There are no two identical leaves in the world”，世间不可能存在两片相同的叶子。</p>
+</blockquote>
+<p>Leaf 也提供了两种ID生成的方式，分别是 <code>Leaf-segment 数据库方案</code>和 <code>Leaf-snowflake 方案</code>。</p>
+<h3 id=leaf-segment-数据库方案>Leaf-segment 数据库方案</h3>
+<p>Leaf-segment 数据库方案，是在上文描述的在使用数据库的方案上，做了如下改变：</p>
+<ul>
+<li>原方案每次获取ID都得读写一次数据库，造成数据库压力大。改为利用proxy server批量获取，每次获取一个segment(step决定大小)号段的值。用完之后再去数据库获取新的号段，可以大大的减轻数据库的压力。</li>
+<li>各个业务不同的发号需求用 <code>biz_tag</code>字段来区分，每个biz-tag的ID获取相互隔离，互不影响。如果以后有性能需求需要对数据库扩容，不需要上述描述的复杂的扩容操作，只需要对biz_tag分库分表就行。</li>
+</ul>
+<p>数据库表设计如下：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sql data-lang=sql><span style=color:#204a87;font-weight:700>CREATE</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>TABLE</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#ce5c00;font-weight:700>`</span><span style=color:#000>leaf_alloc</span><span style=color:#ce5c00;font-weight:700>`</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#000;font-weight:700>(</span><span style=color:#f8f8f8;text-decoration:underline>
+</span><span style=color:#f8f8f8;text-decoration:underline>  </span><span style=color:#ce5c00;font-weight:700>`</span><span style=color:#000>biz_tag</span><span style=color:#ce5c00;font-weight:700>`</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87>varchar</span><span style=color:#000;font-weight:700>(</span><span style=color:#0000cf;font-weight:700>128</span><span style=color:#000;font-weight:700>)</span><span style=color:#f8f8f8;text-decoration:underline>  </span><span style=color:#204a87;font-weight:700>NOT</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>NULL</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>DEFAULT</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#4e9a06>&#39;&#39;</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>COMMENT</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#4e9a06>&#39;业务key&#39;</span><span style=color:#000;font-weight:700>,</span><span style=color:#f8f8f8;text-decoration:underline>
+</span><span style=color:#f8f8f8;text-decoration:underline>  </span><span style=color:#ce5c00;font-weight:700>`</span><span style=color:#000>max_id</span><span style=color:#ce5c00;font-weight:700>`</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87>bigint</span><span style=color:#000;font-weight:700>(</span><span style=color:#0000cf;font-weight:700>20</span><span style=color:#000;font-weight:700>)</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>NOT</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>NULL</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>DEFAULT</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#4e9a06>&#39;1&#39;</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>COMMENT</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#4e9a06>&#39;当前已经分配了的最大id&#39;</span><span style=color:#000;font-weight:700>,</span><span style=color:#f8f8f8;text-decoration:underline>
+</span><span style=color:#f8f8f8;text-decoration:underline>  </span><span style=color:#ce5c00;font-weight:700>`</span><span style=color:#000>step</span><span style=color:#ce5c00;font-weight:700>`</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87>int</span><span style=color:#000;font-weight:700>(</span><span style=color:#0000cf;font-weight:700>11</span><span style=color:#000;font-weight:700>)</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>NOT</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>NULL</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>COMMENT</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#4e9a06>&#39;初始步长，也是动态调整的最小步长&#39;</span><span style=color:#000;font-weight:700>,</span><span style=color:#f8f8f8;text-decoration:underline>
+</span><span style=color:#f8f8f8;text-decoration:underline>  </span><span style=color:#ce5c00;font-weight:700>`</span><span style=color:#000>description</span><span style=color:#ce5c00;font-weight:700>`</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87>varchar</span><span style=color:#000;font-weight:700>(</span><span style=color:#0000cf;font-weight:700>256</span><span style=color:#000;font-weight:700>)</span><span style=color:#f8f8f8;text-decoration:underline>  </span><span style=color:#204a87;font-weight:700>DEFAULT</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>NULL</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>COMMENT</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#4e9a06>&#39;业务key的描述&#39;</span><span style=color:#000;font-weight:700>,</span><span style=color:#f8f8f8;text-decoration:underline>
+</span><span style=color:#f8f8f8;text-decoration:underline>  </span><span style=color:#ce5c00;font-weight:700>`</span><span style=color:#000>update_time</span><span style=color:#ce5c00;font-weight:700>`</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>timestamp</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>NOT</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>NULL</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>DEFAULT</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>CURRENT_TIMESTAMP</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>ON</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>UPDATE</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>CURRENT_TIMESTAMP</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>COMMENT</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#4e9a06>&#39;更新时间&#39;</span><span style=color:#000;font-weight:700>,</span><span style=color:#f8f8f8;text-decoration:underline>
+</span><span style=color:#f8f8f8;text-decoration:underline>  </span><span style=color:#204a87;font-weight:700>PRIMARY</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#204a87;font-weight:700>KEY</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#000;font-weight:700>(</span><span style=color:#ce5c00;font-weight:700>`</span><span style=color:#000>biz_tag</span><span style=color:#ce5c00;font-weight:700>`</span><span style=color:#000;font-weight:700>)</span><span style=color:#f8f8f8;text-decoration:underline>
+</span><span style=color:#f8f8f8;text-decoration:underline></span><span style=color:#000;font-weight:700>)</span><span style=color:#f8f8f8;text-decoration:underline> </span><span style=color:#000>ENGINE</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#000>InnoDB</span><span style=color:#000;font-weight:700>;</span><span style=color:#f8f8f8;text-decoration:underline>
+</span></code></pre></div><p>原来获取ID每次都需要写数据库，现在只需要把step设置得足够大，比如1000。那么只有当1000个号被消耗完了之后才会去重新读写一次数据库。读写数据库的频率从1减小到了1/step，大致架构如下图所示：</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211215001745.png style=display:block;width:80% alt=NAME align=center> </div>
+<p>同时Leaf-segment 为了解决 TP999（满足千分之九百九十九的网络请求所需要的最低耗时）数据波动大，当号段使用完之后还是会hang在更新数据库的I/O上，TP999 数据会出现偶尔的尖刺的问题，提供了双buffer优化。</p>
+<p>简单的说就是，Leaf 取号段的时机是在号段消耗完的时候进行的，也就意味着号段临界点的ID下发时间取决于下一次从DB取回号段的时间，并且在这期间进来的请求也会因为DB号段没有取回来，导致线程阻塞。如果请求DB的网络和DB的性能稳定，这种情况对系统的影响是不大的，但是假如取DB的时候网络发生抖动，或者DB发生慢查询就会导致整个系统的响应时间变慢。</p>
+<p>为了DB取号段的过程能够做到无阻塞，不需要在DB取号段的时候阻塞请求线程，即当号段消费到某个点时就异步的把下一个号段加载到内存中，而不需要等到号段用尽的时候才去更新号段。这样做就可以很大程度上的降低系统的 TP999 指标。详细实现如下图所示：</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211215001756.png style=display:block;width:80% alt=NAME align=center> </div>
+<p>采用双buffer的方式，Leaf服务内部有两个号段缓存区segment。当前号段已下发10%时，如果下一个号段未更新，则另启一个更新线程去更新下一个号段。当前号段全部下发完后，如果下个号段准备好了则切换到下个号段为当前segment接着下发，循环往复。</p>
+<ul>
+<li>每个biz-tag都有消费速度监控，通常推荐segment长度设置为服务高峰期发号QPS的600倍（10分钟），这样即使DB宕机，Leaf仍能持续发号10-20分钟不受影响。</li>
+<li>每次请求来临时都会判断下个号段的状态，从而更新此号段，所以偶尔的网络抖动不会影响下个号段的更新。</li>
+</ul>
+<p>对于这种方案依然存在一些问题，它<strong>仍然依赖 DB的稳定性，需要采用主从备份的方式提高 DB的可用性</strong>，还有 Leaf-segment方案生成的ID是趋势递增的，这样ID号是可被计算的，例如订单ID生成场景，<strong>通过订单id号相减就能大致计算出公司一天的订单量，这个是不能忍受的</strong>。</p>
+<h3 id=leaf-snowflake方案>Leaf-snowflake方案</h3>
+<p>Leaf-snowflake方案完全沿用 snowflake 方案的bit位设计，对于workerID的分配引入了Zookeeper持久顺序节点的特性自动对snowflake节点配置 wokerID。避免了服务规模较大时，动手配置成本太高的问题。</p>
+<p>Leaf-snowflake是按照下面几个步骤启动的：</p>
+<ul>
+<li>启动Leaf-snowflake服务，连接Zookeeper，在leaf_forever父节点下检查自己是否已经注册过（是否有该顺序子节点）。</li>
+<li>如果有注册过直接取回自己的workerID（zk顺序节点生成的int类型ID号），启动服务。</li>
+<li>如果没有注册过，就在该父节点下面创建一个持久顺序节点，创建成功后取回顺序号当做自己的workerID号，启动服务。</li>
+</ul>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211215001813.png style=display:block;width:80% alt=NAME align=center> </div>
+<p>为了减少对 Zookeeper的依赖性，会在本机文件系统上缓存一个workerID文件。当ZooKeeper出现问题，恰好机器出现问题需要重启时，能保证服务能够正常启动。</p>
+<p>上文阐述过在类 snowflake算法上都存在时钟回拨的问题，Leaf-snowflake在解决时钟回拨的问题上是通过校验自身系统时间与 <code>leaf_forever/${self}</code>节点记录时间做比较然后启动报警的措施。</p>
+<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211215001825.png style=display:block;width:60% alt=NAME align=center> </div>
+<p>美团官方建议是由于强依赖时钟，对时间的要求比较敏感，<strong>在机器工作时NTP同步也会造成秒级别的回退，建议可以直接关闭NTP同步。要么在时钟回拨的时候直接不提供服务直接返回ERROR_CODE，等时钟追上即可。或者做一层重试，然后上报报警系统，更或者是发现有时钟回拨之后自动摘除本身节点并报警。</strong></p>
+<p>在性能上官方提供的数据目前 Leaf 的性能在4C8G 的机器上QPS能压测到近5w/s，TP999 1ms。</p>
+<h2 id=mist-薄雾算法>Mist 薄雾算法</h2>
+<blockquote>
+<p>最近有个号称超过snowflake 587倍的ID生成算法，可以参看<a href=https://juejin.im/post/6846687584324681735#heading-5>这里</a>, 如下内容摘自 <a href=https://github.com/asyncins/mist/tree/master>GitHub中项目README</a></p>
+</blockquote>
+<p>薄雾算法是不同于 snowflake 的全局唯一 ID 生成算法。相比 snowflake ，薄雾算法具有更高的数值上限和更长的使用期限。</p>
+<p>现在薄雾算法拥有比雪花算法更高的性能！</p>
+<h3 id=量了什么业务场景和要求呢>量了什么业务场景和要求呢？</h3>
+<p>用到全局唯一 ID 的场景不少，这里引用美团 Leaf 的场景介绍:</p>
+<blockquote>
+<p>在复杂分布式系统中，往往需要对大量的数据和消息进行唯一标识。如在美团点评的金融、支付、餐饮、酒店、猫眼电影等产品的系统中，数据日渐增长，对数据分库分表后需要有一个唯一 ID 来标识一条数据或消息，数据库的自增 ID 显然不能满足需求；特别一点的如订单、骑手、优惠券也都需要有唯一 ID 做标识。此时一个能够生成全局唯一ID 的系统是非常必要的。</p>
+</blockquote>
+<p>引用微信 seqsvr 的场景介绍：</p>
+<blockquote>
+<p>微信在立项之初，就已确立了利用数据版本号实现终端与后台的数据增量同步机制，确保发消息时消息可靠送达对方手机。</p>
+</blockquote>
+<p>爬虫数据服务的场景介绍：</p>
+<blockquote>
+<p>数据来源各不相同，且并发极大的情况下难以生成统一的数据编号，同时数据编号又将作为爬虫下游整个链路的溯源依据，在爬虫业务链路中十分重要。</p>
+</blockquote>
+<p>这里参考美团 <a href=https://tech.meituan.com/2017/04/21/mt-leaf.html>Leaf</a> 的要求：</p>
+<ol>
+<li>全局唯一性：不能出现重复的 ID 号，既然是唯一标识，这是最基本的要求；</li>
+<li>趋势递增：在 MySQL InnoDB 引擎中使用的是聚集索引，由于多数 RDBMS 使用 B-tree 的数据结构来存储索引数据，在主键的选择上面我们应该尽量使用有序的主键保证写入性能；</li>
+<li>单调递增：保证下一个 ID 一定大于上一个 ID，例如事务版本号、IM 增量消息、排序等特殊需求；</li>
+<li>信息安全：如果 ID 是连续的，恶意用户的爬取工作就非常容易做了，直接按照顺序下载指定 URL 即可；如果是订单号就更危险了，竞对可以直接知道我们一天的单量。所以在一些应用场景下，会需要 ID 无规则、不规则；</li>
+</ol>
+<p>可以用“全局不重复，不可猜测且呈递增态势”这句话来概括描述要求。</p>
+<h3 id=薄雾算法的设计思路是怎么样的>薄雾算法的设计思路是怎么样的？</h3>
+<p>薄雾算法采用了与 snowflake 相同的位数——64，在考量业务场景和要求后并没有沿用 1-41-10-12 的占位，而是采用了 1-47-8-8 的占位。即：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>* 1      2                                                     48         56       64
+* +------+-----------------------------------------------------+----------+----------+
+* retain | increas                                             | salt     | salt |
+* +------+-----------------------------------------------------+----------+----------+
+* 0      | 0000000000 0000000000 0000000000 0000000000 0000000 | 00000000 | 00000000 |
+* +------+-----------------------------------------------------+------------+--------+
+</code></pre></div><ul>
+<li>
+<p>第一段为最高位，占 1 位，保持为 0，使得值永远为正数；</p>
+</li>
+<li>
+<p>第二段放置自增数，占 47 位，自增数在高位能保证结果值呈递增态势，遂低位可以为所欲为；</p>
+</li>
+<li>
+<p>第三段放置随机因子一，占 8 位，上限数值 255，使结果值不可预测；</p>
+</li>
+<li>
+<p>第四段放置随机因子二，占 8 位，上限数值 255，使结果值不可预测；</p>
+</li>
+</ul>
+<h3 id=薄雾算法生成的数值是什么样的>薄雾算法生成的数值是什么样的？</h3>
+<p>薄雾自增数为 1～10 的运行结果类似如下：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>171671
+250611
+263582
+355598
+427749
+482010
+581550
+644278
+698636
+762474
+</code></pre></div><p>根据运行结果可知，薄雾算法能够满足“全局不重复，不可猜测且呈递增态势”的场景要求。</p>
+<h3 id=薄雾算法-mist-和雪花算法-snowflake-有何区别>薄雾算法 mist 和雪花算法 snowflake 有何区别？</h3>
+<p>snowflake 是由 Twitter 公司提出的一种全局唯一 ID 生成算法，它具有“递增态势、不依赖数据库、高性能”等特点，自 snowflake 推出以来备受欢迎，算法被应用于大大小小公司的服务中。snowflake 高位为时间戳的二进制，遂完全受到时间戳的影响，倘若时间回拨（当前服务器时间回到之前的某一时刻），那么 snowflake 有极大概率生成与之前同一时刻的重复 ID，这直接影响整个业务。</p>
+<p>snowflake 受时间戳影响，使用上限不超过 70 年。</p>
+<p>薄雾算法 Mist 由书籍《Python3 反爬虫原理与绕过实战》的作者韦世东综合 <a href=https://github.com/baidu/uid-generator>百度 UidGenerator</a>、 <a href=https://tech.meituan.com/2017/04/21/mt-leaf.html>美团 Leaf</a> 和 <a href=https://www.infoq.cn/article/wechat-serial-number-generator-architecture>微信序列号生成器 seqsvr</a> 中介绍的技术点，同时考虑高性能分布式序列号生成器架构后设计的一款“递增态势、不依赖数据库、高性能且不受时间回拨影响”的全局唯一序列号生成算法。</p>
+<p>薄雾算法不受时间戳影响，受到数值大小影响。薄雾算法高位数值上限计算方式为<code>int64(1&lt;&lt;47 - 1)</code>，上限数值<code>140737488355327</code> 百万亿级，假设每天消耗 10 亿，薄雾算法能使用 385+ 年。</p>
+<h3 id=为什么薄雾算法不受时间回拨影响>为什么薄雾算法不受时间回拨影响？</h3>
+<p>snowflake 受时间回拨影响的根本原因是高位采用时间戳的二进制值，而薄雾算法的高位是按序递增的数值。结果值的大小由高位决定，遂薄雾算法不受时间回拨影响。</p>
+<h3 id=为什么说薄雾算法的结果值不可预测>为什么说薄雾算法的结果值不可预测？</h3>
+<p>考虑到“不可预测”的要求，薄雾算法的中间位是 8 位随机值，且末 8 位是也是随机值，两组随机值大大增加了预测难度，因此称为结果值不可预测。</p>
+<p>中间位和末位随机值的开闭区间都是 [0, 255]，理论上随机值可以出现 <code>256 * 256</code> 种组合。</p>
+<h3 id=当程序重启薄雾算法的值会重复吗>当程序重启，薄雾算法的值会重复吗？</h3>
+<p>snowflake 受时间回拨影响，一旦时间回拨就有极大概率生成重复的 ID。薄雾算法中的高位是按序递增的数值，程序重启会造成按序递增数值回到初始值，但由于中间位和末尾随机值的影响，因此不是必定生成（有大概率生成）重复 ID，但递增态势必定受到影响。</p>
+<h3 id=薄雾算法的值会重复那我要它干嘛>薄雾算法的值会重复，那我要它干嘛？</h3>
+<ol>
+<li>无论是什么样的全局唯一 ID 生成算法，都会有优点和缺点。在实际的应用当中，没有人会将全局唯一 ID 生成算法完全托付给程序，而是会用数据库存储关键值或者所有生成的值。全局唯一 ID 生成算法大多都采用分布式架构或者主备架构提供发号服务，这时候就不用担心它的重复问题；</li>
+<li>生成性能比雪花算法高太多倍；</li>
+<li>代码少且简单，在大型应用中，单功能越简单越好；</li>
+</ol>
+<h3 id=是否提供薄雾算法的工程实践或者架构实践>是否提供薄雾算法的工程实践或者架构实践？</h3>
+<p>是的，作者的另一个项目 <a href=https://github.com/asyncins/medis>Medis</a> 是薄雾算法与 Redis 的结合，实现了“全局不重复”，你再也不用担心程序重启带来的问题。</p>
+<h3 id=薄雾算法的分布式架构推荐-cp-还是-ap>薄雾算法的分布式架构，推荐 CP 还是 AP？</h3>
+<p>CAP 是分布式架构中最重要的理论，C 指的是一致性、A 指的是可用性、P 指的是分区容错性。CAP 当中，C 和 A 是互相冲突的，且 P 一定存在，遂我们必须在 CP 和 AP 中选择。<strong>实际上这跟具体的业务需求有关</strong>，但是对于全局唯一 ID 发号服务来说，大多数时候可用性比一致性更重要，也就是选择 AP 会多过选择 CP。至于你怎么选，还是得结合具体的业务场景考虑。</p>
+<h4 id=薄雾算法的性能测试>薄雾算法的性能测试</h4>
+<p>采用 Golnag（1.14） 自带的 Benchmark 进行测试，测试机硬件环境如下：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-text data-lang=text>内存 16 GB 2133 MHz LPDDR3
+处理器 2.3 GHz 双核Intel Core i5
+操作系统 macOS Catalina
+机器 MacBook Pro (13-inch, 2017, Two Thunderbolt 3 ports)
+</code></pre></div><p>进行了多轮测试，随机取 3 轮测试结果。以此计算平均值，得 <code>单次执行时间 346 ns/op</code>。以下是随机 3 轮测试的结果：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-text data-lang=text>goos: darwin
+goarch: amd64
+pkg: mist
+BenchmarkMain-4          3507442               339 ns/op
+PASS
+ok      mist    1.345s
+</code></pre></div><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-text data-lang=text>goos: darwin
+goarch: amd64
+pkg: mist
+BenchmarkMain-4          3488708               338 ns/op
+PASS
+ok      mist    1.382s
+</code></pre></div><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-text data-lang=text>goos: darwin
+goarch: amd64
+pkg: mist
+BenchmarkMain-4          3434936               360 ns/op
+PASS
+ok      mist    1.394s
+</code></pre></div><h2 id=总结>总结</h2>
+<p>以上基本列出了所有常用的分布式ID生成方式，其实大致分类的话可以分为两类：</p>
+<ul>
+<li><strong>一种是类DB型的</strong>，根据设置不同起始值和步长来实现趋势递增，需要考虑服务的容错性和可用性。</li>
+<li><strong>另一种是类snowflake型</strong>，这种就是将64位划分为不同的段，每段代表不同的涵义，基本就是时间戳、机器ID和序列数。这种方案就是需要考虑时钟回拨的问题以及做一些 buffer的缓冲设计提高性能。</li>
+</ul>
+<p>而且可通过将三者（时间戳，机器ID，序列数）划分不同的位数来改变使用寿命和并发数。</p>
+<p>例如对于并发数要求不高、期望长期使用的应用，可增加时间戳位数，减少序列数的位数. 例如配置成<code>{"workerBits":23,"timeBits":31,"seqBits":9}</code>时, 可支持28个节点以整体并发量14400 UID/s的速度持续运行68年。</p>
+<p>对于节点重启频率频繁、期望长期使用的应用, 可增加工作机器位数和时间戳位数, 减少序列数位数. 例如配置成<code>{"workerBits":27,"timeBits":30,"seqBits":6}</code>时, 可支持37个节点以整体并发量2400 UID/s的速度持续运行34年。</p>
+</div>
+<div class=td-content style=page-break-before:always>
+<h1 id=pg-c4fb26855eb13e2e8be23c218e33d3c2>1.20 - 分布式谬误</h1>
+<blockquote>
+<p>20多年前，Peter Deutsch和James Gosling定义了分布式计算的8个谬误。这些是许多开发人员对分布式系统做出的错误假设。从长远来看，这些通常被证明是错误的，导致难以修复错误。</p>
+</blockquote>
+<h2 id=1-网络可靠>1. 网络可靠</h2>
+<h3 id=问题>问题</h3>
+<blockquote>
+<p>通过网络呼叫将失败。</p>
+</blockquote>
+<p>今天的大多数系统都会调用其他系统。您是否正在与第三方系统（支付网关，会计系统，CRM）集成？你在做网络服务电话吗？如果呼叫失败会发生什么？如果您要查询数据，则可以进行简单的重试。但是如果您发送命令会发生什么？我们举一个简单的例子：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-javascript data-lang=javascript><span style=color:#204a87;font-weight:700>var</span> <span style=color:#000>creditCardProcessor</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>CreditCardPaymentService</span><span style=color:#000;font-weight:700>();</span>
+<span style=color:#000>creditCardProcessor</span><span style=color:#000;font-weight:700>.</span><span style=color:#000>Charge</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>chargeRequest</span><span style=color:#000;font-weight:700>);</span>
+</code></pre></div><p>如果我们收到HTTP超时异常会怎么样？如果服务器没有处理请求，那么我们可以重试。但是，如果它确实处理了请求，我们需要确保我们不会对客户进行双重收费。您可以通过使服务器具有幂等性来实现此目的。这意味着如果您使用相同的收费请求拨打10次，则客户只需支付一次费用。如果您没有正确处理这些错误，那么您的系统是不确定的。处理所有这些情况可能会非常复杂。</p>
+<h3 id=解决方案>解决方案</h3>
+<p>因此，如果网络上的呼叫失败，我们能做什么？好吧，我们可以自动重试。排队系统非常擅长这一点。它们通常使用称为存储和转发的模式。它们在将消息转发给收件人之前在本地存储消息。如果收件人处于脱机状态，则排队系统将重试发送邮件。MSMQ是这种排队系统的一个例子。</p>
+<p>但是这种变化将对您的系统设计产生重大影响。您正在从请求/响应模型转移到触发并忘记。由于您不再等待响应，因此您需要更改系统中的用户行程。您不能只使用队列发送替换每个Web服务调用。</p>
+<h3 id=结论>结论</h3>
+<p>你可能会说网络现在更可靠 - 而且它们是。但事情发生了。硬件和软件可能会出现故障 - 电源，路由器，更新或补丁失败，无线信号弱，网络拥塞，啮齿动物或鲨鱼。是的，鲨鱼：在一系列鲨鱼叮咬之后，谷歌正在加强与Kevlar的海底数据线。</p>
+<p>还有人为因素。人们可以开始DDOS攻击，也可以破坏物理设备。</p>
+<p>这是否意味着您需要删除当前的技术堆栈并使用消息传递系统？并不是的！您需要权衡失败的风险与您需要进行的投资。您可以通过投资基础架构和软件来最小化失败的可能性。在许多情况下，失败是一种选择。但在设计分布式系统时，您确实需要考虑失败的问题。</p>
+<h2 id=2-延迟是零>2. 延迟是零</h2>
+<h3 id=问题-1>问题</h3>
+<blockquote>
+<p>通过网络拨打电话不是即时的。</p>
+</blockquote>
+<p>内存呼叫和互联网呼叫之间存在七个数量级的差异。您的应用程序应该是网络感知。这意味着您应该清楚地将本地呼叫与远程呼叫分开。让我们看看我在代码库中看到的一个例子：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-javascript data-lang=javascript><span style=color:#204a87;font-weight:700>var</span> <span style=color:#000>viewModel</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>ViewModel</span><span style=color:#000;font-weight:700>();</span>
+<span style=color:#204a87;font-weight:700>var</span> <span style=color:#000>documents</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>DocumentsCollection</span><span style=color:#000;font-weight:700>();</span>
+<span style=color:#000>foreach</span> <span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>var</span> <span style=color:#204a87>document</span> <span style=color:#204a87;font-weight:700>in</span> <span style=color:#000>documents</span><span style=color:#000;font-weight:700>)</span>
+<span style=color:#000;font-weight:700>{</span>
+    <span style=color:#204a87;font-weight:700>var</span> <span style=color:#000>snapshot</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#204a87>document</span><span style=color:#000;font-weight:700>.</span><span style=color:#000>GetSnapshot</span><span style=color:#000;font-weight:700>();</span>
+    <span style=color:#000>viewModel</span><span style=color:#000;font-weight:700>.</span><span style=color:#000>Add</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>snapshot</span><span style=color:#000;font-weight:700>);</span>
+<span style=color:#000;font-weight:700>}</span>
+</code></pre></div><p>没有进一步检查，这看起来很好。但是，有两个远程呼叫。第2行进行一次调用以获取文档摘要列表。在第5行，还有另一个调用，它检索有关每个文档的更多信息。这是一个经典的Select n + 1问题。为了解决网络延迟问题，您应该在一次调用中返回所有必需的数据。一般的建议是本地调用可以细粒度，但远程调用应该更粗粒度。这就是为什么分布式对象和“网络透明度”的想法死了。但是，即使每个人都同意分布式对象是一个坏主意，有些人仍然认为延迟加载总是一个好主意：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-javascript data-lang=javascript><span style=color:#204a87;font-weight:700>var</span> <span style=color:#000>employee</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>EmployeeRepository</span><span style=color:#000;font-weight:700>.</span><span style=color:#000>GetBy</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>someCriteria</span><span style=color:#000;font-weight:700>)</span>
+<span style=color:#204a87;font-weight:700>var</span> <span style=color:#000>department</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>employee</span><span style=color:#000;font-weight:700>.</span><span style=color:#000>Department</span><span style=color:#000;font-weight:700>;</span>
+<span style=color:#204a87;font-weight:700>var</span> <span style=color:#000>manager</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>department</span><span style=color:#000;font-weight:700>.</span><span style=color:#000>Manager</span><span style=color:#000;font-weight:700>;</span>
+<span style=color:#000>foreach</span> <span style=color:#000;font-weight:700>(</span><span style=color:#204a87;font-weight:700>var</span> <span style=color:#000>peer</span> <span style=color:#204a87;font-weight:700>in</span> <span style=color:#000>manager</span><span style=color:#000;font-weight:700>.</span><span style=color:#000>Employees</span><span style=color:#000;font-weight:700>;)</span>
+<span style=color:#000;font-weight:700>{</span>
+    <span style=color:#8f5902;font-style:italic>// do something
+</span><span style=color:#8f5902;font-style:italic></span><span style=color:#000;font-weight:700>}</span>
+</code></pre></div><p>您不希望财产获取者进行网络呼叫。但是，每个“。” 在上面的代码中调用实际上可以触发数据库之旅。</p>
+<h3 id=解决方案-1>解决方案</h3>
+<ul>
+<li><strong>带回您可能需要的所有数据</strong> 如果您进行远程呼叫，请确保恢复可能需要的所有数据。网络通信不应该是唠叨的。</li>
+<li><strong>将Data Closer移动到客户端</strong> 另一种可能的解决方案是将数据移近客户端。如果您正在使用云，请根据客户的位置仔细选择可用区。缓存还可以帮助最小化网络呼叫的数量。对于静态内容，内容交付网络（CDN）是另一个不错的选择。</li>
+<li><strong>反转数据流</strong> 删除远程调用的另一个选项是反转数据流。我们可以使用Pub / Sub并在本地存储数据，而不是查询其他服务。这样，我们就可以在需要时获取数据。当然，这会带来一些复杂性，但它可能是工具箱中的一个很好的工具。</li>
+</ul>
+<h3 id=结论-1>结论</h3>
+<p>虽然延迟可能不是LAN中的问题，但当您转移到WAN或Internet时，您会注意到延迟。这就是为什么将网络呼叫与内存中的呼叫明确分开是很重要的。在采用微服务架构模式时，您应该牢记这一点。您不应该只使用远程调用替换本地呼叫。这可能会使你的系统变成分布式的大泥球。</p>
+<h2 id=3-带宽是无限的>3. 带宽是无限的</h2>
+<h3 id=问题-2>问题</h3>
+<blockquote>
+<p>带宽是有限的。</p>
+</blockquote>
+<p>带宽是网络在一段时间内发送数据的容量。到目前为止，我还没有发现它是一个问题，但我可以看到为什么它在某些条件下可能是一个问题。虽然带宽随着时间的推移而有所改善，但我们发送的数据量也有所增加。与通过网络传递简单DTO的应用相比，视频流或VoIP需要更多带宽。带宽对于移动应用程序来说更为重要，因此开发人员在设计后端API时需要考虑它。</p>
+<p>错误地使用ORM也会造成伤害。我见过开发人员在查询中过早调用.ToList（）的示例，因此在内存中加载整个表。</p>
+<h3 id=解决方案-2>解决方案</h3>
+<p><strong>领域驱动的设计模式</strong></p>
+<p>那么我们怎样才能确保我们不会带来太多数据呢？域驱动设计模式可以帮助：</p>
+<ul>
+<li>首先，您不应该争取单一的企业级域模型。您应该将域划分为有界上下文。</li>
+<li>要避免有界上下文中的大型复杂对象图，可以使用聚合模式。聚合确保一致性并定义事务边界。</li>
+</ul>
+<p><strong>命令和查询责任隔离</strong></p>
+<p>我们有时会加载复杂的对象图，因为我们需要在屏幕上显示它的一部分。如果我们在很多地方这样做，我们最终会得到一个庞大而复杂的模型，对于写作和阅读来说都是次优的。另一种方法可以是使用命令和查询责任隔离 - CQRS。这意味着将域模型分为两部分：</p>
+<ul>
+<li>在写模式将确保不变保持真实的数据是一致的。由于写模型不关心视图问题，因此可以保持较小且集中。</li>
+<li>该读取模型是视图的担忧进行了优化，所以我们可以获取所有所需的特定视图中的数据（例如，我们的应用程序的屏幕）。</li>
+</ul>
+<h3 id=结论-2>结论</h3>
+<p>在第二个谬误（延迟不是0）和第三个谬误（带宽是无限的）之间有延伸，您应该传输更多数据，以最大限度地减少网络往返次数。您应该传输较少的数据以最小化带宽使用。您需要平衡这两种力量，并找到通过线路发送的正确数据量。</p>
+<p>虽然您可能不会经常遇到带宽限制，但考虑传输的数据非常重要。更少的数据更容易理解。数据越少意味着耦合越少。因此，只传输您可能需要的数据。</p>
+<h2 id=4-网络是安全的>4. 网络是安全的</h2>
+<h3 id=问题-3>问题</h3>
+<blockquote>
+<p>网络并不安全。</p>
+</blockquote>
+<p>这是一个比其他人更多的媒体报道的假设。您的系统仅与最薄弱的链接一样安全。坏消息是分布式系统中有很多链接。您正在使用HTTPS，除非与不支持它的第三方遗留系统进行通信。您正在查看自己的代码，寻找安全问题，但正在使用可能存在风险的开源库。一个OpenSSL的漏洞允许人们通过盗取SSL / TLS保护的数据。Apache Struts中的一个错误允许攻击者在服务器上执行代码。即使你正在抵御所有这些，仍然存在人为因素。恶意DBA可能“错放”数据库备份。今天的攻击者掌握着大量的计算能力和耐心。所以问题不在于他们是否会攻击你的系统，而是什么时候。</p>
+<h3 id=解决方案-3>解决方案</h3>
+<ul>
+<li><strong>深度防御</strong></li>
+</ul>
+<p>您应该使用分层方法来保护您的系统。您需要在网络，基础架构和应用程序级别进行不同的安全检查。</p>
+<ul>
+<li><strong>安全心态</strong></li>
+</ul>
+<p>在设计系统时要牢记安全性。十大漏洞列表在过去5年中没有发生太大变化。您应遵循安全软件设计的最佳实践，并检查常见安全漏洞的代码。您应该定期搜索第三方库以查找新漏洞。常见漏洞和暴露列表可以提供帮助。</p>
+<ul>
+<li><strong>威胁建模</strong></li>
+</ul>
+<p>威胁建模是一种识别系统中可能存在的安全威胁的系统方法。首先确定系统中的所有资产（数据库中的用户数据，文件等）以及如何访问它们。之后，您可以识别可能的攻击并开始执行它们。我建议阅读高级API安全性的第2章，以便更好地概述威胁建模。</p>
+<h3 id=结论-3>结论</h3>
+<p>唯一安全的系统是关闭电源的系统，不连接到任何网络（理想情况下是在一个有形模块中）。它是多么有用的系统！事实是，安全是艰难而昂贵的。分布式系统中有许多组件和链接，每个组件和链接都是恶意用户的可能目标。企业需要平衡攻击的风险和概率与实施预防机制的成本。</p>
+<p>攻击者手上有很多耐心和计算能力。我们可以通过使用威胁建模来防止某些类型的攻击，但我们无法保证100％的安全性。因此，向业务部门明确表示这一点是个好主意，共同决定投资安全性的程度，并制定安全漏洞何时发生的计划。</p>
+<h2 id=5-拓扑不会改变>5. 拓扑不会改变</h2>
+<h3 id=问题-4>问题</h3>
+<blockquote>
+<p>网络拓扑不断变化。</p>
+</blockquote>
+<p>网络拓扑始终在变化。有时它会因意外原因而发生变化 - 当您的应用服务器出现故障并需要更换时。很多时候它是故意的 - 在新服务器上添加新进程。如今，随着云和容器的增加，这一点更加明显。弹性扩展 - 根据工作负载添加或删除服务器的能力 - 需要一定程度的网络灵活性。</p>
+<h3 id=解决方案-4>解决方案</h3>
+<p><strong>摘要网络的物理结构</strong></p>
+<p>您需要做的第一件事是抽象网络的物理结构。有几种方法可以做到这一点：</p>
+<ul>
+<li>停止硬编码IP - 您应该更喜欢使用主机名。通过使用URI，我们依靠DNS将主机名解析为IP。</li>
+<li>当DNS不够时（例如，当您需要映射IP和端口时），则使用发现服务。</li>
+<li>Service Bus框架还可以提供位置透明性。</li>
+</ul>
+<p><strong>无价值的，而非重要的</strong></p>
+<p>通过将您的服务器视为没有价值的，而不是很重要的，您确保没有服务器是不可替代的。这一点智慧可以帮助您进入正确的思维模式：任何服务器都可能出现故障（从而改变拓扑结构），因此您应该尽可能地自动化。</p>
+<p><strong>测试</strong></p>
+<p>最后一条建议是测试你的假设。停止服务或关闭服务器，看看您的系统是否仍在运行。像Netflix的Chaos Monkey这样的工具可以通过随机关闭生产环境中的VM或容器来实现这一目标。通过带来痛苦，您更有动力构建一个可以处理拓扑更改的更具弹性的系统。</p>
+<h3 id=结论-4>结论</h3>
+<p>十年前，大多数拓扑结构并没有经常改变。但是当它发生时，它可能发生在生产中并引入了一些停机时间。如今，随着云和容器的增加，很难忽视这种谬误。你需要为失败做好准备并进行测试。不要等到它在生产中发生！</p>
+<h2 id=6-有一位管理员>6. 有一位管理员</h2>
+<h3 id=问题-5>问题</h3>
+<blockquote>
+<p>这个知道一切的人并不存在。</p>
+</blockquote>
+<p>嗯，这个看起来很明显。当然，没有一个人知道一切。这是一个问题吗？只要应用程序运行顺利，它就不是。但是，当出现问题时，您需要修复它。因为很多人触摸了应用程序，知道如何解决问题的人可能不在那里。</p>
+<p>有很多事情可能会出错。一个例子是配置。今天的应用程序在多个商店中存储配置：配置文件，环境变量，数据库，命令行参数。没有人知道每个可能的配置值的影响是什么。</p>
+<p>另一件可能出错的事情是系统升级。分布式应用程序有许多移动部件，您需要确保它们是同步的。例如，您需要确保当前版本的代码适用于当前版本的数据库。如今，人们关注DevOps和持续交付。但支持零停机部署并非易事。</p>
+<p>但是，至少这些东西都在你的控制之下。许多应用程序与第三方系统交互。这意味着，如果它们失效，你可以做的事情就不多了。因此，即使您的系统有一名管理员，您仍然无法控制第三方系统。</p>
+<h3 id=解决方案-5>解决方案</h3>
+<p><strong>每个人都应对释放过程负责</strong></p>
+<p>这意味着从一开始就涉及Ops人员或系统管理员。理想情况下，他们将成为团队的一员。尽早让系统管理员了解您的进度可以帮助您发现限制因素。例如，生产环境可能具有与开发环境不同的配置，安全限制，防火墙规则或可用端口。</p>
+<p><strong>记录和监控</strong></p>
+<p>系统管理员应该拥有用于错误报告和管理问题的正确工具。你应该从一开始就考虑监控。分布式系统应具有集中式日志。访问十个不同服务器上的日志以调查问题是不可接受的方法。</p>
+<p><strong>解耦</strong></p>
+<p>您应该在系统升级期间争取最少的停机时间。这意味着您应该能够独立升级系统的不同部分。通过使组件向后兼容，您可以在不同时间更新服务器和客户端。</p>
+<p>通过在组件之间放置队列，您可以暂时将它们分离。这意味着，例如，即使后端关闭，Web服务器仍然可以接受请求。</p>
+<p><strong>隔离第三方依赖关系</strong></p>
+<p>您应该以不同于您拥有的组件的方式处理控制之外的系统。这意味着使您的系统更能适应第三方故障。您可以通过引入抽象层来减少外部依赖的影响。这意味着当第三方系统出现故障时，您将找到更少的地方来查找错误。</p>
+<h3 id=结论-5>结论</h3>
+<p>要解决这个谬论，您需要使系统易于管理。DevOps，日志记录和监控可以提供帮助。您还需要考虑系统的升级过程。如果升级需要数小时的停机时间，则无法部署每个sprint。没有一个管理员，所以每个人都应该对发布过程负责。</p>
+<h2 id=7-运输成本为零>7. 运输成本为零</h2>
+<h3 id=问题-6>问题</h3>
+<blockquote>
+<p>运输成本并不是零。</p>
+</blockquote>
+<p>这种谬论与第二个谬误有关，即 延迟为零。通过网络传输内容在时间和资源上都有代价。如果第二个谬误讨论了时间方面，那么谬误＃7就会解决资源消耗问题。</p>
+<p>这种谬论有两个不同的方面：</p>
+<p><strong>网络基础设施的成本</strong></p>
+<p>网络基础设施需要付出代价。服务器，SAN，网络交换机，负载平衡器以及负责此设备的人员 - 所有这些都需要花钱。如果您的系统是在内部部署的，那么您需要预先支付这个价格。如果您正在使用云，那么您只需为您使用的内容付费，但您仍然需要付费。</p>
+<p><strong>序列化/反序列化的成本</strong></p>
+<p>这种谬误的第二个方面是在传输级别和应用程序级别之间传输数据的成本。序列化和反序列化会消耗CPU时间，因此需要花钱。如果您的应用程序是内部部署的，那么如果您不主动监视资源消耗，则会隐藏此成本。但是，如果您的应用程序部署在云端，那么这笔费用就会非常明显，因为您需要为使用的内容付费。</p>
+<h3 id=解决方案-6>解决方案</h3>
+<p>关于基础设施的成本，你无能为力。您只能确保尽可能高效地使用它。SOAP或XML比JSON更昂贵。JSON比像Google的Protocol Buffers这样的二进制协议更昂贵。根据系统的类型，这可能或多或少重要。例如，对于与视频流或VoIP有关的应用，传输成本更为重要。</p>
+<h3 id=结论-6>结论</h3>
+<p>您应该注意运输成本以及应用程序正在执行的序列化和反序列化程度。这并不意味着您应该优化，除非需要它。您应该对资源消耗进行基准测试和监控，并确定运输成本是否对您有用。</p>
+<h2 id=8-网络是同质的>8. 网络是同质的</h2>
+<h3 id=问题-7>问题</h3>
+<blockquote>
+<p>网络不是同质的。</p>
+</blockquote>
+<p>同质网络是使用类似配置和相同通信协议的计算机网络。拥有类似配置的计算机是一项艰巨的任务。例如，您几乎无法控制哪些移动设备可以连接到您的应用。这就是为什么重点关注标准协议。</p>
+<h3 id=解决方案-7>解决方案</h3>
+<p>您应该选择标准格式以避免供应商锁定。这可能意味着XML，JSON或协议缓冲区。有很多选择可供选择。</p>
+<h3 id=结论-7>结论</h3>
+<p>您需要确保系统的组件可以相互通信。使用专有协议会损害应用程序的互操作性。</p>
+<h2 id=总结>总结</h2>
+<blockquote>
+<p>设计分布式系统很难。</p>
+</blockquote>
+<p>这些谬论发表于20多年前。但他们今天仍然坚持，其中一些比其他人更多。我认为今天许多开发人员都知道它们，但我们编写的代码并没有显示出来。</p>
+<p>我们必须接受这些事实：网络不可靠，不安全并且需要花钱。带宽有限。网络的拓扑结构将发生变化。其组件的配置方式不同。意识到这些限制将有助于我们设计更好的分布式系统。</p>
 </div>
 </main>
 </div>
