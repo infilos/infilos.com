@@ -1,0 +1,1512 @@
+<!doctype html><html lang=zh class=no-js>
+<head>
+<meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no">
+<meta name=generator content="Hugo 0.92.2">
+<meta name=ROBOTS content="INDEX, FOLLOW">
+<link rel="shortcut icon" href=/favicons/favicon.ico>
+<link rel=apple-touch-icon href=/favicons/apple-touch-icon-180x180.png sizes=180x180>
+<link rel=icon type=image/png href=/favicons/favicon-16x16.png sizes=16x16>
+<link rel=icon type=image/png href=/favicons/favicon-32x32.png sizes=32x32>
+<link rel=icon type=image/png href=/favicons/android-36x36.png sizes=36x36>
+<link rel=icon type=image/png href=/favicons/android-48x48.png sizes=48x48>
+<link rel=icon type=image/png href=/favicons/android-72x72.png sizes=72x72>
+<link rel=icon type=image/png href=/favicons/android-96x96.png sizes=96x96>
+<link rel=icon type=image/png href=/favicons/android-144x144.png sizes=144x144>
+<link rel=icon type=image/png href=/favicons/android-192x192.png sizes=192x192>
+<title>数据仓库 | infilos.com</title><meta property="og:title" content="数据仓库">
+<meta property="og:description" content="原文链接：数据仓库体系
+ 8 个发展阶段 1. 概念阶段（1978-1988） 数据仓库最早的概念可以追溯到20世纪70年代MIT的一项研究，该研究致力于开发一种优化的技术架构并提出这些架构的指导性意见。
+**第一次，MIT的研究员将业务系统和分析系统分开，将业务处理和分析处理分成不同的层次，并采用单独的数据存储和完全不同的设计准则。**同时，MIT的研究成果与80年代提出的信息中心（InformationCenter）相吻合：即把那些新出现的、不可以预测的、但是大量存在的分析型的负载从业务处理系统中剥离出来。
+但是限于当时的信息处理和数据存储能力，该研究只是确立了一个论点：这两种信息处理的方式差别如此之大，以至于它们只能采用完全不同的架构和设计方法。
+2. 萌芽阶段 在80年代中后期,作为当时技术最先进的公司,DEC已经开始采用分布式网络架构来支持其业务应用，并且DEC公司首先将业务系统移植到其自身的RDBMS产品：RdB。并且，DEC公司从工程部、销售部、财务部以及信息技术部抽调了不同的人员组建了新的小组，不仅研究新的分析系统架构，并要求将其应用到其全球的财务系统中。该小组结合MIT的研究结论，建立了TA2（TechnicalArchitecture2）规范，该规范定义了分析系统的四个组成部分：
+ 数据获取 数据访问 目录 用户服务  其中的数据获取和数据访问目前大家都很清楚，而目录服务是用于帮助用户在网络中找到他们想要的信息，类似于业务元数据管理；用户服务用以支持对数据的直接交互，包含了其他服务的所有人机交互界面，这是系统架构的一个非常大的转变，第一次将交互界面作为单独的组件提出来。
+3. 集成阶段 全企业集成（EnterpriseIntergration，1988）同时，IBM也在处理信息管理不同方面的问题，其最烦人的问题是不断增加的信息孤岛，IBM的很多客户要面对很多分立系统的数据集成问题，而这些系统有不同的编码方式和数据格式。
+1988年，为解决全企业集成问题，IBM爱尔兰公司的BarryDevlin和PaulMurphy第一次提出了“信息仓库（InformationWarehouse）”的概念，将其定义为：“一个结构化的环境，能支持最终用户管理其全部的业务，并支持信息技术部门保证数据质量”，并在1991年在DECTA2的基础上把信息仓库的概念包含进去，并称之为VITAL规范，将PC、图形化界面、面向对象的组件以及局域网都包含在VITAL里，并定义了85种信息仓库的组件，包括数据抽取、转换、有效性验证、加载、Cube开发和图形化查询工具等。但是IBM只是将这种领先的概念用于市场宣传，而没有付诸实际的架构设计。这是IBM有一个领域上创新后停止不前导致丧失其领先地位。因此，在90年代初期，数据仓库的基本原理、框架架构，以及分析系统的主要原则都已经确定，主要的技术，包括关系型数据存取、网络、C/S架构和图形化界面均已具备，只欠东风了。
+同时，在1988年－1991年，一些前沿的公司已经开始建立数据仓库。
+4. 确立阶段（1991） 企业级数据仓库（EDW，1991）1991年，BillInmon出版了其有关数据仓库的第一本书，这本书不仅仅说明为什么要建数据仓库、数据仓库能给你带来什么，更重要的是，Inmon第一次提供了如何建设数据仓库的指导性意见，**该书定义了数据仓库非常具体的原则，包括：数据仓库是面向主题的（Subject-Oriented）、集成的（Integrated）、包含历史的（Time-variant）、相对稳定的（Nonvolatile）、**面向决策支持的（DecisionSupport）面向全企业的（EnterpriseScope）最明细的数据存（AtomicDetail）数据快照式的数据获取（SnapShotCapture）这些原则到现在仍然是指导数据仓库建设的最基本原则，虽然中间的一些原则引发一些争论，并导致一些分歧和数据仓库变体的产生。
+BillInmon凭借其这本书奠定了其在数据仓库建设的位置，被称之为“数据仓库之父”。
+5. 数据集市（1994－1996） 数据仓库发展的第一明显分歧是数据集市概念的产生。由于企业级数据仓库的设计、实施很困难，使得最早吃数据仓库螃蟹的公司遭到大面积的失败，因此数据仓库的建设者和分析师开始考虑只建设企业级数据仓库的一部分，然后再逐步添加，但是这有背于BillInmon的原则：各个实施部分的数据抽取、清洗、转换和加载是独立，导致了数据的混乱与不一致性。而且部分实施的项目也有很多失败，除了常见的业务需求定义不清、项目执行不力之外，很重要的原因是因为其数据模型设计，在企业级数据仓库中，Inmon推荐采用3范式进行数据建模，但是不排除其他的方法，但是Inmon的追随者固守OLTP系统的3范式设计，从而无法支持DSS系统的性能和数据易访问性的要求。
+这时，Ralph Kimball出现了，他的第一本书“TheDataWarehouseToolkit”掀起了数据集市的狂潮，这本书提供了如何为分析进行数据模型优化详细指导意见，从DimensionalModeling大行其道，也为传统的关系型数据模型和多维OLAP之间建立了很好的桥梁。从此，数据集市在很多地方冒了出来，并获得很大成功，而企业级数据仓库已逐渐被人所淡忘。
+6. 争吵与混乱（1996-1997） 企业级数据仓库还是部门级数据集市？关系型还是多维？BillInmon和RalphKimball一开始就争论不休，其各自的追随者也唇舌相向，形成相对立的两派：Inmon派和Kimball派（有点象少林和武当，呵呵）。
+在初期，数据集市的快速实施和较高的成功率让Kimball派占了上风，但是很快，他们也发现自己陷入了某种困境：企业中存在6－7个不同的数据集市，分别有不同的ETL，相互之间的数据也不完全一致。同时，各个项目实施中也任意侵犯了Inmon开始定下的准则：把数据集市当成众多OLTP系统之后的有一个系统，而不是一个基础性的集成性的东西，为保证数据的准确性和实时性，有的甚至可以由OLTP系统直接修改数据集市里面的数据，为了保证系统的性能，有的数据集市删除了历史数据。等等，不一而足。
+当然，这导致了一些新的应用的出现，例如ODS，但是人们对DataWarehouse、DataMart、ODS的概念非常的模糊，经常混为一谈。有人说OLAP就是数据仓库，也有人说我要ODS和DataMart，不要Datawarehouse，也有人说，我DataMart建多了，自然就有DataWarehouse了。但是BillInmon一直很旗帜鲜明：“你可以打到几万吨的小鱼小虾，但是这些小鱼小虾加起来不是大鲸鱼”。
+7. 合并（1998－2001） 经过多翻争吵，证明one-size-fits-all是不可能的，你需要不同的BI架构来满足不同的业务需求。BillInmon也推出了新的BI架构CIF（Corporationinformationfactory），把Kimball的数据集市也包容进来了，第一次，Kimball承认了Inmon，但是仍然还有很多人在争论是自顶向下，还是自底向上。
+8. 未来 未来几个方向：时效性方向的实时数仓；数据质量方向的数据治理；数据中台、数据湖。
+4 种常见数据模型 大数据时代，维度建模已成为各大厂的主流方式。
+维度建模从分析决策的需求出发构建模型，为分析需求服务。重点关注用户如何快速的完成数据分析，可以直观的反应业务模型中的业务问题，需要大量的数据预处理、数据冗余，有较好的大规模复杂查询的响应性能。
+1. 为什么要进行数据仓库建模  性能：良好的模型能帮我们快速查询需要的数据，减少数据的IO吞吐 成本：减少数据冗余、计算结果复用、从而降低存储和计算成本 效率：改善用户使用数据的体验，提高使用数据的效率 改善统计口径的不一致性，减少数据计算错误的可能性  2. 四种常见模型 2.1 维度模型 维度建模按数据组织类型划分可分为星型模型、雪花模型、星座模型。
+Kimball老爷爷维度建模四部曲：
+选择业务处理过程 > 定义粒度 > 选择维度 > 确定事实">
+<meta property="og:type" content="article">
+<meta property="og:url" content="/%E6%95%B0%E6%8D%AE%E6%B2%BB%E7%90%86/data-warehouse/"><meta property="article:section" content="数据治理">
+<meta property="og:site_name" content="infilos.com">
+<meta itemprop=name content="数据仓库">
+<meta itemprop=description content="原文链接：数据仓库体系
+ 8 个发展阶段 1. 概念阶段（1978-1988） 数据仓库最早的概念可以追溯到20世纪70年代MIT的一项研究，该研究致力于开发一种优化的技术架构并提出这些架构的指导性意见。
+**第一次，MIT的研究员将业务系统和分析系统分开，将业务处理和分析处理分成不同的层次，并采用单独的数据存储和完全不同的设计准则。**同时，MIT的研究成果与80年代提出的信息中心（InformationCenter）相吻合：即把那些新出现的、不可以预测的、但是大量存在的分析型的负载从业务处理系统中剥离出来。
+但是限于当时的信息处理和数据存储能力，该研究只是确立了一个论点：这两种信息处理的方式差别如此之大，以至于它们只能采用完全不同的架构和设计方法。
+2. 萌芽阶段 在80年代中后期,作为当时技术最先进的公司,DEC已经开始采用分布式网络架构来支持其业务应用，并且DEC公司首先将业务系统移植到其自身的RDBMS产品：RdB。并且，DEC公司从工程部、销售部、财务部以及信息技术部抽调了不同的人员组建了新的小组，不仅研究新的分析系统架构，并要求将其应用到其全球的财务系统中。该小组结合MIT的研究结论，建立了TA2（TechnicalArchitecture2）规范，该规范定义了分析系统的四个组成部分：
+ 数据获取 数据访问 目录 用户服务  其中的数据获取和数据访问目前大家都很清楚，而目录服务是用于帮助用户在网络中找到他们想要的信息，类似于业务元数据管理；用户服务用以支持对数据的直接交互，包含了其他服务的所有人机交互界面，这是系统架构的一个非常大的转变，第一次将交互界面作为单独的组件提出来。
+3. 集成阶段 全企业集成（EnterpriseIntergration，1988）同时，IBM也在处理信息管理不同方面的问题，其最烦人的问题是不断增加的信息孤岛，IBM的很多客户要面对很多分立系统的数据集成问题，而这些系统有不同的编码方式和数据格式。
+1988年，为解决全企业集成问题，IBM爱尔兰公司的BarryDevlin和PaulMurphy第一次提出了“信息仓库（InformationWarehouse）”的概念，将其定义为：“一个结构化的环境，能支持最终用户管理其全部的业务，并支持信息技术部门保证数据质量”，并在1991年在DECTA2的基础上把信息仓库的概念包含进去，并称之为VITAL规范，将PC、图形化界面、面向对象的组件以及局域网都包含在VITAL里，并定义了85种信息仓库的组件，包括数据抽取、转换、有效性验证、加载、Cube开发和图形化查询工具等。但是IBM只是将这种领先的概念用于市场宣传，而没有付诸实际的架构设计。这是IBM有一个领域上创新后停止不前导致丧失其领先地位。因此，在90年代初期，数据仓库的基本原理、框架架构，以及分析系统的主要原则都已经确定，主要的技术，包括关系型数据存取、网络、C/S架构和图形化界面均已具备，只欠东风了。
+同时，在1988年－1991年，一些前沿的公司已经开始建立数据仓库。
+4. 确立阶段（1991） 企业级数据仓库（EDW，1991）1991年，BillInmon出版了其有关数据仓库的第一本书，这本书不仅仅说明为什么要建数据仓库、数据仓库能给你带来什么，更重要的是，Inmon第一次提供了如何建设数据仓库的指导性意见，**该书定义了数据仓库非常具体的原则，包括：数据仓库是面向主题的（Subject-Oriented）、集成的（Integrated）、包含历史的（Time-variant）、相对稳定的（Nonvolatile）、**面向决策支持的（DecisionSupport）面向全企业的（EnterpriseScope）最明细的数据存（AtomicDetail）数据快照式的数据获取（SnapShotCapture）这些原则到现在仍然是指导数据仓库建设的最基本原则，虽然中间的一些原则引发一些争论，并导致一些分歧和数据仓库变体的产生。
+BillInmon凭借其这本书奠定了其在数据仓库建设的位置，被称之为“数据仓库之父”。
+5. 数据集市（1994－1996） 数据仓库发展的第一明显分歧是数据集市概念的产生。由于企业级数据仓库的设计、实施很困难，使得最早吃数据仓库螃蟹的公司遭到大面积的失败，因此数据仓库的建设者和分析师开始考虑只建设企业级数据仓库的一部分，然后再逐步添加，但是这有背于BillInmon的原则：各个实施部分的数据抽取、清洗、转换和加载是独立，导致了数据的混乱与不一致性。而且部分实施的项目也有很多失败，除了常见的业务需求定义不清、项目执行不力之外，很重要的原因是因为其数据模型设计，在企业级数据仓库中，Inmon推荐采用3范式进行数据建模，但是不排除其他的方法，但是Inmon的追随者固守OLTP系统的3范式设计，从而无法支持DSS系统的性能和数据易访问性的要求。
+这时，Ralph Kimball出现了，他的第一本书“TheDataWarehouseToolkit”掀起了数据集市的狂潮，这本书提供了如何为分析进行数据模型优化详细指导意见，从DimensionalModeling大行其道，也为传统的关系型数据模型和多维OLAP之间建立了很好的桥梁。从此，数据集市在很多地方冒了出来，并获得很大成功，而企业级数据仓库已逐渐被人所淡忘。
+6. 争吵与混乱（1996-1997） 企业级数据仓库还是部门级数据集市？关系型还是多维？BillInmon和RalphKimball一开始就争论不休，其各自的追随者也唇舌相向，形成相对立的两派：Inmon派和Kimball派（有点象少林和武当，呵呵）。
+在初期，数据集市的快速实施和较高的成功率让Kimball派占了上风，但是很快，他们也发现自己陷入了某种困境：企业中存在6－7个不同的数据集市，分别有不同的ETL，相互之间的数据也不完全一致。同时，各个项目实施中也任意侵犯了Inmon开始定下的准则：把数据集市当成众多OLTP系统之后的有一个系统，而不是一个基础性的集成性的东西，为保证数据的准确性和实时性，有的甚至可以由OLTP系统直接修改数据集市里面的数据，为了保证系统的性能，有的数据集市删除了历史数据。等等，不一而足。
+当然，这导致了一些新的应用的出现，例如ODS，但是人们对DataWarehouse、DataMart、ODS的概念非常的模糊，经常混为一谈。有人说OLAP就是数据仓库，也有人说我要ODS和DataMart，不要Datawarehouse，也有人说，我DataMart建多了，自然就有DataWarehouse了。但是BillInmon一直很旗帜鲜明：“你可以打到几万吨的小鱼小虾，但是这些小鱼小虾加起来不是大鲸鱼”。
+7. 合并（1998－2001） 经过多翻争吵，证明one-size-fits-all是不可能的，你需要不同的BI架构来满足不同的业务需求。BillInmon也推出了新的BI架构CIF（Corporationinformationfactory），把Kimball的数据集市也包容进来了，第一次，Kimball承认了Inmon，但是仍然还有很多人在争论是自顶向下，还是自底向上。
+8. 未来 未来几个方向：时效性方向的实时数仓；数据质量方向的数据治理；数据中台、数据湖。
+4 种常见数据模型 大数据时代，维度建模已成为各大厂的主流方式。
+维度建模从分析决策的需求出发构建模型，为分析需求服务。重点关注用户如何快速的完成数据分析，可以直观的反应业务模型中的业务问题，需要大量的数据预处理、数据冗余，有较好的大规模复杂查询的响应性能。
+1. 为什么要进行数据仓库建模  性能：良好的模型能帮我们快速查询需要的数据，减少数据的IO吞吐 成本：减少数据冗余、计算结果复用、从而降低存储和计算成本 效率：改善用户使用数据的体验，提高使用数据的效率 改善统计口径的不一致性，减少数据计算错误的可能性  2. 四种常见模型 2.1 维度模型 维度建模按数据组织类型划分可分为星型模型、雪花模型、星座模型。
+Kimball老爷爷维度建模四部曲：
+选择业务处理过程 > 定义粒度 > 选择维度 > 确定事实">
+<meta itemprop=wordCount content="1109">
+<meta itemprop=keywords content><meta name=twitter:card content="summary">
+<meta name=twitter:title content="数据仓库">
+<meta name=twitter:description content="原文链接：数据仓库体系
+ 8 个发展阶段 1. 概念阶段（1978-1988） 数据仓库最早的概念可以追溯到20世纪70年代MIT的一项研究，该研究致力于开发一种优化的技术架构并提出这些架构的指导性意见。
+**第一次，MIT的研究员将业务系统和分析系统分开，将业务处理和分析处理分成不同的层次，并采用单独的数据存储和完全不同的设计准则。**同时，MIT的研究成果与80年代提出的信息中心（InformationCenter）相吻合：即把那些新出现的、不可以预测的、但是大量存在的分析型的负载从业务处理系统中剥离出来。
+但是限于当时的信息处理和数据存储能力，该研究只是确立了一个论点：这两种信息处理的方式差别如此之大，以至于它们只能采用完全不同的架构和设计方法。
+2. 萌芽阶段 在80年代中后期,作为当时技术最先进的公司,DEC已经开始采用分布式网络架构来支持其业务应用，并且DEC公司首先将业务系统移植到其自身的RDBMS产品：RdB。并且，DEC公司从工程部、销售部、财务部以及信息技术部抽调了不同的人员组建了新的小组，不仅研究新的分析系统架构，并要求将其应用到其全球的财务系统中。该小组结合MIT的研究结论，建立了TA2（TechnicalArchitecture2）规范，该规范定义了分析系统的四个组成部分：
+ 数据获取 数据访问 目录 用户服务  其中的数据获取和数据访问目前大家都很清楚，而目录服务是用于帮助用户在网络中找到他们想要的信息，类似于业务元数据管理；用户服务用以支持对数据的直接交互，包含了其他服务的所有人机交互界面，这是系统架构的一个非常大的转变，第一次将交互界面作为单独的组件提出来。
+3. 集成阶段 全企业集成（EnterpriseIntergration，1988）同时，IBM也在处理信息管理不同方面的问题，其最烦人的问题是不断增加的信息孤岛，IBM的很多客户要面对很多分立系统的数据集成问题，而这些系统有不同的编码方式和数据格式。
+1988年，为解决全企业集成问题，IBM爱尔兰公司的BarryDevlin和PaulMurphy第一次提出了“信息仓库（InformationWarehouse）”的概念，将其定义为：“一个结构化的环境，能支持最终用户管理其全部的业务，并支持信息技术部门保证数据质量”，并在1991年在DECTA2的基础上把信息仓库的概念包含进去，并称之为VITAL规范，将PC、图形化界面、面向对象的组件以及局域网都包含在VITAL里，并定义了85种信息仓库的组件，包括数据抽取、转换、有效性验证、加载、Cube开发和图形化查询工具等。但是IBM只是将这种领先的概念用于市场宣传，而没有付诸实际的架构设计。这是IBM有一个领域上创新后停止不前导致丧失其领先地位。因此，在90年代初期，数据仓库的基本原理、框架架构，以及分析系统的主要原则都已经确定，主要的技术，包括关系型数据存取、网络、C/S架构和图形化界面均已具备，只欠东风了。
+同时，在1988年－1991年，一些前沿的公司已经开始建立数据仓库。
+4. 确立阶段（1991） 企业级数据仓库（EDW，1991）1991年，BillInmon出版了其有关数据仓库的第一本书，这本书不仅仅说明为什么要建数据仓库、数据仓库能给你带来什么，更重要的是，Inmon第一次提供了如何建设数据仓库的指导性意见，**该书定义了数据仓库非常具体的原则，包括：数据仓库是面向主题的（Subject-Oriented）、集成的（Integrated）、包含历史的（Time-variant）、相对稳定的（Nonvolatile）、**面向决策支持的（DecisionSupport）面向全企业的（EnterpriseScope）最明细的数据存（AtomicDetail）数据快照式的数据获取（SnapShotCapture）这些原则到现在仍然是指导数据仓库建设的最基本原则，虽然中间的一些原则引发一些争论，并导致一些分歧和数据仓库变体的产生。
+BillInmon凭借其这本书奠定了其在数据仓库建设的位置，被称之为“数据仓库之父”。
+5. 数据集市（1994－1996） 数据仓库发展的第一明显分歧是数据集市概念的产生。由于企业级数据仓库的设计、实施很困难，使得最早吃数据仓库螃蟹的公司遭到大面积的失败，因此数据仓库的建设者和分析师开始考虑只建设企业级数据仓库的一部分，然后再逐步添加，但是这有背于BillInmon的原则：各个实施部分的数据抽取、清洗、转换和加载是独立，导致了数据的混乱与不一致性。而且部分实施的项目也有很多失败，除了常见的业务需求定义不清、项目执行不力之外，很重要的原因是因为其数据模型设计，在企业级数据仓库中，Inmon推荐采用3范式进行数据建模，但是不排除其他的方法，但是Inmon的追随者固守OLTP系统的3范式设计，从而无法支持DSS系统的性能和数据易访问性的要求。
+这时，Ralph Kimball出现了，他的第一本书“TheDataWarehouseToolkit”掀起了数据集市的狂潮，这本书提供了如何为分析进行数据模型优化详细指导意见，从DimensionalModeling大行其道，也为传统的关系型数据模型和多维OLAP之间建立了很好的桥梁。从此，数据集市在很多地方冒了出来，并获得很大成功，而企业级数据仓库已逐渐被人所淡忘。
+6. 争吵与混乱（1996-1997） 企业级数据仓库还是部门级数据集市？关系型还是多维？BillInmon和RalphKimball一开始就争论不休，其各自的追随者也唇舌相向，形成相对立的两派：Inmon派和Kimball派（有点象少林和武当，呵呵）。
+在初期，数据集市的快速实施和较高的成功率让Kimball派占了上风，但是很快，他们也发现自己陷入了某种困境：企业中存在6－7个不同的数据集市，分别有不同的ETL，相互之间的数据也不完全一致。同时，各个项目实施中也任意侵犯了Inmon开始定下的准则：把数据集市当成众多OLTP系统之后的有一个系统，而不是一个基础性的集成性的东西，为保证数据的准确性和实时性，有的甚至可以由OLTP系统直接修改数据集市里面的数据，为了保证系统的性能，有的数据集市删除了历史数据。等等，不一而足。
+当然，这导致了一些新的应用的出现，例如ODS，但是人们对DataWarehouse、DataMart、ODS的概念非常的模糊，经常混为一谈。有人说OLAP就是数据仓库，也有人说我要ODS和DataMart，不要Datawarehouse，也有人说，我DataMart建多了，自然就有DataWarehouse了。但是BillInmon一直很旗帜鲜明：“你可以打到几万吨的小鱼小虾，但是这些小鱼小虾加起来不是大鲸鱼”。
+7. 合并（1998－2001） 经过多翻争吵，证明one-size-fits-all是不可能的，你需要不同的BI架构来满足不同的业务需求。BillInmon也推出了新的BI架构CIF（Corporationinformationfactory），把Kimball的数据集市也包容进来了，第一次，Kimball承认了Inmon，但是仍然还有很多人在争论是自顶向下，还是自底向上。
+8. 未来 未来几个方向：时效性方向的实时数仓；数据质量方向的数据治理；数据中台、数据湖。
+4 种常见数据模型 大数据时代，维度建模已成为各大厂的主流方式。
+维度建模从分析决策的需求出发构建模型，为分析需求服务。重点关注用户如何快速的完成数据分析，可以直观的反应业务模型中的业务问题，需要大量的数据预处理、数据冗余，有较好的大规模复杂查询的响应性能。
+1. 为什么要进行数据仓库建模  性能：良好的模型能帮我们快速查询需要的数据，减少数据的IO吞吐 成本：减少数据冗余、计算结果复用、从而降低存储和计算成本 效率：改善用户使用数据的体验，提高使用数据的效率 改善统计口径的不一致性，减少数据计算错误的可能性  2. 四种常见模型 2.1 维度模型 维度建模按数据组织类型划分可分为星型模型、雪花模型、星座模型。
+Kimball老爷爷维度建模四部曲：
+选择业务处理过程 > 定义粒度 > 选择维度 > 确定事实">
+<script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga('create','UA-123062585-1','auto'),ga('send','pageview'))</script>
+<script async src=https://www.google-analytics.com/analytics.js></script>
+<link rel=preload href=/scss/main.min.847464b684a6e89d7276700a5c500c17ab494dd1755b2654a7b27d8b59e3347e.css as=style>
+<link href=/scss/main.min.847464b684a6e89d7276700a5c500c17ab494dd1755b2654a7b27d8b59e3347e.css rel=stylesheet integrity>
+<script src=/js/jquery-3.5.1.min.js integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin=anonymous></script>
+</head>
+<body class=td-page>
+<header>
+<nav class="js-navbar-scroll navbar navbar-expand navbar-dark flex-column flex-md-row td-navbar">
+<a class=navbar-brand href=/>
+<span class=navbar-logo><svg id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512" style="enable-background:new 0 0 512 512"><path style="fill:#ffc107" d="M432.384 143.616c-4.165-4.164-10.917-4.164-15.083.0l-60.352 60.352c-4.164 4.165-4.164 10.917.0 15.083 21.187 20.463 54.951 19.876 75.413-1.311 19.962-20.668 19.962-53.435.0-74.102L432.384 143.616z"/><path style="fill:#607d8b" d="M42.667 277.334c-5.891.003-10.669-4.771-10.672-10.662-.002-4.338 2.623-8.245 6.64-9.882l234.667-96c5.455-2.233 11.687.38 13.92 5.835s-.38 11.687-5.835 13.92l-234.667 96C45.433 277.069 44.056 277.337 42.667 277.334z"/><path style="fill:#546e7a" d="M391.552 56.448l-32-32C343.938 8.745 322.689-.059 300.544.0h-3.755c-46.082.024-83.432 37.374-83.456 83.456v3.755c-.053 22.138 8.75 43.377 24.448 58.987l32 32c4.165 4.164 10.917 4.164 15.083.0L391.531 71.531C395.701 67.372 395.71 60.62 391.552 56.448z"/><path style="fill:#607d8b" d="M160 469.334c-3.279.006-6.379-1.497-8.405-4.075L34.261 315.926c-3.635-4.636-2.823-11.341 1.813-14.976s11.341-2.823 14.976 1.813l117.333 149.333c3.629 4.641 2.809 11.344-1.832 14.973C164.681 468.533 162.375 469.329 160 469.334z"/><path style="fill:#455a64" d="M487.467 86.848l-3.669-3.648c-37.687-36.557-97.71-36.197-134.955.811l-51.413 51.413c-36.996 37.25-37.357 97.263-.811 134.955l3.584 3.669c1.7 2.457 4.671 3.706 7.616 3.2 2.831.005 5.548-1.115 7.552-3.115l172.181-172.181c4.189-4.143 4.226-10.896.083-15.085-.028-.028-.055-.056-.083-.083L487.467 86.848z"/><g><path style="fill:#ffc107" d="M501.333 192H480c-5.891.0-10.667-4.776-10.667-10.667s4.776-10.667 10.667-10.667h21.333c5.891.0 10.667 4.776 10.667 10.667S507.225 192 501.333 192z"/><path style="fill:#ffc107" d="M394.667 298.667c-5.891.0-10.667-4.776-10.667-10.667v-21.333c0-5.891 4.776-10.667 10.667-10.667 5.891.0 10.667 4.776 10.667 10.667V288C405.333 293.891 400.558 298.667 394.667 298.667z"/><path style="fill:#ffc107" d="M480 277.334c-2.831.005-5.548-1.115-7.552-3.115l-21.333-21.333c-4.093-4.237-3.975-10.99.262-15.083 4.134-3.993 10.687-3.993 14.821.0l21.333 21.333c4.159 4.172 4.148 10.926-.024 15.085C485.514 276.209 482.815 277.327 480 277.334z"/></g><g><path style="fill:#455a64" d="M266.667 448H96c-29.455.0-53.333 23.878-53.333 53.333.0 5.891 4.776 10.667 10.667 10.667h256c5.891.0 10.667-4.776 10.667-10.667C320 471.878 296.122 448 266.667 448z"/><circle style="fill:#455a64" cx="32" cy="288" r="32"/></g><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/></svg></span><span class=font-weight-bold>infilos.com</span>
+</a>
+<div class="collapse navbar-collapse" id=navbarSupportedContent>
+<ul class="navbar-nav mr-auto">
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86>
+<span>基础</span>
+</a>
+</li>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80>
+<span>语言</span>
+</a>
+</li>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93>
+<span>框架库</span>
+</a>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+分布式
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%88%86%e5%b8%83%e5%bc%8f/base>基本构成</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+大数据
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%ad%98%e5%82%a8%e7%b3%bb%e7%bb%9f>存储系统</a>
+<a class=dropdown-item href=/%e6%9f%a5%e8%af%a2%e7%b3%bb%e7%bb%9f>查询系统</a>
+<a class=dropdown-item href=/%e6%b6%88%e6%81%af%e7%b3%bb%e7%bb%9f>消息系统</a>
+<a class=dropdown-item href=/%e5%a4%84%e7%90%86%e7%b3%bb%e7%bb%9f>处理系统</a>
+<a class=dropdown-item href=/%e6%95%b0%e6%8d%ae%e6%b2%bb%e7%90%86>数据治理</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+中后台
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e8%ae%be%e6%96%bd>基础设施</a>
+<a class=dropdown-item href=/%e7%94%a8%e6%88%b7%e7%b3%bb%e7%bb%9f>用户系统</a>
+<a class=dropdown-item href=/%e4%ba%a4%e4%ba%92%e7%95%8c%e9%9d%a2>交互界面</a>
+<a class=dropdown-item href=/%e4%b8%9a%e5%8a%a1%e7%b3%bb%e7%bb%9f>业务系统</a>
+</div>
+</li>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e6%a8%a1%e5%bc%8f%e6%9e%b6%e6%9e%84>
+<span>模式架构</span>
+</a>
+</li>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e9%9d%a2%e8%af%95%e9%97%ae%e7%ad%94>
+<span>面试</span>
+</a>
+</li>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e7%ae%a1%e7%90%86%e8%b7%af%e5%be%84>
+<span>管理</span>
+</a>
+</li>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e5%bc%80%e6%ba%90%e9%a1%b9%e7%9b%ae>
+<span>开源</span>
+</a>
+</li>
+</ul>
+<div class="form-inline my-2 my-lg-0">
+<div class="nav-item nav-search-item my-2 my-md-0">
+<input type=search class="form-control td-search-input" placeholder="&#xf002; 站内搜索…" aria-label=站内搜索… autocomplete=off>
+</div>
+</div>
+</div>
+</nav>
+</header>
+<div class="container-fluid td-outer">
+<div class=td-main>
+<div class="row flex-xl-nowrap">
+<aside class="col-12 col-md-3 col-xl-2 td-sidebar d-print-none">
+<div id=td-sidebar-menu class=td-sidebar__inner>
+<div id=content-mobile>
+<form class="td-sidebar__search d-flex align-items-center">
+<input type=search class="form-control td-search-input" placeholder="&#xf002; 站内搜索…" aria-label=站内搜索… autocomplete=off>
+<button class="btn btn-link td-sidebar__toggle d-md-none p-0 ml-3 fas fa-bars" type=button data-toggle=collapse data-target=#td-section-nav aria-controls=td-docs-nav aria-expanded=false aria-label="Toggle section navigation">
+</button>
+</form>
+</div>
+<div id=content-desktop></div>
+<nav class="collapse td-sidebar-nav" id=td-section-nav>
+<ul class="td-sidebar-nav__section pr-md-3 ul-0">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e695b0e68daee6b2bbe79086-li>
+<a href=/%E6%95%B0%E6%8D%AE%E6%B2%BB%E7%90%86/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section tree-root" id=m-e695b0e68daee6b2bbe79086><span>数据治理</span></a>
+<ul class=ul-1>
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e695b0e68daee6b2bbe79086data-mid-ground-li>
+<a href=/%E6%95%B0%E6%8D%AE%E6%B2%BB%E7%90%86/data-mid-ground/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e695b0e68daee6b2bbe79086data-mid-ground><span>数据中台</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child active-path" id=m-e695b0e68daee6b2bbe79086data-warehouse-li>
+<a href=/%E6%95%B0%E6%8D%AE%E6%B2%BB%E7%90%86/data-warehouse/ class="align-left pl-0 active td-sidebar-link td-sidebar-link__page" id=m-e695b0e68daee6b2bbe79086data-warehouse><span class=td-sidebar-nav-active-item>数据仓库</span></a>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</div>
+</aside>
+<aside class="d-none d-xl-block col-xl-2 td-sidebar-toc d-print-none">
+<div class="td-page-meta ml-2 pb-1 pt-2 mb-0">
+<a href=https://github.com/infilos/infilos.com/edit/master/content/zh/%e6%95%b0%e6%8d%ae%e6%b2%bb%e7%90%86/data-warehouse.md target=_blank><i class="fa fa-edit fa-fw"></i> 编辑此页</a>
+<a href="https://github.com/infilos/infilos.com/new/master/content/zh/%e6%95%b0%e6%8d%ae%e6%b2%bb%e7%90%86/data-warehouse.md?filename=change-me.md&value=---%0Atitle%3A+%22Long+Page+Title%22%0AlinkTitle%3A+%22Short+Nav+Title%22%0Aweight%3A+100%0Adescription%3A+%3E-%0A+++++Page+description+for+heading+and+indexes.%0A---%0A%0A%23%23+Heading%0A%0AEdit+this+template+to+create+your+new+page.%0A%0A%2A+Give+it+a+good+name%2C+ending+in+%60.md%60+-+e.g.+%60getting-started.md%60%0A%2A+Edit+the+%22front+matter%22+section+at+the+top+of+the+page+%28weight+controls+how+its+ordered+amongst+other+pages+in+the+same+directory%3B+lowest+number+first%29.%0A%2A+Add+a+good+commit+message+at+the+bottom+of+the+page+%28%3C80+characters%3B+use+the+extended+description+field+for+more+detail%29.%0A%2A+Create+a+new+branch+so+you+can+preview+your+new+file+and+request+a+review+via+Pull+Request.%0A" target=_blank><i class="fa fa-edit fa-fw"></i> 添加子页面</a>
+<a href="https://github.com/infilos/infilos.com/issues/new?title=%e6%95%b0%e6%8d%ae%e4%bb%93%e5%ba%93" target=_blank><i class="fab fa-github fa-fw"></i> 提交文档问题</a>
+<a id=print href=/%E6%95%B0%E6%8D%AE%E6%B2%BB%E7%90%86/_print/><i class="fa fa-print fa-fw"></i> 整节打印</a>
+</div>
+<div class=td-toc><nav id=TableOfContents>
+<ul>
+<li><a href=#8-个发展阶段>8 个发展阶段</a>
+<ul>
+<li><a href=#1-概念阶段1978-1988>1. 概念阶段（1978-1988）</a></li>
+<li><a href=#2-萌芽阶段>2. 萌芽阶段</a></li>
+<li><a href=#3-集成阶段>3. 集成阶段</a></li>
+<li><a href=#4-确立阶段1991>4. 确立阶段（1991）</a></li>
+<li><a href=#5-数据集市19941996>5. 数据集市（1994－1996）</a></li>
+<li><a href=#6-争吵与混乱1996-1997>6. 争吵与混乱（1996-1997）</a></li>
+<li><a href=#7-合并19982001>7. 合并（1998－2001）</a></li>
+<li><a href=#8-未来>8. 未来</a></li>
+</ul>
+</li>
+<li><a href=#4-种常见数据模型>4 种常见数据模型</a>
+<ul>
+<li><a href=#1-为什么要进行数据仓库建模>1. 为什么要进行数据仓库建模</a></li>
+<li><a href=#2-四种常见模型>2. 四种常见模型</a></li>
+<li><a href=#22-范式模型>2.2 范式模型</a></li>
+<li><a href=#23-data-vault模型><strong>2.3 Data Vault模型</strong></a></li>
+<li><a href=#24-anchor模型><strong>2.4 Anchor模型</strong></a></li>
+<li><a href=#3-数据模型的评价标准>3. 数据模型的评价标准</a></li>
+</ul>
+</li>
+<li><a href=#3-种事实表>3 种事实表</a>
+<ul>
+<li><a href=#1-事实表概述>1. 事实表概述</a></li>
+<li><a href=#2-三种事实表对比>2. 三种事实表对比</a></li>
+<li><a href=#3-事实表设计-8-大原则>3. 事实表设计 8 大原则</a></li>
+<li><a href=#4-事实表的设计方法>4. 事实表的设计方法</a></li>
+</ul>
+</li>
+<li><a href=#多维体系结构>多维体系结构</a>
+<ul>
+<li><a href=#1-总线架构>1. 总线架构</a></li>
+<li><a href=#2-一致性维度>2. 一致性维度</a></li>
+<li><a href=#3-一致性事实>3. 一致性事实</a></li>
+<li><a href=#数据仓库规范设计>数据仓库规范设计</a></li>
+<li><a href=#1-为什么要进行规范设计>1. 为什么要进行规范设计</a></li>
+<li><a href=#2-设计规范指标>2. 设计规范—指标</a></li>
+<li><a href=#3-命名规范表命名>3. 命名规范—表命名</a></li>
+<li><a href=#4-开发规范>4. 开发规范</a></li>
+<li><a href=#5-流程规范>5. 流程规范</a></li>
+</ul>
+</li>
+<li><a href=#元数据管理>元数据管理</a>
+<ul>
+<li><a href=#1-业务元数据>1. 业务元数据</a></li>
+<li><a href=#2-技术元数据>2. 技术元数据</a></li>
+<li><a href=#3-管理元数据>3. 管理元数据</a></li>
+<li><a href=#4-工程化管理>4. 工程化管理</a></li>
+</ul>
+</li>
+<li><a href=#维度表>维度表</a>
+<ul>
+<li><a href=#1-什么是维度表>1. 什么是维度表</a></li>
+<li><a href=#2-维度表设计原则>2. 维度表设计原则</a></li>
+<li><a href=#3-维表设计方法>3. 维表设计方法</a></li>
+</ul>
+</li>
+<li><a href=#三范式与反范式>三范式与反范式</a>
+<ul>
+<li><a href=#1-第一范式>1. 第一范式</a></li>
+<li><a href=#2-第二范式>2. 第二范式</a></li>
+<li><a href=#3-第三范式>3. 第三范式</a></li>
+<li><a href=#4-反范式化>4. 反范式化</a></li>
+<li><a href=#5-优缺点对比>5. 优缺点对比</a></li>
+<li><a href=#6-olap和oltp中范式设计>6. OLAP和OLTP中范式设计</a></li>
+</ul>
+</li>
+<li><a href=#数据仓库架构lambda-和-kappa><strong>数据仓库架构—Lambda 和 Kappa</strong></a>
+<ul>
+<li><a href=#1-lambda-架构原理>1. Lambda 架构原理</a></li>
+<li><a href=#2-lambda架构的缺点>2. Lambda架构的缺点</a></li>
+<li><a href=#3-kappa架构原理>3. Kappa架构原理</a></li>
+<li><a href=#4-优缺点对比>4. 优缺点对比</a></li>
+<li><a href=#5-数据架构评价标准>5. 数据架构评价标准</a></li>
+</ul>
+</li>
+<li><a href=#数据治理>数据治理</a>
+<ul>
+<li><a href=#1-什么是数据治理>1. 什么是数据治理</a></li>
+<li><a href=#2-数据治理的目的>2. 数据治理的目的</a></li>
+<li><a href=#3-数据治理的方法>3. 数据治理的方法</a></li>
+<li><a href=#4-数据质量8个衡量标准>4. 数据质量8个衡量标准</a></li>
+<li><a href=#5-数据治理流程>5. 数据治理流程</a></li>
+</ul>
+</li>
+<li><a href=#etl>ETL</a>
+<ul>
+<li><a href=#1-什么是etl>1. 什么是ETL</a></li>
+<li><a href=#2-etl--elt>2. ETL & ELT</a></li>
+<li><a href=#3-常用的-etl-工具>3. 常用的 ETL 工具</a></li>
+<li><a href=#4-etl加载策略>4. ETL加载策略</a></li>
+</ul>
+</li>
+<li><a href=#数据应用olap>数据应用—OLAP</a>
+<ul>
+<li><a href=#1-olap和oltp的区别>1. OLAP和OLTP的区别</a></li>
+<li><a href=#2-olap分类>2. OLAP分类</a></li>
+<li><a href=#3-olap基本操作>3. OLAP基本操作</a></li>
+<li><a href=#4-olap选型>4. OLAP选型</a></li>
+</ul>
+</li>
+<li><a href=#数据倾斜><strong>数据倾斜</strong></a>
+<ul>
+<li><a href=#1-数据倾斜表现>1. 数据倾斜表现</a></li>
+<li><a href=#2-数据倾斜产生原因>2. 数据倾斜产生原因</a></li>
+<li><a href=#3-解决数据倾斜思路>3. 解决数据倾斜思路</a></li>
+</ul>
+</li>
+</ul>
+</nav></div>
+</aside>
+<main class="col-12 col-md-9 col-xl-8 pl-md-5" role=main>
+<nav aria-label=breadcrumb class="d-none d-md-block d-print-none">
+<ol class="breadcrumb spb-1">
+<li class=breadcrumb-item>
+<a href=/%E6%95%B0%E6%8D%AE%E6%B2%BB%E7%90%86/>数据治理</a>
+</li>
+<li class="breadcrumb-item active" aria-current=page>
+<a href=/%E6%95%B0%E6%8D%AE%E6%B2%BB%E7%90%86/data-warehouse/>数据仓库</a>
+</li>
+</ol>
+</nav>
+<div class=td-content>
+<h1>数据仓库</h1>
+<header class=article-meta>
+</header>
+<div class="pageinfo pageinfo-primary">
+<p><a href=https://www.cnblogs.com/innn/p/15360475.html>原文链接：数据仓库体系</a></p>
+</div>
+<h2 id=8-个发展阶段>8 个发展阶段</h2>
+<h3 id=1-概念阶段1978-1988>1. 概念阶段（1978-1988）</h3>
+<p>数据仓库最早的概念可以追溯到20世纪70年代MIT的一项研究，该研究致力于开发一种优化的技术架构并提出这些架构的指导性意见。</p>
+<p>**第一次，MIT的研究员将业务系统和分析系统分开，将业务处理和分析处理分成不同的层次，并采用单独的数据存储和完全不同的设计准则。**同时，MIT的研究成果与80年代提出的信息中心（InformationCenter）相吻合：即把那些新出现的、不可以预测的、但是大量存在的分析型的负载从业务处理系统中剥离出来。</p>
+<p>但是限于当时的信息处理和数据存储能力，该研究只是确立了一个论点：这两种信息处理的方式差别如此之大，以至于它们只能采用完全不同的架构和设计方法。</p>
+<h3 id=2-萌芽阶段>2. 萌芽阶段</h3>
+<p>在80年代中后期,作为当时技术最先进的公司,<strong>DEC已经开始采用分布式网络架构来支持其业务应用</strong>，并且DEC公司首先将业务系统移植到其自身的RDBMS产品：RdB。并且，DEC公司从工程部、销售部、财务部以及信息技术部抽调了不同的人员组建了新的小组，不仅研究新的分析系统架构，并要求将其应用到其全球的财务系统中。该小组结合MIT的研究结论，建立了TA2（TechnicalArchitecture2）规范，该规范定义了分析系统的四个组成部分：</p>
+<ul>
+<li>数据获取</li>
+<li>数据访问</li>
+<li>目录</li>
+<li>用户服务</li>
+</ul>
+<p>其中的数据获取和数据访问目前大家都很清楚，而目录服务是用于帮助用户在网络中找到他们想要的信息，类似于业务元数据管理；用户服务用以支持对数据的直接交互，包含了其他服务的所有人机交互界面，<strong>这是系统架构的一个非常大的转变，第一次将交互界面作为单独的组件提出来。</strong></p>
+<h3 id=3-集成阶段>3. 集成阶段</h3>
+<p>全企业集成（EnterpriseIntergration，1988）同时，IBM也在处理信息管理不同方面的问题，其最烦人的问题是不断增加的信息孤岛，IBM的很多客户要面对很多分立系统的数据集成问题，而这些系统有不同的编码方式和数据格式。</p>
+<p>1988年，为解决全企业集成问题，IBM爱尔兰公司的BarryDevlin和PaulMurphy第一次提出了“信息仓库（InformationWarehouse）”的概念，将其定义为：“<strong>一个结构化的环境，能支持最终用户管理其全部的业务，并支持信息技术部门保证数据质量</strong>”，并在1991年在DECTA2的基础上把信息仓库的概念包含进去，并称之为VITAL规范，将PC、图形化界面、面向对象的组件以及局域网都包含在VITAL里，并定义了85种信息仓库的组件，包括数据抽取、转换、有效性验证、加载、Cube开发和图形化查询工具等。但是IBM只是将这种领先的概念用于市场宣传，而没有付诸实际的架构设计。这是IBM有一个领域上创新后停止不前导致丧失其领先地位。因此，在90年代初期，数据仓库的基本原理、框架架构，以及分析系统的主要原则都已经确定，主要的技术，包括关系型数据存取、网络、C/S架构和图形化界面均已具备，只欠东风了。</p>
+<p>同时，<strong>在1988年－1991年，一些前沿的公司已经开始建立数据仓库</strong>。</p>
+<h3 id=4-确立阶段1991>4. 确立阶段（1991）</h3>
+<p>企业级数据仓库（EDW，1991）1991年，BillInmon出版了其有关数据仓库的第一本书，这本书不仅仅说明为什么要建数据仓库、数据仓库能给你带来什么，更重要的是，Inmon第一次提供了如何建设数据仓库的指导性意见，**该书定义了数据仓库非常具体的原则，包括：数据仓库是面向主题的（Subject-Oriented）、集成的（Integrated）、包含历史的（Time-variant）、相对稳定的（Nonvolatile）、**面向决策支持的（DecisionSupport）面向全企业的（EnterpriseScope）最明细的数据存（AtomicDetail）数据快照式的数据获取（SnapShotCapture）这些原则到现在仍然是指导数据仓库建设的最基本原则，虽然中间的一些原则引发一些争论，并导致一些分歧和数据仓库变体的产生。</p>
+<p><strong>BillInmon凭借其这本书奠定了其在数据仓库建设的位置，被称之为“数据仓库之父”。</strong></p>
+<h3 id=5-数据集市19941996>5. 数据集市（1994－1996）</h3>
+<p>数据仓库发展的第一明显分歧是数据集市概念的产生。由于企业级数据仓库的设计、实施很困难，使得最早吃数据仓库螃蟹的公司遭到大面积的失败，因此数据仓库的建设者和分析师开始考虑只建设企业级数据仓库的一部分，然后再逐步添加，但是这有背于BillInmon的原则：各个实施部分的数据抽取、清洗、转换和加载是独立，导致了数据的混乱与不一致性。而且部分实施的项目也有很多失败，除了常见的业务需求定义不清、项目执行不力之外，很重要的原因是因为其数据模型设计，在企业级数据仓库中，Inmon推荐采用3范式进行数据建模，但是不排除其他的方法，但是Inmon的追随者固守OLTP系统的3范式设计，从而无法支持DSS系统的性能和数据易访问性的要求。</p>
+<p>这时，<strong>Ralph Kimball出现了，他的第一本书“TheDataWarehouseToolkit”掀起了数据集市的狂潮</strong>，这本书提供了如何为分析进行数据模型优化详细指导意见，从DimensionalModeling大行其道，也为传统的关系型数据模型和多维OLAP之间建立了很好的桥梁。从此，数据集市在很多地方冒了出来，并获得很大成功，而企业级数据仓库已逐渐被人所淡忘。</p>
+<h3 id=6-争吵与混乱1996-1997>6. 争吵与混乱（1996-1997）</h3>
+<p>企业级数据仓库还是部门级数据集市？关系型还是多维？<strong>BillInmon和RalphKimball一开始就争论不休，其各自的追随者也唇舌相向，形成相对立的两派：Inmon派和Kimball派（有点象少林和武当，呵呵）。</strong></p>
+<p>在初期，数据集市的快速实施和较高的成功率让Kimball派占了上风，但是很快，他们也发现自己陷入了某种困境：企业中存在6－7个不同的数据集市，分别有不同的ETL，相互之间的数据也不完全一致。同时，各个项目实施中也任意侵犯了Inmon开始定下的准则：把数据集市当成众多OLTP系统之后的有一个系统，而不是一个基础性的集成性的东西，为保证数据的准确性和实时性，有的甚至可以由OLTP系统直接修改数据集市里面的数据，为了保证系统的性能，有的数据集市删除了历史数据。等等，不一而足。</p>
+<p>当然，这导致了一些新的应用的出现，例如ODS，但是人们对DataWarehouse、DataMart、ODS的概念非常的模糊，经常混为一谈。有人说OLAP就是数据仓库，也有人说我要ODS和DataMart，不要Datawarehouse，也有人说，我DataMart建多了，自然就有DataWarehouse了。但是BillInmon一直很旗帜鲜明：“你可以打到几万吨的小鱼小虾，但是这些小鱼小虾加起来不是大鲸鱼”。</p>
+<h3 id=7-合并19982001>7. 合并（1998－2001）</h3>
+<p><strong>经过多翻争吵，证明one-size-fits-all是不可能的</strong>，你需要不同的BI架构来满足不同的业务需求。BillInmon也推出了新的BI架构CIF（Corporationinformationfactory），把Kimball的数据集市也包容进来了，第一次，Kimball承认了Inmon，但是仍然还有很多人在争论是自顶向下，还是自底向上。</p>
+<h3 id=8-未来>8. 未来</h3>
+<p>未来几个方向：时效性方向的实时数仓；数据质量方向的数据治理；数据中台、数据湖。</p>
+<h2 id=4-种常见数据模型>4 种常见数据模型</h2>
+<p>大数据时代，维度建模已成为各大厂的主流方式。</p>
+<p>维度建模从分析决策的需求出发构建模型，为分析需求服务。重点关注用户如何<strong>快速的完成数据分析，可以直观的反应业务模型中的业务问题，需要大量的数据预处理、数据冗余，有较好的大规模复杂查询的响应性能</strong>。</p>
+<h3 id=1-为什么要进行数据仓库建模>1. 为什么要进行数据仓库建模</h3>
+<ul>
+<li>性能：良好的模型能帮我们快速查询需要的数据，减少数据的IO吞吐</li>
+<li>成本：减少数据冗余、计算结果复用、从而降低存储和计算成本</li>
+<li>效率：改善用户使用数据的体验，提高使用数据的效率</li>
+<li>改善统计口径的不一致性，减少数据计算错误的可能性</li>
+</ul>
+<h3 id=2-四种常见模型>2. 四种常见模型</h3>
+<h4 id=21-维度模型>2.1 <strong>维度模型</strong></h4>
+<p><strong>维度建模</strong>按数据组织类型划分可分为星型模型、雪花模型、星座模型。</p>
+<p>Kimball老爷爷维度建模四部曲：</p>
+<p><strong>选择业务处理过程 > 定义粒度 > 选择维度 > 确定事实</strong></p>
+<h4 id=211-星型模型>2.1.1 星型模型</h4>
+<p>星型模型主要是维表和事实表，以事实表为中心，所有维度直接关联在事实表上，呈星型分布。</p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220214225144.png style=display:block;margin-left:auto;margin-right:auto;width:80% alt=20220214225144></div>
+<h4 id=212-雪花模型>2.1.2. <strong>雪花模型</strong></h4>
+<p>雪花模型，在星型模型的基础上，维度表上又关联了其他维度表。这种模型维护成本高，性能方面也较差，所以一般不建议使用。尤其是基于hadoop体系构建数仓，减少join就是减少shuffle，性能差距会很大。</p>
+<p>星型模型可以理解为，一个事实表关联多个维度表，雪花模型可以理解为一个事实表关联多个维度表，维度表再关联维度表。</p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220214225211.png style=display:block;margin-left:auto;margin-right:auto;width:80% alt=20220214225211></div>
+<h4 id=213-星座模型>2.1.3 <strong>星座模型</strong></h4>
+<p>星座模型，是对星型模型的扩展延伸，多张事实表共享维度表。</p>
+<p>星座模型是很多数据仓库的常态，因为很多数据仓库都是多个事实表的。所以星座模型只反映是否有多个事实表，他们之间是否共享一些维度表。</p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220214225237.png style=display:block;margin-left:auto;margin-right:auto;width:80% alt=20220214225237></div>
+<h3 id=22-范式模型>2.2 范式模型</h3>
+<p>即实体关系（ER）模型，数据仓库之父Immon提出的，从全企业的高度设计一个3NF模型，用实体加关系描述的数据模型描述企业业务架构，在范式理论上符合3NF。此建模方法，对建模人员的能力要求非常高。</p>
+<p><strong>特点</strong>：设计思路自上而下，适合上游基础数据存储，同一份数据只存储一份，没有数据冗余，方便解耦，易维护，缺点是开发周期一般比较长，维护成本高。</p>
+<p>详见后文：三范式与反范式</p>
+<h3 id=23-data-vault模型><strong>2.3 Data Vault模型</strong></h3>
+<p>DataVault由Hub（关键核心业务实体）、Link（关系）、Satellite（实体属性） 三部分组成 ，是Dan Linstedt发起创建的一种模型方法论，它是在ER关系模型上的衍生，同时设计的出发点也是为了实现数据的整合，并非为数据决策分析直接使用。</p>
+<h3 id=24-anchor模型><strong>2.4 Anchor模型</strong></h3>
+<p>高度可扩展的模型，所有的扩展只是添加而不是修改，因此它将模型规范到6NF，基本变成了K-V结构模型。企业很少使用。</p>
+<h3 id=3-数据模型的评价标准>3. 数据模型的评价标准</h3>
+<p><strong>数据模型建设的怎么样，极度依赖规范设计</strong>，如果代码风格是“<strong>千人千面</strong>”，那么恐怕半年下来，业务系统就没法看了。<strong>没有什么比“数据系统”更看重“法制”了</strong>，规范体系不仅能保障数据建设的一致性，也能够应对业务交接的情况，更能够为自动化奠定基础。</p>
+<ol>
+<li><strong>业务过程清晰</strong>：ODS就是原始信息，不修改；DWD面向基础业务过程；DIM描述维度信息；DWS针对最小场景做指标计算；ADS也要分层，面向跨域的建设，和面向应用的建设；</li>
+<li><strong>指标可理解</strong>：按照一定业务事务过程进行业务划分，明细层粒度明确、历史数据可获取，汇总层维度和指标同名同义，能客观反映业务不同角度下的量化程度；</li>
+<li><strong>核心模型相对稳定</strong>：如果业务过程运行的比较久，过程相对固定，就要尽快下沉到公共层，形成可复用的核心模型；</li>
+<li><strong>高内聚低耦合</strong>：各主题内数据模型要业务高内聚，避免在一个模型耦合其他业务的指标，造成该模型主题不清晰和性价比低。</li>
+</ol>
+<blockquote>
+<ul>
+<li>在传统企业数仓中，业务相对稳定，以范式建模为主。如电信、金融行业等</li>
+<li>在互联网公司，业务变化快，需求来来回回的改，计算和存储也不是问题，我们更关心快速便捷的满足业务需求，所以以维度建模为主。</li>
+</ul>
+</blockquote>
+<h2 id=3-种事实表>3 种事实表</h2>
+<h3 id=1-事实表概述>1. 事实表概述</h3>
+<p>事实表有三种类型 : <strong>事务事实表、周期快照事实表</strong>和<strong>累积快照事实表</strong>。</p>
+<ul>
+<li>
+<p><strong>1.1 事务事实表</strong></p>
+<ul>
+<li>也称原子事实表，描述业务过程，跟踪控件或时间上某点的度量事件，保存的是最原子的数据；</li>
+<li><strong>个人理解</strong>：类似于mysql binlog日志，每一次相关的 change 都记录下来，生成一行新的数据</li>
+</ul>
+</li>
+<li>
+<p><strong>1.2 周期快照事实表</strong></p>
+<ul>
+<li>以一个周期为时间间隔，来记录事实，一般周期可以是每天、每周、每月、每年等；</li>
+<li><strong>个人理解</strong>：只看某个业务过程，比如订单收货，数据按订单收货时间来切分，周期可以为每天、每月等。</li>
+</ul>
+</li>
+<li>
+<p><strong>1.3 累积快照事实</strong></p>
+<ul>
+<li>用来描述过程开始和结束之间的关键步骤事件，覆盖过程的整个生命周期，通常具有多个日期字段来记录关键时间点；当过程随着生命周期不断变化时，记录也会随着过程的变化而被修改；</li>
+<li><strong>个人理解</strong>：要看整个生命周期的多个业务过程，比如：创建订单 → 买家付款 → 卖家发货 → 买家确认收货。粒度是一个订单一行数据，创建订单时间，付款时间，发货时间，收货时间，分别作为一个字段，便于计算不同业务过程的时间间隔。</li>
+</ul>
+</li>
+</ul>
+<h3 id=2-三种事实表对比>2. 三种事实表对比</h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>事务事实表</th>
+<th>周期快照事实表</th>
+<th>累积快照事实表</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>时期/时间</td>
+<td>离散事务时间点</td>
+<td>以有规律的、可预测的</td>
+<td>用于时间跨度不确定的不断变化的工作流</td>
+</tr>
+<tr>
+<td>日期维度</td>
+<td>事务日期</td>
+<td>快照日期</td>
+<td>相关业务过程涉及的多个日期</td>
+</tr>
+<tr>
+<td>粒度</td>
+<td>每行代表实体的一个事务</td>
+<td>每行代表某时间周期的一个实体</td>
+<td>每行代表一个实体的生命周期</td>
+</tr>
+<tr>
+<td>事实</td>
+<td>事务事实</td>
+<td>累积事实</td>
+<td>相关业务过程事实和时间间隔事实</td>
+</tr>
+<tr>
+<td>事实表加载</td>
+<td>插入</td>
+<td>插入</td>
+<td>插入与更新</td>
+</tr>
+<tr>
+<td>事实表更新</td>
+<td>不更新</td>
+<td>不更新</td>
+<td>业务过程变更时更新</td>
+</tr>
+</tbody>
+</table>
+<h3 id=3-事实表设计-8-大原则>3. 事实表设计 8 大原则</h3>
+<ul>
+<li><strong>原则 1：尽可能包含所有与业务过程相关的事实</strong>
+<ul>
+<li>分析哪些事实与业务过程相关，是设计过程中非常重要的关注点；</li>
+<li>在事实表中，尽量包含所有与业务过程相关的事实，即使存在冗余，由于事实通常是数字型，存储开销不会太大；</li>
+</ul>
+</li>
+<li><strong>原则 2：只选择与业务过程相关的事实</strong>
+<ul>
+<li>如，订单的下单这个业务过程，事实表中不应该存在支付金额这个表示支付业务过程的事实；</li>
+</ul>
+</li>
+<li><strong>原则 3：分解不可加性事实为可加的组件</strong>
+<ul>
+<li>如，订单的优惠率，应分解为订单原价金额与订单优惠金额两个事实存储在事实表中；</li>
+</ul>
+</li>
+<li><strong>原则 4：在选择维度和事实之前必须先声明粒度</strong>
+<ul>
+<li>因为原子粒度提供了最大限度的灵活性，可以支持无法预期的各种细节层次的用户需求；</li>
+<li>粒度用于确定事实表中一行所表示业务的细节层次，决定了维度模型的扩展性；</li>
+<li>每个维度和事实必须与所定义的粒度保持一致；</li>
+<li>设计事实表时，粒度定义越细越好，一般从最低级别的原子粒度开始；</li>
+</ul>
+</li>
+<li><strong>原则 5：在同一个事实表中不能有多种不同粒度的事实</strong>
+<ul>
+<li>粒度为票一级；（实际业务中，一个订单可以同时支付多张票）</li>
+<li>票支付金额和票折扣金额，两个事实的粒度为 “票级”，与定义的粒度一致；</li>
+<li>订单支付金额和订单票数，两个事实的粒度为 “订单级”，属于上一层订单级数据，与 “票级” 事实表的粒度不一致，且不能进行汇总；</li>
+<li>如果，以订单金额和订单票数这两个维度汇总总金额和总票数，会造成大量的重复计算；</li>
+<li>疑问：怎么判断不同事实的粒度是否相同？</li>
+</ul>
+</li>
+<li><strong>原则 6：事实的单位要保持一致</strong>
+<ul>
+<li>如，订单金额、订单优惠金额、订单运费这 3 个事实，应该采用统一的计量单位，统一为元或者分，以方便使用；</li>
+</ul>
+</li>
+<li><strong>原则 7：对事实的 null 值要处理</strong>
+<ul>
+<li>原因：在数据库中，null 值对常用数字型字段的 SQL 过滤条件都不生效；如，大于、小于、等于、大于或等于、小于或等于；</li>
+<li>处理：用 0 代替 null ；</li>
+</ul>
+</li>
+<li><strong>原则 8：使用退化维度提高事实表的易用性</strong>
+<ul>
+<li>易用性：对事实表，更较少关联操作、过滤查询、控制聚合层次、排序数据、定义主从关系等；</li>
+<li>事实表中存储各种类型的常用维度信息，较少下游用户使用时关联多个表的操作；</li>
+<li>通过退化维度，可以实现对事实表的过滤查询、控制聚合层次、排序数据、定义主从关系等；</li>
+<li>在 Kimball 的维度建模中，通常按照星形模型的方式设计，通过事实表的外键关联专门的维表，这种方式来获取维度，谨慎使用退化维表；这与大数据领域的事实表设计不一样；
+<ul>
+<li>思路：通过增加冗余存储，减少计算开销，提高使用效率；</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id=4-事实表的设计方法>4. 事实表的设计方法</h3>
+<p>Kimball 的维度模型设计 4 步法：<strong>选择业务过程、声明粒度、确定维度、确定事实；</strong></p>
+<p>当前的互联网大数据环境，维度模型的设计，是基于 Kimball 的四步维度建模方法进行了更进一步的改进：</p>
+<p><strong>第一步：选择业务过程及确定事实表类型</strong></p>
+<ul>
+<li>如淘宝的一个交易订单，选择 “买家付款” 这个业务过程，则事实表类型应为只包含买家付款这一个业务过程的 “单事务事实表”；</li>
+<li>如选择了所有 4 个业务过程，并且需要分享各业务过程的时间间隔，则事实表类型应为包含了所有 4 个业务过程的 “累积快照事实表”；</li>
+<li>如是选择 “买家付款” 这个业务过程，还是选择 “创建订单” 和 “买家付款” 这两个业务过程，具体根据业务情况来定；</li>
+<li>思路：详细分析需求，对业务的整个生命周期进行分析，明确<strong>关键的业务步骤</strong>，从而选择与需求有关的业务过程；</li>
+<li>以实例说明：如何选择业务过程？如何确定事实表类型？
+<ol>
+<li>分析业务的生命周期，<strong>业务过程通常使用行为动词表示业务执行的活动</strong>；</li>
+<li>明确关键的业务步骤：该订单流转的业务过程有 4 个：<strong>创建订单 → 买家付款 → 卖家发货 → 买家确认收货；</strong></li>
+<li>根据业务需求，选择与维度建模有关的业务过程；</li>
+<li>根据所选的业务过程确定事实表类型；</li>
+</ol>
+</li>
+</ul>
+<p><strong>第二步：声明粒度</strong></p>
+<ul>
+<li>粒度的作用：</li>
+<li>粒度的选择：尽量选择最细级别的原子粒度，以确保事实表的应用具有最大的灵活性；
+<ol>
+<li>灵活性：支持无法预期的各种细节层次的用户需求；</li>
+<li>对于订单级别，粒度可以定义为最细的订单级别；（如，父子订单，事实表的粒度可以定 “子订单级别” ；）</li>
+<li>粒度的声明，意味着<strong>精确定义事实表的每一行所表示的业务含义</strong>；</li>
+<li>明确的粒度能够确保对实表中行的意思的理解不会产生混淆，保证所有的事实按照同样的细节层次记录；</li>
+</ol>
+</li>
+</ul>
+<p><strong>第三步：确定维度</strong></p>
+<ul>
+<li>如，淘宝订单 “付款事务事实表” 中，粒度为 “子订单”，相关的维度有买家、卖家、商品、收货人信息、业务类型、订单时间等；</li>
+<li>完成了粒度声明，就意味着确定了主键，对应的维度组合以及相关的维度字段也可以确定了；</li>
+<li>选择维度的原则：应该选择能够描述清楚<strong>业务过程所处的环境</strong>的维度信息；</li>
+</ul>
+<p><strong>第四步：确定事实</strong></p>
+<ul>
+<li>
+<p>确定原则：<strong>选择与业务过程有关的所有事实，且事实的粒度要与所声明的事实表的粒度一致</strong>；</p>
+<ul>
+<li>思路：可以通过回答 “过程的度量是什么” 来确定；</li>
+<li>注意：将不可加性事实分解为可加的组件；（分解的原则：可以通过分解后的可加的属性值，计算得到不可加性事实）</li>
+</ul>
+</li>
+</ul>
+<h2 id=多维体系结构>多维体系结构</h2>
+<p>在Kimball的维度建模的数据仓库中，关于多维体系结构（MD）有三个关键性概念：总线架构（Bus Architecture），一致性维度（Conformed Dimension）和一致性事实（Conformed Fact）。</p>
+<h3 id=1-总线架构>1. 总线架构</h3>
+<p>多维体系结构(总线架构) 数据仓库领域里，有一种构建数据仓库的架构，叫Multidimensional Architecture（MD），中文一般翻译为“多维体系结构”，也称为“总线架构”（Bus Architecture）。</p>
+<p>多维体系结构的创始人是数据仓库领域中最有实践经验的Kimball博士。多维体系结构主要包括后台（Back Room）和前台（Front Room）两部分。后台也称为数据准备区（Staging Area），是MD架构的最为核心的部件。在后台，是一致性维度的产生、保存和分发的场所。同时，代理键也在后台产生。前台是MD架构对外的接口，包括两种主要的数据集市，一种是原子数据集市，另一种是聚集数据集市。</p>
+<p><strong>原子数据集市保存着最低粒度的细节数据，数据以星型结构来进行数据存储。聚集数据集市的粒度通常比原子数据集市要高，和原子数据集市一样，聚集数据集市也是以星型结构来进行数据存储</strong>。前台还包括像查询管理、活动监控等为了提供数据仓库的性能和质量的服务。在多维体系结构中，所有的这些基于星型机构来建立的数据集市可以在物理上存在于一个数据库实例中，也可以分散在不同的机器上，而所有这些数据集市的集合组成的分布式的数据仓库。</p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220214230810.png style=display:block;margin-left:auto;margin-right:auto;width:80% alt=20220214230810></div>
+<h3 id=2-一致性维度>2. 一致性维度</h3>
+<p>在多维体系结构中，没有物理上的数据仓库，由物理上的数据集市组合成逻辑上的数据仓库。而且数据集市的建立是可以逐步完成的，最终组合在一起，成为一个数据仓库。如果分步建立数据集市的过程出现了问题，数据集市就会变成孤立的集市，不能组合成数据仓库，而一致性维度的提出正式为了解决这个问题。</p>
+<p>一致性维度的范围是总线架构中的维度，即可能会在多个数据集市中都存在的维度，这个范围的选取需要架构师来决定。一致性维度的内容和普通维度并没有本质上区别，都是经过数据清洗和整合后的结果。 一致性维度建立的地点是多维体系结构的后台（Back Room），即数据准备区。</p>
+<p>在多维体系结构的数据仓库项目组内需要有专门的维度设计师，他的职责就是建立维度和维护维度的一致性。在后台建立好的维度同步复制到各个数据集市。这样所有数据集市的这部分维度都是完全相同的。建立新的数据集市时，需要在后台进行一致性维度处理，根据情况来决定是否新增和修改一致性维度，然后同步复制到各个数据集市。这是不同数据集市维度保持一致的要点。</p>
+<p><strong>在同一个集市内，一致性维度的意思是两个维度如果有关系，要么就是完全一样的，要么就是一个维度在数学意义上是另一个维度的子集。</strong></p>
+<p>例如，如果建立月维度话，月维度的各种描述必须与日期维度中的完全一致，最常用的做法就是在日期维度上建立视图生成月维度。这样月维度就可以是日期维度的子集，在后续钻取等操作时可以保持一致。如果维度表中的数据量较大，出于效率的考虑，应该建立物化视图或者实际的物理表。这样，维度保持一致后，事实就可以保存在各个数据集市中。虽然在物理上是独立的，但在逻辑上由一致性维度使所有的数据集市是联系在一起，随时可以进行交叉探察等操作，也就组成了数据仓库。</p>
+<h3 id=3-一致性事实>3. 一致性事实</h3>
+<p>在建立多个数据集市时，完成一致性维度的工作就已经完成了一致性的80%－90%的工作量。余下的工作就是建立一致性事实。一致性事实和一致性维度有些不同，一致性维度是由专人维护在后台（Back Room），发生修改时同步复制到每个数据集市，而事实表一般不会在多个数据集市间复制。需要查询多个数据集市中的事实时，一般通过交叉探查（drill across）来实现。</p>
+<p>为了能在多个数据集市间进行交叉探查，一致性事实主要需要保证两点：**第一个是KPI的定义及计算方法要一致，第二个是事实的单位要一致性。**如果业务要求或事实上就不能保持一致的话，建议不同单位的事实分开建立字段保存。</p>
+<p>这样，一致性维度将多个数据集市结合在一起，一致性事实保证不同数据集市间的事实数据可以交叉探查，一个分布式的数据仓库就建成了。</p>
+<blockquote>
+<ul>
+<li><strong>总线矩阵</strong>：业务过程和维度的交点；</li>
+<li><strong>一致性维度</strong>：同一集市的维度表，内容相同或包含；</li>
+<li><strong>一致性事实</strong>：不同集市的同一事实，需保证口径一致，单位统一。</li>
+</ul>
+<p>追求一致性必然会增加开发工作量，但长期来说，使用方便、运维简单；一致性和性能之间，需要平衡。</p>
+</blockquote>
+<h3 id=数据仓库规范设计>数据仓库规范设计</h3>
+<h3 id=1-为什么要进行规范设计>1. 为什么要进行规范设计</h3>
+<p>无规矩、不方圆。规范设计是在具体开发工作之前制定的，过程中不断进行完善。目的在于<strong>约束 *<em>N 个人*<em>对齐认知</em></em>，按照</strong>一个标准或流程**进行开发，以保证数据一致性，流程清晰且稳定。</p>
+<p>一个良好的规范设计，应当起到以下作用：**提高开发效率，**<strong>提升质量，降低沟通对齐成本，降低运维成本等。</strong></p>
+<p>下面带领大家盘一盘数据仓库有哪些规范，从中挑选几个重点细说：</p>
+<ul>
+<li>
+<p><strong>设计规范</strong></p>
+<ul>
+<li>逻辑架构、技术架构、分层设计、主题划分、方法论</li>
+</ul>
+</li>
+<li>
+<p><strong>命名规范</strong></p>
+</li>
+<li>
+<p>各层级命名、任务命名、表命名、字段命名、指标命名等</p>
+</li>
+<li>
+<p><strong>模型规范</strong></p>
+<ul>
+<li>建模方法、建模工具、血缘关系、维度退化、一致性维度、元数据管理</li>
+</ul>
+</li>
+<li>
+<p><strong>开发规范</strong></p>
+<ul>
+<li>脚本注释、字段别名、编码规范、脚本格式、数据类型、缩写规范</li>
+</ul>
+</li>
+<li>
+<p><strong>流程规范</strong></p>
+<ul>
+<li>需求流程、工程流程、上线流程、调度流、调度和表生命周期管理</li>
+</ul>
+</li>
+</ul>
+<h3 id=2-设计规范指标>2. 设计规范—指标</h3>
+<p><strong>Step1：面向主题域管理</strong></p>
+<ul>
+<li>为了提高指标管理的效率，你需要按照<strong>业务线、主题域和业务过程</strong>三级目录方式管理指标。</li>
+</ul>
+<p><strong>Step2：划分原子指标和派生指标</strong></p>
+<ul>
+<li>原子指标 + 原子指标 = 派生指标</li>
+</ul>
+<p><strong>Step3：进行指标命名规范</strong></p>
+<ul>
+<li>需要遵循两个原则：<strong>易懂与统一</strong>
+<ol>
+<li><strong>易懂</strong>，就是看到指标的名称，就可以基本判断这个指标归属于哪个业务过程；</li>
+<li><strong>统一</strong>，就是要确保派生指标和它继承的原子指标命名是一致的。</li>
+<li>对于原子指标，标名称适合用“动作 + 度量”的命名方式（比如注册用户数、购买用户数）</li>
+<li>对于派生指标，应该严格遵循“时间周期 + 统计粒度 + 修饰词 + 原子指标”的命名方式。（比如30天内黑卡会员购买用户数）</li>
+</ol>
+</li>
+</ul>
+<p><strong>Step4：分级管理</strong></p>
+<ul>
+<li>指标确实是多，如果一视同仁去管理其实很难，所以可以<strong>按照下面的原则进行等级划分</strong>：
+<ol>
+<li>一级指标：数据中台直接产出，核心指标（提供给公司高层看的）、原子指标以及跨部门的派生指标。</li>
+<li>二级指标：基于中台提供的原子指标，业务部门创建的派生指标。</li>
+</ol>
+</li>
+</ul>
+<h3 id=3-命名规范表命名>3. 命名规范—表命名</h3>
+<h4 id=31-常规表><strong>3.1 常规表</strong></h4>
+<p>常规表是我们需要固化的表，是正式使用的表，是目前一段时间内需要去维护去完善的表。</p>
+<p>规范：<strong>分层前缀[dwd|dws|ads|bi]_业务域_主题域_XXX_更新频率|全量/增量。</strong></p>
+<p>业务域、主题域我们都可以用词根的方式枚举清楚，不断完善，粒度也是同样的，主要的是时间粒度、日、月、年、周等，使用词根定义好简称。</p>
+<p><strong>建议格式：dwd_xxx_xxx_da</strong></p>
+<ul>
+<li>di ：每日增量</li>
+<li>da：每日全量</li>
+<li>mi：每月增量</li>
+<li>ma：每月全量</li>
+</ul>
+<h4 id=32-中间表><strong>3.2 中间表</strong></h4>
+<p>中间表一般出现在Job中，是Job中临时存储的中间数据的表，中间表的作用域只限于当前Job执行过程中，Job一旦执行完成，该中间表的使命就完成了，是可以删除的（按照自己公司的场景自由选择，以前公司会保留几天的中间表数据，用来排查问题）。</p>
+<p><strong>建议格式：<code>mid_table_name_[0~9]</code></strong></p>
+<p>table_name是我们任务中目标表的名字，通常来说一个任务只有一个目标表。这里加上表名，是为了防止自由发挥的时候表名冲突，而末尾大家可以选择自由发挥，起一些有意义的名字，或者简单粗暴，使用数字代替，各有优劣吧，谨慎选择。</p>
+<h4 id=33-临时表><strong>3.3 临时表</strong></h4>
+<p>临时表是临时测试的表，是临时使用一次的表，就是暂时保存下数据看看，后续一般不再使用的表，是可以随时删除的表。</p>
+<p><strong>建议格式：tmp_xxx</strong></p>
+<p>只要加上tmp开头即可，其他名字随意，注意tmp开头的表不要用来实际使用，只是测试验证而已。</p>
+<h4 id=34-维度表><strong>3.4 维度表</strong></h4>
+<p>维度表是基于底层数据，抽象出来的描述类的表。维度表可以自动从底层表抽象出来，也可以手工来维护。</p>
+<p><strong>建议格式：dim_xxx</strong></p>
+<p>维度表，统一以dim开头，后面加上，对该指标的描述，可以自由发挥。</p>
+<h3 id=4-开发规范>4. 开发规范</h3>
+<table>
+<thead>
+<tr>
+<th>1</th>
+<th>表和列的注释释是否有缺失，复杂计算逻辑是否有注释释</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2</td>
+<td>任务是否支持多次重跑而输出不变，不能有insert into语句</td>
+</tr>
+<tr>
+<td>3</td>
+<td>分区表是否使用分区键过滤并且有有效裁剪</td>
+</tr>
+<tr>
+<td>4</td>
+<td>外连接的过逑条件是否使用正确，例如在左连接的where语句存在右表的过滤条件</td>
+</tr>
+<tr>
+<td>5</td>
+<td>关联小表，是否使用/*+ map join * / hint</td>
+</tr>
+<tr>
+<td>6</td>
+<td>不允许引用别的计算任务临时表</td>
+</tr>
+<tr>
+<td>7</td>
+<td>原则上不允许存在一个任务更新多个目标表</td>
+</tr>
+<tr>
+<td>8</td>
+<td>是否存在笞、迪卡尔积</td>
+</tr>
+<tr>
+<td>9</td>
+<td>禁止在代码里面使用drop 111ble、creat它111ble、renaiue 111ble、chan零column等ddl语句</td>
+</tr>
+<tr>
+<td>10</td>
+<td>使用动态分区时，有没有检查分区键值为NULL的情况</td>
+</tr>
+<tr>
+<td>11</td>
+<td>DQC质量监控规则是否配置，严禁棵奔</td>
+</tr>
+<tr>
+<td>12</td>
+<td>代码中有没有进行适当的规避数据倾斜语句</td>
+</tr>
+<tr>
+<td>13</td>
+<td>Where条件中is null语句有没有进行空字符串处理</td>
+</tr>
+</tbody>
+</table>
+<h3 id=5-流程规范>5. 流程规范</h3>
+<p>根据阿里流程规范，本文将数据仓库研发流程抽象为如下几点：</p>
+<ol>
+<li><strong>需求阶段</strong>：数据产品经理应如何应对不断变化的业务需求。</li>
+<li><strong>设计阶段</strong>：数据产品经理、数据开发者应如何综合性能、成本、效率、质量等因素，更好地组织与存储数据。</li>
+<li><strong>开发阶段</strong>：数据研发者如何高效、规范地进行编码工作。</li>
+<li><strong>测试阶段</strong>：测试人员应如何准确地暴露代码问题与项目风险，提升产出质量。</li>
+<li><strong>发布阶段</strong>：如何将具备发布条件的程序平稳地发布到线上稳定产出。</li>
+<li><strong>运维阶段</strong>：运维人员应如何保障数据产出的时效性和稳定性。</li>
+</ol>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220214231642.png style=display:block;margin-left:auto;margin-right:auto;width:80% alt=20220214231642></div>
+<h2 id=元数据管理>元数据管理</h2>
+<h3 id=1-业务元数据>1. 业务元数据</h3>
+<ol>
+<li>描述 ”数据”背后的业务含义</li>
+<li><strong>主题定义</strong>：每段 ETL、表背后的归属业务主题。</li>
+<li><strong>业务描述</strong>：每段代码实现的具体业务逻辑。</li>
+<li><strong>标准指标</strong>：类似于 BI 中的语义层、数仓中的一致性事实；将分析中的指标进行规范化。</li>
+<li><strong>标准维度</strong>：同<strong>标准指标</strong>，对分析的各维度定义实现规范化、标准化。</li>
+<li>不断的进行维护且与业务方进行沟通确认。</li>
+</ol>
+<h3 id=2-技术元数据>2. 技术元数据</h3>
+<ul>
+<li>
+<p><strong>数据源元数据</strong></p>
+<ul>
+<li>例如：数据源的 IP、端口、数据库类型；数据获取的方式；数据存储的结构；原数据各列的定义及 key 指对应的值。</li>
+</ul>
+</li>
+<li>
+<p><strong>ETL</strong> <strong>元数据</strong></p>
+<ul>
+<li>根据 ETL 目的的不同，可以分为两类：<strong>数据清洗元数据</strong>；<strong>数据处理元数据</strong>。</li>
+<li><strong>数据清洗</strong>，主要目的是为了解决掉脏数据及规范数据格式；因此此处元数据主要为：各表各列的"正确"数据规则；默认数据类型的"正确"规则。</li>
+<li><strong>数据处理</strong>，例如常见的表输入表输出；非结构化数据结构化；特殊字段的拆分等。源数据到数仓、数据集市层的各类规则。比如内容、清理、数据刷新规则。</li>
+</ul>
+</li>
+<li>
+<p><strong>数据仓库元数据</strong></p>
+<ul>
+<li>数据仓库结构的描述，包括仓库模式、视图、维、层次结构及数据集市的位置和内容；业务系统、数据仓库和数据集市的体系结构和模式等。</li>
+</ul>
+</li>
+<li>
+<p><strong>BI</strong> <strong>元数据</strong></p>
+<ul>
+<li>汇总用的算法、包括各类度量和维度定义算法。数据粒度、主题领域、聚集、汇总、预定义的查询与报告。</li>
+</ul>
+</li>
+</ul>
+<h3 id=3-管理元数据>3. 管理元数据</h3>
+<p>管理领域相关，包括管理流程、人员组织、角色职责等。</p>
+<h3 id=4-工程化管理>4. 工程化管理</h3>
+<p>在日常工作中，元数据的管理主要体现在元数据的采集、存储、查询、应用几个方面。原则上应从<strong>规范化</strong>，到<strong>脚本化</strong>，到<strong>工具化</strong>的方向进行建设。</p>
+<ul>
+<li><strong>采集</strong>：元数据采集时尽可能详细，真实，可通过工具生成或者勾选，避免手动录入带来不规范等问题</li>
+<li><strong>存储</strong>：存储元数据要做到不失真，元数据变更时及时同步</li>
+<li><strong>查询</strong>：通过网页或库表等方式，方便快捷的看到元数据，辅助进行开发</li>
+<li><strong>应用</strong>：数据血缘、优化调度依赖、数据治理等</li>
+</ul>
+<h2 id=维度表>维度表</h2>
+<h3 id=1-什么是维度表>1. 什么是维度表</h3>
+<p>维度是维度建模的基础和灵魂。在维度建模中，将度量称为“事实” ， 将环境描述为“维度”。</p>
+<p>维度表包含了事实表中指定属性的相关详细信息，最常用的维度表有日期维度、城市维度等。</p>
+<p><strong>日期维表：</strong></p>
+<table>
+<thead>
+<tr>
+<th>num</th>
+<th>字段名</th>
+<th>字段中文名</th>
+<th>描述</th>
+<th>数据类型</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>date</td>
+<td>日期</td>
+<td>日期 yyyMMdd格式</td>
+<td>bigint</td>
+</tr>
+<tr>
+<td>2</td>
+<td>week</td>
+<td>星期，数字型</td>
+<td>星期，数字型 0-6</td>
+<td>bigint</td>
+</tr>
+<tr>
+<td>3</td>
+<td>week_cn</td>
+<td>星期中文名</td>
+<td>星期中文名 星期一……</td>
+<td>string</td>
+</tr>
+<tr>
+<td>4</td>
+<td>year_weeks</td>
+<td>一年中的第几周</td>
+<td>一年中的第几周 1 2 3……</td>
+<td>bigint</td>
+</tr>
+<tr>
+<td>5</td>
+<td>mon_dt</td>
+<td>本周周一日期</td>
+<td>本周周一日期</td>
+<td>bigint</td>
+</tr>
+<tr>
+<td>6</td>
+<td>sun_dt</td>
+<td>本周周日日期</td>
+<td>本周周日日期</td>
+<td>bigint</td>
+</tr>
+<tr>
+<td>7</td>
+<td>month</td>
+<td>年月</td>
+<td>年月，yyyyMM格式</td>
+<td>bigint</td>
+</tr>
+<tr>
+<td>8</td>
+<td>month_short</td>
+<td>月份简写</td>
+<td>月份简写，MM格式1~12</td>
+<td>bigint</td>
+</tr>
+<tr>
+<td>9</td>
+<td>month_cn</td>
+<td>月份中文名</td>
+<td>月份中文名 一月……</td>
+<td>string</td>
+</tr>
+<tr>
+<td>10</td>
+<td>quarter</td>
+<td>季度</td>
+<td>季度，yyyyQ1\2\3\4</td>
+<td>string</td>
+</tr>
+<tr>
+<td>11</td>
+<td>quarter_short</td>
+<td>季度 数字型</td>
+<td>季度 数字型 1-4</td>
+<td>bigint</td>
+</tr>
+<tr>
+<td>12</td>
+<td>quarter_cn</td>
+<td>季度中文名</td>
+<td>季度中文名 第一季度……</td>
+<td>string</td>
+</tr>
+<tr>
+<td>13</td>
+<td>year</td>
+<td>年份</td>
+<td>年份，yyyy格式</td>
+<td>bigint</td>
+</tr>
+</tbody>
+</table>
+<h3 id=2-维度表设计原则>2. 维度表设计原则</h3>
+<p>维度的作用一般是查询约束、分类汇总以及排序等，我们在进行维度表设计时，应当提前考虑：</p>
+<p><strong>（1）维度属性尽量丰富，为数据使用打下基础</strong></p>
+<p>比如淘宝商品维度有近百个维度属性，为下游的数据统计、分析、探查提供了良好的基础。</p>
+<p><strong>（2）给出详实的、富有意义的文字描述</strong></p>
+<p>属性不应该是编码，而应该是真正的文字。在间里巴巴维度建模中， 一般是编码和文字同时存在，比如商品维度中的商品 ID 和商品标题、 类目 ID 和 类目名称等。ID 一 般用于不同表之间的关联，而名称一般用 于报表标签</p>
+<p><strong>（3）区分数值型属性和事实</strong></p>
+<p>数值型宇段是作为事实还是维度属性，可以参考字段的一般用途。如果通常用于查询约束条件或分组统计，则是作为维度属性;如果通常 用于参与度量的计算， 则是作为事实。比如商品价格，可以用于查询约 束条件或统计价格区间 的商品数量，此时是作为维度属性使用的;也可 以用于统计某类目 下商品的平均价格，此时是作为事实使用的。另外， 如果数值型字段是离散值，则作为维度属性存在的可能性较大;如果数 值型宇段是连续值 ，则作为度量存在的可能性较大，但并不绝对，需要 同时参考宇段的具体用途。</p>
+<p><strong>（4）沉淀出通用的维度属性，为建立一致性维度做好铺垫</strong></p>
+<p>有些维度属性获取需要进行比较复杂的逻辑处理，有些需要通过多表关联得到，或者通过单表 的不同宇段混合处理得到，或者通过对单表 的某个字段进行解析得到。此时，需要将尽可能多的通用的维度属性进 行沉淀。一方 面，可以提高下游使用的方便性，减少复杂度;另一方面，可以避免下游使用解析时由于各自逻辑不同而导致口径不 一致。</p>
+<p><strong>（5）退化维度（Degenerate Dimension）</strong></p>
+<p>在维度类型中，有一种重要的维度称作为退化维度。这种维度指的是直接把一些简单的维度放在事实表中。退化维度是维度建模领域中的一个非常重要的概念，它对理解维度建模有着非常重要的作用，退化维度一般在分析中可以用来做分组使用。</p>
+<p><strong>（6）缓慢变化维（Slowly Changing Dimensions）</strong></p>
+<p>维度的属性并不是始终不变的，它会随着时间的流逝发生缓慢的变化，这种随时间发生变化的维度我们一般称之为缓慢变化维（SCD），<strong>缓慢变化维一般使用代理健作为维度表的主健。</strong></p>
+<blockquote>
+<ul>
+<li><a href="https://mp.weixin.qq.com/s?__biz=MzkxNTI2MzMyMA==&mid=2247505768&idx=1&sn=6773b4930448625671fb87446db576fe&chksm=c1634d5ff614c449f560f6139df2a7a40f9684ad5613fbbe635c3bbcc3feeca681c29ab782b5&scene=21#wechat_redirect">缓慢变化维的十种方式</a></li>
+</ul>
+</blockquote>
+<h3 id=3-维表设计方法>3. 维表设计方法</h3>
+<ul>
+<li>
+<p>第一步：<strong>选择维度或新建维度</strong>。作为维度建模的核心，在企业级数 据仓库中必须保证维度的唯一性。以淘宝商品维度为例，有且只允许有 一个维度定义。</p>
+</li>
+<li>
+<p>第二步：<strong>确定主维表</strong>。此处的主维表一般是 ODS 表，直接与业务 系统同步。以淘宝商品维度为例， s_auction_auctions 是与前台商品中心 系统同步的商品表，此表即是主维表。</p>
+</li>
+<li>
+<p>第三步：<strong>确定相关维表</strong>。数据仓库是业务源系统的数据整合，不同业务系统或者同 一业务系统中的表之间存在 关联性。根据对业务的梳 理，确定哪些表和主维表存在关联关系，并选择其中的某些表用于生成维度属性。</p>
+</li>
+<li>
+<p>第四步 ：<strong>确定维度属性</strong> 。本步骤主要 包括两个阶段，其中第 一 个阶 段是从主维表 中选择维度属性或生成新的维度属性;第 二个阶段是从相 关维表中选择维度属性或生成新 的维度属性。以淘宝商品维度为例，从 主维表 (s_auction_auctions)和类目、 SPU、卖家、店铺等相关维表中 选择维度属性或生成新 的维度属性。</p>
+</li>
+</ul>
+<h2 id=三范式与反范式>三范式与反范式</h2>
+<p><strong>范式是符合某一种级别的关系模式的集合</strong>。构造数据库必须遵循一定的规则。在关系数据库中，这种规则就是范式。</p>
+<p>关系数据库中的关系必须满足一定的要求，即满足不同的范式。大数据生态中，各类强大的查询引擎层出不穷，相对廉价的磁盘和分布式技术，也让数据冗余变得可接受甚至更加方便。</p>
+<p>在创建一个数据库的过程中，范化是将其转化为一些表的过程，这种方法可以使从数据库得到的<strong>结果更加明确</strong>。这样可能使数据库产生重复数据，从而导致创建多余的表。范化是在识别数据库中的数据元素、关系以及定义所需的表和各表中的项目等这些初始工作之后的一个细化的过程。</p>
+<h3 id=1-第一范式>1. 第一范式</h3>
+<p><strong>1NF要求属性具有原子性，即列不可再分解；</strong></p>
+<blockquote>
+<p>表：字段1、 字段2(字段2.1、字段2.2)、字段3 &mldr;&mldr;</p>
+</blockquote>
+<p>如学生（学号，姓名，性别，出生年月日）</p>
+<p>有些钢筋可能要问西红柿了，<strong>姓名</strong>可以拆成<strong>姓、名</strong>两列， “出生年月日” 也可以拆成年、月、日三个字段。所以就不满足第一范式了！！！这里再强调一下原子性，原子性是根据使用方便来自定义的最小单位。中国人一般姓名一起用，美国就习惯姓名分别存两字段。</p>
+<h3 id=2-第二范式>2. 第二范式</h3>
+<p><strong>2NF要求记录有惟一标识，即不存在部分依赖；</strong></p>
+<p>简单来说就是拆表，以人为粒度做一张明细表，以课程号为粒度做一张维度表，两表关联使用，消除了数据冗余</p>
+<blockquote>
+<p>表：学号、课程号、姓名、学分;</p>
+</blockquote>
+<p>这个表明显说明了两个事务:学生信息, 课程信息;由于非主键字段必须依赖主键，这里<strong>学分依赖课程号</strong>，<strong>姓名依赖与学号</strong>，所以不符合二范式。</p>
+<p><strong>可能会存在问题：</strong></p>
+<ul>
+<li><code>数据冗余：</code>每条记录都含有相同信息；</li>
+<li><code>删除异常：</code>删除所有学生成绩，就把课程信息全删除了；</li>
+<li><code>插入异常：</code>学生未选课，无法记录进数据库；</li>
+<li><code>更新异常：</code>调整课程学分，所有行都调整。</li>
+</ul>
+<p><strong>正确做法:</strong>
+学生：<code>Student</code>(学号, 姓名)；
+课程：<code>Course</code>(课程号, 学分)；
+选课关系：<code>StudentCourse</code>(学号, 课程号, 成绩)。</p>
+<h3 id=3-第三范式>3. 第三范式</h3>
+<p>3NF是对字段的**<code>冗余性</code>**，要求任何字段不能由其他字段派生出来，它要求字段没有冗余，即不存在传递依赖；</p>
+<blockquote>
+<p>表: 学号, 姓名, 年龄, 学院名称, 学院电话</p>
+</blockquote>
+<p>因为存在<strong>依赖传递</strong>: (学号) → (学生)→(所在学院) → (学院电话) 。</p>
+<p><strong>可能会存在问题：</strong></p>
+<ul>
+<li><code>数据冗余:</code>有重复值；</li>
+<li><code>更新异常：</code>有重复的冗余信息，修改时需要同时修改多条记录，否则会出现<strong>数据不一致的情况</strong> 。</li>
+</ul>
+<p><strong>正确做法：</strong></p>
+<p>学生：(学号, 姓名, 年龄, 所在学院)；</p>
+<p>学院：(学院, 电话)。</p>
+<h3 id=4-反范式化>4. 反范式化</h3>
+<p><strong>一般说来，数据库只需满足第三范式（<code>3NF</code>）就行了。</strong></p>
+<p>没有冗余的数据库设计可以做到。但是，没有冗余的数据库未必是最好的数据库，有时为了提高运行效率，就必须降低范式标准，适当保留冗余数据。具体做法是：在概念数据模型设计时遵守第三范式，降低范式标准的工作放到物理数据模型设计时考虑。降低范式就是增加字段，允许冗余，<strong><code>达到以空间换时间的目的</code></strong>。</p>
+<p>〖例〗：有一张存放商品的基本表，如表1所示。“金额”这个字段的存在，表明该表的设计不满足第三范式，因为“金额”可以由“单价”乘以“数量”得到，说明“金额”是冗余字段。但是，增加“金额”这个冗余字段，可以提高查询统计的速度，这就是以空间换时间的作法。</p>
+<p>在<code>Rose 2002</code>中，规定列有两种类型：<strong>数据列</strong>和<strong>计算列</strong>。“金额”这样的列被称为“计算列”，而“单价”和“数量”这样的列被称为“数据列”。</p>
+<h3 id=5-优缺点对比>5. 优缺点对比</h3>
+<p><strong>范式化 （时间换空间）</strong></p>
+<ul>
+<li><strong>优点：</strong>
+<ul>
+<li>范式化的表减少了数据冗余，数据表更新操作快、占用存储空间少。</li>
+</ul>
+</li>
+<li><strong>缺点：</strong>
+<ul>
+<li>查询时需要对多个表进行关联，查询性能降低。</li>
+<li>更难进行索引优化</li>
+</ul>
+</li>
+</ul>
+<p><strong>反范式化（空间换时间）</strong>
+反范式的过程就是通过冗余数据来提高查询性能，但冗余数据会牺牲数据一致性</p>
+<ul>
+<li><strong>优点：</strong>
+<ul>
+<li>可以减少表关联</li>
+<li>可以更好进行索引优化</li>
+</ul>
+</li>
+<li><strong>缺点：</strong>
+<ul>
+<li>存在大量冗余数据</li>
+<li>数据维护成本更高（删除异常，插入异常，更新异常）</li>
+</ul>
+</li>
+</ul>
+<h3 id=6-olap和oltp中范式设计>6. OLAP和OLTP中范式设计</h3>
+<p>OLAP 一般冗余比较多，以查询分析为主，这种一般都是采用反范式设计，以提高查询效率。更新一般是定时大批量数据插入。</p>
+<p>OLTP 则是尽可能消除冗余，以提高变更的效率。因为这种应用无时无刻不在频繁变化。</p>
+<h2 id=数据仓库架构lambda-和-kappa><strong>数据仓库架构—Lambda 和 Kappa</strong></h2>
+<p>随着<strong>数据量的暴增</strong>和<strong>数据实时性要求</strong>越来越高，以及<strong>大数据技术的发展驱动企业不断升级迭代</strong>，数据仓库架构方面也在不断演进，分别经历了以下过程：<strong>早期经典数仓架构 > 离线大数据架构 > Lambda > Kappa > 混合架构。</strong></p>
+<table>
+<thead>
+<tr>
+<th>架构</th>
+<th>组成</th>
+<th>特点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>经典数仓架构</td>
+<td>关系型数据库（mysql、oracle）为主</td>
+<td>数据量小，实时性要求低</td>
+</tr>
+<tr>
+<td>离线大数据架构</td>
+<td>hive，spark为主</td>
+<td>数据量大，实时性要求低</td>
+</tr>
+<tr>
+<td>Lambda</td>
+<td>hive，spark负责存量，strom/Flink负责实时计算</td>
+<td>数据量大，实时性要求高</td>
+</tr>
+<tr>
+<td>Kappa</td>
+<td>kafka、strom、Flink</td>
+<td>多业务，多数据源，事件型数据源</td>
+</tr>
+<tr>
+<td>混合架构</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220214232555.png style=display:block;margin-left:auto;margin-right:auto;width:50% alt=20220214232555></div>
+<h3 id=1-lambda-架构原理>1. Lambda 架构原理</h3>
+<p><strong>Lambda架构的核心思想是把大数据系统拆分成三层：Batch Layer，Speed Layer和Serving Layer</strong>。其中，Batch Layer负责数据集存储以及全量数据集的预查询。</p>
+<p>Speed Layer主要负责对增量数据进行计算，生成Realtime Views。Serving Layer用于响应用户的查询请求，它将Batch Views和Realtime Views的结果进行合并，得到最后的结果，返回给用户，如下图：</p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220214232625.png style=display:block;margin-left:auto;margin-right:auto;width:60% alt=20220214232625></div>
+<h3 id=2-lambda架构的缺点>2. Lambda架构的缺点</h3>
+<p>Lambda架构解决了大数据量下实时计算的问题，但架构本身也存在一定缺点。</p>
+<ul>
+<li><strong>实时与批量计算结果不一致引起的数据口径问题</strong>：因为批量和实时计算走的是两个计算框架和计算程序，算出的结果往往不同，经常看到一个数字当天看是一个数据，第二天看昨天的数据反而发生了变化。</li>
+<li><strong>批量计算在计算窗口内无法完成</strong>：在IOT时代，数据量级越来越大，经常发现夜间只有4、5个小时的时间窗口，已经无法完成白天20多个小时累计的数据，保证早上上班前准时出数据已成为每个大数据团队头疼的问题。</li>
+<li><strong>开发和维护的复杂性问题</strong>：Lambda 架构需要在两个不同的 API（application programming interface，应用程序编程接口）中对同样的业务逻辑进行两次编程：一次为批量计算的ETL系统，一次为流式计算的Streaming系统。针对同一个业务问题产生了两个代码库，各有不同的漏洞。这种系统实际上非常难维护</li>
+<li><strong>服务器存储大</strong>：数据仓库的典型设计，会产生大量的中间结果表，造成数据急速膨胀，加大服务器存储压力。</li>
+</ul>
+<h3 id=3-kappa架构原理>3. Kappa架构原理</h3>
+<p><strong>Kappa架构的核心思想包括以下三点：</strong></p>
+<ul>
+<li>用Kafka或者类似的分布式队列系统保存数据，你需要几天的数据量就保存几天。</li>
+<li>当需要全量重新计算时，重新起一个流计算实例，从头开始读取数据进行处理，并输出到一个新的结果存储中。</li>
+<li>当新的实例做完后，停止老的流计算实例，并把老的一些结果删除。</li>
+</ul>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220214232657.png style=display:block;margin-left:auto;margin-right:auto;width:80% alt=20220214232657></div>
+<p>在Kappa架构下，<strong>只有在有必要的时候才会对历史数据进行重复计算，并且实时计算和批处理过程使用的是同一份代码。</strong></p>
+<h3 id=4-优缺点对比>4. 优缺点对比</h3>
+<table>
+<thead>
+<tr>
+<th>项目</th>
+<th>Lambda</th>
+<th>Kappa</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>数据处理能力</td>
+<td>可以处理超大规模的历史数据</td>
+<td>历史数据处理的能力有限</td>
+</tr>
+<tr>
+<td>机器开销</td>
+<td>批处理和实时计算需一直运行，机器开销大</td>
+<td>必要时进行全量计算，机器开销相对较小</td>
+</tr>
+<tr>
+<td>存储开销</td>
+<td>只需要保存一份查询结果，存储开销较小</td>
+<td>需要存储新老实例结果，存储开销相对较大</td>
+</tr>
+<tr>
+<td>开发、测试难度</td>
+<td>实现两套代码，开发、测试难度较大</td>
+<td>只需面对一个框架，开发、测试难度相对较小</td>
+</tr>
+<tr>
+<td>运维成本</td>
+<td>维护两套系统，运维成本大</td>
+<td>只需维护一个框架，运维成本小</td>
+</tr>
+</tbody>
+</table>
+<h3 id=5-数据架构评价标准>5. 数据架构评价标准</h3>
+<ul>
+<li><strong>响应速度</strong>：数据架构的主要场景包括：业务开发、数据产品、运营分析三大类，不论是那种场景，数据架构均应该在尽可能短的时间内响应需求；</li>
+<li><strong>可复用性</strong>：只有复用能力上来了，响应速度才能提上来，体现在下游依赖、调用次数、核心字段覆盖率等指标上；</li>
+<li><strong>稳定性</strong>：除了日常任务不出问题以外，一旦发现了问题，能在多短的时间内定位和恢复问题，就非常重要；</li>
+<li><strong>健壮性</strong>：除了电商等已经耕耘多年的领域外，绝大多数业务模型，都会快速的变化，如何适应这种变化，就非常考验架构功底。</li>
+</ul>
+<blockquote>
+<ul>
+<li>Lambda 将全量历史数据和实时增量数据合并输出。</li>
+<li>Kappa 两个流协作输出，queries每次使用最新一个流处理结果</li>
+</ul>
+<p>目前很多准实时增量批处理方案也能满足实时性需求，从稳定性和运维成本上也表现更佳。</p>
+<p>比如kudu（存储）+impala（计算）准实时方案，可以实现千万级数据的增量更新和olap查询，性能优异。</p>
+</blockquote>
+<h2 id=数据治理>数据治理</h2>
+<h3 id=1-什么是数据治理>1. 什么是数据治理</h3>
+<p>**数据治理（Data Governance）是组织中涉及数据使用的一整套管理行为。**由企业数据治理部门发起并推行，关于如何制定和实施针对整个企业内部数据的商业应用和技术管理的一系列政策和流程。</p>
+<p>数据的质量直接影响着数据的价值，并且直接影响着数据分析的结果以及我们以此做出的决策的质量。</p>
+<p>我们常说，<strong>用数据说话</strong>，用数据支撑决策管理，但低质量的数据、甚至存在错误的数据，必然会"说假话"！！！<strong>数据治理即提高数据的质量，发挥数据资产价值</strong>。</p>
+<h3 id=2-数据治理的目的>2. 数据治理的目的</h3>
+<ul>
+<li>降低风险</li>
+<li>建立数据使用内部规则</li>
+<li>实施合规要求</li>
+<li>改善内部和外部沟通</li>
+<li>增加数据价值</li>
+<li>方便数据管理</li>
+<li>降低成本</li>
+<li>通过风险管理和优化来帮助确保公司的持续生存</li>
+</ul>
+<h3 id=3-数据治理的方法>3. 数据治理的方法</h3>
+<p>从技术实施角度看，数据治理包含**“理”“采”“存”“管”“用”**这五个步骤，即业务和数据资源梳理、数据采集清洗、数据库设计和存储、数据管理、数据使用。</p>
+<p><strong>数据资源梳理</strong>：数据治理的第一个步骤是从业务的视角厘清组织的数据资源环境和数据资源清单，包含组织机构、业务事项、信息系统，以及以数据库、网页、文件和 API 接口形式存在的数据项资源，本步骤的输出物为分门别类的数据资源清单。</p>
+<p><strong>数据采集清洗</strong>：通过可视化的 ETL 工具（例如阿里的 DataX，Pentaho Data Integration）将数据从来源端经过抽取 (extract)、转换 (transform)、加载 (load) 至目的端的过程，目的是将散落和零乱的数据集中存储起来。</p>
+<p><strong>基础库主题库建设</strong>：一般情况下，可以将数据分为基础数据、业务主题数据和分析数据。基础数据一般指的是核心实体数据，或称主数据，例如智慧城市中的人口、法人、地理信息、信用、电子证照等数据。主题数据一般指的是某个业务主题数据，例如市场监督管理局的食品监管、质量监督检查、企业综合监管等数据。而分析数据指的是基于业务主题数据综合分析而得的分析结果数据，例如市场监督管理局的企业综合评价、产业区域分布、高危企业分布等。那么基础库和主题库的建设就是在对业务理解的基础上，基于易存储、易管理、易使用的原则抽像数据存储结构，说白了，就是基于一定的原则设计数据库表结构，然后再根据数据资源清单设计数据采集清洗流程，将整洁干净的数据存储到数据库或数据仓库中。</p>
+<p><strong>元数据管理</strong>：元数据管理是对基础库和主题库中的数据项属性的管理，同时，将数据项的业务含义与数据项进行了关联，便于业务人员也能够理解数据库中的数据字段含义，并且，元数据是后面提到的自动化数据共享、数据交换和商业智能（BI）的基础。需要注意的是，元数据管理一般是对基础库和主题库中（即核心数据资产）的数据项属性的管理，而数据资源清单是对各类数据来源的数据项的管理。</p>
+<p><strong>血缘追踪</strong>：数据被业务场景使用时，发现数据错误，数据治理团队需要快速定位数据来源，修复数据错误。那么数据治理团队需要知道业务团队的数据来自于哪个核心库，核心库的数据又来自于哪个数据源头。我们的实践是在元数据和数据资源清单之间建立关联关系，且业务团队使用的数据项由元数据组合配置而来，这样，就建立了数据使用场景与数据源头之间的血缘关系。数据资源目录：数据资源目录一般应用于数据共享的场景，例如政府部门之间的数据共享，数据资源目录是基于业务场景和行业规范而创建，同时依托于元数据和基础库主题而实现自动化的数据申请和使用。</p>
+<p><strong>质量管理</strong>：数据价值的成功发掘必须依托于高质量的数据，唯有准确、完整、一致的数据才有使用价值。因此，需要从多维度来分析数据的质量，例如：偏移量、非空检查、值域检查、规范性检查、重复性检查、关联关系检查、离群值检查、波动检查等等。需要注意的是，优秀的数据质量模型的设计必须依赖于对业务的深刻理解，在技术上也推荐使用大数据相关技术来保障检测性能和降低对业务系统的性能影响，例如 Hadoop，MapReduce，HBase 等。</p>
+<p><strong>商业智能（BI）</strong>：数据治理的目的是使用，对于一个大型的数据仓库来说，数据使用的场景和需求是多变的，那么可以使用 BI 类的产品快速获取需要的数据，并分析形成报表，比较知名的产品有 Microsoft Power BI，QlikView，Tableau，帆软等。</p>
+<p><strong>数据共享交换</strong>：数据共享包括组织内部和组织之间的数据共享，共享方式也分为库表、文件和 API 接口三种共享方式，库表共享比较直接粗暴，文件共享方式通过 ETL 工具做一个反向的数据交换也就可以实现。我们比较推荐的是 API 接口共享方式，在这种方式下，能够让中心数据仓库保留数据所有权，把数据使用权通过 API 接口的形式进行了转移。API 接口共享可以使用 API 网关实现，常见的功能是自动化的接口生成、申请审核、限流、限并发、多用户隔离、调用统计、调用审计、黑白名单、调用监控、质量监控等等。</p>
+<h3 id=4-数据质量8个衡量标准>4. 数据质量8个衡量标准</h3>
+<ul>
+<li>
+<p><strong>数据的准确性</strong></p>
+<ul>
+<li>数据采集值或者观测值和真实值之间的接近程度，也叫做误差值，误差越大，准确度越低。</li>
+</ul>
+</li>
+<li>
+<p><strong>数据的精确性</strong></p>
+<ul>
+<li>指对同一对象的观测数据在<strong>重复测量</strong>时所得到不同数据间的接近程度。</li>
+</ul>
+</li>
+<li>
+<p><strong>数据的真实性</strong></p>
+</li>
+<li>
+<p><strong>数据的及时性</strong></p>
+<ul>
+<li>数据能否在需要的时候得到保证，比如月初的财务对账，能不能在月初就完成</li>
+</ul>
+</li>
+<li>
+<p><strong>数据的即时性</strong></p>
+<ul>
+<li>指数据采集时间节点和数据传输的时间节点，一个数据在数据源头采集后立即存储，并立即加工呈现，就是即时数据，而经过一段时间之后再传输到信息系统中，则数据即时性就稍差。</li>
+</ul>
+</li>
+<li>
+<p><strong>数据的完整性</strong></p>
+<ul>
+<li>应采集和实际采集到数据之间的比例。</li>
+</ul>
+</li>
+<li>
+<p><strong>数据的全面性</strong></p>
+<ul>
+<li>完整性衡量的是应采集和实际采集的差异。而全面性指的是数据采集点的遗漏情况。</li>
+</ul>
+</li>
+<li>
+<p><strong>数据的关联性</strong></p>
+<ul>
+<li>指各个数据集之间的关联关系。比如员工工资数据和员工绩效考核数据是通过员工这个资源关联在一起来的。</li>
+</ul>
+</li>
+</ul>
+<h3 id=5-数据治理流程>5. 数据治理流程</h3>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220214233357.png style=display:block;margin-left:auto;margin-right:auto;width:80% alt=20220214233357></div>
+<p>基本流程：<strong>发现数据质量问题 > 定义数据质量规则 > 质量控制 > 质量评估 > 质量优化</strong></p>
+<h2 id=etl>ETL</h2>
+<h3 id=1-什么是etl>1. 什么是ETL</h3>
+<p><strong>ETL</strong>，是英文Extract-Transform-Load的缩写，用来描述将数据从来源端经过抽取（extract）、转换（transform）、加载（load）至目的端的过程，是数据仓库的生命线。</p>
+<p>**抽取（<strong>Extract</strong>）**主要是针对各个业务系统及不同服务器的分散数据，充分理解数据定义后，规划需要的数据源及数据定义，制定可操作的数据源，制定增量抽取和缓慢渐变的规则。</p>
+<p>**转换（<strong>transform</strong>）**主要是针对数据仓库建立的模型，通过一系列的转换来实现将数据从业务模型到分析模型，通过ETL工具可视化拖拽操作可以直接使用标准的内置代码片段功能、自定义脚本、函数、存储过程以及其他的扩展方式，实现了各种复杂的转换，并且支持自动分析日志，清楚的监控数据转换的状态并优化分析模型。</p>
+<p>**装载（<strong>Load</strong>）**主要是将经过转换的数据装载到数据仓库里面，可以通过直连数据库的方式来进行数据装载，可以充分体现高效性。在应用的时候可以随时调整数据抽取工作的运行方式，可以灵活的集成到其他管理系统中。</p>
+<h3 id=2-etl--elt>2. ETL & ELT</h3>
+<p>伴随着数据仓库的发展（传送门：数据仓库的八个发展阶段），数据量从小到大，数据实时性从T+1到准实时、实时，ETL也在不断演进。</p>
+<ul>
+<li>在传统数仓中，数据量小，计算逻辑相对简单，我们可以直接用ETL工具实现数据转换（T），转换之后再加载到目标库，即（Extract-Transform-Load）。</li>
+<li>但在大数据场景下，数据量越大越大，计算逻辑愈发复杂，数据清洗需放在运算能力更强的分布式计算引擎中完成，ETL也就变成了ELT（Extract-Load-Transform）。</li>
+</ul>
+<p><strong>即：Extract-Transform-Load &#187; Extract-Load-Transform</strong></p>
+<p>通常我们所说的ETL，已经泛指数据同步、数据清洗全过程，而不仅限于数据的抽取-转换-加载。</p>
+<h3 id=3-常用的-etl-工具>3. 常用的 ETL 工具</h3>
+<h3 id=4-etl加载策略>4. ETL加载策略</h3>
+<h4 id=41-增量><strong>4.1 增量</strong></h4>
+<ul>
+<li>有些表巨大，我们需要选择增量策略，新增delta数据需要和存量数据merge合并。
+<ul>
+<li>只有新增(full join。能拿更新表就拿更新表)</li>
+</ul>
+</li>
+</ul>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220214233552.png style=display:block;margin-left:auto;margin-right:auto;width:80% alt=20220214233552></div>
+<ul>
+<li><strong>新增+删除</strong>
+<ul>
+<li>history-table Left join delet-table where delect-table.value is null == 表a</li>
+<li>表a full join update-table (能拿update就拿update)</li>
+</ul>
+</li>
+</ul>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220214233607.png style=display:block;margin-left:auto;margin-right:auto;width:80% alt=20220214233607></div>
+<h4 id=42-全量><strong>4.2 全量</strong></h4>
+<p>每天一个全量表，也可一个hive天分区一个全量。</p>
+<h4 id=43-流式><strong>4.3 流式</strong></h4>
+<p>使用kafka，消费mysql binlog日志到目标库，源表和目标库是1：1的镜像。</p>
+<blockquote>
+<p>无论是全量还是增量的方式，都会浪费多余的存储或通过计算去重，得到最新的全量数据。建议kafka的数据同步方案，源表变化一条，目标表消费一条，目标表数据始终是一份最新全量数据，且为实时同步的。</p>
+</blockquote>
+<h2 id=数据应用olap>数据应用—OLAP</h2>
+<h3 id=1-olap和oltp的区别>1. OLAP和OLTP的区别</h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>OLTP</th>
+<th>OLAP</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>对象</strong></td>
+<td>业务开发人员</td>
+<td>分析决策人员</td>
+</tr>
+<tr>
+<td><strong>功能</strong></td>
+<td>日常事务处理</td>
+<td>面向分析决策</td>
+</tr>
+<tr>
+<td><strong>模型</strong></td>
+<td>关系模型</td>
+<td>多维模型</td>
+</tr>
+<tr>
+<td><strong>数据量</strong></td>
+<td>几条或几十条记录</td>
+<td>＞百万于万条记录</td>
+</tr>
+<tr>
+<td><strong>操作类型</strong></td>
+<td>增、删、查、改(CRUD)</td>
+<td>查询为主</td>
+</tr>
+<tr>
+<td><strong>总体概括</strong></td>
+<td>联机事务处理</td>
+<td>在线分析处理</td>
+</tr>
+</tbody>
+</table>
+<h3 id=2-olap分类>2. OLAP分类</h3>
+<ul>
+<li><strong>MOLAP</strong>，<strong>基于多维数组的存储模型</strong>，也是OLAP最初的形态，特点是对数据进行预计算，以空间换效率，<strong>明细和聚合数据都保存在cube中</strong>。但生成cube需要大量时间和空间。</li>
+<li><strong>ROLAP</strong>，<strong>基于关系模型进行存储数据</strong>，不需要预计算，按需即时查询。<strong>明细和汇总数据都保存在关系型数据库事实表中</strong>。其特点是与事务实体对应，关系清晰；但一般需要较为复杂的数据准备。在响应前端需求时，一般较快，但取决于计算引擎能力。</li>
+<li><strong>HOLAP</strong>，混合模型，<strong>细节数据以ROLAP存放，聚合数据以MOLAP存放</strong>。这种方式相对灵活，且更加高效。可按企业业务场景和数据粒度进行取舍，没有最好，只有最适合。</li>
+</ul>
+<h3 id=3-olap基本操作>3. OLAP基本操作</h3>
+<ul>
+<li><strong>钻取</strong>：维的层次变化，<strong>从粗粒度到细粒度</strong>，汇总数据下钻到明细数据。如通过季度销售数据钻取每个月的销售数据。</li>
+<li><strong>上卷</strong>：钻取的逆，向上钻取。<strong>从细粒度到粗粒度</strong>，细粒度数据到不同维层级的汇总。eg. 通过每个月的销售数据汇总季度、年销售数据。</li>
+<li><strong>切片</strong>：<strong>特定维数据</strong>（剩余维两个）。eg. 只选电子产品销售数据。</li>
+<li><strong>切块</strong>：<strong>维区间数据</strong>（剩余维三个）。eg. 第一季度到第二季度销售数据。</li>
+<li><strong>旋转</strong>：<strong>维位置互换</strong>（数据行列互换），通过旋转可以得到不同视角的数据。</li>
+</ul>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220214233758.png style=display:block;margin-left:auto;margin-right:auto;width:80% alt=20220214233758></div>
+<h3 id=4-olap选型>4. OLAP选型</h3>
+<h4 id=41-druid><strong>4.1 druid</strong></h4>
+<ul>
+<li>实时查询和分析的高容错、高性能开源分布式系统，用于解决如何在大规模数据集下进行快速的、交互式的查询和分析。</li>
+<li>实时的数据消费，真正做到数据摄入实时、查询结果实时。</li>
+<li>扩展性强，支持 PB 级数据</li>
+<li>极高的高可用保障，支持滚动升级。</li>
+<li>druid属于时间存储，删除操作比较繁琐，且不支持查询条件删除数据，只能根据时间范围删除数据。Druid能接受的数据的格式相对简单，比如不能处理嵌套结构的数据。</li>
+</ul>
+<h4 id=42-kylin><strong>4.2 kylin</strong></h4>
+<ul>
+<li>可扩展超快olap引擎，Hadoop/Spark上百亿数据规模</li>
+<li>提供 Hadoop ANSI SQL 接口</li>
+<li>交互式查询能力，用户可以与Hadoop数据进行亚秒级交互</li>
+<li>百亿以上数据集构建多维立方体（MOLAP CUBE）</li>
+<li>与BI工具无缝整合，如Tableau，PowerBI/Excel，MSTR，QlikSense，Hue和SuperSet</li>
+</ul>
+<h2 id=数据倾斜><strong>数据倾斜</strong></h2>
+<h3 id=1-数据倾斜表现>1. 数据倾斜表现</h3>
+<h4 id=11-hadoop中的数据倾斜表现><strong>1.1 hadoop中的数据倾斜表现</strong></h4>
+<ul>
+<li>有一个多几个Reduce卡住，卡在99.99%，一直不能结束。</li>
+<li>各种container报错OOM</li>
+<li>异常的Reducer读写的数据量极大，至少远远超过其它正常的Reducer</li>
+<li>伴随着数据倾斜，会出现任务被kill等各种诡异的表现。</li>
+</ul>
+<h4 id=12-hive中数据倾斜><strong>1.2 hive中数据倾斜</strong></h4>
+<p>一般都发生在Sql中group by和join on上，而且和数据逻辑绑定比较深。</p>
+<h4 id=13-spark中的数据倾斜><strong>1.3 Spark中的数据倾斜</strong></h4>
+<p>Spark中的数据倾斜，包括Spark Streaming和Spark Sql，表现主要有下面几种：</p>
+<ul>
+<li>Executor lost，OOM，Shuffle过程出错；</li>
+<li>Driver OOM；</li>
+<li>单个Executor执行时间特别久，整体任务卡在某个阶段不能结束；</li>
+<li>正常运行的任务突然失败；</li>
+</ul>
+<h3 id=2-数据倾斜产生原因>2. 数据倾斜产生原因</h3>
+<p>我们以Spark和Hive的使用场景为例。</p>
+<p>在做数据运算的时候会涉及到，count distinct、group by、join on等操作，这些都会触发Shuffle动作。一旦触发Shuffle，所有相同key的值就会被拉到一个或几个Reducer节点上，容易发生单点计算问题，导致数据倾斜。</p>
+<p>一般来说，数据倾斜原因有以下几方面：</p>
+<ol>
+<li>key分布不均匀</li>
+<li>建表时考虑不周</li>
+</ol>
+<p>举一个例子，就说数据默认值的设计吧，假设我们有两张表：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>user（用户信息表）：userid，register_ip
+ip（IP表）：ip，register_user_cnt
+</code></pre></div><p>这可能是两个不同的人开发的数据表。如果我们的数据规范不太完善的话，会出现一种情况：</p>
+<ul>
+<li>user表中的register_ip字段，如果获取不到这个信息，我们默认为null；</li>
+<li>但是在ip表中，我们在统计这个值的时候，为了方便，我们把获取不到ip的用户，统一认为他们的ip为0。</li>
+</ul>
+<p>两边其实都没有错的，但是一旦我们做关联了，这个任务会在做关联的阶段，也就是sql的on的阶段卡死。</p>
+<ol start=3>
+<li>业务数据激增</li>
+</ol>
+<p>比如订单场景，我们在某一天在北京和上海两个城市多了强力的推广，结果可能是这两个城市的订单量增长了10000%，其余城市的数据量不变。</p>
+<p>然后我们要统计不同城市的订单情况，这样，一做group操作，可能直接就数据倾斜了。</p>
+<h3 id=3-解决数据倾斜思路>3. 解决数据倾斜思路</h3>
+<p>很多数据倾斜的问题，都可以用和平台无关的方式解决，比如更好的<strong>数据预处理</strong>，<strong>异常值的过滤</strong>等。因此，解决数据倾斜的重点在于对数据设计和业务的理解，这两个搞清楚了，数据倾斜就解决了大部分了。</p>
+<ol>
+<li>业务逻辑</li>
+</ol>
+<p>我们从业务逻辑的层面上来优化数据倾斜，比如上面的两个城市做推广活动导致那两个城市数据量激增的例子，我们可以单独对这两个城市来做count，单独做时可用两次MR，第一次打散计算，第二次再最终聚合计算。完成后和其它城市做整合。</p>
+<ol start=2>
+<li>程序层面</li>
+</ol>
+<p>比如说在Hive中，经常遇到count(distinct)操作，这样会导致最终只有一个Reduce任务。
+我们可以先group by，再在外面包一层count，就可以了。比如计算按用户名去重后的总用户量：</p>
+<p>优化前</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>只有一个reduce，先去重再count负担比较大：
+select name,count(distinct name)from user;
+</code></pre></div><p>优化后</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>// 设置该任务的每个job的reducer个数为3个。Hive默认-1，自动推断。
+set mapred.reduce.tasks=3;
+// 启动两个job，一个负责子查询(可以有多个reduce)，另一个负责count(1)：
+select count(1) from (select name from user group by name) tmp;
+</code></pre></div><ol start=3>
+<li>调参方面</li>
+</ol>
+<p>Hadoop和Spark都自带了很多的参数和机制来调节数据倾斜，合理利用它们就能解决大部分问题。</p>
+<ol start=4>
+<li>从业务和数据上解决数据倾斜</li>
+</ol>
+<p>很多数据倾斜都是在数据的使用上造成的。我们举几个场景，并分别给出它们的解决方案。
+一个原则：尽早过滤每个阶段的数据量。</p>
+<ul>
+<li><strong>数据有损的方法</strong>：找到异常数据，比如ip为0的数据，过滤掉。</li>
+<li><strong>数据无损的方法</strong>：对分布不均匀的数据，单独计算。</li>
+<li><strong>hash法</strong>：先对key做一层hash，先将数据随机打散让它的并行度变大，再汇聚。</li>
+<li><strong>数据预处理</strong>：就是先做一层数据质量处理，类似于数据仓库维度建模时，底层先处理数据质量。</li>
+</ul>
+<style>.feedback--answer{display:inline-block}.feedback--answer-no{margin-left:1em}.feedback--response{display:none;margin-top:1em}.feedback--response__visible{display:block}</style>
+<div class=d-print-none>
+<h2 class=feedback--title>Feedback</h2>
+<p class=feedback--question>Was this page helpful?</p>
+<button class="btn btn-primary mb-4 feedback--answer feedback--answer-yes">Yes</button>
+<button class="btn btn-primary mb-4 feedback--answer feedback--answer-no">No</button>
+<p class="feedback--response feedback--response-yes">
+Glad to hear it! Please <a href=https://github.com/infilos/infilos.com/issues/new>tell us how we can improve</a>.
+</p>
+<p class="feedback--response feedback--response-no">
+Sorry to hear that. Please <a href=https://github.com/infilos/infilos.com/issues/new>tell us how we can improve</a>.
+</p>
+</div>
+<script>const yesButton=document.querySelector('.feedback--answer-yes'),noButton=document.querySelector('.feedback--answer-no'),yesResponse=document.querySelector('.feedback--response-yes'),noResponse=document.querySelector('.feedback--response-no'),disableButtons=()=>{yesButton.disabled=!0,noButton.disabled=!0},sendFeedback=b=>{if(typeof ga!='function')return;const a={command:'send',hitType:'event',category:'Helpful',action:'click',label:window.location.pathname,value:b};ga(a.command,a.hitType,a.category,a.action,a.label,a.value)};yesButton.addEventListener('click',()=>{yesResponse.classList.add('feedback--response__visible'),disableButtons(),sendFeedback(1)}),noButton.addEventListener('click',()=>{noResponse.classList.add('feedback--response__visible'),disableButtons(),sendFeedback(0)})</script>
+<br>
+</div>
+</main>
+</div>
+</div>
+<footer class="bg-dark py-5 row d-print-none">
+<div class="container-fluid mx-sm-5">
+<div class=row>
+<div class="col-6 col-sm-4 text-xs-center order-sm-2">
+</div>
+<div class="col-6 col-sm-4 text-right text-xs-center order-sm-3">
+<ul class="list-inline mb-0">
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Weibo aria-label=Weibo>
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://weibo.com/u/3848950217>
+<i class="fab fa-weibo"></i>
+</a>
+</li>
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Twitter aria-label=Twitter>
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://twitter.com/zhange_zzg>
+<i class="fab fa-twitter"></i>
+</a>
+</li>
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title="Stack Overflow" aria-label="Stack Overflow">
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://stackoverflow.com>
+<i class="fab fa-stack-overflow"></i>
+</a>
+</li>
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=GitHub aria-label=GitHub>
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://github.com/infilos/infilos.com>
+<i class="fab fa-github"></i>
+</a>
+</li>
+</ul>
+</div>
+<div class="col-12 col-sm-4 text-center py-2 order-sm-2">
+<small class=text-white>&copy; 2022 infilos.com All Rights Reserved</small>
+</div>
+</div>
+</div>
+</footer>
+</div>
+<script src=/js/popper.min.js integrity=sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49 crossorigin=anonymous></script>
+<script src=/js/bootstrap.min.js integrity=sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy crossorigin=anonymous></script>
+<script src=/js/main.min.5c74b870c6953931a705f390a49c7e4c0a842ec5c83b24354758dd674343ed0d.js integrity="sha256-XHS4cMaVOTGnBfOQpJx+TAqELsXIOyQ1R1jdZ0ND7Q0=" crossorigin=anonymous></script>
+</body>
+</html>

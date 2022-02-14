@@ -2,7 +2,7 @@
 <head>
 <meta charset=utf-8>
 <meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no">
-<meta name=generator content="Hugo 0.90.1">
+<meta name=generator content="Hugo 0.92.2">
 <meta name=ROBOTS content="INDEX, FOLLOW">
 <link rel=canonical type=text/html href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/spring/>
 <link rel="shortcut icon" href=/favicons/favicon.ico>
@@ -153,7 +153,8 @@
 <li>17: <a href=#pg-8a537acbc9d13aeae1f6f6889945078b>CH18-设计模式</a></li>
 <li>18: <a href=#pg-c1ed45f8c9963ab83da9a3693d1dc049>CH19-Servlet</a></li>
 <li>19: <a href=#pg-f2fcf0cb3c529849895fe44264410673>CH20-缓存注解</a></li>
-<li>20: <a href=#pg-96a02cd959cd8b2ba1d7d2148623ab28>CH21-SpEL表达式</a></li>
+<li>20: <a href=#pg-96a02cd959cd8b2ba1d7d2148623ab28>CH21-跨域问题</a></li>
+<li>21: <a href=#pg-aa4590f80ad01df2c10ef759b6501021>CH22-SpEL表达式</a></li>
 </ul>
 <div class=content>
 </div>
@@ -7662,7 +7663,182 @@ declaredEventType.isAssignableFrom(eventType)当以下两种情况返回true</p>
 </code></pre></div>
 </div>
 <div class=td-content style=page-break-before:always>
-<h1 id=pg-96a02cd959cd8b2ba1d7d2148623ab28>20 - CH21-SpEL表达式</h1>
+<h1 id=pg-96a02cd959cd8b2ba1d7d2148623ab28>20 - CH21-跨域问题</h1>
+<h2 id=什么是跨域>什么是跨域</h2>
+<p>很多人对跨域有一种误解，以为这是前端的事，和后端没关系，其实不是这样的，说到跨域，就不得不说说浏览器的同源策略。</p>
+<p>同源策略是由 Netscape 提出的一个著名的安全策略，它是浏览器最核心也最基本的安全功能，现在所有支持 JavaScript 的浏览器都会使用这个策略。所谓同源是指协议、域名以及端口要相同。</p>
+<p>同源策略是基于安全方面的考虑提出来的，这个策略本身没问题，但是我们在实际开发中，由于各种原因又经常有跨域的需求，传统的跨域方案是 JSONP，JSONP 虽然能解决跨域但是有一个很大的局限性，那就是只支持 GET 请求，不支持其他类型的请求，在 RESTful 时代这几乎就没什么用。</p>
+<p>而今天我们说的 CORS（跨域源资源共享）（CORS，Cross-origin resource sharing）是一个 W3C 标准，它是一份浏览器技术的规范，提供了 Web 服务从不同网域传来沙盒脚本的方法，以避开浏览器的同源策略，这是 JSONP 模式的现代版。</p>
+<p>在 Spring 框架中，对于 CORS 也提供了相应的解决方案，在 Spring Boot 中，这一方案得倒了简化，无论是单纯的跨域，还是结合 Spring Security 之后的跨域，都变得非常容易了。</p>
+<h2 id=解决方案>解决方案</h2>
+<p>首先创建两个普通的 Spring Boot 项目，这个就不用我多说，第一个命名为 provider 提供服务，第二个命名为 consumer 消费服务，第一个配置端口为 8080，第二个配置配置为 8081，然后在 provider 上提供两个 hello 接口，一个 get，一个 post，如下：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#5c35cc;font-weight:700>@RestController</span>
+<span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>HelloController</span> <span style=color:#ce5c00;font-weight:700>{</span>
+    <span style=color:#5c35cc;font-weight:700>@GetMapping</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;/hello&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
+    <span style=color:#204a87;font-weight:700>public</span> <span style=color:#000>String</span> <span style=color:#000>hello</span><span style=color:#ce5c00;font-weight:700>()</span> <span style=color:#ce5c00;font-weight:700>{</span>
+        <span style=color:#204a87;font-weight:700>return</span> <span style=color:#4e9a06>&#34;hello&#34;</span><span style=color:#ce5c00;font-weight:700>;</span>
+    <span style=color:#ce5c00;font-weight:700>}</span>
+    <span style=color:#5c35cc;font-weight:700>@PostMapping</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;/hello&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
+    <span style=color:#204a87;font-weight:700>public</span> <span style=color:#000>String</span> <span style=color:#000>hello2</span><span style=color:#ce5c00;font-weight:700>()</span> <span style=color:#ce5c00;font-weight:700>{</span>
+        <span style=color:#204a87;font-weight:700>return</span> <span style=color:#4e9a06>&#34;post hello&#34;</span><span style=color:#ce5c00;font-weight:700>;</span>
+    <span style=color:#ce5c00;font-weight:700>}</span>
+<span style=color:#ce5c00;font-weight:700>}</span>
+</code></pre></div><p>在 consumer 的 resources/static 目录下创建一个 html 文件，发送一个简单的 ajax 请求，如下：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-html data-lang=html><span style=color:#000;font-weight:700>&lt;</span><span style=color:#204a87;font-weight:700>div</span> <span style=color:#c4a000>id</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#4e9a06>&#34;app&#34;</span><span style=color:#000;font-weight:700>&gt;&lt;/</span><span style=color:#204a87;font-weight:700>div</span><span style=color:#000;font-weight:700>&gt;</span>
+<span style=color:#000;font-weight:700>&lt;</span><span style=color:#204a87;font-weight:700>input</span> <span style=color:#c4a000>type</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#4e9a06>&#34;button&#34;</span> <span style=color:#c4a000>onclick</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#4e9a06>&#34;btnClick()&#34;</span> <span style=color:#c4a000>value</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#4e9a06>&#34;get_button&#34;</span><span style=color:#000;font-weight:700>&gt;</span>
+<span style=color:#000;font-weight:700>&lt;</span><span style=color:#204a87;font-weight:700>input</span> <span style=color:#c4a000>type</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#4e9a06>&#34;button&#34;</span> <span style=color:#c4a000>onclick</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#4e9a06>&#34;btnClick2()&#34;</span> <span style=color:#c4a000>value</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#4e9a06>&#34;post_button&#34;</span><span style=color:#000;font-weight:700>&gt;</span>
+<span style=color:#000;font-weight:700>&lt;</span><span style=color:#204a87;font-weight:700>script</span><span style=color:#000;font-weight:700>&gt;</span>
+    <span style=color:#204a87;font-weight:700>function</span> <span style=color:#000>btnClick</span><span style=color:#000;font-weight:700>()</span> <span style=color:#000;font-weight:700>{</span>
+        <span style=color:#000>$</span><span style=color:#000;font-weight:700>.</span><span style=color:#000>get</span><span style=color:#000;font-weight:700>(</span><span style=color:#4e9a06>&#39;http://localhost:8080/hello&#39;</span><span style=color:#000;font-weight:700>,</span> <span style=color:#204a87;font-weight:700>function</span> <span style=color:#000;font-weight:700>(</span><span style=color:#000>msg</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000;font-weight:700>{</span>
+            <span style=color:#000>$</span><span style=color:#000;font-weight:700>(</span><span style=color:#4e9a06>&#34;#app&#34;</span><span style=color:#000;font-weight:700>).</span><span style=color:#000>html</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>msg</span><span style=color:#000;font-weight:700>);</span>
+        <span style=color:#000;font-weight:700>});</span>
+    <span style=color:#000;font-weight:700>}</span>
+
+    <span style=color:#204a87;font-weight:700>function</span> <span style=color:#000>btnClick2</span><span style=color:#000;font-weight:700>()</span> <span style=color:#000;font-weight:700>{</span>
+        <span style=color:#000>$</span><span style=color:#000;font-weight:700>.</span><span style=color:#000>post</span><span style=color:#000;font-weight:700>(</span><span style=color:#4e9a06>&#39;http://localhost:8080/hello&#39;</span><span style=color:#000;font-weight:700>,</span> <span style=color:#204a87;font-weight:700>function</span> <span style=color:#000;font-weight:700>(</span><span style=color:#000>msg</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000;font-weight:700>{</span>
+            <span style=color:#000>$</span><span style=color:#000;font-weight:700>(</span><span style=color:#4e9a06>&#34;#app&#34;</span><span style=color:#000;font-weight:700>).</span><span style=color:#000>html</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>msg</span><span style=color:#000;font-weight:700>);</span>
+        <span style=color:#000;font-weight:700>});</span>
+    <span style=color:#000;font-weight:700>}</span>
+<span style=color:#000;font-weight:700>&lt;/</span><span style=color:#204a87;font-weight:700>script</span><span style=color:#000;font-weight:700>&gt;</span>
+</code></pre></div><p>然后分别启动两个项目，发送请求按钮，观察浏览器控制台如下：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>Access to XMLHttpRequest at &#39;http://localhost:8080/hello&#39; from origin &#39;http://localhost:8081&#39; has been blocked by CORS policy: No &#39;Access-Control-Allow-Origin&#39; header is present on the requested resource.
+</code></pre></div><p>可以看到，由于同源策略的限制，请求无法发送成功。</p>
+<p>使用 CORS 可以在前端代码不做任何修改的情况下，实现跨域，那么接下来看看在 provider 中如何配置。首先可以通过 <code>@CrossOrigin</code> 注解配置某一个方法接受某一个域的请求，如下：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#5c35cc;font-weight:700>@RestController</span>
+<span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>HelloController</span> <span style=color:#ce5c00;font-weight:700>{</span>
+    <span style=color:#5c35cc;font-weight:700>@CrossOrigin</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>value</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#4e9a06>&#34;http://localhost:8081&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
+    <span style=color:#5c35cc;font-weight:700>@GetMapping</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;/hello&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
+    <span style=color:#204a87;font-weight:700>public</span> <span style=color:#000>String</span> <span style=color:#000>hello</span><span style=color:#ce5c00;font-weight:700>()</span> <span style=color:#ce5c00;font-weight:700>{</span>
+        <span style=color:#204a87;font-weight:700>return</span> <span style=color:#4e9a06>&#34;hello&#34;</span><span style=color:#ce5c00;font-weight:700>;</span>
+    <span style=color:#ce5c00;font-weight:700>}</span>
+
+    <span style=color:#5c35cc;font-weight:700>@CrossOrigin</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>value</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#4e9a06>&#34;http://localhost:8081&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
+    <span style=color:#5c35cc;font-weight:700>@PostMapping</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;/hello&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
+    <span style=color:#204a87;font-weight:700>public</span> <span style=color:#000>String</span> <span style=color:#000>hello2</span><span style=color:#ce5c00;font-weight:700>()</span> <span style=color:#ce5c00;font-weight:700>{</span>
+        <span style=color:#204a87;font-weight:700>return</span> <span style=color:#4e9a06>&#34;post hello&#34;</span><span style=color:#ce5c00;font-weight:700>;</span>
+    <span style=color:#ce5c00;font-weight:700>}</span>
+<span style=color:#ce5c00;font-weight:700>}</span>
+</code></pre></div><p>这个注解表示这两个接口接受来自 <code>http://localhost:8081</code> 地址的请求，配置完成后，重启 provider ，再次发送请求，浏览器控制台就不会报错了，consumer 也能拿到数据了。</p>
+<p>此时观察浏览器请求网络控制台，可以看到响应头中多了如下信息：</p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220214222833.png style=display:block;margin-left:auto;margin-right:auto;width:60% alt=20220214222833></div>
+<p>这个表示服务端愿意接收来自 <code>http://localhost:8081</code> 的请求，拿到这个信息后，浏览器就不会再去限制本次请求的跨域了。</p>
+<p>provider 上，每一个方法上都去加注解未免太麻烦了，有的小伙伴想到可以讲注解直接加在 Controller 上，不过每个 Controller 都要加还是麻烦，在 Spring Boot 中，还可以通过全局配置一次性解决这个问题，全局配置只需要在 SpringMVC 的配置类中重写 addCorsMappings 方法即可，如下：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#5c35cc;font-weight:700>@Configuration</span>
+<span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>WebMvcConfig</span> <span style=color:#204a87;font-weight:700>implements</span> <span style=color:#000>WebMvcConfigurer</span> <span style=color:#ce5c00;font-weight:700>{</span>
+    <span style=color:#5c35cc;font-weight:700>@Override</span>
+    <span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>void</span> <span style=color:#000>addCorsMappings</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>CorsRegistry</span> <span style=color:#000>registry</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>
+        <span style=color:#000>registry</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>addMapping</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;/**&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
+        <span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>allowedOrigins</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;http://localhost:8081&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
+        <span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>allowedMethods</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;*&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
+        <span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>allowedHeaders</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;*&#34;</span><span style=color:#ce5c00;font-weight:700>);</span>
+    <span style=color:#ce5c00;font-weight:700>}</span>
+<span style=color:#ce5c00;font-weight:700>}</span>
+</code></pre></div><p><code>/**</code> 表示本应用的所有方法都会去处理跨域请求，allowedMethods 表示允许通过的请求数，allowedHeaders 则表示允许的请求头。经过这样的配置之后，就不必在每个方法上单独配置跨域了。</p>
+<h3 id=存在的问题>存在的问题</h3>
+<p>了解了整个 CORS 的工作过程之后，我们通过 Ajax 发送跨域请求，虽然用户体验提高了，但是也有潜在的威胁存在，常见的就是 CSRF（Cross-site request forgery）跨站请求伪造。跨站请求伪造也被称为 one-click attack 或者 session riding，通常缩写为 CSRF 或者 XSRF，是一种挟制用户在当前已登录的 Web 应用程序上执行非本意的操作的攻击方法。</p>
+<p>关于 CSRF 攻击的具体介绍和防御办法，大家可以参考松哥之前的文章，这里就不重复介绍了：</p>
+<ul>
+<li><a href=https://mp.weixin.qq.com/s/TDm8ljxbHpMqteucfmeccA>松哥手把手教你在 SpringBoot 中防御 CSRF 攻击！so easy！</a></li>
+<li><a href=https://mp.weixin.qq.com/s/evyI9wo30JI78_ZYGaKFRg>要学就学透彻！Spring Security 中 CSRF 防御源码解析</a></li>
+</ul>
+<h2 id=spring-security>Spring Security</h2>
+<p>如果使用了 Spring Security，上面的跨域配置会失效，因为请求被 Spring Security 拦截了。</p>
+<p>当引入了 Spring Security 的时候，我们有两种办法开启 Spring Security 对跨域的支持。</p>
+<h3 id=方式一>方式一</h3>
+<p>方式一就是在上一小节的基础上，添加 Spring Security 对于 CORS 的支持，只需要添加如下配置即可：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#5c35cc;font-weight:700>@Configuration</span>
+<span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>SecurityConfig</span> <span style=color:#204a87;font-weight:700>extends</span> <span style=color:#000>WebSecurityConfigurerAdapter</span> <span style=color:#ce5c00;font-weight:700>{</span>
+    <span style=color:#5c35cc;font-weight:700>@Override</span>
+    <span style=color:#204a87;font-weight:700>protected</span> <span style=color:#204a87;font-weight:700>void</span> <span style=color:#000>configure</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>HttpSecurity</span> <span style=color:#000>http</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#204a87;font-weight:700>throws</span> <span style=color:#000>Exception</span> <span style=color:#ce5c00;font-weight:700>{</span>
+        <span style=color:#000>http</span>
+                <span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>authorizeRequests</span><span style=color:#ce5c00;font-weight:700>()</span>
+                <span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>anyRequest</span><span style=color:#ce5c00;font-weight:700>().</span><span style=color:#c4a000>authenticated</span><span style=color:#ce5c00;font-weight:700>()</span>
+                <span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>and</span><span style=color:#ce5c00;font-weight:700>()</span>
+                <span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>formLogin</span><span style=color:#ce5c00;font-weight:700>()</span>
+                <span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>permitAll</span><span style=color:#ce5c00;font-weight:700>()</span>
+                <span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>and</span><span style=color:#ce5c00;font-weight:700>()</span>
+                <span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>httpBasic</span><span style=color:#ce5c00;font-weight:700>()</span>
+                <span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>and</span><span style=color:#ce5c00;font-weight:700>()</span>
+                <span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>cors</span><span style=color:#ce5c00;font-weight:700>()</span>
+                <span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>and</span><span style=color:#ce5c00;font-weight:700>()</span>
+                <span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>csrf</span><span style=color:#ce5c00;font-weight:700>()</span>
+                <span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>disable</span><span style=color:#ce5c00;font-weight:700>();</span>
+    <span style=color:#ce5c00;font-weight:700>}</span>
+<span style=color:#ce5c00;font-weight:700>}</span>
+</code></pre></div><p>一个 <code>.cors</code> 就开启了 Spring Security 对 CORS 的支持。</p>
+<h3 id=方式二>方式二</h3>
+<p>方式二则是去除第二小节的跨域配置，直接在 Spring Security 中做全局配置，如下：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#5c35cc;font-weight:700>@Configuration</span>
+<span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>SecurityConfig</span> <span style=color:#204a87;font-weight:700>extends</span> <span style=color:#000>WebSecurityConfigurerAdapter</span> <span style=color:#ce5c00;font-weight:700>{</span>
+    <span style=color:#5c35cc;font-weight:700>@Override</span>
+    <span style=color:#204a87;font-weight:700>protected</span> <span style=color:#204a87;font-weight:700>void</span> <span style=color:#000>configure</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>HttpSecurity</span> <span style=color:#000>http</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#204a87;font-weight:700>throws</span> <span style=color:#000>Exception</span> <span style=color:#ce5c00;font-weight:700>{</span>
+        <span style=color:#000>http</span>
+                <span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>authorizeRequests</span><span style=color:#ce5c00;font-weight:700>()</span>
+                <span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>anyRequest</span><span style=color:#ce5c00;font-weight:700>().</span><span style=color:#c4a000>authenticated</span><span style=color:#ce5c00;font-weight:700>()</span>
+                <span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>and</span><span style=color:#ce5c00;font-weight:700>()</span>
+                <span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>formLogin</span><span style=color:#ce5c00;font-weight:700>()</span>
+                <span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>permitAll</span><span style=color:#ce5c00;font-weight:700>()</span>
+                <span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>and</span><span style=color:#ce5c00;font-weight:700>()</span>
+                <span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>httpBasic</span><span style=color:#ce5c00;font-weight:700>()</span>
+                <span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>and</span><span style=color:#ce5c00;font-weight:700>()</span>
+                <span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>cors</span><span style=color:#ce5c00;font-weight:700>()</span>
+                <span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>configurationSource</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>corsConfigurationSource</span><span style=color:#ce5c00;font-weight:700>())</span>
+                <span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>and</span><span style=color:#ce5c00;font-weight:700>()</span>
+                <span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>csrf</span><span style=color:#ce5c00;font-weight:700>()</span>
+                <span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>disable</span><span style=color:#ce5c00;font-weight:700>();</span>
+    <span style=color:#ce5c00;font-weight:700>}</span>
+    <span style=color:#5c35cc;font-weight:700>@Bean</span>
+    <span style=color:#000>CorsConfigurationSource</span> <span style=color:#000>corsConfigurationSource</span><span style=color:#ce5c00;font-weight:700>()</span> <span style=color:#ce5c00;font-weight:700>{</span>
+        <span style=color:#000>UrlBasedCorsConfigurationSource</span> <span style=color:#000>source</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>UrlBasedCorsConfigurationSource</span><span style=color:#ce5c00;font-weight:700>();</span>
+        <span style=color:#000>CorsConfiguration</span> <span style=color:#000>configuration</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>CorsConfiguration</span><span style=color:#ce5c00;font-weight:700>();</span>
+        <span style=color:#000>configuration</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>setAllowCredentials</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#204a87;font-weight:700>true</span><span style=color:#ce5c00;font-weight:700>);</span>
+        <span style=color:#000>configuration</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>setAllowedOrigins</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>Arrays</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>asList</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;*&#34;</span><span style=color:#ce5c00;font-weight:700>));</span>
+        <span style=color:#000>configuration</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>setAllowedMethods</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>Arrays</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>asList</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;*&#34;</span><span style=color:#ce5c00;font-weight:700>));</span>
+        <span style=color:#000>configuration</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>setAllowedHeaders</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>Arrays</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>asList</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;*&#34;</span><span style=color:#ce5c00;font-weight:700>));</span>
+        <span style=color:#000>configuration</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>setMaxAge</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>Duration</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>ofHours</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>1</span><span style=color:#ce5c00;font-weight:700>));</span>
+        <span style=color:#000>source</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>registerCorsConfiguration</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;/**&#34;</span><span style=color:#ce5c00;font-weight:700>,</span><span style=color:#000>configuration</span><span style=color:#ce5c00;font-weight:700>);</span>
+        <span style=color:#204a87;font-weight:700>return</span> <span style=color:#000>source</span><span style=color:#ce5c00;font-weight:700>;</span>
+    <span style=color:#ce5c00;font-weight:700>}</span>
+<span style=color:#ce5c00;font-weight:700>}</span>
+</code></pre></div><p>通过 CorsConfigurationSource 实例对跨域信息作出详细配置，例如允许的请求来源、允许的请求方法、允许通过的请求头、探测请求的有效期、需要处理的路径等等。</p>
+<p><strong>使用这种方式就可以去掉第二小节的跨域配置了。</strong></p>
+<h2 id=oauth2>OAuth2</h2>
+<p>还有一种情况就是 OAuth2 允许跨域，如果用户要访问 OAuth2 端点，例如 <code>/oauth/token</code> ，出现了跨域该怎么配置呢？</p>
+<p>这个解决方案松哥在之前的 【<a href=http://www.javaboy.org/2020/0611/cors-springsecurity.html>用 Swagger 测试接口，怎么在请求头中携带 Token？</a>】 一文中已经有过介绍，主要是配置一个 CorsFilter，大家可以参考该篇文章，我这里就把核心配置类列出来：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#5c35cc;font-weight:700>@Configuration</span>
+<span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>GlobalCorsConfiguration</span> <span style=color:#ce5c00;font-weight:700>{</span>
+    <span style=color:#5c35cc;font-weight:700>@Bean</span>
+    <span style=color:#204a87;font-weight:700>public</span> <span style=color:#000>CorsFilter</span> <span style=color:#000>corsFilter</span><span style=color:#ce5c00;font-weight:700>()</span> <span style=color:#ce5c00;font-weight:700>{</span>
+        <span style=color:#000>CorsConfiguration</span> <span style=color:#000>corsConfiguration</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>CorsConfiguration</span><span style=color:#ce5c00;font-weight:700>();</span>
+        <span style=color:#000>corsConfiguration</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>setAllowCredentials</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#204a87;font-weight:700>true</span><span style=color:#ce5c00;font-weight:700>);</span>
+        <span style=color:#000>corsConfiguration</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>addAllowedOrigin</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;*&#34;</span><span style=color:#ce5c00;font-weight:700>);</span>
+        <span style=color:#000>corsConfiguration</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>addAllowedHeader</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;*&#34;</span><span style=color:#ce5c00;font-weight:700>);</span>
+        <span style=color:#000>corsConfiguration</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>addAllowedMethod</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;*&#34;</span><span style=color:#ce5c00;font-weight:700>);</span>
+        <span style=color:#000>UrlBasedCorsConfigurationSource</span> <span style=color:#000>urlBasedCorsConfigurationSource</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>UrlBasedCorsConfigurationSource</span><span style=color:#ce5c00;font-weight:700>();</span>
+        <span style=color:#000>urlBasedCorsConfigurationSource</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>registerCorsConfiguration</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;/**&#34;</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>corsConfiguration</span><span style=color:#ce5c00;font-weight:700>);</span>
+        <span style=color:#204a87;font-weight:700>return</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>CorsFilter</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>urlBasedCorsConfigurationSource</span><span style=color:#ce5c00;font-weight:700>);</span>
+    <span style=color:#ce5c00;font-weight:700>}</span>
+<span style=color:#ce5c00;font-weight:700>}</span>
+</code></pre></div><p>然后在 SecurityConfig 中开启跨域支持：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#5c35cc;font-weight:700>@Configuration</span>
+<span style=color:#5c35cc;font-weight:700>@Order</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>Ordered</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>HIGHEST_PRECEDENCE</span><span style=color:#ce5c00;font-weight:700>)</span>
+<span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>SecurityConfig</span> <span style=color:#204a87;font-weight:700>extends</span> <span style=color:#000>WebSecurityConfigurerAdapter</span> <span style=color:#ce5c00;font-weight:700>{</span>
+    <span style=color:#ce5c00;font-weight:700>...</span>
+    <span style=color:#ce5c00;font-weight:700>...</span>
+    <span style=color:#5c35cc;font-weight:700>@Override</span>
+    <span style=color:#204a87;font-weight:700>protected</span> <span style=color:#204a87;font-weight:700>void</span> <span style=color:#000>configure</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>HttpSecurity</span> <span style=color:#000>http</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#204a87;font-weight:700>throws</span> <span style=color:#000>Exception</span> <span style=color:#ce5c00;font-weight:700>{</span>
+        <span style=color:#000>http</span>
+                <span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>requestMatchers</span><span style=color:#ce5c00;font-weight:700>().</span><span style=color:#c4a000>antMatchers</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>HttpMethod</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>OPTIONS</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#4e9a06>&#34;/oauth/**&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
+                <span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>and</span><span style=color:#ce5c00;font-weight:700>()</span>
+                <span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>csrf</span><span style=color:#ce5c00;font-weight:700>().</span><span style=color:#c4a000>disable</span><span style=color:#ce5c00;font-weight:700>().</span><span style=color:#c4a000>formLogin</span><span style=color:#ce5c00;font-weight:700>()</span>
+                <span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>and</span><span style=color:#ce5c00;font-weight:700>()</span>
+                <span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>cors</span><span style=color:#ce5c00;font-weight:700>();</span>
+    <span style=color:#ce5c00;font-weight:700>}</span>
+<span style=color:#ce5c00;font-weight:700>}</span>
+</code></pre></div>
+</div>
+<div class=td-content style=page-break-before:always>
+<h1 id=pg-aa4590f80ad01df2c10ef759b6501021>21 - CH22-SpEL表达式</h1>
 <h2 id=简介>简介</h2>
 <p>Spring表达式语言是一个支持查询和操作运行时对象图功能的强大的表达式语言。它的语法类似于传统 EL，但提供额外的功能，最出色的就是函数调用和字符串模板函数。</p>
 <p>尽管有其他可选的 Java 表达式语言，如 OGNL, MVEL,JBoss EL 等等，但 Spel 创建的初衷是了给 Spring 社区提供一种简单而高效的表达式语言，一种可贯穿整个 Spring 产品组的语言。这种语言的特性应基于 Spring 产品的需求而设计。</p>
@@ -7783,7 +7959,8 @@ declaredEventType.isAssignableFrom(eventType)当以下两种情况返回true</p>
 <ul>
 <li><code>OFF</code> - 编译器被关闭;这是默认的。</li>
 <li><code>IMMEDIATE</code> - 在直接模式下，表达式尽快编制。 这是一个典型的首个编译选项。如果编译错误的表达式 （通常是由于一个类型变化，如上面所描述的）调用者将会得到一个异常。</li>
-<li><code>MIXED</code> - 在混合模式下，随着时间的推移，表达式默默地解释和编译之间切换。 经过解释运行的一些数字后，他们就会切换去编译源码 ，如果出现问题，编译形式（如一种变化，如 如上所述），那么表达式将自动切换回解释形式 。一段时间后，可能产生另一种形式的编制，并切换到它。基本上 相比用户<code>IMMEDIATE</code>模式，不同之处在于对于异常的处理，混合模式是隐式的（原话是： Basically the exception that the user gets in <code>IMMEDIATE</code> mode is instead handled internally。）。</li>
+<li><code>MIXED</code> - 在混合模式下，随着时间的推移，表达式默默地解释和编译之间切换。 经过解释运行的一些数字后，他们就会切换去编译源码 ，如果出现问题，编译形式（如一种变化，如 如上所述），那么表达式将自动切换回解释形式 。一段时间后，可能产生另一种形式的编制，并切换到它。基本上 相比用户<code>IMMEDIATE</code>模式，不同之处在于对于异常的处理，混合模式是隐式的（原话是： Basically the exception that the user gets
+in <code>IMMEDIATE</code> mode is instead handled internally。）。</li>
 </ul>
 <p><code>IMMEDIATE</code> 模式的存在是因为<code>MIXED</code>模式可能会导致问题的表达式 有副作用。如果在后面的部分是一个编译表达的摧毁 可能已经做了一些这已经影响到了系统的状态。如果这 已经发生的调用可能不希望它默默地重新运行在解释模式 因为表达的一部分可能运行两次。</p>
 <p>选择模式后，使用<code>SpelParserConfiguration</code>配置解析器：</p>
@@ -8109,7 +8286,8 @@ declaredEventType.isAssignableFrom(eventType)当以下两种情况返回true</p>
 </span><span style=color:#8f5902;font-style:italic></span><span style=color:#000>String</span> <span style=color:#000>aleks</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>parser</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>parseExpression</span><span style=color:#ce5c00;font-weight:700>(</span>
         <span style=color:#4e9a06>&#34;Name = &#39;Aleksandar Seovic&#39;&#34;</span><span style=color:#ce5c00;font-weight:700>).</span><span style=color:#c4a000>getValue</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>context</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>inventor</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>String</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>class</span><span style=color:#ce5c00;font-weight:700>);</span>
 </code></pre></div><h2 id=类型>类型</h2>
-<p>您可以使用特殊的 <code>T</code> 运算符来指定 <code>java.lang.Class</code>（类型）的实例。静态方法也可以通过使用此运算符来调用。<code>StandardEvaluationContext</code> 使用 <code>TypeLocator</code> 查找类型，而 <code>StandardTypeLocator</code>（可以替换）是在了解 <code>java.lang</code> 包的情况下构建的。 这意味着对 <code>Java.lang</code> 中的类型的 <code>T()</code> 引用不需要完全限定，但是所有其他类型引用都必须是完全限定的。下面的示例演示如何使用 <code>T</code> 运算符：</p>
+<p>您可以使用特殊的 <code>T</code> 运算符来指定 <code>java.lang.Class</code>（类型）的实例。静态方法也可以通过使用此运算符来调用。<code>StandardEvaluationContext</code> 使用 <code>TypeLocator</code> 查找类型，而 <code>StandardTypeLocator</code>（可以替换）是在了解 <code>java.lang</code> 包的情况下构建的。 这意味着对 <code>Java.lang</code> 中的类型的 <code>T()</code>
+引用不需要完全限定，但是所有其他类型引用都必须是完全限定的。下面的示例演示如何使用 <code>T</code> 运算符：</p>
 <div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#000>Class</span> <span style=color:#000>dateClass</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>parser</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>parseExpression</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;T(java.util.Date)&#34;</span><span style=color:#ce5c00;font-weight:700>).</span><span style=color:#c4a000>getValue</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>Class</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>class</span><span style=color:#ce5c00;font-weight:700>);</span>
 
 <span style=color:#000>Class</span> <span style=color:#000>stringClass</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>parser</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>parseExpression</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;T(String)&#34;</span><span style=color:#ce5c00;font-weight:700>).</span><span style=color:#c4a000>getValue</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>Class</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>class</span><span style=color:#ce5c00;font-weight:700>);</span>
@@ -8475,7 +8653,7 @@ String displayName = (name != null ? name : &#34;Unknown&#34;);
 </ul>
 </div>
 <div class="col-12 col-sm-4 text-center py-2 order-sm-2">
-<small class=text-white>&copy; 2021 infilos.com All Rights Reserved</small>
+<small class=text-white>&copy; 2022 infilos.com All Rights Reserved</small>
 </div>
 </div>
 </div>
