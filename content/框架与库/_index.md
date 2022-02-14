@@ -21,6 +21,13 @@ Life is too short to depend on unstable software!  [__Read more...](https://blog
 - [eclipse-collections](https://github.com/eclipse/eclipse-collections)
   - [Visualizing Eclipse Collections](https://medium.com/oracledevs/visualizing-eclipse-collections-646dad9533a9)
 
+## Files
+
+- [zip4j](https://github.com/srikanth-lingala/zip4j): zip files and streams.
+- [commons-io](https://github.com/apache/commons-io)
+- [commons-codec](https://github.com/apache/commons-codec)
+- [tika](https://github.com/apache/tika): detects and extracts metadata.
+
 ## Functional
 
 - [linq](https://github.com/timandy/linq): LINQ to Objects for Java.

@@ -980,6 +980,14 @@ $ git reset --hard 0254ea7
 
 ([摘自](https://www.atlassian.com/git/tutorials/rewriting-history/git-reflog)).
 
+## 中文被转义为 Unicode 码
+
+如果文件路径或文件名包含中文，会被转移为 Unicode 码，这时需要设置：
+
+```bash
+$ git config --global core.quotepath false
+```
+
 # 其它资源(Other Resources)
 
 ## 书(Books)
