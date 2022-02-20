@@ -291,8 +291,6 @@ $ classloader
 
 #### 基础命令
 
-著作权归https://pdai.tech所有。 链接：https://pdai.tech/md/java/jvm/java-jvm-agent-arthas.html
-
 - help——查看命令帮助信息
 - [cat](https://github.com/alibaba/arthas/blob/master/site/src/site/sphinx/cat.md)——打印文件内容，和linux里的cat命令类似
 - [grep]](https://github.com/alibaba/arthas/blob/master/site/src/site/sphinx/grep.md)——匹配查找，和linux里的grep命令类似

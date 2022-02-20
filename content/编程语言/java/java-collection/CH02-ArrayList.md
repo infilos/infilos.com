@@ -31,9 +31,6 @@ private int size;
 ### 构造函数
 
 ```java
-著作权归https://pdai.tech所有。
-链接：https://www.pdai.tech/md/java/collection/java-collection-ArrayList.html
-
 public ArrayList(int initialCapacity) {
     if (initialCapacity > 0) {
         this.elementData = new Object[initialCapacity];

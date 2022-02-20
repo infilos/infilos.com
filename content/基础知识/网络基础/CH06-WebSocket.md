@@ -41,7 +41,7 @@ HTML5开始提供的一种浏览器与服务器进行全双工通讯的网络技
 3. 数据帧格式
 4. 如何维持连接
 
-### 入门示例
+## 入门示例
 
 在正式介绍协议细节前，先来看一个简单的例子，有个直观感受。例子包括了WebSocket服务端、WebSocket客户端（网页端）。
 
@@ -113,7 +113,11 @@ client: received world
 
 ## 如何建立连接
 
-前面提到，WebSocket复用了HTTP的握手通道。具体指的是，客户端通过HTTP请求与WebSocket服务端协商升级协议。协议升级完成后，后续的数据交换则遵照WebSocket的协议。
+<div><img src="https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220220153411.png" style="display:block;margin-left:auto;margin-right:auto;width:70%;" alt="20220220153411" /></div>
+
+WebSocket 协议本质上是一个基于 TCP 的协议，为了建立一个 WebSocket 连接，客户端浏览器首先要向服务器发起一个 HTTP 请求，这个请求相比较平时使用的 HTTP 请求多了一些信息。
+
+WebSocket 复用了 HTTP 的握手通道。具体指的是，客户端通过 HTTP 请求与 WebSocket 服务端协商升级协议。协议升级完成后，后续的数据交换则遵照 WebSocket 的协议。
 
 ### 1、客户端：申请协议升级
 
@@ -430,3 +434,6 @@ Sec-WebSocket-Accept: <connection-key>
 
 但是对浏览器加上这个限制后，可以大大增加攻击的难度，以及攻击的影响范围。如果没有这个限制，只需要在网上放个钓鱼网站骗人去访问，一下子就可以在短时间内展开大范围的攻击。
 
+## 项目示例
+
+[Github: spring-boot-ws-chat](https://github.com/infilos/spring-boot-ws-chat)

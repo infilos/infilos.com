@@ -80,9 +80,6 @@ public LinkedList(Collection<? extends E> c) {
 ### getFirst, getLast
 
 ```java
-著作权归https://pdai.tech所有。
-链接：https://www.pdai.tech/md/java/collection/java-collection-LinkedList.html
-
 /**
  * Returns the first element in this list.
  *
