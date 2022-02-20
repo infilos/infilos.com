@@ -1,0 +1,680 @@
+<!doctype html><html lang=zh class=no-js>
+<head>
+<meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no">
+<meta name=generator content="Hugo 0.92.2">
+<meta name=ROBOTS content="INDEX, FOLLOW">
+<link rel="shortcut icon" href=/favicons/favicon.ico>
+<link rel=apple-touch-icon href=/favicons/apple-touch-icon-180x180.png sizes=180x180>
+<link rel=icon type=image/png href=/favicons/favicon-16x16.png sizes=16x16>
+<link rel=icon type=image/png href=/favicons/favicon-32x32.png sizes=32x32>
+<link rel=icon type=image/png href=/favicons/android-36x36.png sizes=36x36>
+<link rel=icon type=image/png href=/favicons/android-48x48.png sizes=48x48>
+<link rel=icon type=image/png href=/favicons/android-72x72.png sizes=72x72>
+<link rel=icon type=image/png href=/favicons/android-96x96.png sizes=96x96>
+<link rel=icon type=image/png href=/favicons/android-144x144.png sizes=144x144>
+<link rel=icon type=image/png href=/favicons/android-192x192.png sizes=192x192>
+<title>DDD 概念精要 | infilos.com</title><meta property="og:title" content="DDD 概念精要">
+<meta property="og:description" content="领域驱动设计不是新鲜的概念，至今已有十六年时间，一直来不曾大行其道，直到 IT 行业内掀起微服务的狂潮，技术界才重新审视和意识到领域驱动设计的价值。不能说微服务拯救了领域驱动设计，但确实是微服务，让领域驱动设计又重新焕发了青春。DDD 是一个非常庞大的建模和设计体系，这篇文章只在理论和概念上阐述 DDD 的价值、方法和架构，欢迎任何的问题指正和补充。
+DDD 价值 应对复杂业务 引起软件系统复杂度的主要因素是需求，软件系统需求又可以分两个方面：业务需求和技术需求 。我们分析系统的复杂度时就可以从业务复杂度和技术复杂度这两个维度出发。
+业务复杂度跟系统的业务需求规模和需求之间的关系层级有直接关系，需求的数量和关系的层级决定代码的规模和逻辑循环或递归的层级，系统的需求数量越大，需求之间的关系越复杂，系统的业务复杂度就越大。John Ousterhout 的著作《A Philosophy of Software Design》从认知的负担和开发工作量的角度来定义软件系统的复杂度，并给出了一个复杂度公式：
+ 子模块的复杂度（cp）乘以该模块对应的开发时间权重值（tp），累加后得到系统的整体复杂度（C）。可以看到系统整体的复杂度并不简单等于所有子模块复杂度的累加，还要考虑该模块的开发维护所花费的时间在整体时间中的权重占比（tp），这个权重比就跟模块划分是否内聚、设计是否优雅有直接关系。
+技术复杂度则来自于对软件系统运行的质量需求，包括安全、高性能、高并发、高可用和高扩展性。系统安全性要求对访问进行控制，无论是加密还是认证和授权，都需要为整个系统架构添加额外的间接层。不仅对访问的低延迟产生影响，还极大提升了系统代码复杂度；为了让后端系统能具备高扩展性和弹性，要求所有系统的设计必须是无状态的；为了提升用户端访问体验，后端需要增添离线任务对数据加工、异构、预热、预缓存，以实现用空间换时间，降低实时接口的逻辑复杂度来降低请求的延迟。然而最让开发者更抓狂的是这些技术需求彼此又是相互影响甚至相互矛盾，在一些复杂流程并要求高响应的业务场景，如下单、秒杀等，会将一个同步的访问请求拆分为多级步骤的异步请求，再通过引入消息中间件对这些请求进行整合和分散处理，这种分离一方面增加了系统架构的复杂性，另一方面也因为引入了更多的资源，使得系统的高可用面临挑战，并增加了维护数据一致性的难度。而且技术复杂度与业务复杂度并非孤立，二者复杂度因子混合在一起产生的负作用更让系统的复杂度变得不可预期，难以掌控，就好比氢气和氯气混合在一起遇到光亮发生爆炸一样。
+DDD 的核心思想就是要避免业务逻辑的复杂度与技术实现的复杂度混淆在一起，确定业务逻辑与技术实现的边界，从而隔离各自的复杂度，业务逻辑并不关心技术是如何实现的。无论采用何种技术，只要业务需求不变，业务规则就不会变化。理想状态下，应该保证业务逻辑与技术实现是正交的。
+DDD 通过分层架构与六边形架构确保业务逻辑与技术实现的隔离。
+DDD 战略设计指导我们面对客户的业务需求，由领域专家与开发团队展开充分的交流，经过需求分析与知识提炼，获得清晰的问题域，在引入限界上下文和上下文映射对问题域进行合理的分解，识别出核心领域与子领域，并确定领域的边界以及它们之间的关系，从而把一个大的复杂系统问题拆分成多个细粒度、独立和内聚的业务子问题，从而很好地分解和控制业务复杂度，各个小组聚焦各自的子领域中。
+在架构方面，通过分层架构来隔离关注点，将领域实现独立出来，利于领域模型的单一性与稳定性；
+引入六边形架构清晰地界定领域与技术基础设施的边界；CQRS 模式则分离了查询场景和命令场景，针对不同场景选择使用同步或异步操作，提高架构的低延迟性与高并发能力。
+分层架构 “分层架构”遵循了“关注点分离”原则，将属于业务逻辑的关注点放到领域层（Domain Layer）中，而将支撑业务逻辑的技术实现放到基础设施层（Infrastructure Layer）中。同时，领域驱动设计又颇具创见的引入了应用层（Application Layer）。应用层扮演了双重角色。一方面它作为业务逻辑的外观（Facade），暴露了能够体现业务用例的应用服务接口；另一方面它又是业务逻辑与技术实现的粘合剂，实现二者之间的协作。下图展现的就是一个典型的领域驱动设计分层架构。蓝色区域的内容与业务逻辑有关，灰色区域的内容与技术实现有关，二者泾渭分明，然后汇合在应用层。应用层确定了业务逻辑与技术实现的边界，通过直接依赖或者依赖注入（DI，Dependency Injection）的方式将二者结合起来。
+ 六边形架构 由 Cockburn 提出的六边形架构则以“内外分离”的方式，更加清晰地勾勒出业务逻辑与技术实现的边界，且将业务逻辑放在了架构的核心位置。这种架构模式改变了我们观察系统架构的视角。体现业务逻辑的应用层与领域层处于六边形架构的内核，并通过内部的六边形边界与基础设施的模块隔离开。当我们在进行软件开发时，只要恪守架构上的六边形边界，就不会让技术实现的复杂度污染到业务逻辑，保证了领域的整洁。边界还隔离了变化产生的影响。如果我们在领域层或应用层抽象了技术实现的接口，再通过依赖注入将控制的方向倒转，业务内核就会变得更加的稳定，不会因为技术选型或其他决策的变化而导致领域代码的修改。
+快速响应业务变化 不确定性和变化是这个时代的主旋律，业务需要快速上线，并根据用户的反馈不停地调整和升级，有生命力的业务主动寻求变化，不变则亡是很多行业目前的共识，企业应对变化的响应力成了成败的关键。同时一个长期困扰软件研发的问题是，需求总是在变化，无论预先设计如何“精确”，总是发现下一个坑就在不远处。相信很多技术人员都有这样的经历，架构和响应能力越来越糟糕，也就是我们常说的架构腐化了，最后大家不得不接受重写。软件架构设计的另一个关键方面是让系统能够更快地响应外界业务的变化，并且使得系统能够持续演进。在遇到变化时不需要从头开始，保证实现成本得到有效控制。
+DDD 的核心是从业务出发、面向业务变化构建软件架构，实质是保证面对业务变化时我们能够有足够快的响应能力。面向业务变化而架构就要求首先理解业务的核心问题，即有针对性地进行关注点分离来找到相对内聚的业务活动形成子问题域。让每个字问题的划分尽可能靠近变化的原点，子问题域内部是相对稳定的，未来的变化频率不会很高，是符合深模块特性的，而子问题边界是很容易变化的。DDD 最后在实现层面利用成熟的技术模式屏蔽掉技术细节的复杂度。
+与微服务相得益彰 Martin Fowler 和 James Lewis 提出微服务时，提出了微服务的 9 大架构特质，指导组织围绕业务组建团队，把业务拆分为一个个业务上高度内聚、技术上松散耦合、运行在独立进程中的小型服务，微服务架构赋予了每个服务业务上的敏捷性和技术上的自主性，因此可以针对每个服务进行独立地迭代、更新、部署和弹性扩展，从而缩短需求交付周期并加速创新。
+在面对复杂业务和快速变化需求时，DDD 从业务视角进行关注点分离和应对复杂度，让业务具备更高的响应力。DDD 战略设计阶段，引入限界上下文（Bounded Context）和上下文映射（Context Map）对问题域进行合理的分解，确定领域的边界以及它们之间的关系，维持模型的完整性。
+限界上下文不仅限于对领域模型的控制，而在于分离关注点之后，使得整个上下文可以成为独立部署的设计单元，这就是“微服务”的概念，上下文映射的诸多模式则对应了微服务之间的协作。因此在战略设计阶段，微服务扩展了领域驱动设计的内容，反过来领域驱动设计又能够保证良好的微服务设计。
+边界给了实现限界上下文内部的最大自由度。这也是战略设计在分治上起到的效用，我们可以在不同的限界上下文选择不同的架构模式和技术实现，这也正好映照了微服务的特点：在技术架构上，系统模块之间充分解耦，可以自由地选择合适的技术架构，去中心化地治理技术和数据。
+ThoughtWorks 公司技术专家编写的《微服务设计》书中，专门有一章节“限界上下文”，充分说明微服务的落地需要 DDD 来辅助的，起码在建模阶段是需要借助 DDD 强大的战略模式来支撑的。微服务不是简单的指将服务尽可能的拆小，然后一个 RPC 框架搞定了，这太粗糙了，无法落地。">
+<meta property="og:type" content="article">
+<meta property="og:url" content="/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/ddd/ddd-concept-essentials/"><meta property="article:section" content="模式架构">
+<meta property="og:site_name" content="infilos.com">
+<meta itemprop=name content="DDD 概念精要">
+<meta itemprop=description content="领域驱动设计不是新鲜的概念，至今已有十六年时间，一直来不曾大行其道，直到 IT 行业内掀起微服务的狂潮，技术界才重新审视和意识到领域驱动设计的价值。不能说微服务拯救了领域驱动设计，但确实是微服务，让领域驱动设计又重新焕发了青春。DDD 是一个非常庞大的建模和设计体系，这篇文章只在理论和概念上阐述 DDD 的价值、方法和架构，欢迎任何的问题指正和补充。
+DDD 价值 应对复杂业务 引起软件系统复杂度的主要因素是需求，软件系统需求又可以分两个方面：业务需求和技术需求 。我们分析系统的复杂度时就可以从业务复杂度和技术复杂度这两个维度出发。
+业务复杂度跟系统的业务需求规模和需求之间的关系层级有直接关系，需求的数量和关系的层级决定代码的规模和逻辑循环或递归的层级，系统的需求数量越大，需求之间的关系越复杂，系统的业务复杂度就越大。John Ousterhout 的著作《A Philosophy of Software Design》从认知的负担和开发工作量的角度来定义软件系统的复杂度，并给出了一个复杂度公式：
+ 子模块的复杂度（cp）乘以该模块对应的开发时间权重值（tp），累加后得到系统的整体复杂度（C）。可以看到系统整体的复杂度并不简单等于所有子模块复杂度的累加，还要考虑该模块的开发维护所花费的时间在整体时间中的权重占比（tp），这个权重比就跟模块划分是否内聚、设计是否优雅有直接关系。
+技术复杂度则来自于对软件系统运行的质量需求，包括安全、高性能、高并发、高可用和高扩展性。系统安全性要求对访问进行控制，无论是加密还是认证和授权，都需要为整个系统架构添加额外的间接层。不仅对访问的低延迟产生影响，还极大提升了系统代码复杂度；为了让后端系统能具备高扩展性和弹性，要求所有系统的设计必须是无状态的；为了提升用户端访问体验，后端需要增添离线任务对数据加工、异构、预热、预缓存，以实现用空间换时间，降低实时接口的逻辑复杂度来降低请求的延迟。然而最让开发者更抓狂的是这些技术需求彼此又是相互影响甚至相互矛盾，在一些复杂流程并要求高响应的业务场景，如下单、秒杀等，会将一个同步的访问请求拆分为多级步骤的异步请求，再通过引入消息中间件对这些请求进行整合和分散处理，这种分离一方面增加了系统架构的复杂性，另一方面也因为引入了更多的资源，使得系统的高可用面临挑战，并增加了维护数据一致性的难度。而且技术复杂度与业务复杂度并非孤立，二者复杂度因子混合在一起产生的负作用更让系统的复杂度变得不可预期，难以掌控，就好比氢气和氯气混合在一起遇到光亮发生爆炸一样。
+DDD 的核心思想就是要避免业务逻辑的复杂度与技术实现的复杂度混淆在一起，确定业务逻辑与技术实现的边界，从而隔离各自的复杂度，业务逻辑并不关心技术是如何实现的。无论采用何种技术，只要业务需求不变，业务规则就不会变化。理想状态下，应该保证业务逻辑与技术实现是正交的。
+DDD 通过分层架构与六边形架构确保业务逻辑与技术实现的隔离。
+DDD 战略设计指导我们面对客户的业务需求，由领域专家与开发团队展开充分的交流，经过需求分析与知识提炼，获得清晰的问题域，在引入限界上下文和上下文映射对问题域进行合理的分解，识别出核心领域与子领域，并确定领域的边界以及它们之间的关系，从而把一个大的复杂系统问题拆分成多个细粒度、独立和内聚的业务子问题，从而很好地分解和控制业务复杂度，各个小组聚焦各自的子领域中。
+在架构方面，通过分层架构来隔离关注点，将领域实现独立出来，利于领域模型的单一性与稳定性；
+引入六边形架构清晰地界定领域与技术基础设施的边界；CQRS 模式则分离了查询场景和命令场景，针对不同场景选择使用同步或异步操作，提高架构的低延迟性与高并发能力。
+分层架构 “分层架构”遵循了“关注点分离”原则，将属于业务逻辑的关注点放到领域层（Domain Layer）中，而将支撑业务逻辑的技术实现放到基础设施层（Infrastructure Layer）中。同时，领域驱动设计又颇具创见的引入了应用层（Application Layer）。应用层扮演了双重角色。一方面它作为业务逻辑的外观（Facade），暴露了能够体现业务用例的应用服务接口；另一方面它又是业务逻辑与技术实现的粘合剂，实现二者之间的协作。下图展现的就是一个典型的领域驱动设计分层架构。蓝色区域的内容与业务逻辑有关，灰色区域的内容与技术实现有关，二者泾渭分明，然后汇合在应用层。应用层确定了业务逻辑与技术实现的边界，通过直接依赖或者依赖注入（DI，Dependency Injection）的方式将二者结合起来。
+ 六边形架构 由 Cockburn 提出的六边形架构则以“内外分离”的方式，更加清晰地勾勒出业务逻辑与技术实现的边界，且将业务逻辑放在了架构的核心位置。这种架构模式改变了我们观察系统架构的视角。体现业务逻辑的应用层与领域层处于六边形架构的内核，并通过内部的六边形边界与基础设施的模块隔离开。当我们在进行软件开发时，只要恪守架构上的六边形边界，就不会让技术实现的复杂度污染到业务逻辑，保证了领域的整洁。边界还隔离了变化产生的影响。如果我们在领域层或应用层抽象了技术实现的接口，再通过依赖注入将控制的方向倒转，业务内核就会变得更加的稳定，不会因为技术选型或其他决策的变化而导致领域代码的修改。
+快速响应业务变化 不确定性和变化是这个时代的主旋律，业务需要快速上线，并根据用户的反馈不停地调整和升级，有生命力的业务主动寻求变化，不变则亡是很多行业目前的共识，企业应对变化的响应力成了成败的关键。同时一个长期困扰软件研发的问题是，需求总是在变化，无论预先设计如何“精确”，总是发现下一个坑就在不远处。相信很多技术人员都有这样的经历，架构和响应能力越来越糟糕，也就是我们常说的架构腐化了，最后大家不得不接受重写。软件架构设计的另一个关键方面是让系统能够更快地响应外界业务的变化，并且使得系统能够持续演进。在遇到变化时不需要从头开始，保证实现成本得到有效控制。
+DDD 的核心是从业务出发、面向业务变化构建软件架构，实质是保证面对业务变化时我们能够有足够快的响应能力。面向业务变化而架构就要求首先理解业务的核心问题，即有针对性地进行关注点分离来找到相对内聚的业务活动形成子问题域。让每个字问题的划分尽可能靠近变化的原点，子问题域内部是相对稳定的，未来的变化频率不会很高，是符合深模块特性的，而子问题边界是很容易变化的。DDD 最后在实现层面利用成熟的技术模式屏蔽掉技术细节的复杂度。
+与微服务相得益彰 Martin Fowler 和 James Lewis 提出微服务时，提出了微服务的 9 大架构特质，指导组织围绕业务组建团队，把业务拆分为一个个业务上高度内聚、技术上松散耦合、运行在独立进程中的小型服务，微服务架构赋予了每个服务业务上的敏捷性和技术上的自主性，因此可以针对每个服务进行独立地迭代、更新、部署和弹性扩展，从而缩短需求交付周期并加速创新。
+在面对复杂业务和快速变化需求时，DDD 从业务视角进行关注点分离和应对复杂度，让业务具备更高的响应力。DDD 战略设计阶段，引入限界上下文（Bounded Context）和上下文映射（Context Map）对问题域进行合理的分解，确定领域的边界以及它们之间的关系，维持模型的完整性。
+限界上下文不仅限于对领域模型的控制，而在于分离关注点之后，使得整个上下文可以成为独立部署的设计单元，这就是“微服务”的概念，上下文映射的诸多模式则对应了微服务之间的协作。因此在战略设计阶段，微服务扩展了领域驱动设计的内容，反过来领域驱动设计又能够保证良好的微服务设计。
+边界给了实现限界上下文内部的最大自由度。这也是战略设计在分治上起到的效用，我们可以在不同的限界上下文选择不同的架构模式和技术实现，这也正好映照了微服务的特点：在技术架构上，系统模块之间充分解耦，可以自由地选择合适的技术架构，去中心化地治理技术和数据。
+ThoughtWorks 公司技术专家编写的《微服务设计》书中，专门有一章节“限界上下文”，充分说明微服务的落地需要 DDD 来辅助的，起码在建模阶段是需要借助 DDD 强大的战略模式来支撑的。微服务不是简单的指将服务尽可能的拆小，然后一个 RPC 框架搞定了，这太粗糙了，无法落地。">
+<meta itemprop=wordCount content="485">
+<meta itemprop=keywords content><meta name=twitter:card content="summary">
+<meta name=twitter:title content="DDD 概念精要">
+<meta name=twitter:description content="领域驱动设计不是新鲜的概念，至今已有十六年时间，一直来不曾大行其道，直到 IT 行业内掀起微服务的狂潮，技术界才重新审视和意识到领域驱动设计的价值。不能说微服务拯救了领域驱动设计，但确实是微服务，让领域驱动设计又重新焕发了青春。DDD 是一个非常庞大的建模和设计体系，这篇文章只在理论和概念上阐述 DDD 的价值、方法和架构，欢迎任何的问题指正和补充。
+DDD 价值 应对复杂业务 引起软件系统复杂度的主要因素是需求，软件系统需求又可以分两个方面：业务需求和技术需求 。我们分析系统的复杂度时就可以从业务复杂度和技术复杂度这两个维度出发。
+业务复杂度跟系统的业务需求规模和需求之间的关系层级有直接关系，需求的数量和关系的层级决定代码的规模和逻辑循环或递归的层级，系统的需求数量越大，需求之间的关系越复杂，系统的业务复杂度就越大。John Ousterhout 的著作《A Philosophy of Software Design》从认知的负担和开发工作量的角度来定义软件系统的复杂度，并给出了一个复杂度公式：
+ 子模块的复杂度（cp）乘以该模块对应的开发时间权重值（tp），累加后得到系统的整体复杂度（C）。可以看到系统整体的复杂度并不简单等于所有子模块复杂度的累加，还要考虑该模块的开发维护所花费的时间在整体时间中的权重占比（tp），这个权重比就跟模块划分是否内聚、设计是否优雅有直接关系。
+技术复杂度则来自于对软件系统运行的质量需求，包括安全、高性能、高并发、高可用和高扩展性。系统安全性要求对访问进行控制，无论是加密还是认证和授权，都需要为整个系统架构添加额外的间接层。不仅对访问的低延迟产生影响，还极大提升了系统代码复杂度；为了让后端系统能具备高扩展性和弹性，要求所有系统的设计必须是无状态的；为了提升用户端访问体验，后端需要增添离线任务对数据加工、异构、预热、预缓存，以实现用空间换时间，降低实时接口的逻辑复杂度来降低请求的延迟。然而最让开发者更抓狂的是这些技术需求彼此又是相互影响甚至相互矛盾，在一些复杂流程并要求高响应的业务场景，如下单、秒杀等，会将一个同步的访问请求拆分为多级步骤的异步请求，再通过引入消息中间件对这些请求进行整合和分散处理，这种分离一方面增加了系统架构的复杂性，另一方面也因为引入了更多的资源，使得系统的高可用面临挑战，并增加了维护数据一致性的难度。而且技术复杂度与业务复杂度并非孤立，二者复杂度因子混合在一起产生的负作用更让系统的复杂度变得不可预期，难以掌控，就好比氢气和氯气混合在一起遇到光亮发生爆炸一样。
+DDD 的核心思想就是要避免业务逻辑的复杂度与技术实现的复杂度混淆在一起，确定业务逻辑与技术实现的边界，从而隔离各自的复杂度，业务逻辑并不关心技术是如何实现的。无论采用何种技术，只要业务需求不变，业务规则就不会变化。理想状态下，应该保证业务逻辑与技术实现是正交的。
+DDD 通过分层架构与六边形架构确保业务逻辑与技术实现的隔离。
+DDD 战略设计指导我们面对客户的业务需求，由领域专家与开发团队展开充分的交流，经过需求分析与知识提炼，获得清晰的问题域，在引入限界上下文和上下文映射对问题域进行合理的分解，识别出核心领域与子领域，并确定领域的边界以及它们之间的关系，从而把一个大的复杂系统问题拆分成多个细粒度、独立和内聚的业务子问题，从而很好地分解和控制业务复杂度，各个小组聚焦各自的子领域中。
+在架构方面，通过分层架构来隔离关注点，将领域实现独立出来，利于领域模型的单一性与稳定性；
+引入六边形架构清晰地界定领域与技术基础设施的边界；CQRS 模式则分离了查询场景和命令场景，针对不同场景选择使用同步或异步操作，提高架构的低延迟性与高并发能力。
+分层架构 “分层架构”遵循了“关注点分离”原则，将属于业务逻辑的关注点放到领域层（Domain Layer）中，而将支撑业务逻辑的技术实现放到基础设施层（Infrastructure Layer）中。同时，领域驱动设计又颇具创见的引入了应用层（Application Layer）。应用层扮演了双重角色。一方面它作为业务逻辑的外观（Facade），暴露了能够体现业务用例的应用服务接口；另一方面它又是业务逻辑与技术实现的粘合剂，实现二者之间的协作。下图展现的就是一个典型的领域驱动设计分层架构。蓝色区域的内容与业务逻辑有关，灰色区域的内容与技术实现有关，二者泾渭分明，然后汇合在应用层。应用层确定了业务逻辑与技术实现的边界，通过直接依赖或者依赖注入（DI，Dependency Injection）的方式将二者结合起来。
+ 六边形架构 由 Cockburn 提出的六边形架构则以“内外分离”的方式，更加清晰地勾勒出业务逻辑与技术实现的边界，且将业务逻辑放在了架构的核心位置。这种架构模式改变了我们观察系统架构的视角。体现业务逻辑的应用层与领域层处于六边形架构的内核，并通过内部的六边形边界与基础设施的模块隔离开。当我们在进行软件开发时，只要恪守架构上的六边形边界，就不会让技术实现的复杂度污染到业务逻辑，保证了领域的整洁。边界还隔离了变化产生的影响。如果我们在领域层或应用层抽象了技术实现的接口，再通过依赖注入将控制的方向倒转，业务内核就会变得更加的稳定，不会因为技术选型或其他决策的变化而导致领域代码的修改。
+快速响应业务变化 不确定性和变化是这个时代的主旋律，业务需要快速上线，并根据用户的反馈不停地调整和升级，有生命力的业务主动寻求变化，不变则亡是很多行业目前的共识，企业应对变化的响应力成了成败的关键。同时一个长期困扰软件研发的问题是，需求总是在变化，无论预先设计如何“精确”，总是发现下一个坑就在不远处。相信很多技术人员都有这样的经历，架构和响应能力越来越糟糕，也就是我们常说的架构腐化了，最后大家不得不接受重写。软件架构设计的另一个关键方面是让系统能够更快地响应外界业务的变化，并且使得系统能够持续演进。在遇到变化时不需要从头开始，保证实现成本得到有效控制。
+DDD 的核心是从业务出发、面向业务变化构建软件架构，实质是保证面对业务变化时我们能够有足够快的响应能力。面向业务变化而架构就要求首先理解业务的核心问题，即有针对性地进行关注点分离来找到相对内聚的业务活动形成子问题域。让每个字问题的划分尽可能靠近变化的原点，子问题域内部是相对稳定的，未来的变化频率不会很高，是符合深模块特性的，而子问题边界是很容易变化的。DDD 最后在实现层面利用成熟的技术模式屏蔽掉技术细节的复杂度。
+与微服务相得益彰 Martin Fowler 和 James Lewis 提出微服务时，提出了微服务的 9 大架构特质，指导组织围绕业务组建团队，把业务拆分为一个个业务上高度内聚、技术上松散耦合、运行在独立进程中的小型服务，微服务架构赋予了每个服务业务上的敏捷性和技术上的自主性，因此可以针对每个服务进行独立地迭代、更新、部署和弹性扩展，从而缩短需求交付周期并加速创新。
+在面对复杂业务和快速变化需求时，DDD 从业务视角进行关注点分离和应对复杂度，让业务具备更高的响应力。DDD 战略设计阶段，引入限界上下文（Bounded Context）和上下文映射（Context Map）对问题域进行合理的分解，确定领域的边界以及它们之间的关系，维持模型的完整性。
+限界上下文不仅限于对领域模型的控制，而在于分离关注点之后，使得整个上下文可以成为独立部署的设计单元，这就是“微服务”的概念，上下文映射的诸多模式则对应了微服务之间的协作。因此在战略设计阶段，微服务扩展了领域驱动设计的内容，反过来领域驱动设计又能够保证良好的微服务设计。
+边界给了实现限界上下文内部的最大自由度。这也是战略设计在分治上起到的效用，我们可以在不同的限界上下文选择不同的架构模式和技术实现，这也正好映照了微服务的特点：在技术架构上，系统模块之间充分解耦，可以自由地选择合适的技术架构，去中心化地治理技术和数据。
+ThoughtWorks 公司技术专家编写的《微服务设计》书中，专门有一章节“限界上下文”，充分说明微服务的落地需要 DDD 来辅助的，起码在建模阶段是需要借助 DDD 强大的战略模式来支撑的。微服务不是简单的指将服务尽可能的拆小，然后一个 RPC 框架搞定了，这太粗糙了，无法落地。">
+<script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga('create','UA-123062585-1','auto'),ga('send','pageview'))</script>
+<script async src=https://www.google-analytics.com/analytics.js></script>
+<link rel=preload href=/scss/main.min.847464b684a6e89d7276700a5c500c17ab494dd1755b2654a7b27d8b59e3347e.css as=style>
+<link href=/scss/main.min.847464b684a6e89d7276700a5c500c17ab494dd1755b2654a7b27d8b59e3347e.css rel=stylesheet integrity>
+<script src=/js/jquery-3.5.1.min.js integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin=anonymous></script>
+</head>
+<body class=td-page>
+<header>
+<nav class="js-navbar-scroll navbar navbar-expand navbar-dark flex-column flex-md-row td-navbar">
+<a class=navbar-brand href=/>
+<span class=navbar-logo><svg id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512" style="enable-background:new 0 0 512 512"><path style="fill:#ffc107" d="M432.384 143.616c-4.165-4.164-10.917-4.164-15.083.0l-60.352 60.352c-4.164 4.165-4.164 10.917.0 15.083 21.187 20.463 54.951 19.876 75.413-1.311 19.962-20.668 19.962-53.435.0-74.102L432.384 143.616z"/><path style="fill:#607d8b" d="M42.667 277.334c-5.891.003-10.669-4.771-10.672-10.662-.002-4.338 2.623-8.245 6.64-9.882l234.667-96c5.455-2.233 11.687.38 13.92 5.835s-.38 11.687-5.835 13.92l-234.667 96C45.433 277.069 44.056 277.337 42.667 277.334z"/><path style="fill:#546e7a" d="M391.552 56.448l-32-32C343.938 8.745 322.689-.059 300.544.0h-3.755c-46.082.024-83.432 37.374-83.456 83.456v3.755c-.053 22.138 8.75 43.377 24.448 58.987l32 32c4.165 4.164 10.917 4.164 15.083.0L391.531 71.531C395.701 67.372 395.71 60.62 391.552 56.448z"/><path style="fill:#607d8b" d="M160 469.334c-3.279.006-6.379-1.497-8.405-4.075L34.261 315.926c-3.635-4.636-2.823-11.341 1.813-14.976s11.341-2.823 14.976 1.813l117.333 149.333c3.629 4.641 2.809 11.344-1.832 14.973C164.681 468.533 162.375 469.329 160 469.334z"/><path style="fill:#455a64" d="M487.467 86.848l-3.669-3.648c-37.687-36.557-97.71-36.197-134.955.811l-51.413 51.413c-36.996 37.25-37.357 97.263-.811 134.955l3.584 3.669c1.7 2.457 4.671 3.706 7.616 3.2 2.831.005 5.548-1.115 7.552-3.115l172.181-172.181c4.189-4.143 4.226-10.896.083-15.085-.028-.028-.055-.056-.083-.083L487.467 86.848z"/><g><path style="fill:#ffc107" d="M501.333 192H480c-5.891.0-10.667-4.776-10.667-10.667s4.776-10.667 10.667-10.667h21.333c5.891.0 10.667 4.776 10.667 10.667S507.225 192 501.333 192z"/><path style="fill:#ffc107" d="M394.667 298.667c-5.891.0-10.667-4.776-10.667-10.667v-21.333c0-5.891 4.776-10.667 10.667-10.667 5.891.0 10.667 4.776 10.667 10.667V288C405.333 293.891 400.558 298.667 394.667 298.667z"/><path style="fill:#ffc107" d="M480 277.334c-2.831.005-5.548-1.115-7.552-3.115l-21.333-21.333c-4.093-4.237-3.975-10.99.262-15.083 4.134-3.993 10.687-3.993 14.821.0l21.333 21.333c4.159 4.172 4.148 10.926-.024 15.085C485.514 276.209 482.815 277.327 480 277.334z"/></g><g><path style="fill:#455a64" d="M266.667 448H96c-29.455.0-53.333 23.878-53.333 53.333.0 5.891 4.776 10.667 10.667 10.667h256c5.891.0 10.667-4.776 10.667-10.667C320 471.878 296.122 448 266.667 448z"/><circle style="fill:#455a64" cx="32" cy="288" r="32"/></g><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/></svg></span><span class=font-weight-bold>infilos.com</span>
+</a>
+<div class="collapse navbar-collapse" id=navbarSupportedContent>
+<ul class="navbar-nav mr-auto">
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86>
+<span>基础</span>
+</a>
+</li>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80>
+<span>语言</span>
+</a>
+</li>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93>
+<span>框架库</span>
+</a>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+分布式
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%88%86%e5%b8%83%e5%bc%8f/base>基本构成</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+大数据
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%ad%98%e5%82%a8%e7%b3%bb%e7%bb%9f>存储系统</a>
+<a class=dropdown-item href=/%e6%9f%a5%e8%af%a2%e7%b3%bb%e7%bb%9f>查询系统</a>
+<a class=dropdown-item href=/%e6%b6%88%e6%81%af%e7%b3%bb%e7%bb%9f>消息系统</a>
+<a class=dropdown-item href=/%e5%a4%84%e7%90%86%e7%b3%bb%e7%bb%9f>处理系统</a>
+<a class=dropdown-item href=/%e6%95%b0%e6%8d%ae%e6%b2%bb%e7%90%86>数据治理</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+中后台
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e8%ae%be%e6%96%bd>基础设施</a>
+<a class=dropdown-item href=/%e7%94%a8%e6%88%b7%e7%b3%bb%e7%bb%9f>用户系统</a>
+<a class=dropdown-item href=/%e4%ba%a4%e4%ba%92%e7%95%8c%e9%9d%a2>交互界面</a>
+<a class=dropdown-item href=/%e4%b8%9a%e5%8a%a1%e7%b3%bb%e7%bb%9f>业务系统</a>
+</div>
+</li>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e6%a8%a1%e5%bc%8f%e6%9e%b6%e6%9e%84>
+<span>模式架构</span>
+</a>
+</li>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e9%9d%a2%e8%af%95%e9%97%ae%e7%ad%94>
+<span>面试</span>
+</a>
+</li>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e7%ae%a1%e7%90%86%e8%b7%af%e5%be%84>
+<span>管理</span>
+</a>
+</li>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e5%bc%80%e6%ba%90%e9%a1%b9%e7%9b%ae>
+<span>开源</span>
+</a>
+</li>
+</ul>
+<div class="form-inline my-2 my-lg-0">
+<div class="nav-item nav-search-item my-2 my-md-0">
+<input type=search class="form-control td-search-input" placeholder="&#xf002; 站内搜索…" aria-label=站内搜索… autocomplete=off>
+</div>
+</div>
+</div>
+</nav>
+</header>
+<div class="container-fluid td-outer">
+<div class=td-main>
+<div class="row flex-xl-nowrap">
+<aside class="col-12 col-md-3 col-xl-2 td-sidebar d-print-none">
+<div id=td-sidebar-menu class=td-sidebar__inner>
+<div id=content-mobile>
+<form class="td-sidebar__search d-flex align-items-center">
+<input type=search class="form-control td-search-input" placeholder="&#xf002; 站内搜索…" aria-label=站内搜索… autocomplete=off>
+<button class="btn btn-link td-sidebar__toggle d-md-none p-0 ml-3 fas fa-bars" type=button data-toggle=collapse data-target=#td-section-nav aria-controls=td-docs-nav aria-expanded=false aria-label="Toggle section navigation">
+</button>
+</form>
+</div>
+<div id=content-desktop></div>
+<nav class="collapse td-sidebar-nav" id=td-section-nav>
+<ul class="td-sidebar-nav__section pr-md-3 ul-0">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e6a8a1e5bc8fe69eb6e69e84-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section tree-root" id=m-e6a8a1e5bc8fe69eb6e69e84><span>架构模式</span></a>
+<ul class=ul-1>
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84rules-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/rules/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a8a1e5bc8fe69eb6e69e84rules><span>编程原则</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a8a1e5bc8fe69eb6e69e84design-pattern-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a8a1e5bc8fe69eb6e69e84design-pattern><span>设计模式</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-pattern-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-pattern><span>Java 模式</span></a>
+<ul class="ul-3 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch01-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch01/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch01><span>CH01-创建型-简单工厂</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch02-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch02/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch02><span>CH02-创建型-工厂方法</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch03-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch03/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch03><span>CH03-创建型-抽象工厂</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch04-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch04/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch04><span>CH04-创建型-建造者</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch05-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch05/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch05><span>CH05-创建型-单例</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch06-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch06/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch06><span>CH06-结构型-适配器</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch07-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch07/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch07><span>CH07-结构型-桥接</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch08-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch08/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch08><span>CH08-结构型-装饰器</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch09-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch09/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch09><span>CH09-结构型-外观</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch10-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch10/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch10><span>CH10-结构型-享元</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch11-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch11/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch11><span>CH11-结构型-代理</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch12-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch12/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch12><span>CH12-行为型-命令</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch13-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch13/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch13><span>CH13-行为型-中介者</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch14-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch14/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch14><span>CH14-行为型-观察者</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch15-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch15/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch15><span>CH15-行为型-状态</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch16-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch16/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch16><span>CH16-行为型-策略</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-pattern-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-pattern><span>Scala 模式</span></a>
+<ul class="ul-3 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch01-e6a8a1e5bc8fe58886e7b1bb-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch01-%E6%A8%A1%E5%BC%8F%E5%88%86%E7%B1%BB/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch01-e6a8a1e5bc8fe58886e7b1bb><span>CH01-模式分类</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch02-e789b9e8b4a8e4b88ee6b7b7e585a5e7bb84e59088-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch02-%E7%89%B9%E8%B4%A8%E4%B8%8E%E6%B7%B7%E5%85%A5%E7%BB%84%E5%90%88/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch02-e789b9e8b4a8e4b88ee6b7b7e585a5e7bb84e59088><span>CH02-特质与混入组合</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch03-e7bb9fe4b880e58c96-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch03-%E7%BB%9F%E4%B8%80%E5%8C%96/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch03-e7bb9fe4b880e58c96><span>CH03-统一化</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch04-e68abde8b1a1e4b88ee887aae7b1bbe59e8b-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch04-%E6%8A%BD%E8%B1%A1%E4%B8%8E%E8%87%AA%E7%B1%BB%E5%9E%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch04-e68abde8b1a1e4b88ee887aae7b1bbe59e8b><span>CH04-抽象与自类型</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch05-aop-e4b88ee7bb84e4bbb6-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch05-aop-%E4%B8%8E%E7%BB%84%E4%BB%B6/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch05-aop-e4b88ee7bb84e4bbb6><span>CH05-AOP 与组件</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch06-0-e5889be5bbbae59e8be6a8a1e5bc8f-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch06-0-%E5%88%9B%E5%BB%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch06-0-e5889be5bbbae59e8be6a8a1e5bc8f><span>CH06-创建型模式</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch06-1-e5b7a5e58e82e696b9e6b395-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch06-1-%E5%B7%A5%E5%8E%82%E6%96%B9%E6%B3%95/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch06-1-e5b7a5e58e82e696b9e6b395><span>CH06-1-工厂方法</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch06-2-e68abde8b1a1e5b7a5e58e82-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch06-2-%E6%8A%BD%E8%B1%A1%E5%B7%A5%E5%8E%82/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch06-2-e68abde8b1a1e5b7a5e58e82><span>CH06-2-抽象工厂</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch06-3-e585b6e4bb96e5b7a5e58e82e6a8a1e5bc8f-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch06-3-%E5%85%B6%E4%BB%96%E5%B7%A5%E5%8E%82%E6%A8%A1%E5%BC%8F/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch06-3-e585b6e4bb96e5b7a5e58e82e6a8a1e5bc8f><span>CH06-3-其他工厂模式</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch06-4-e68792e5889de5a78be58c96-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch06-4-%E6%87%92%E5%88%9D%E5%A7%8B%E5%8C%96/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch06-4-e68792e5889de5a78be58c96><span>CH06-4-懒初始化</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch06-5-e58d95e4be8be6a8a1e5bc8f-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch06-5-%E5%8D%95%E4%BE%8B%E6%A8%A1%E5%BC%8F/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch06-5-e58d95e4be8be6a8a1e5bc8f><span>CH06-5-单例模式</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch06-6-e69e84e5bbbae599a8e6a8a1e5bc8f-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch06-6-%E6%9E%84%E5%BB%BA%E5%99%A8%E6%A8%A1%E5%BC%8F/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch06-6-e69e84e5bbbae599a8e6a8a1e5bc8f><span>CH06-6-构建器模式</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch06-7-e58e9fe59e8be6a8a1e5bc8f-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch06-7-%E5%8E%9F%E5%9E%8B%E6%A8%A1%E5%BC%8F/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch06-7-e58e9fe59e8be6a8a1e5bc8f><span>CH06-7-原型模式</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch07-0-e7bb93e69e84e59e8be6a8a1e5bc8f-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch07-0-%E7%BB%93%E6%9E%84%E5%9E%8B%E6%A8%A1%E5%BC%8F/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch07-0-e7bb93e69e84e59e8be6a8a1e5bc8f><span>CH07-结构型模式</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch07-1-e98082e9858de599a8e6a8a1e5bc8f-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch07-1-%E9%80%82%E9%85%8D%E5%99%A8%E6%A8%A1%E5%BC%8F/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch07-1-e98082e9858de599a8e6a8a1e5bc8f><span>CH07-1-适配器模式</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch07-2-e8a385e9a5b0e599a8e6a8a1e5bc8f-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch07-2-%E8%A3%85%E9%A5%B0%E5%99%A8%E6%A8%A1%E5%BC%8F/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch07-2-e8a385e9a5b0e599a8e6a8a1e5bc8f><span>CH07-2-装饰器模式</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch07-3-e6a1a5e68ea5e6a8a1e5bc8f-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch07-3-%E6%A1%A5%E6%8E%A5%E6%A8%A1%E5%BC%8F/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch07-3-e6a1a5e68ea5e6a8a1e5bc8f><span>CH07-3-桥接模式</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch07-4-e7bb84e59088e6a8a1e5bc8f-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch07-4-%E7%BB%84%E5%90%88%E6%A8%A1%E5%BC%8F/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch07-4-e7bb84e59088e6a8a1e5bc8f><span>CH07-4-组合模式</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch07-5-e5a496e8a782e6a8a1e5bc8f-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch07-5-%E5%A4%96%E8%A7%82%E6%A8%A1%E5%BC%8F/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch07-5-e5a496e8a782e6a8a1e5bc8f><span>CH07-5-外观模式</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch07-6-e4baabe58583e6a8a1e5bc8f-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch07-6-%E4%BA%AB%E5%85%83%E6%A8%A1%E5%BC%8F/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch07-6-e4baabe58583e6a8a1e5bc8f><span>CH07-6-享元模式</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch07-7-e4bba3e79086e6a8a1e5bc8f-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch07-7-%E4%BB%A3%E7%90%86%E6%A8%A1%E5%BC%8F/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch07-7-e4bba3e79086e6a8a1e5bc8f><span>CH07-7-代理模式</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch08-e8a18ce4b8bae59e8be6a8a1e5bc8f-1-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch08-%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F-1/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch08-e8a18ce4b8bae59e8be6a8a1e5bc8f-1><span>CH08-行为型模式-1</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch09-e8a18ce4b8bae59e8be6a8a1e5bc8f-2-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch09-%E8%A1%8C%E4%B8%BA%E5%9E%8B%E6%A8%A1%E5%BC%8F-2/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch09-e8a18ce4b8bae59e8be6a8a1e5bc8f-2><span>CH09-行为型模式-2</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch10-e587bde695b0e5bc8fe6a8a1e5bc8fe79086e8aeba-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch10-%E5%87%BD%E6%95%B0%E5%BC%8F%E6%A8%A1%E5%BC%8F%E7%90%86%E8%AE%BA/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch10-e587bde695b0e5bc8fe6a8a1e5bc8fe79086e8aeba><span>CH10-函数式模式理论</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch11-e587bde695b0e5bc8fe6a8a1e5bc8fe5ba94e794a8-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch11-%E5%87%BD%E6%95%B0%E5%BC%8F%E6%A8%A1%E5%BC%8F%E5%BA%94%E7%94%A8/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch11-e587bde695b0e5bc8fe6a8a1e5bc8fe5ba94e794a8><span>CH11-函数式模式应用</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch12-e5ae9ee99985e5ba94e794a8-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch12-%E5%AE%9E%E9%99%85%E5%BA%94%E7%94%A8/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch12-e5ae9ee99985e5ba94e794a8><span>CH12-实际应用</span></a>
+</li>
+</ul>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a8a1e5bc8fe69eb6e69e84micro-service-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/micro-service/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a8a1e5bc8fe69eb6e69e84micro-service><span>微服务架构</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84micro-servicepattern-overview-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/micro-service/pattern-overview/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84micro-servicepattern-overview><span>模式概览</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84micro-servicems-disasters-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/micro-service/ms-disasters/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84micro-servicems-disasters><span>微服务灾难</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84micro-servicefault-tolerance-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/micro-service/fault-tolerance/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84micro-servicefault-tolerance><span>故障容错模式</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a8a1e5bc8fe69eb6e69e84high-conc-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a8a1e5bc8fe69eb6e69e84high-conc><span>高并发系统</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch01-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch01/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch01><span>CH01-基础-设计方法</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch02-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch02/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch02><span>CH02-基础-架构分层</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch03-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch03/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch03><span>CH03-基础-高性能</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch04-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch04/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch04><span>CH04-基础-高可用</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch05-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch05/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch05><span>CH05-基础-易扩展</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch07-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch07/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch07><span>CH07-数据库-池化</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch08-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch08/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch08><span>CH08-数据库-主从分离</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch09-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch09/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch09><span>CH09-数据库-分库分表</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch10-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch10/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch10><span>CH10-数据库-发号器</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch11-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch11/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch11><span>CH11-数据库-NoSQL</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch12-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch12/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch12><span>CH12-缓存-基础</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch13-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch13/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch13><span>CH13-缓存-读写策略</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch14-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch14/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch14><span>CH14-缓存-高可用</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch15-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch15/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch15><span>CH15-缓存-穿透</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch16-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch16/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch16><span>CH16-缓存-CDN</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch17-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch17/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch17><span>CH17-缓存-数据迁移</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch18-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch18/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch18><span>CH18-消息-基础</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch19-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch19/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch19><span>CH19-消息-投递</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch20-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch20/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch20><span>CH20-消息-延迟</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch21-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch21/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch21><span>CH21-分布式-服务拆分</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch22-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch22/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch22><span>CH22-分布式-微服务</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch23-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch23/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch23><span>CH23-分布式-RPC</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch24-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch24/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch24><span>CH24-分布式-注册中心</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch25-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch25/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch25><span>CH25-分布式-追踪</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch26-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch26/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch26><span>CH26-分布式-负载均衡</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch27-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch27/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch27><span>CH27-分布式-接口网关</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch28-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch28/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch28><span>CH28-分布式-跨地域</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch29-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch29/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch29><span>CH29-分布式-服务网格</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch30-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch30/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch30><span>CH30-维护-后端监控</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch31-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch31/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch31><span>CH31-维护-应用监控</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch32-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch32/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch32><span>CH32-维护-链路压测</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch33-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch33/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch33><span>CH33-维护-配置管理</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch34-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch34/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch34><span>CH34-维护-降级熔断</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch35-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch35/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch35><span>CH35-维护-流量控制</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch37-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch37/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch37><span>CH37-实战-计数系统-1</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch38-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch38/ title=CH38-实战-计数系统-2 class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch38><span>CH37-实战-计数系统-2</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch39-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch39/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch39><span>CH39-实战-信息流-1</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch40-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch40/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch40><span>CH40-实战-信息流-2</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84ddia-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/ddia/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a8a1e5bc8fe69eb6e69e84ddia><span>数据密集系统</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a8a1e5bc8fe69eb6e69e84rpc-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/rpc/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a8a1e5bc8fe69eb6e69e84rpc><span>远程过程调用</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84rpcrpc-overview-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/rpc/rpc-overview/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84rpcrpc-overview><span>RPC 概览</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e6a8a1e5bc8fe69eb6e69e84ddd-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/ddd/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a8a1e5bc8fe69eb6e69e84ddd><span>领域驱动设计</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child active-path" id=m-e6a8a1e5bc8fe69eb6e69e84dddddd-concept-essentials-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/ddd/ddd-concept-essentials/ class="align-left pl-0 active td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84dddddd-concept-essentials><span class=td-sidebar-nav-active-item>DDD 概念精要</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84dddddd-instruct-micro-service-li>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/ddd/ddd-instruct-micro-service/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84dddddd-instruct-micro-service><span>DDD 指导微服务</span></a>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</div>
+</aside>
+<aside class="d-none d-xl-block col-xl-2 td-sidebar-toc d-print-none">
+<div class="td-page-meta ml-2 pb-1 pt-2 mb-0">
+<a href=https://github.com/infilos/infilos.com/edit/master/content/zh/%e6%a8%a1%e5%bc%8f%e6%9e%b6%e6%9e%84/ddd/ddd-concept-essentials.md target=_blank><i class="fa fa-edit fa-fw"></i> 编辑此页</a>
+<a href="https://github.com/infilos/infilos.com/new/master/content/zh/%e6%a8%a1%e5%bc%8f%e6%9e%b6%e6%9e%84/ddd/ddd-concept-essentials.md?filename=change-me.md&value=---%0Atitle%3A+%22Long+Page+Title%22%0AlinkTitle%3A+%22Short+Nav+Title%22%0Aweight%3A+100%0Adescription%3A+%3E-%0A+++++Page+description+for+heading+and+indexes.%0A---%0A%0A%23%23+Heading%0A%0AEdit+this+template+to+create+your+new+page.%0A%0A%2A+Give+it+a+good+name%2C+ending+in+%60.md%60+-+e.g.+%60getting-started.md%60%0A%2A+Edit+the+%22front+matter%22+section+at+the+top+of+the+page+%28weight+controls+how+its+ordered+amongst+other+pages+in+the+same+directory%3B+lowest+number+first%29.%0A%2A+Add+a+good+commit+message+at+the+bottom+of+the+page+%28%3C80+characters%3B+use+the+extended+description+field+for+more+detail%29.%0A%2A+Create+a+new+branch+so+you+can+preview+your+new+file+and+request+a+review+via+Pull+Request.%0A" target=_blank><i class="fa fa-edit fa-fw"></i> 添加子页面</a>
+<a href="https://github.com/infilos/infilos.com/issues/new?title=DDD%20%e6%a6%82%e5%bf%b5%e7%b2%be%e8%a6%81" target=_blank><i class="fab fa-github fa-fw"></i> 提交文档问题</a>
+<a id=print href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/ddd/_print/><i class="fa fa-print fa-fw"></i> 整节打印</a>
+</div>
+<div class=td-toc><nav id=TableOfContents>
+<ul>
+<li><a href=#ddd-价值>DDD 价值</a>
+<ul>
+<li><a href=#应对复杂业务>应对复杂业务</a></li>
+</ul>
+</li>
+<li><a href=#ddd-过程>DDD 过程</a>
+<ul>
+<li><a href=#战略设计>战略设计</a></li>
+<li><a href=#架构设计>架构设计</a></li>
+<li><a href=#战术设计>战术设计</a></li>
+</ul>
+</li>
+<li><a href=#总结>总结</a></li>
+</ul>
+</nav></div>
+</aside>
+<main class="col-12 col-md-9 col-xl-8 pl-md-5" role=main>
+<nav aria-label=breadcrumb class="d-none d-md-block d-print-none">
+<ol class="breadcrumb spb-1">
+<li class=breadcrumb-item>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/>架构模式</a>
+</li>
+<li class=breadcrumb-item>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/ddd/>领域驱动设计</a>
+</li>
+<li class="breadcrumb-item active" aria-current=page>
+<a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/ddd/ddd-concept-essentials/>DDD 概念精要</a>
+</li>
+</ol>
+</nav>
+<div class=td-content>
+<h1>DDD 概念精要</h1>
+<header class=article-meta>
+</header>
+<p>领域驱动设计不是新鲜的概念，至今已有十六年时间，一直来不曾大行其道，直到 IT 行业内掀起微服务的狂潮，技术界才重新审视和意识到领域驱动设计的价值。不能说微服务拯救了领域驱动设计，但确实是微服务，让领域驱动设计又重新焕发了青春。DDD 是一个非常庞大的建模和设计体系，这篇文章只在理论和概念上阐述 DDD 的价值、方法和架构，欢迎任何的问题指正和补充。</p>
+<h2 id=ddd-价值>DDD 价值</h2>
+<h3 id=应对复杂业务>应对复杂业务</h3>
+<p>引起软件系统复杂度的主要因素是需求，软件系统需求又可以分两个方面：业务需求和技术需求 。我们分析系统的复杂度时就可以从业务复杂度和技术复杂度这两个维度出发。</p>
+<p>业务复杂度跟系统的业务需求规模和需求之间的关系层级有直接关系，需求的数量和关系的层级决定代码的规模和逻辑循环或递归的层级，系统的需求数量越大，需求之间的关系越复杂，系统的业务复杂度就越大。John Ousterhout 的著作《A Philosophy of Software Design》从认知的负担和开发工作量的角度来定义软件系统的复杂度，并给出了一个复杂度公式：</p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220220223658.png style=display:block;margin-left:auto;margin-right:auto;width:40% alt=20220220223658></div>
+<p>子模块的复杂度（cp）乘以该模块对应的开发时间权重值（tp），累加后得到系统的整体复杂度（C）。可以看到系统整体的复杂度并不简单等于所有子模块复杂度的累加，还要考虑该模块的开发维护所花费的时间在整体时间中的权重占比（tp），这个权重比就跟模块划分是否内聚、设计是否优雅有直接关系。</p>
+<p>技术复杂度则来自于对软件系统运行的质量需求，包括安全、高性能、高并发、高可用和高扩展性。系统安全性要求对访问进行控制，无论是加密还是认证和授权，都需要为整个系统架构添加额外的间接层。不仅对访问的低延迟产生影响，还极大提升了系统代码复杂度；为了让后端系统能具备高扩展性和弹性，要求所有系统的设计必须是无状态的；为了提升用户端访问体验，后端需要增添离线任务对数据加工、异构、预热、预缓存，以实现用空间换时间，降低实时接口的逻辑复杂度来降低请求的延迟。然而最让开发者更抓狂的是这些技术需求彼此又是相互影响甚至相互矛盾，在一些复杂流程并要求高响应的业务场景，如下单、秒杀等，会将一个同步的访问请求拆分为多级步骤的异步请求，再通过引入消息中间件对这些请求进行整合和分散处理，这种分离一方面增加了系统架构的复杂性，另一方面也因为引入了更多的资源，使得系统的高可用面临挑战，并增加了维护数据一致性的难度。而且技术复杂度与业务复杂度并非孤立，二者复杂度因子混合在一起产生的负作用更让系统的复杂度变得不可预期，难以掌控，就好比氢气和氯气混合在一起遇到光亮发生爆炸一样。</p>
+<p>DDD 的核心思想就是要避免业务逻辑的复杂度与技术实现的复杂度混淆在一起，确定业务逻辑与技术实现的边界，从而隔离各自的复杂度，业务逻辑并不关心技术是如何实现的。无论采用何种技术，只要业务需求不变，业务规则就不会变化。理想状态下，应该保证业务逻辑与技术实现是正交的。</p>
+<p>DDD 通过分层架构与六边形架构确保业务逻辑与技术实现的隔离。</p>
+<p>DDD 战略设计指导我们面对客户的业务需求，由领域专家与开发团队展开充分的交流，经过需求分析与知识提炼，获得清晰的问题域，在引入限界上下文和上下文映射对问题域进行合理的分解，识别出核心领域与子领域，并确定领域的边界以及它们之间的关系，从而把一个大的复杂系统问题拆分成多个细粒度、独立和内聚的业务子问题，从而很好地分解和控制业务复杂度，各个小组聚焦各自的子领域中。</p>
+<p>在架构方面，通过分层架构来隔离关注点，将领域实现独立出来，利于领域模型的单一性与稳定性；</p>
+<p>引入六边形架构清晰地界定领域与技术基础设施的边界；CQRS 模式则分离了查询场景和命令场景，针对不同场景选择使用同步或异步操作，提高架构的低延迟性与高并发能力。</p>
+<h4 id=分层架构>分层架构</h4>
+<p>“分层架构”遵循了“关注点分离”原则，将属于业务逻辑的关注点放到领域层（Domain Layer）中，而将支撑业务逻辑的技术实现放到基础设施层（Infrastructure Layer）中。同时，领域驱动设计又颇具创见的引入了应用层（Application Layer）。应用层扮演了双重角色。一方面它作为业务逻辑的外观（Facade），暴露了能够体现业务用例的应用服务接口；另一方面它又是业务逻辑与技术实现的粘合剂，实现二者之间的协作。下图展现的就是一个典型的领域驱动设计分层架构。蓝色区域的内容与业务逻辑有关，灰色区域的内容与技术实现有关，二者泾渭分明，然后汇合在应用层。应用层确定了业务逻辑与技术实现的边界，通过直接依赖或者依赖注入（DI，Dependency Injection）的方式将二者结合起来。</p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220220223735.png style=display:block;margin-left:auto;margin-right:auto;width:80% alt=20220220223735></div>
+<h4 id=六边形架构>六边形架构</h4>
+<p>由 Cockburn 提出的六边形架构则以“内外分离”的方式，更加清晰地勾勒出业务逻辑与技术实现的边界，且将业务逻辑放在了架构的核心位置。这种架构模式改变了我们观察系统架构的视角。体现业务逻辑的应用层与领域层处于六边形架构的内核，并通过内部的六边形边界与基础设施的模块隔离开。当我们在进行软件开发时，只要恪守架构上的六边形边界，就不会让技术实现的复杂度污染到业务逻辑，保证了领域的整洁。边界还隔离了变化产生的影响。如果我们在领域层或应用层抽象了技术实现的接口，再通过依赖注入将控制的方向倒转，业务内核就会变得更加的稳定，不会因为技术选型或其他决策的变化而导致领域代码的修改。</p>
+<h4 id=快速响应业务变化>快速响应业务变化</h4>
+<p>不确定性和变化是这个时代的主旋律，业务需要快速上线，并根据用户的反馈不停地调整和升级，有生命力的业务主动寻求变化，不变则亡是很多行业目前的共识，企业应对变化的响应力成了成败的关键。同时一个长期困扰软件研发的问题是，需求总是在变化，无论预先设计如何“精确”，总是发现下一个坑就在不远处。相信很多技术人员都有这样的经历，架构和响应能力越来越糟糕，也就是我们常说的架构腐化了，最后大家不得不接受重写。软件架构设计的另一个关键方面是让系统能够更快地响应外界业务的变化，并且使得系统能够持续演进。在遇到变化时不需要从头开始，保证实现成本得到有效控制。</p>
+<p>DDD 的核心是从业务出发、面向业务变化构建软件架构，实质是保证面对业务变化时我们能够有足够快的响应能力。面向业务变化而架构就要求首先理解业务的核心问题，即有针对性地进行关注点分离来找到相对内聚的业务活动形成子问题域。让每个字问题的划分尽可能靠近变化的原点，子问题域内部是相对稳定的，未来的变化频率不会很高，是符合深模块特性的，而子问题边界是很容易变化的。DDD 最后在实现层面利用成熟的技术模式屏蔽掉技术细节的复杂度。</p>
+<h4 id=与微服务相得益彰>与微服务相得益彰</h4>
+<p>Martin Fowler 和 James Lewis 提出微服务时，提出了微服务的 9 大架构特质，指导组织围绕业务组建团队，把业务拆分为一个个业务上高度内聚、技术上松散耦合、运行在独立进程中的小型服务，微服务架构赋予了每个服务业务上的敏捷性和技术上的自主性，因此可以针对每个服务进行独立地迭代、更新、部署和弹性扩展，从而缩短需求交付周期并加速创新。</p>
+<p>在面对复杂业务和快速变化需求时，DDD 从业务视角进行关注点分离和应对复杂度，让业务具备更高的响应力。DDD 战略设计阶段，引入限界上下文（Bounded Context）和上下文映射（Context Map）对问题域进行合理的分解，确定领域的边界以及它们之间的关系，维持模型的完整性。</p>
+<p>限界上下文不仅限于对领域模型的控制，而在于分离关注点之后，使得整个上下文可以成为独立部署的设计单元，这就是“微服务”的概念，上下文映射的诸多模式则对应了微服务之间的协作。因此在战略设计阶段，微服务扩展了领域驱动设计的内容，反过来领域驱动设计又能够保证良好的微服务设计。</p>
+<p>边界给了实现限界上下文内部的最大自由度。这也是战略设计在分治上起到的效用，我们可以在不同的限界上下文选择不同的架构模式和技术实现，这也正好映照了微服务的特点：在技术架构上，系统模块之间充分解耦，可以自由地选择合适的技术架构，去中心化地治理技术和数据。</p>
+<p>ThoughtWorks 公司技术专家编写的《微服务设计》书中，专门有一章节“限界上下文”，充分说明微服务的落地需要 DDD 来辅助的，起码在建模阶段是需要借助 DDD 强大的战略模式来支撑的。微服务不是简单的指将服务尽可能的拆小，然后一个 RPC 框架搞定了，这太粗糙了，无法落地。</p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220220223806.png style=display:block;margin-left:auto;margin-right:auto;width:50% alt=20220220223806></div>
+<h4 id=辅助中台战略落地>辅助中台战略落地</h4>
+<p>领域驱动设计让参与者基于统一语言沟通和协作，围绕一个统一和一致的领域模型工作，传统的分析模型和设计模型不再割裂；显式地把业务领域和设计放到了软件开发的核心，软件人员和业务人员合作来构建领域模型，使得软件的交付质量更高且维护成本更低；利用限界上下文来分解问题域，识别核心领域，有效分解和控制了业务的复杂度；</p>
+<p>利用 DDD 提倡的分层、六边形等架构，分离了业务复杂度和技术复杂度，使得系统具备更强的扩展性和弹性；战术层面提供了元模型（聚合，实体，值对象，服务，工厂，仓储）帮助构建清晰、稳定，能快速响应变化和新需求能力的应用；</p>
+<p>DDD 构建的应用能快速方便地切到微服务；领域驱动设计给企业应用带来的稳定性、灵活性、扩展性和应对变化的响应力对于建立灵活前台、稳固中台能带来巨大的帮助作用。</p>
+<h2 id=ddd-过程>DDD 过程</h2>
+<p>领域驱动设计是一套面对复杂业务进行建模和设计的方法论和实践，建立了以领域为核心驱动力的设计体系。领域驱动设计分为 2 个主要过程：战略设计、战术设计 。</p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220220223845.png style=display:block;margin-left:auto;margin-right:auto;width:80% alt=20220220223845></div>
+<p>在战略设计阶段 ，面对纷繁复杂的业务需求，领域专家和研发团队进行紧密合作、充分沟通，进行事件风暴或场景驱动设计，分析需求并提炼知识，得到比较清晰的问题域，输出由领域专家和研发团队达成共识的统一语言（UL，Ubiquitous Language），基于统一语言对问题域进行分析和建模，识别业务边界，确定限界上下文，根据限界上下文划分独立的领域，建立限界上下文彼此之间的关系，接着引入系统上下文(System Context)确定系统的边界，并确定它的外部环境，包括与其集成的第三方系统与基础设施。利用 DDD 分层架构或六边形架构界定业务领域和技术实现的边界，让稳定的核心领域模型处于架构的最内部，避免技术实现和架构变动带来的影响。</p>
+<p>接着进入战术设计阶段 ，一个大的业务问题被分解为多个限界上下文（问题域），团队视野和专注就可以聚焦到每一个内聚的限界上下文，进行战术设计。战术设计的重点是利用领域驱动设计的元模型对领域的复杂性进行分解和建模。</p>
+<p>领域驱动设计强调和突出了领域模型的重要性，通过整个领域驱动设计过程，绑定领域模型和技术模型，以保证领域模型和技术模型在贯穿整个软件开发的生命周期中（需求分析、建模、架构、设计、编码、测试与持续重构）的强一致性。领域模型指导着软件设计以及技术编码实现，接着通过重构实践来挖掘隐式概念，完善统一语言和模型，运用设计模式改进设计与开发质量。以下是领域驱动设计的粗略过程：</p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220220223858.png style=display:block;margin-left:auto;margin-right:auto;width:80% alt=20220220223858></div>
+<h3 id=战略设计>战略设计</h3>
+<h4 id=提炼问题域>提炼问题域</h4>
+<p>回顾我们往日的分析和解决问题过程， 面对复杂问题，很多同学还没完全理解问题的全貌就已经在提出解决办法，这些解决办法只是针对问题的局部，经典图书《第五项修炼》把这种行为称为“反应式”的，碰到一个问题给出一个回应办法，而从这些问题整体来看这种方式会阻碍团队找出最佳解决方案。</p>
+<p>DDD 作为一种建模和架构方法，最大的突破是着重明确了区分了问题域和解决方案域，对业务问题的认知不是技术人员最擅长的，很多研发在碰到需求时，脑子本能就闪现表、类、服务、架构，把解决方案当终极问题来追求，而 DDD 要求研发进行痛苦的蜕变，在业务分析和领域建模阶段忘记技术解决方案。同时 DDD 要求领域专家和技术人员坐在一起通力合作、密切沟通来分析和建模，领域专家对业务有着深刻的理解，技术人员擅长技术实现和架构设计，而领域专家和技术人员由于工种的差异导致交流产生障碍，开发人员满脑子是技术语言，领域专家脑子也都是业务概念，如果按照本能基于自己的专业背景进行沟通，效率太低了，即使有翻译的角色也会产生理解偏差， DDD 的一个核心原则是所有人员包括领域专家和技术的进行任何沟通都使用一种基于模型的通用语言（UL，Ubiquitous Language），在代码中也是这样。</p>
+<p>DDD 帮助技术人员对需求进行本质思考和理解，关注点不在是聚焦在功能上，而是理解需求的真正意图和愿景，而非开发一个 feature，更深层次地理解隐含的愿景才能开发出真正地解决问题和创造价值的系统来。在提炼问题域过程中，领域专家和技术专家通过充分交流，进行需求分析和知识提炼，获得清晰的问题子域，识别出核心域、通用域、支撑域。通用域是开发该软件系统根本竞争力所在，也是领域建模的重心，建议分配最精锐的研发；</p>
+<p>通用域 是指多个子域依赖的通用功能子域，比如权限、邮件、日志系统等；支撑域 是指系统中非核心域和通用域的业务域。</p>
+<p>需求分析时从用例开始，列出达成业务目标需要的步骤，切忌跳转到解决方案上，识别出用于构建模型的知识，通过 UML 表示分析模型和业务模型，形成业务和技术人员达成共识的通用语言。</p>
+<p>该阶段领域专家只专注于问题域而不是解决方案，业务和技术人员基于 UL 沟通，并且考虑投入产出比，团队只为核心业务进行领域驱动设计并创建 UL，订单系统为下单模块进行 DDD，订单监控模块用普通的事务脚本方式来即可，我们通天塔的活动模板和积木业务非常复杂和核心，非常适合使用 DDD 来建模和架构设计，而通天塔后端的 Man 系统是面向开发者进行后端和线上业务监控的，进行 DDD 就是小题大做。</p>
+<h4 id=识别限界上下文bounded-context>识别限界上下文（Bounded Context）</h4>
+<p>Eric Evans 说：“对一个大型系统，领域模型的完全统一将是不可行的或者不划算的。”。DDD 的构建块不能盲目地应用在一个无限大的领域模型上，一个无限大的领域模型也无助于我们开发出优质的软件，限界上下文是分解领域模型的关键。限界上下文是一种“分而治之”的思维，也是一种高层的抽象机制，让人们对领域进行本质思考，简化问题和应对复杂性。</p>
+<p>限界上下文如同细胞，细胞是上下文，细胞壁是边界，细胞内的信息负责对代谢和遗传进行调控，细胞壁对细胞起着支持和保护防御的作用，控制物质进出，让对细胞有用的物质不能出来，有害的物质也不能进入细胞。而领域驱动设计中的限界上下文保证领域模型的一致性和完整性，清晰边界的控制力保证了领域的安全和稳定。</p>
+<h4 id=如何识别限界上下文>如何识别限界上下文？</h4>
+<p>明确了系统的问题域和业务期望后，梳理出主要的业务流程，这些业务流程体现了各种参与者在这个过程中通过业务活动共同协作，最终完成具有业务价值的领域功能。业务流程结合了参与角色（Who）、业务活动（What）和业务价值（Why）。在业务流程的基础上，我们就可以抽象出不同的业务场景，这些业务场景又由多个业务活动组成，可以利用领域场景分析方法剖析场景，以帮助我们识别业务活动，例如采用用例对场景进行分析，此时，一个业务活动实则就是一个用例。业务流程是一个由多个用户角色参与的动态过程，而业务场景则是这些用户角色执行业务活动的静态上下文。</p>
+<p>接下来，我们利用领域场景分析的用例分析方法剖析这些场景。通过参与者（Actor）来驱动对用例的识别，这些参与者恰好就是参与到场景业务活动的角色。根据用例描述出来的业务活动应该与统一语言一致，最好直接从统一语言中撷取。一旦准确地用统一语言描述出这些业务活动，我们就可以从语义相关性和功能相关性两个方面识别业务边界，进而提炼出初步的限界上下文。</p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220220223937.png style=display:block;margin-left:auto;margin-right:auto;width:80% alt=20220220223937></div>
+<p>从不同角度看待限界上下文，限界上下文会呈现出对不同对象的控制力。</p>
+<ul>
+<li>领域逻辑层面：限界上下文确定了领域模型的业务边界，维护了模型的完整性与一致性，从而降低系统的业务复杂度。</li>
+<li>团队合作层面：限界上下文确定了团队的工作边界，建立了团队之间的合作模式，提升了团队间的协作效率，“康威定律”告诉我们，系统设计（产品结构）等同组织形式，每个设计系统的组织，其产生的设计等同于组织之间的沟通结构，限界上下文指导产生的团队结构的工作模式是最高效的。</li>
+<li>技术架构层面：限界上下文确定了系统架构的应用边界，保证了系统层和上下文领域层各自的一致性，建立了上下文之间的集成方式。微服务中，限界上下文指导技术人员划分微服务的边界，通常一个限界上下文作为一个在独立进程中运行的微服务。</li>
+</ul>
+<p>DDD 驱动我们把每一个限界上下文设计成一个个“自治”的单元，自治要满足四个特点：</p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220220223951.png style=display:block;margin-left:auto;margin-right:auto;width:50% alt=20220220223951></div>
+<ul>
+<li>最小完备 是实现自治的基本条件，指的是自治单元履行的职责是根据业务价值的完整性和最小功能集进行设计的，这让自治单元无需求助其他自治单元获得信息，避免了不必要的依赖关系，同时也避免了不必要和不合适的职责添加到该自治单元上。</li>
+<li>自我履行意味着由自治单元自身决定要做什么。是否应该履行某职责，由限界上下文拥有的信息来决定。站在自治单元的角度去思考：“如果我拥有了这些信息，我究竟应该履行哪些职责？”这些职责属于当前上下文的活动范围，一旦超出，就该毫不犹豫地将不属于该范围的请求转交给别的上下文。自我履行其实意味着对知识的掌握，为避免风险，你要履行的职责一定是你掌握的知识范畴之内。</li>
+<li>稳定空间 指的是减少外界变化对限界上下文内部的影响。稳定空间符合开放封闭原则（OCP），即对修改是封闭的，对扩展是开放的，该原则其实体现了一个单元的封闭空间与开放空间。封闭空间体现为对细节的封装与隐藏，开放空间体现为对共性特征的抽象与统一，二者共同确保了整个空间的稳定。</li>
+<li>独立进化 指的是减少限界上下文的变化对外界的影响。用限界上下文的上下游关系来阐释，则稳定空间寓意下游限界上下文，无论上游怎么变，我自岿然不动。要做到独立进化，就必须保证对外公开接口的稳定性，因为这些接口被众多消费者依赖和调用，一旦发生变更，就会牵一发而动全身。一个独立进化的限界上下文，需要一个稳定、设计良好的接口设计，并在版本上考虑了兼容与演化。</li>
+</ul>
+<p>最小完备是基础，只有赋予了限界上下文足够的信息，才能保证它的自我履行。稳定空间与独立进化则一个对内一个对外，是对变化的有效应对，而它们又是通过最小完备和自我履行来保障限界上下文受到变化的影响最小。</p>
+<h4 id=上下文映射>上下文映射</h4>
+<p>限界上下文仅是一种对领域问题域的静态划分，还缺少一个重要的关注点，即：限界上下文之间是如何协作的？当我们发现彼此协作存在问题时，说明限界上下文的划分出现了问题，也是识别限界上下文的一种验证方法。Eric Evans 将这种体现限界上下文协作方式的要素称之为“上下文映射（Context Map）”，并给出了 9 种上下文映射关系：</p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220220224024.png style=display:block;margin-left:auto;margin-right:auto;width:80% alt=20220220224024></div>
+<p>Open Host Service 相当于微服务之间的协作关系；防腐层（Anti-Corruption）是一种高度防御性的策略，结合门面（Facade）模式和适配器（Adapter）设计模式，将模型与其需要集成的其他模型隔离开来，以防止被频繁变更或不稳定的依赖模型污染和腐败。</p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220220224039.png style=display:block;margin-left:auto;margin-right:auto;width:80% alt=20220220224039></div>
+<h3 id=架构设计>架构设计</h3>
+<blockquote>
+<p>“DDD 不需要特殊的架构，只要是能将技术问题与业务问题分离的架构即可。” &ndash; Eric Evans</p>
+</blockquote>
+<p>传统的三层架构分而治之、降低耦合、提高复用，但存在弊端，业务逻辑在不同层泄露，导致替换某一层变得困难、难以对核心逻辑完整测试。领域驱动设计给出了 DDD 分层架构、六边形架构、整洁架构等分层架构，它们遵循“关注点分离”原则，旨在分离和隔离业务复杂度和技术复杂度，凸显了领域模型，保证了领域模型的稳定性和一致性。</p>
+<h4 id=ddd-分层架构>DDD 分层架构</h4>
+<p>DDD 分层架构将属于业务逻辑的关注点放到领域层（Domain Layer）中，将支撑业务逻辑的技术实现放到基础设施层（Infrastructure Layer）中，DDD 创新性地引入了应用层（Application Layer），应用层扮演了两重角色。一作为业务逻辑的门面（Facade），暴露了能够体现业务用例的应用服务接口，又是业务逻辑与技术实现的粘合剂，实现二者之间的协作。下图展现的是一个典型的领域驱动设计分层架构。蓝色区域和业务逻辑相关，灰色区域与技术实现相关，二者泾渭分明，然后汇合在应用层。应用层确定了业务逻辑与技术实现的边界，通过直接依赖或者依赖注入（DI，Dependency Injection）的方式将二者结合起来。</p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220220224100.png style=display:block;margin-left:auto;margin-right:auto;width:60% alt=20220220224100></div>
+<p>我们详细介绍 DDD 分层架构中每一层的用意和设计：</p>
+<p>表现层（User Interface Layer）：负责向用户显示信息和解释用户命令，完成前端界面逻辑应用层（Application Layer） 很薄的一层，负责展现层与领域层之间的协调，不包含任何的业务逻辑和业务规则，也不保留业务对象的状态，是对领域服务的编排和转发。应用层扮演了两重角色。一作为业务逻辑的门面（Facade），暴露了能够体现业务用例的应用服务接口，又是业务逻辑与技术实现的粘合剂，实现二者之间的协作。一个 Application Service 代表一个 Use Case，一个 Use Case 代表了一个完整的业务场景，对于外部的客户来说，应用层是与客户协作的应用服务，接口代表是业务的含义。</p>
+<p>我们知道 DDD 分层架构的主要目标是分离业务复杂度与技术复杂度，应用层扮演的就是这样的分界线。从设计模式的角度来理解，应用层的 Application Service 是一个 Facade，对外部客户，作为代表 Use Case 的整体应用，对架构内部，它负责整合领域层的领域逻辑与非业务相关的横切关注点。</p>
+<p>应用中，存在与具体的业务逻辑无关，在整个系统中会被诸多服务调用的横切关注点实现，他们在职责上是内聚的，散布在所有代码层次中，包括异常处理、事务、监控、日志、认证和授权等。所以与横切关注点协作的服务应被定义为应用服务。</p>
+<p>领域层（Domain Layer），是业务软件的核心所在，也是软件架构的核心，包含了业务所涉及的领域对象（实体、值对象）、领域服务，负责表达业务概念、业务状态信息以及业务规则，具体表现形式就是领域模型。领域驱动设计提倡富领域模型，将业务逻辑归属到领域对象上。基础设施层（Infrastructure Layer）：基础层为各层提供通用的技术能力，包括：为应用层传递消息、提供 API 管理，为领域层提供数据库持久化机制等。它还能通过技术框架来支持各层之间的交互。</p>
+<h4 id=整洁架构clean-architecture>整洁架构（Clean Architecture）</h4>
+<p>整洁架构中，同心圆代表应用软件架构的不同部分，也是一种以领域模型为中心的架构，从里到外依次是 Entities、Use Cases、Interface Adapters、Frameworks and Drivers。整洁架构明确了各层的依赖关系，越往里，依赖越低，越抽象，外圆代码依赖只能指向内圆，内圆不知道外圆的任何事情。</p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220220224125.png style=display:block;margin-left:auto;margin-right:auto;width:50% alt=20220220224125></div>
+<h4 id=六边形架构hexagonal-architecture>六边形架构（Hexagonal Architecture）</h4>
+<p>又称为端口-适配器，六边形架构也是一种分层架构，不是从上下或左右分，而是从内部和外部来分。六边形架构在领域驱动设计和微服务架构设计中扮演了较重要的角色。六边形架构将系统分为内部（内部六边形）和外部，内部代表了应用的业务逻辑，外部代表应用的驱动逻辑、基础设施（诸如 REST，SOAP，NoSQL，SQL，Message Queue 等）或其他应用，UI 层、DB 层、和各种中间件层实际上是没有本质上区别的，都只是数据的输入和输出。内部通过端口和外部系统通信，端口代表了一定协议，以 API 呈现。</p>
+<p>一个端口对应多个适配器，对应多个外部系统，对这一类外部系统的归纳，不同的外部系统需要使用不同的适配器，适配器负责对协议进行转换。六边形架构有一个明确的关注点，一开始就强调把重心放在业务逻辑上，外部的驱动逻辑或被驱动逻辑存在可变性、可替换性，依赖具体技术细节。而核心的业务领域相对稳定，体现应用的核心价值。六边形的六并没有实质意义，只是为了留足够的空间放置端口和适配器，一般端口数不会超过 4 个。适配器可以分为 2 类，“主”、“从”适配器，也可称为“驱动者”和“被驱动者”。</p>
+<p>代码依赖只能使由外向内。对于驱动者适配器（也称主适配器，Driving Adapter），就是外部依赖内部的。但是对于被驱动者适配器（也称次适配器，Driven Adapter），实际是内部依赖外部，这时需要使用依赖倒置，由驱动者适配器将被驱动者适配器注入到应用内部，这时端口的定义在应用内部，但是实现是由适配器实现。</p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220220224141.png style=display:block;margin-left:auto;margin-right:auto;width:50% alt=20220220224141></div>
+<h4 id=cqrs命令与查询职责分离>CQRS（命令与查询职责分离）</h4>
+<p>CQRS 使用分离的接口将数据查询操作(Queries)和数据修改操作(Commands)分离开来，这也意味着在查询和更新过程中使用的数据模型也是不一样的，这样读和写逻辑就隔离开来了。使用 CQRS 分离了读写职责之后，可以对数据进行读写分离操作来改进性能，可扩展性和安全。DDD 和 CQRS 结合，可以分别对读和写建模：</p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220220224158.png style=display:block;margin-left:auto;margin-right:auto;width:50% alt=20220220224158></div>
+<p>查询模型是一种非规范化数据模型，不反映领域行为，只用于数据查询和显示。命令模型执行领域行为，在领域行为执行完成后通知查询模型。如果查询模型和领域模型共享数据源，则可以省略这一步；如果没有共享数据源，可以借助于发布订阅的消息模式通知到查询模型，从而达到数据最终一致性。对于写少读多的共享类通用数据服务（如主数据类应用）可以采用读写分离架构模式。单数据中心写入数据，通过发布订阅模式将数据副本分发到多数据中心。通过查询模型微服务，实现多数据中心数据共享和查询。</p>
+<p>通天塔从系统维度对数据库进行了读写分离，通天塔的 C 端应用和服务大部分是读场景，CMS 是多写应用，所以 CMS 的写走主库，读服务按照使用场景不同访问不同的从库，实时请求、同步数据到集市、数据中心等，这点也从数据库基础架构上保证了通天塔系统的低延时和稳定。</p>
+<h4 id=综述>综述</h4>
+<p>六边形架构的内部六边形、DDD 分层架构的领域层和应用层、以及整洁架构 Use Cases 和 Entities 区域实现了核心业务逻辑。但是核心业务逻辑又由两部分来完成：应用层和领域层逻辑。领域层实现了最核心的业务领域部分的逻辑，对外提供领域模型内细粒度的领域服务，应用层依赖领域层业务逻辑，通过服务组合和编排通过 API 网关向前台应用提供粗粒度的服务。业务需求变幻莫测，但我们总能在这些变化找出一些规律，用户体验、操作交互、以及业务流程的变化，往往只会导致 UI 层和流程的变化，总体来说，不管前端和外部如何变化，核心领域逻辑基本不会大变。把握好这个规律，我们就知道如何设计应用层和领域层，如何进行逻辑划界了。架构模型正是通过分层方式来控制需求变化对系统的影响，确保从外向里受的影响逐步减小。面向用户端的展现层可以快速响应外部需求进行调整和发布，灵活多变；应用层通过服务组合和编排实现业务流程的快速适配上线，以满足不同的业务场景；领域层是经过抽象和提炼的业务原子单元，是非常稳定的。这些架构设计的好处是可以保证领域层的核心业务逻辑不会因为外部需求和流程的变动而调整，对于建立前台灵活、中台稳固的架构能力是很有好处的。下面是 Herberto Graca 的一张包含了六边形、整洁、CQRS 等架构的综合图，全面的说明了这些架构的设计要点和不同的出发点。</p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220220224222.png style=display:block;margin-left:auto;margin-right:auto;width:80% alt=20220220224222></div>
+<h3 id=战术设计>战术设计</h3>
+<p>战略设计为我们提供一种高层视角来审视我们的软件系统，而战术设计则将战略设计的成果具体化和细节化，它关注的是单个限界上下文内部技术层面的实施。DDD 给我们提供了一整套技术工具集，包括实体、值对象、领域服务和资源库等，如下：</p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220220224252.png style=display:block;margin-left:auto;margin-right:auto;width:80% alt=20220220224252></div>
+<h4 id=行为饱满的领域对象>行为饱满的领域对象</h4>
+<p>让我们先看几个概念：</p>
+<ul>
+<li><strong>失血模型</strong> ：是仅包含属性的 getter/setter 方法的数据载体，没有行为和动作，业务逻辑由服务层完成。贫血模型：包括了属性、getter/setter 方法，和不依赖于持久化的原子领域逻辑，依赖于持久层的业务逻辑将会放到服务层中。</li>
+<li><strong>充血模型</strong>：包含了属性、getter/setter 方法、大部分的业务逻辑，包括依赖于持久层的业务逻辑，所以使用充血模型的领域层是依赖于持久层，服务层是很薄的一层，仅仅封装事务和少量逻辑。</li>
+<li><strong>胀血模型</strong>：取消了 Service 层，胀血模型就是把和业务逻辑不相关的其他应用逻辑（如授权、事务等）都放到领域模型中。</li>
+</ul>
+<p>胀血模型是显而易见不可取的，这里不做过多讨论。失血模型是绝大数企业开发应用的模式，一些火热的 ORM 工具比如 Hibernate，Entity Framework 实际上助长了失血模型的扩散，而且传统三层架构中的服务层，承受了太多的职责，如事务管理、业务逻辑、权限检查等，这违反了单一职责原则和关注分离原则，并且产生了大量的依赖和循环依赖，当业务复杂度上升时，服务层所包含的代码将会非常庞大和复杂，直接导致了维护成本和测试成本的上升。同时也会导致业务逻辑、状态会散落到在大量方法中，原本的代码意图会渐渐不明确，我们将这种情况称为由失血症引起的失忆症，它会导致系统变得愈发复杂和难以维护。</p>
+<p>采用领域模型的开发方式，将数据和业务逻辑封装在一起，从服务层移动到领域将业务逻辑模型中，这样服务层可以只负责应用逻辑（事务、日志、认证、监控、编排等），领域模型可以专门负责其相关的业务逻辑，相关的业务分别内聚到不同的领域模型中，与现实领域的业务对象映射，一些很有可能重复的业务代码都会被集中到一处，降低重复代码，提升业务逻辑的复用、可测试性和维护性。贫血模型和充血模型都是满足数据+行为的，应该采用哪种模式，大家这是一个争论了旷日持久的问题，关注点还是在于领域模型是否要依赖持久层，我个人还是偏重于贫血模式，依赖持久层就意味着单元测试的展开要更加困难，而且领域对象的生命周期应该交给外部模型才更合理。</p>
+<h4 id=领域驱动设计元模型>领域驱动设计元模型</h4>
+<p>实体（Entity） 实体是一种具有唯一身份标识的对象，具有持续的生命周期，除唯一标识其他属性是可变的。实体通过它的唯一标识被区分。例如实体订单 Order，标识为 oderId，通天塔的活动实体 Activity，标识为 activityId。</p>
+<ul>
+<li><strong>值对象（Value Object）</strong> 当我们只关心一个模型元素的属性时，应把它归类为值对象。应该使这个模型元素能够表示出其属性的意义，并为它提供相关功能。建议将值对象设计成一个不变（Immutable）对象，这样就不需要担心并发带来的诸如同步、冲突等问题了，这既降低了编程的难度，又可以无需引入额外的同步锁影响程序的性能。也不要为它分配任何标识，这样应用也无需去管理值对象的生命周期。值对象通过比较其属性（equals）区分是否是相同值对象。应该尽量使用值对象来建模而不是实体对象。在领域驱动设计中，提倡尽量定义值对象来替代基本类型，因为基本类型无法体现统一语言中的领域概念。假设一个实体定义了许多属性，这些属性都是基本类型，就会导致与这些属性相关的领域行为都要放到实体中，导致实体的职责变得不够单一。引入值对象后情况就不同了，我们可以利用合理的职责分配，将这些职责（领域行为）按照内聚性分配到各个值对象中，这个领域模型就能变得协作良好。值对象可以与其所在的实体对象保存在同一张表中，值对象的每一个属性保存为一列；值对象也可以独立于其所在的实体对象保存在另一张表中，值对象获得委派主键，该主键对客户端是不可见的。</li>
+<li><strong>聚合（Aggregate）</strong> 聚合中所包含的对象之间具有密不可分的联系，一个聚合中可以包含多个实体和值对象，因此聚合也被称为根实体。聚合是持久化的基本单位，它和资源库具有一一对应的关系。在聚合中，根是唯一允许外部对象保持对它的引用的元素，而边界内部的对象之间则可以互相引用。除根以外的其他 Entity 都有本地表示，但这些标识只有在聚合内部才需要加以区别，因为外部对象除了根 Entity 之外看不到其他对象。在一个聚合中直接引用另外一个聚合并不是 DDD 所鼓励的，但是我们可以通过 ID 的方式引用另外的聚合，聚合是一个事务的边界。如果一次业务操作涉及到了对多个聚合状态的更改，那么应该采用发布领域事件（参考下文）的方式通知相应的聚合。此时的数据一致性便从事务一致性变成了最终一致性（Eventual Consistency）。</li>
+<li><strong>领域服务（Domain Service）</strong> 建模一个领域概念，把它放在实体上不合适，它放在值对象上也不合适，或者碰到跨聚合实例业务逻辑，没办法合理放到某个实体中的业务逻辑，领域服务就是应对这些情况的服务。如果勉强地把这些重要的领域功能归为 Entity 或 Value Object 的职责，那么不是歪曲了基于模型的对象的定义，就是人为地增加了一些无意义的对象；领域服务和上文中提到的应用服务是不同的，领域服务是领域模型的一部分，而应用服务不是。应用服务是领域服务的客户，它将领域模型变成对外界可用的软件系统。如果将太多的领域逻辑放在领域服务上，实体和值对象上的业务逻辑会越来越弱，将变成贫血对象。在分层架构中要区分什么时候应该定义领域服务，什么时候应该定义应用服务，一个根本的判断依据是看需要封装的职责是否与领域相关。</li>
+<li><strong>资源库（Repository）</strong> 资源库用于保存和获取聚合对象，将实际的存储和查询技术封装起来，对外隐藏封装了数据访问机制。只为那些确实需要直接访问的聚合提供 Repository。让客户始终聚焦于模型，而将所有对象的存储和访问操作交给 Repository 来完成。资源库与 DAO 有些相似，但也存在显著区别，DAO 是比 Repository 更低的一层，同时 DAO 只是对数据库的一层很薄的封装，而资源库则更加具有领域特征，以“领域”为中心，所描述的是“领域语言”。另外，所有的实体都可以有相应的 DAO，但并不是所有的实体都有资源库，只有聚合才有相应的资源库。</li>
+<li><strong>领域事件（Repository）</strong> 在 Eric 的《领域驱动设计》中并没有提到领域事件，领域事件是最近几年才加入 DDD 生态系统的。在传统的软件系统中，对数据一致性的处理都是通过事务完成的，其中包括本地事务和全局事务。DDD 的一个重要原则便是一次事务只能更新一个聚合实例，但存在一个业务流程涉及修改多个聚合的事务，怎么实现整个业务流程的数据一致性呢？在 DDD 中，领域事件便可以用于处理上述问题，此时最终一致性取代了事务一致性，通过领域事件的方式达到各个组件之间的数据一致性。既然是领域事件，他们便应该从领域模型中发布，一个领域事件是指一个在领域中“有意义”的事件。领域事件的最终接收者可以是本限界上下文中的组件，也可以是另一个限界上下文。再进一步发展，事件驱动架构可以演变成事件源（Event Sourcing），即对聚合的获取并不是通过加载数据库中的瞬时状态，而是通过重放发生在聚合生命周期中的所有领域事件完成。</li>
+<li><strong>工厂（Factories）</strong> 当创建一个对象或创建整个聚合时，如果创建工作很复杂，或者暴露了过多的内部结构，则可以使用 Factory 进行封装，应该将创建复杂对象的实例和聚合的职责转移到一个单独的对象，这个对象本身在领域模型中可能没有职责，但它仍是领域设计的一部分。</li>
+<li><strong>模块（Modules）</strong> 可以从两种维度来观察模型，一是可以在 Module 中查看细节，而不会被整个模型淹没；二是观察 Module 之间的关系，而不考虑其内部细节。模块之间应该是低耦合的，而在模块内部则是高内聚的。模块并不仅仅是代码的划分，而且也是概念的划分。找到一种低耦合的概念组织方式，从而可以相互独立地理解和分析这些概念。对模型进行精化，直到可以根据高层领域概念对模型进行划分，同时相应的代码也不会产生耦合。</li>
+</ul>
+<h4 id=模型关系><em><strong>模型关系</strong></em></h4>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220220224335.png style=display:block;margin-left:auto;margin-right:auto;width:80% alt=20220220224335></div>
+<h4 id=对象概念>对象概念</h4>
+<p>VO（View Object）：视图对象，用于展示层，它的作用是把某个指定页面（或组件）的所有数据封装起来。DTO（Data Transfer Object）数据传输对象，分布式应用提供粗粒度的数据实体，也是一种数据传输协议，以减少分布式调用的次数，从而提高分布式调用的性能和降低网络负载，这里泛指用于展示层与服务层之间的数据传输对象。RPC 对外暴露的服务涉及对象 API 就是 DTO，如 JSF（京东 RPC 框架）、Dubbo。对比 VO：绝大多数应用场景下，VO 与 DTO 的属性值基本一致，但对于设计层面来说，概念上还是存在区别，DTO 代表服务层需要接收的数据和返回的数据，而 VO 代表展示层需要显示的数据。</p>
+<p>DO（Domain Object）：领域对象，就是从现实世界中抽象出来的有形或无形的业务实体。DO 不是简单的 POJO，它具有领域业务逻辑。PO（Persistent Object）：持久化对象。</p>
+<p>对比 DO：DO 和 PO 在绝大部分情况下是一一对应的，但也存在区别，例如 DO 在某些场景下不需要进行显式的持久化，只驻留在静态内存。同样 PO 也可以没有对应的 DO，比如一对多表关系在领域模型层面不需要单独的领域对象。</p>
+<p><em><strong>下面是这些对象在系统架构中的分布：</strong></em></p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220220224356.png style=display:block;margin-left:auto;margin-right:auto;width:50% alt=20220220224356></div>
+<p><strong>Domain Primitive</strong></p>
+<p>Domain Primitive 是一个在特定领域里，拥有精准定义的、可自我验证的、拥有丰富行为和业务逻辑的 Value Object，DP 使用业务域中的原生语言，可以是业务域的最小组成部分、也可以构建复杂组合。Domain Primitive 是 Value Object 的进阶版，在原始 VO 的基础上要求每个 DP 拥有概念的整体，而不仅仅是值对象。在 VO 的 Immutable 基础上增加了 Validity 和行为。在项目中，散落在各个服务或工具类里面的代码，都可以抽出来放在 DP 里，成为 DP 自己的行为或属性。原则是：所有抽离出来的方法要做到无状态，比如原来是 static 的方法。如果原来的方法有状态变更，需要将改变状态的部分和不改状态的部分分离，然后将无状态的部分融入 DP。因为 DP 也是一种 Object Value，本身不能带状态，所以一切需要改变状态的代码都不属于 DP 的范畴。Domain Primitive 涉及三种手段：</p>
+<p>让隐性的概念显性化（Make Implicit Concepts Explicit）通天塔活动类型就是一个简单的 int 类型，属于隐式概念，但活动类型包含了很多相关业务逻辑，比如类型名称，不同类型活动具有独特的 Icon，判断活动类型是否是判断等，我们把活动类型显性化，定义为一个 Value Object。</p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220220224414.png style=display:block;margin-left:auto;margin-right:auto;width:60% alt=20220220224414></div>
+<p>让隐性的上下文显性化（Make Implicit Context Explicit）当要实现一个功能或进行逻辑判断依赖多个概念时，可以把这些概念封装到一个独立地完整概念，也是一种 Object Value：</p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220220224430.png style=display:block;margin-left:auto;margin-right:auto;width:60% alt=20220220224430></div>
+<p>封装多对象行为（Encapsulate Multi-Object Behavior）常见推荐使用 Domain Primitive 的场景有：</p>
+<ul>
+<li>
+<p>有格式要求的 String：比如 Name，PhoneNumber，OrderNumber，ZipCode，Address 等。</p>
+</li>
+<li>
+<p>限制的 Integer：比如 OrderId（>0），Percentage（0-100%），Quantity（>=0）等。</p>
+</li>
+<li>
+<p>可枚举的 int：比如 Status（一般不用 Enum 因为反序列化问题）。</p>
+</li>
+<li>
+<p>Double 或 BigDecimal：一般用到的 Double 或 BigDecimal 都是有业务含义的，比如 Temperature、Money、Amount、ExchangeRate、Rating 等。</p>
+</li>
+<li>
+<p>复杂的数据结构：比如 Map&lt;String, List>等，尽量能把 Map 的所有操作包装掉，仅暴露必要行为，如通天塔的活动 Map 类。</p>
+</li>
+<li>
+<p>接口变得清晰可读，校验逻辑内聚，在接口边界外完成，无胶水代码，业务逻辑清晰可读，代码变得更容易测试，也更安全。</p>
+</li>
+</ul>
+<h2 id=总结>总结</h2>
+<p>DDD 不是一套框架，而是一种面向复杂问题的建模方法论和实践，所以在代码层面缺乏了足够的约束，导致 DDD 在实际应用中上手门槛很高，甚至可以说绝大部分人都对 DDD 的理解有所偏差。</p>
+<p>而且 DDD 诸多实践在真正践行时面临很多挑战，</p>
+<ul>
+<li>首先是领域专家和技术人员在建模过程中要摒弃自己固有的专业背景和思维定式，专注于问题域，基于统一语言紧密沟通和协作，具有深度业务领域理解和洞察的领域专家和一个精通领域建模和架构设计的技术团队一样少见，都必须经过长时间学习和实践的。</li>
+<li>其次技术人员必须转变思维和架构习惯，软件系统最终交付的是业务价值，不是功能和技术方案，一切要以问题和业务为核心去建模和架构。</li>
+</ul>
+<style>.feedback--answer{display:inline-block}.feedback--answer-no{margin-left:1em}.feedback--response{display:none;margin-top:1em}.feedback--response__visible{display:block}</style>
+<div class=d-print-none>
+<h2 class=feedback--title>Feedback</h2>
+<p class=feedback--question>Was this page helpful?</p>
+<button class="btn btn-primary mb-4 feedback--answer feedback--answer-yes">Yes</button>
+<button class="btn btn-primary mb-4 feedback--answer feedback--answer-no">No</button>
+<p class="feedback--response feedback--response-yes">
+Glad to hear it! Please <a href=https://github.com/infilos/infilos.com/issues/new>tell us how we can improve</a>.
+</p>
+<p class="feedback--response feedback--response-no">
+Sorry to hear that. Please <a href=https://github.com/infilos/infilos.com/issues/new>tell us how we can improve</a>.
+</p>
+</div>
+<script>const yesButton=document.querySelector('.feedback--answer-yes'),noButton=document.querySelector('.feedback--answer-no'),yesResponse=document.querySelector('.feedback--response-yes'),noResponse=document.querySelector('.feedback--response-no'),disableButtons=()=>{yesButton.disabled=!0,noButton.disabled=!0},sendFeedback=b=>{if(typeof ga!='function')return;const a={command:'send',hitType:'event',category:'Helpful',action:'click',label:window.location.pathname,value:b};ga(a.command,a.hitType,a.category,a.action,a.label,a.value)};yesButton.addEventListener('click',()=>{yesResponse.classList.add('feedback--response__visible'),disableButtons(),sendFeedback(1)}),noButton.addEventListener('click',()=>{noResponse.classList.add('feedback--response__visible'),disableButtons(),sendFeedback(0)})</script>
+<br>
+</div>
+</main>
+</div>
+</div>
+<footer class="bg-dark py-5 row d-print-none">
+<div class="container-fluid mx-sm-5">
+<div class=row>
+<div class="col-6 col-sm-4 text-xs-center order-sm-2">
+</div>
+<div class="col-6 col-sm-4 text-right text-xs-center order-sm-3">
+<ul class="list-inline mb-0">
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Weibo aria-label=Weibo>
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://weibo.com/u/3848950217>
+<i class="fab fa-weibo"></i>
+</a>
+</li>
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Twitter aria-label=Twitter>
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://twitter.com/zhange_zzg>
+<i class="fab fa-twitter"></i>
+</a>
+</li>
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title="Stack Overflow" aria-label="Stack Overflow">
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://stackoverflow.com>
+<i class="fab fa-stack-overflow"></i>
+</a>
+</li>
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=GitHub aria-label=GitHub>
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://github.com/infilos/infilos.com>
+<i class="fab fa-github"></i>
+</a>
+</li>
+</ul>
+</div>
+<div class="col-12 col-sm-4 text-center py-2 order-sm-2">
+<small class=text-white>&copy; 2022 infilos.com All Rights Reserved</small>
+</div>
+</div>
+</div>
+</footer>
+</div>
+<script src=/js/popper.min.js integrity=sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49 crossorigin=anonymous></script>
+<script src=/js/bootstrap.min.js integrity=sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy crossorigin=anonymous></script>
+<script src=/js/main.min.5c74b870c6953931a705f390a49c7e4c0a842ec5c83b24354758dd674343ed0d.js integrity="sha256-XHS4cMaVOTGnBfOQpJx+TAqELsXIOyQ1R1jdZ0ND7Q0=" crossorigin=anonymous></script>
+</body>
+</html>

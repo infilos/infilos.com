@@ -1,0 +1,508 @@
+<!doctype html><html lang=zh class=no-js>
+<head>
+<meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no">
+<meta name=generator content="Hugo 0.92.2">
+<meta name=ROBOTS content="INDEX, FOLLOW">
+<link rel="shortcut icon" href=/favicons/favicon.ico>
+<link rel=apple-touch-icon href=/favicons/apple-touch-icon-180x180.png sizes=180x180>
+<link rel=icon type=image/png href=/favicons/favicon-16x16.png sizes=16x16>
+<link rel=icon type=image/png href=/favicons/favicon-32x32.png sizes=32x32>
+<link rel=icon type=image/png href=/favicons/android-36x36.png sizes=36x36>
+<link rel=icon type=image/png href=/favicons/android-48x48.png sizes=48x48>
+<link rel=icon type=image/png href=/favicons/android-72x72.png sizes=72x72>
+<link rel=icon type=image/png href=/favicons/android-96x96.png sizes=96x96>
+<link rel=icon type=image/png href=/favicons/android-144x144.png sizes=144x144>
+<link rel=icon type=image/png href=/favicons/android-192x192.png sizes=192x192>
+<title>CH08-百亿量级 | infilos.com</title><meta property="og:title" content="CH08-百亿量级">
+<meta property="og:description" content="需求背景 该应用场景为 DMP 缓存存储需求，DMP 需要管理非常多的第三方 id 数据，其中包括各媒体 cookie 与自身 cookie（以下统称 supperid）的 mapping 关系，还包括了 supperid 的人口标签、移动端id（主要是idfa和imei）的人口标签，以及一些黑名单id、ip等数据。
+在 hdfs 的帮助下离线存储千亿记录并不困难，然而 DMP 还需要提供毫秒级的实时查询。由于 cookie 这种 id 本身具有不稳定性，所以很多的真实用户的浏览行为会导致大量的新 cookie 生成，只有及时同步 mapping 的数据才能命中 DMP 的人口标签，无法通过预热来获取较高的命中，这就跟缓存存储带来了极大的挑战。
+经过实际测试，对于上述数据，常规存储超过五十亿的kv记录就需要1T多的内存，如果需要做高可用多副本那带来的消耗是巨大的，另外kv的长短不齐也会带来很多内存碎片，这就需要超大规模的存储方案来解决上述问题。
+缓存内容 人⼝标签主要是 cookie、imei、idfa 以及其对应的 gender（性别）、age（年龄段）、geo（地域）等；mapping 关系主要是媒体 cookie 对 supperid 的映射。以下是数据存储⽰示例：
+1、PC端的ID：
+媒体编号-媒体 cookie=>supperid
+ supperid => { age=>年龄段编码，gender=>性别编码，geo=>地理位置编码 }  2、Device 端的 ID：
+ imei or idfa => { age=>年龄段编码，gender=>性别编码，geo=>地理位置编码 }  显然 PC 数据需要存储两种 key=>value 还有 key=>hashmap，⽽ Device 数据需要存储一种 key=>hashmap 即可。">
+<meta property="og:type" content="article">
+<meta property="og:url" content="/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/redis/ch08-%E7%99%BE%E4%BA%BF%E9%87%8F%E7%BA%A7/"><meta property="article:section" content="存储系统">
+<meta property="og:site_name" content="infilos.com">
+<meta itemprop=name content="CH08-百亿量级">
+<meta itemprop=description content="需求背景 该应用场景为 DMP 缓存存储需求，DMP 需要管理非常多的第三方 id 数据，其中包括各媒体 cookie 与自身 cookie（以下统称 supperid）的 mapping 关系，还包括了 supperid 的人口标签、移动端id（主要是idfa和imei）的人口标签，以及一些黑名单id、ip等数据。
+在 hdfs 的帮助下离线存储千亿记录并不困难，然而 DMP 还需要提供毫秒级的实时查询。由于 cookie 这种 id 本身具有不稳定性，所以很多的真实用户的浏览行为会导致大量的新 cookie 生成，只有及时同步 mapping 的数据才能命中 DMP 的人口标签，无法通过预热来获取较高的命中，这就跟缓存存储带来了极大的挑战。
+经过实际测试，对于上述数据，常规存储超过五十亿的kv记录就需要1T多的内存，如果需要做高可用多副本那带来的消耗是巨大的，另外kv的长短不齐也会带来很多内存碎片，这就需要超大规模的存储方案来解决上述问题。
+缓存内容 人⼝标签主要是 cookie、imei、idfa 以及其对应的 gender（性别）、age（年龄段）、geo（地域）等；mapping 关系主要是媒体 cookie 对 supperid 的映射。以下是数据存储⽰示例：
+1、PC端的ID：
+媒体编号-媒体 cookie=>supperid
+ supperid => { age=>年龄段编码，gender=>性别编码，geo=>地理位置编码 }  2、Device 端的 ID：
+ imei or idfa => { age=>年龄段编码，gender=>性别编码，geo=>地理位置编码 }  显然 PC 数据需要存储两种 key=>value 还有 key=>hashmap，⽽ Device 数据需要存储一种 key=>hashmap 即可。">
+<meta itemprop=wordCount content="262">
+<meta itemprop=keywords content><meta name=twitter:card content="summary">
+<meta name=twitter:title content="CH08-百亿量级">
+<meta name=twitter:description content="需求背景 该应用场景为 DMP 缓存存储需求，DMP 需要管理非常多的第三方 id 数据，其中包括各媒体 cookie 与自身 cookie（以下统称 supperid）的 mapping 关系，还包括了 supperid 的人口标签、移动端id（主要是idfa和imei）的人口标签，以及一些黑名单id、ip等数据。
+在 hdfs 的帮助下离线存储千亿记录并不困难，然而 DMP 还需要提供毫秒级的实时查询。由于 cookie 这种 id 本身具有不稳定性，所以很多的真实用户的浏览行为会导致大量的新 cookie 生成，只有及时同步 mapping 的数据才能命中 DMP 的人口标签，无法通过预热来获取较高的命中，这就跟缓存存储带来了极大的挑战。
+经过实际测试，对于上述数据，常规存储超过五十亿的kv记录就需要1T多的内存，如果需要做高可用多副本那带来的消耗是巨大的，另外kv的长短不齐也会带来很多内存碎片，这就需要超大规模的存储方案来解决上述问题。
+缓存内容 人⼝标签主要是 cookie、imei、idfa 以及其对应的 gender（性别）、age（年龄段）、geo（地域）等；mapping 关系主要是媒体 cookie 对 supperid 的映射。以下是数据存储⽰示例：
+1、PC端的ID：
+媒体编号-媒体 cookie=>supperid
+ supperid => { age=>年龄段编码，gender=>性别编码，geo=>地理位置编码 }  2、Device 端的 ID：
+ imei or idfa => { age=>年龄段编码，gender=>性别编码，geo=>地理位置编码 }  显然 PC 数据需要存储两种 key=>value 还有 key=>hashmap，⽽ Device 数据需要存储一种 key=>hashmap 即可。">
+<script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga('create','UA-123062585-1','auto'),ga('send','pageview'))</script>
+<script async src=https://www.google-analytics.com/analytics.js></script>
+<link rel=preload href=/scss/main.min.847464b684a6e89d7276700a5c500c17ab494dd1755b2654a7b27d8b59e3347e.css as=style>
+<link href=/scss/main.min.847464b684a6e89d7276700a5c500c17ab494dd1755b2654a7b27d8b59e3347e.css rel=stylesheet integrity>
+<script src=/js/jquery-3.5.1.min.js integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin=anonymous></script>
+</head>
+<body class=td-page>
+<header>
+<nav class="js-navbar-scroll navbar navbar-expand navbar-dark flex-column flex-md-row td-navbar">
+<a class=navbar-brand href=/>
+<span class=navbar-logo><svg id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512" style="enable-background:new 0 0 512 512"><path style="fill:#ffc107" d="M432.384 143.616c-4.165-4.164-10.917-4.164-15.083.0l-60.352 60.352c-4.164 4.165-4.164 10.917.0 15.083 21.187 20.463 54.951 19.876 75.413-1.311 19.962-20.668 19.962-53.435.0-74.102L432.384 143.616z"/><path style="fill:#607d8b" d="M42.667 277.334c-5.891.003-10.669-4.771-10.672-10.662-.002-4.338 2.623-8.245 6.64-9.882l234.667-96c5.455-2.233 11.687.38 13.92 5.835s-.38 11.687-5.835 13.92l-234.667 96C45.433 277.069 44.056 277.337 42.667 277.334z"/><path style="fill:#546e7a" d="M391.552 56.448l-32-32C343.938 8.745 322.689-.059 300.544.0h-3.755c-46.082.024-83.432 37.374-83.456 83.456v3.755c-.053 22.138 8.75 43.377 24.448 58.987l32 32c4.165 4.164 10.917 4.164 15.083.0L391.531 71.531C395.701 67.372 395.71 60.62 391.552 56.448z"/><path style="fill:#607d8b" d="M160 469.334c-3.279.006-6.379-1.497-8.405-4.075L34.261 315.926c-3.635-4.636-2.823-11.341 1.813-14.976s11.341-2.823 14.976 1.813l117.333 149.333c3.629 4.641 2.809 11.344-1.832 14.973C164.681 468.533 162.375 469.329 160 469.334z"/><path style="fill:#455a64" d="M487.467 86.848l-3.669-3.648c-37.687-36.557-97.71-36.197-134.955.811l-51.413 51.413c-36.996 37.25-37.357 97.263-.811 134.955l3.584 3.669c1.7 2.457 4.671 3.706 7.616 3.2 2.831.005 5.548-1.115 7.552-3.115l172.181-172.181c4.189-4.143 4.226-10.896.083-15.085-.028-.028-.055-.056-.083-.083L487.467 86.848z"/><g><path style="fill:#ffc107" d="M501.333 192H480c-5.891.0-10.667-4.776-10.667-10.667s4.776-10.667 10.667-10.667h21.333c5.891.0 10.667 4.776 10.667 10.667S507.225 192 501.333 192z"/><path style="fill:#ffc107" d="M394.667 298.667c-5.891.0-10.667-4.776-10.667-10.667v-21.333c0-5.891 4.776-10.667 10.667-10.667 5.891.0 10.667 4.776 10.667 10.667V288C405.333 293.891 400.558 298.667 394.667 298.667z"/><path style="fill:#ffc107" d="M480 277.334c-2.831.005-5.548-1.115-7.552-3.115l-21.333-21.333c-4.093-4.237-3.975-10.99.262-15.083 4.134-3.993 10.687-3.993 14.821.0l21.333 21.333c4.159 4.172 4.148 10.926-.024 15.085C485.514 276.209 482.815 277.327 480 277.334z"/></g><g><path style="fill:#455a64" d="M266.667 448H96c-29.455.0-53.333 23.878-53.333 53.333.0 5.891 4.776 10.667 10.667 10.667h256c5.891.0 10.667-4.776 10.667-10.667C320 471.878 296.122 448 266.667 448z"/><circle style="fill:#455a64" cx="32" cy="288" r="32"/></g><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/></svg></span><span class=font-weight-bold>infilos.com</span>
+</a>
+<div class="collapse navbar-collapse" id=navbarSupportedContent>
+<ul class="navbar-nav mr-auto">
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86>
+<span>基础</span>
+</a>
+</li>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80>
+<span>语言</span>
+</a>
+</li>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93>
+<span>框架库</span>
+</a>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+分布式
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%88%86%e5%b8%83%e5%bc%8f/base>基本构成</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+大数据
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%ad%98%e5%82%a8%e7%b3%bb%e7%bb%9f>存储系统</a>
+<a class=dropdown-item href=/%e6%9f%a5%e8%af%a2%e7%b3%bb%e7%bb%9f>查询系统</a>
+<a class=dropdown-item href=/%e6%b6%88%e6%81%af%e7%b3%bb%e7%bb%9f>消息系统</a>
+<a class=dropdown-item href=/%e5%a4%84%e7%90%86%e7%b3%bb%e7%bb%9f>处理系统</a>
+<a class=dropdown-item href=/%e6%95%b0%e6%8d%ae%e6%b2%bb%e7%90%86>数据治理</a>
+</div>
+</li>
+<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+<a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
+中后台
+<span>+</span>
+</a>
+<div class=dropdown-menu aria-labelledby=navbarDropdown>
+<a class=dropdown-item href=/%e5%9f%ba%e7%a1%80%e8%ae%be%e6%96%bd>基础设施</a>
+<a class=dropdown-item href=/%e7%94%a8%e6%88%b7%e7%b3%bb%e7%bb%9f>用户系统</a>
+<a class=dropdown-item href=/%e4%ba%a4%e4%ba%92%e7%95%8c%e9%9d%a2>交互界面</a>
+<a class=dropdown-item href=/%e4%b8%9a%e5%8a%a1%e7%b3%bb%e7%bb%9f>业务系统</a>
+</div>
+</li>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e6%a8%a1%e5%bc%8f%e6%9e%b6%e6%9e%84>
+<span>模式架构</span>
+</a>
+</li>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e9%9d%a2%e8%af%95%e9%97%ae%e7%ad%94>
+<span>面试</span>
+</a>
+</li>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e7%ae%a1%e7%90%86%e8%b7%af%e5%be%84>
+<span>管理</span>
+</a>
+</li>
+<li class=nav-item style=max-width:90px;min-width:10px>
+<a class=nav-link href=/%e5%bc%80%e6%ba%90%e9%a1%b9%e7%9b%ae>
+<span>开源</span>
+</a>
+</li>
+</ul>
+<div class="form-inline my-2 my-lg-0">
+<div class="nav-item nav-search-item my-2 my-md-0">
+<input type=search class="form-control td-search-input" placeholder="&#xf002; 站内搜索…" aria-label=站内搜索… autocomplete=off>
+</div>
+</div>
+</div>
+</nav>
+</header>
+<div class="container-fluid td-outer">
+<div class=td-main>
+<div class="row flex-xl-nowrap">
+<aside class="col-12 col-md-3 col-xl-2 td-sidebar d-print-none">
+<div id=td-sidebar-menu class=td-sidebar__inner>
+<div id=content-mobile>
+<form class="td-sidebar__search d-flex align-items-center">
+<input type=search class="form-control td-search-input" placeholder="&#xf002; 站内搜索…" aria-label=站内搜索… autocomplete=off>
+<button class="btn btn-link td-sidebar__toggle d-md-none p-0 ml-3 fas fa-bars" type=button data-toggle=collapse data-target=#td-section-nav aria-controls=td-docs-nav aria-expanded=false aria-label="Toggle section navigation">
+</button>
+</form>
+</div>
+<div id=content-desktop></div>
+<nav class="collapse td-sidebar-nav" id=td-section-nav>
+<ul class="td-sidebar-nav__section pr-md-3 ul-0">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e5ad98e582a8e7b3bbe7bb9f-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section tree-root" id=m-e5ad98e582a8e7b3bbe7bb9f><span>存储系统</span></a>
+<ul class=ul-1>
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e5ad98e582a8e7b3bbe7bb9frdbms-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/rdbms/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e5ad98e582a8e7b3bbe7bb9frdbms><span>RDBMS</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9frdbmsch01-e5b7a5e4bd9ce696b9e5bc8f-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/rdbms/ch01-%E5%B7%A5%E4%BD%9C%E6%96%B9%E5%BC%8F/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9frdbmsch01-e5b7a5e4bd9ce696b9e5bc8f><span>CH01-工作方式</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9frdbmsch02-e8aebee8aea1e79086e8aeba-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/rdbms/ch02-%E8%AE%BE%E8%AE%A1%E7%90%86%E8%AE%BA/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9frdbmsch02-e8aebee8aea1e79086e8aeba><span>CH02-设计理论</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9frdbmsch03-e8aebee8aea1e6b581e7a88b-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/rdbms/ch03-%E8%AE%BE%E8%AE%A1%E6%B5%81%E7%A8%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9frdbmsch03-e8aebee8aea1e6b581e7a88b><span>CH03-设计流程</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9frdbmsch04-e6a0b8e5bf83e79fa5e8af86-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/rdbms/ch04-%E6%A0%B8%E5%BF%83%E7%9F%A5%E8%AF%86/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9frdbmsch04-e6a0b8e5bf83e79fa5e8af86><span>CH04-核心知识</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fjdbc-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/jdbc/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e5ad98e582a8e7b3bbe7bb9fjdbc><span>JDBC</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e5ad98e582a8e7b3bbe7bb9fsql-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/sql/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e5ad98e582a8e7b3bbe7bb9fsql><span>SQL</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fsqlch01-e8afade6b395e59fbae7a180-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/sql/ch01-%E8%AF%AD%E6%B3%95%E5%9F%BA%E7%A1%80/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fsqlch01-e8afade6b395e59fbae7a180><span>CH01-语法基础</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fsqlch02-e69fa5e8afa2e7bb83e4b9a0-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/sql/ch02-%E6%9F%A5%E8%AF%A2%E7%BB%83%E4%B9%A0/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fsqlch02-e69fa5e8afa2e7bb83e4b9a0><span>CH02-查询练习</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fsqlch03-e69fa5e8afa2e8bf9be998b6-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/sql/ch03-%E6%9F%A5%E8%AF%A2%E8%BF%9B%E9%98%B6/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fsqlch03-e69fa5e8afa2e8bf9be998b6><span>CH03-查询进阶</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fsqlch04-e69fa5e8afa2e4bc98e58c96-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/sql/ch04-%E6%9F%A5%E8%AF%A2%E4%BC%98%E5%8C%96/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fsqlch04-e69fa5e8afa2e4bc98e58c96><span>CH04-查询优化</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fsqlch05-e8bf9ee68ea5e69fa5e8afa2-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/sql/ch05-%E8%BF%9E%E6%8E%A5%E6%9F%A5%E8%AF%A2/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fsqlch05-e8bf9ee68ea5e69fa5e8afa2><span>CH05-连接查询</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fsqlch06-e5ad90e69fa5e8afa2-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/sql/ch06-%E5%AD%90%E6%9F%A5%E8%AF%A2/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fsqlch06-e5ad90e69fa5e8afa2><span>CH06-子查询</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fsqlch07-e8bf90e7bbb4e8afade58fa5-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/sql/ch07-%E8%BF%90%E7%BB%B4%E8%AF%AD%E5%8F%A5/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fsqlch07-e8bf90e7bbb4e8afade58fa5><span>CH07-运维语句</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e5ad98e582a8e7b3bbe7bb9fmysql><span>MySQL</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch01-e695b0e68daee7b1bbe59e8b-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql/ch01-%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch01-e695b0e68daee7b1bbe59e8b><span>CH01-数据类型</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch02-e5ad98e582a8e5bc95e6938e-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql/ch02-%E5%AD%98%E5%82%A8%E5%BC%95%E6%93%8E/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch02-e5ad98e582a8e5bc95e6938e><span>CH02-存储引擎</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch03-e7b4a2e5bc95be6a091-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql/ch03-%E7%B4%A2%E5%BC%95b+%E6%A0%91/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch03-e7b4a2e5bc95be6a091><span>CH03-索引B+树</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch04-e680a7e883bde4bc98e58c96-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql/ch04-%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch04-e680a7e883bde4bc98e58c96><span>CH04-性能优化</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch05-e58886e5ba93e58886e8a1a8-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql/ch05-%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch05-e58886e5ba93e58886e8a1a8><span>CH05-分库分表</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch06-e5a48de588b6e58886e7a6bb-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql/ch06-%E5%A4%8D%E5%88%B6%E5%88%86%E7%A6%BB/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch06-e5a48de588b6e58886e7a6bb><span>CH06-复制分离</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch07-e689a7e8a18ce8bf87e7a88b-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql/ch07-%E6%89%A7%E8%A1%8C%E8%BF%87%E7%A8%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch07-e689a7e8a18ce8bf87e7a88b><span>CH07-执行过程</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch08-e58f82e88083e8a784e7baa6-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql/ch08-%E5%8F%82%E8%80%83%E8%A7%84%E7%BA%A6/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch08-e58f82e88083e8a784e7baa6><span>CH08-参考规约</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practice-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practice><span>MySQL 实战</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech01-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch01/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech01><span>CH01-基础架构</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech02-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch02/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech02><span>CH02-日志系统</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech03-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch03/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech03><span>CH03-事务隔离</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech04-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch04/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech04><span>CH04-索引-上</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech05-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch05/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech05><span>CH05-索引-下</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech06-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch06/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech06><span>CH06-全局锁与表锁</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech07-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch07/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech07><span>CH07-行级锁</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech08-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch08/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech08><span>CH08-MVCC</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech09-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch09/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech09><span>CH09-索引选择</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech10-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch10/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech10><span>CH10-优化器</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech11-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch11/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech11><span>CH11-字符串索引</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech12-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch12/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech12><span>CH12-刷脏页</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech13-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch13/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech13><span>CH13-空间回收</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech14-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch14/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech14><span>CH14-Count 实现</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech15-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch15/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech15><span>CH15-日志与索引</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech16-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch16/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech16><span>CH16-Orderby 实现</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech17-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch17/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech17><span>CH17-随机查询</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech18-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch18/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech18><span>CH18-性能案例</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech19-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch19/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech19><span>CH19-单行优化</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech20-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch20/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech20><span>CH20-幻读</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech21-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch21/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech21><span>CH21-加锁规则</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech22-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch22/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech22><span>CH22-优化场景</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech23-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch23/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech23><span>CH23-可靠保证</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech24-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch24/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech24><span>CH24-主备一致</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech25-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch25/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech25><span>CH25-高可用</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech26-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch26/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech26><span>CH26-备库延迟</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech27-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch27/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech27><span>CH27-主库故障</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech28-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch28/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech28><span>CH28-读写分离</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech29-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch29/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech29><span>CH29-故障判断</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech30-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch30/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech30><span>CH30-动态观察锁</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech31-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch31/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech31><span>CH31-误删恢复</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech32-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch32/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech32><span>CH32-KILL 语句</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech33-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch33/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech33><span>CH33-内存占用</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech34-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch34/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech34><span>CH34-JOIN 应用</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech35-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch35/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech35><span>CH35-JOIN 优化</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech36-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch36/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech36><span>CH36-临时表重名</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech37-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch37/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech37><span>CH37-内部临时表</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech38-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch38/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech38><span>CH38-Memory 引擎</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech39-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch39/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech39><span>CH39-自增主键连续性</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech40-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch40/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech40><span>INSERT 相关锁</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech41-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch41/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech41><span>CH41-表快速复制</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech42-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch42/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech42><span>CH42-GRANT 授权</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech43-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch43/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech43><span>CH43-分区表</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech44-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch44/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech44><span>CH44-问题答疑</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-internal-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-internal/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-internal><span>MySQL 内幕</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e5ad98e582a8e7b3bbe7bb9fredis-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/redis/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e5ad98e582a8e7b3bbe7bb9fredis><span>Redis</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fredisch01-e59fbae69cace7b1bbe59e8b-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/redis/ch01-%E5%9F%BA%E6%9C%AC%E7%B1%BB%E5%9E%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fredisch01-e59fbae69cace7b1bbe59e8b><span>CH01-基本类型</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fredisch02-e9ab98e7baa7e7b1bbe59e8b-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/redis/ch02-%E9%AB%98%E7%BA%A7%E7%B1%BB%E5%9E%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fredisch02-e9ab98e7baa7e7b1bbe59e8b><span>CH02-高级类型</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fredisch03-stream-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/redis/ch03-stream/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fredisch03-stream><span>CH03-Stream</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fredisch04-e5afb9e8b1a1e69cbae588b6-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/redis/ch04-%E5%AF%B9%E8%B1%A1%E6%9C%BA%E5%88%B6/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fredisch04-e5afb9e8b1a1e69cbae588b6><span>CH04-对象机制</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fredisch05-e5ba95e5b182e7bb93e69e84-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/redis/ch05-%E5%BA%95%E5%B1%82%E7%BB%93%E6%9E%84/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fredisch05-e5ba95e5b182e7bb93e69e84><span>CH05-底层结构</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fredisch06-e7bc93e5ad98e69cbae588b6-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/redis/ch06-%E7%BC%93%E5%AD%98%E6%9C%BA%E5%88%B6/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fredisch06-e7bc93e5ad98e69cbae588b6><span>CH06-缓存机制</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fredisch07-e9ab98e58fafe794a8e680a7-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/redis/ch07-%E9%AB%98%E5%8F%AF%E7%94%A8%E6%80%A7/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fredisch07-e9ab98e58fafe794a8e680a7><span>CH07-高可用性</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child active-path" id=m-e5ad98e582a8e7b3bbe7bb9fredisch08-e799bee4babfe9878fe7baa7-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/redis/ch08-%E7%99%BE%E4%BA%BF%E9%87%8F%E7%BA%A7/ class="align-left pl-0 active td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fredisch08-e799bee4babfe9878fe7baa7><span class=td-sidebar-nav-active-item>CH08-百亿量级</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fredisch09-e5ae9ee78eb0e6909ce7b4a2-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/redis/ch09-%E5%AE%9E%E7%8E%B0%E6%90%9C%E7%B4%A2/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fredisch09-e5ae9ee78eb0e6909ce7b4a2><span>CH09-实现搜索</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fredisch10-e5b8b8e8a781e997aee9a298-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/redis/ch10-%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fredisch10-e5b8b8e8a781e997aee9a298><span>CH10-常见问题</span></a>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</div>
+</aside>
+<aside class="d-none d-xl-block col-xl-2 td-sidebar-toc d-print-none">
+<div class="td-page-meta ml-2 pb-1 pt-2 mb-0">
+<a href=https://github.com/infilos/infilos.com/edit/master/content/zh/%e5%ad%98%e5%82%a8%e7%b3%bb%e7%bb%9f/redis/CH08-%e7%99%be%e4%ba%bf%e9%87%8f%e7%ba%a7.md target=_blank><i class="fa fa-edit fa-fw"></i> 编辑此页</a>
+<a href="https://github.com/infilos/infilos.com/new/master/content/zh/%e5%ad%98%e5%82%a8%e7%b3%bb%e7%bb%9f/redis/CH08-%e7%99%be%e4%ba%bf%e9%87%8f%e7%ba%a7.md?filename=change-me.md&value=---%0Atitle%3A+%22Long+Page+Title%22%0AlinkTitle%3A+%22Short+Nav+Title%22%0Aweight%3A+100%0Adescription%3A+%3E-%0A+++++Page+description+for+heading+and+indexes.%0A---%0A%0A%23%23+Heading%0A%0AEdit+this+template+to+create+your+new+page.%0A%0A%2A+Give+it+a+good+name%2C+ending+in+%60.md%60+-+e.g.+%60getting-started.md%60%0A%2A+Edit+the+%22front+matter%22+section+at+the+top+of+the+page+%28weight+controls+how+its+ordered+amongst+other+pages+in+the+same+directory%3B+lowest+number+first%29.%0A%2A+Add+a+good+commit+message+at+the+bottom+of+the+page+%28%3C80+characters%3B+use+the+extended+description+field+for+more+detail%29.%0A%2A+Create+a+new+branch+so+you+can+preview+your+new+file+and+request+a+review+via+Pull+Request.%0A" target=_blank><i class="fa fa-edit fa-fw"></i> 添加子页面</a>
+<a href="https://github.com/infilos/infilos.com/issues/new?title=CH08-%e7%99%be%e4%ba%bf%e9%87%8f%e7%ba%a7" target=_blank><i class="fab fa-github fa-fw"></i> 提交文档问题</a>
+<a id=print href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/redis/_print/><i class="fa fa-print fa-fw"></i> 整节打印</a>
+</div>
+<div class=td-toc><nav id=TableOfContents>
+<ul>
+<li><a href=#需求背景>需求背景</a></li>
+<li><a href=#缓存内容>缓存内容</a></li>
+<li><a href=#数据特点>数据特点</a></li>
+<li><a href=#技术挑战>技术挑战</a></li>
+<li><a href=#解决方案>解决方案</a>
+<ul>
+<li><a href=#淘汰策略>淘汰策略</a></li>
+<li><a href=#减少膨胀>减少膨胀</a></li>
+<li><a href=#减少碎片>减少碎片</a></li>
+</ul>
+</li>
+</ul>
+</nav></div>
+</aside>
+<main class="col-12 col-md-9 col-xl-8 pl-md-5" role=main>
+<nav aria-label=breadcrumb class="d-none d-md-block d-print-none">
+<ol class="breadcrumb spb-1">
+<li class=breadcrumb-item>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/>存储系统</a>
+</li>
+<li class=breadcrumb-item>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/redis/>Redis</a>
+</li>
+<li class="breadcrumb-item active" aria-current=page>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/redis/ch08-%E7%99%BE%E4%BA%BF%E9%87%8F%E7%BA%A7/>CH08-百亿量级</a>
+</li>
+</ol>
+</nav>
+<div class=td-content>
+<h1>CH08-百亿量级</h1>
+<header class=article-meta>
+</header>
+<h2 id=需求背景>需求背景</h2>
+<p>该应用场景为 DMP 缓存存储需求，DMP 需要管理非常多的第三方 id 数据，其中包括各媒体 cookie 与自身 cookie（以下统称 supperid）的 mapping 关系，还包括了 supperid 的人口标签、移动端id（主要是idfa和imei）的人口标签，以及一些黑名单id、ip等数据。</p>
+<p>在 hdfs 的帮助下离线存储千亿记录并不困难，然而 DMP 还需要提供毫秒级的实时查询。由于 cookie 这种 id 本身具有不稳定性，所以很多的真实用户的浏览行为会导致大量的新 cookie 生成，只有及时同步 mapping 的数据才能命中 DMP 的人口标签，无法通过预热来获取较高的命中，这就跟缓存存储带来了极大的挑战。</p>
+<p>经过实际测试，对于上述数据，常规存储超过五十亿的kv记录就需要1T多的内存，如果需要做高可用多副本那带来的消耗是巨大的，另外kv的长短不齐也会带来很多内存碎片，这就需要超大规模的存储方案来解决上述问题。</p>
+<h2 id=缓存内容>缓存内容</h2>
+<p>人⼝标签主要是 cookie、imei、idfa 以及其对应的 gender（性别）、age（年龄段）、geo（地域）等；mapping 关系主要是媒体 cookie 对 supperid 的映射。以下是数据存储⽰示例：</p>
+<p><strong>1、PC端的ID：</strong></p>
+<p>媒体编号-媒体 cookie=>supperid</p>
+<ul>
+<li><code>supperid => { age=>年龄段编码，gender=>性别编码，geo=>地理位置编码 }</code></li>
+</ul>
+<p><strong>2、Device 端的 ID：</strong></p>
+<ul>
+<li><code>imei or idfa => { age=>年龄段编码，gender=>性别编码，geo=>地理位置编码 }</code></li>
+</ul>
+<p>显然 PC 数据需要存储两种 key=>value 还有 key=>hashmap，⽽ Device 数据需要存储一种 key=>hashmap 即可。</p>
+<h2 id=数据特点>数据特点</h2>
+<p>短 key 短 value：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>其中superid为21位数字：比如1605242015141689522；
+imei为小写md5：比如2d131005dc0f37d362a5d97094103633；
+idfa为大写带”-”md5：比如：51DFFC83-9541-4411-FA4F-356927E39D04；
+</code></pre></div><ul>
+<li>媒体自身的 cookie 长短不一；</li>
+<li>需要为全量数据提供服务，supperid 是百亿级、媒体映射是千亿级、移动 id 是几十亿级；</li>
+<li>每天有十亿级别的 mapping 关系产生；</li>
+<li>对于较大时间窗口内可以预判热数据（有一些存留的稳定 cookie）；</li>
+<li>对于当前 mapping 数据无法预判热数据，有很多是新生成的 cookie；</li>
+</ul>
+<h2 id=技术挑战>技术挑战</h2>
+<ol>
+<li>长短不一容易造成内存碎片；</li>
+<li>由于指针大量存在，内存膨胀率比较高，一般在7倍，纯内存存储通病；</li>
+<li>虽然可以通过cookie的行为预判其热度，但每天新生成的id依然很多（百分比比较敏感，暂不透露）；</li>
+<li>由于服务要求在公网环境（国内公网延迟60ms以下）下100ms以内，所以原则上当天新更新的 mapping 和人口标签需要全部 in memory，而不会让请求落到后端的冷数据；</li>
+<li>业务方面，所有数据原则上至少保留35天甚至更久；</li>
+<li>内存至今也比较昂贵，百亿级Key乃至千亿级存储方案势在必行！</li>
+</ol>
+<h2 id=解决方案>解决方案</h2>
+<h3 id=淘汰策略>淘汰策略</h3>
+<p>存储吃紧的一个重要原因在于每天会有很多新数据入库，所以及时清理数据尤为重要。主要方法就是发现和保留热数据淘汰冷数据。</p>
+<p>网民的量级远远达不到几十亿的规模，id 有一定的生命周期，会不断的变化。所以很大程度上我们存储的id实际上是无效的。而查询其实前端的逻辑就是广告曝光，跟人的行为有关，所以一个 id 在某个时间窗口的（可能是一个campaign，半个月、几个月）访问行为上会有一定的重复性。</p>
+<p>数据初始化之前，我们先利用 HBase 将日志的id聚合去重，划定TTL的范围，一般是35天，这样可以砍掉近35天未出现的id。另外在 Redis 中设置过期时间是35天，当有访问并命中时，对 key 进行续命，延长过期时间，未在 35 天出现的自然淘汰。这样可以针对稳定 cookie 或 id 有效，实际证明，续命的方法对 idfa 和 imei 比较实用，长期积累可达到非常理想的命中。</p>
+<h3 id=减少膨胀>减少膨胀</h3>
+<p>Hash 表空间大小和 Key 的个数决定了冲突率（或者用负载因子衡量），再合理的范围内，key 越多自然hash表空间越大，消耗的内存自然也会很大。再加上大量指针本身是长整型，所以内存存储的膨胀十分可观。先来谈谈如何把 key 的个数减少。</p>
+<p>大家先来了解一种存储结构。我们期望将 key1=>value1 存储在 redis 中，那么可以按照如下过程去存储。先用固定长度的随机散列md5(key)值作为 redis 的 key，我们称之为 BucketId，而将key1=>value1存储在hashmap结构中，这样在查询的时候就可以让client按照上面的过程计算出散列，从而查询到 value1。</p>
+<p>过程变化简单描述为：get(key1) -> hget(md5(key1), key1) 从而得到 value1。</p>
+<p>如果我们通过预先计算，让很多key可以在BucketId空间里碰撞，那么可以认为一个BucketId下面挂了多个key。比如平均每个BucketId下面挂10个key，那么理论上我们将会减少超过90%的redis key的个数。</p>
+<p>具体实现起来有一些麻烦，而且用这个方法之前你要想好容量规模。我们通常使用的 md5 是 32 位的 hexString（16进制字符），它的空间是 128bit，这个量级太大了，我们需要存储的是百亿级，大约是 33 bit（2的33次方），所以我们需要有一种机制计算出合适位数的散列，而且为了节约内存，我们需要利用全部字符类型（ASCII码在0~127之间）来填充，而不用 HexString，这样 Key 的长度可以缩短到一半。</p>
+<p>下面是具体的实现方式：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>static</span> <span style=color:#204a87;font-weight:700>byte</span> <span style=color:#ce5c00;font-weight:700>[]</span> <span style=color:#000>getBucketId</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#204a87;font-weight:700>byte</span> <span style=color:#ce5c00;font-weight:700>[]</span> <span style=color:#000>key</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>Integer</span> <span style=color:#000>bit</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>
+    <span style=color:#000>MessageDigest</span> <span style=color:#000>mdInst</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>MessageDigest</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>getInstance</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;MD5&#34;</span><span style=color:#ce5c00;font-weight:700>);</span>
+    <span style=color:#000>mdInst</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>update</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>key</span><span style=color:#ce5c00;font-weight:700>);</span>
+    <span style=color:#204a87;font-weight:700>byte</span> <span style=color:#ce5c00;font-weight:700>[]</span> <span style=color:#000>md</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>mdInst</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>digest</span><span style=color:#ce5c00;font-weight:700>();</span>
+    <span style=color:#204a87;font-weight:700>byte</span> <span style=color:#ce5c00;font-weight:700>[]</span> <span style=color:#000>r</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#204a87;font-weight:700>byte</span><span style=color:#ce5c00;font-weight:700>[(</span><span style=color:#000>bit</span><span style=color:#ce5c00;font-weight:700>-</span><span style=color:#000>1</span><span style=color:#ce5c00;font-weight:700>)/</span><span style=color:#000>7</span> <span style=color:#ce5c00;font-weight:700>+</span> <span style=color:#000>1</span><span style=color:#ce5c00;font-weight:700>];</span><span style=color:#8f5902;font-style:italic>// 因为一个字节中只有7位能够表示成单字符，ascii码是7位
+</span><span style=color:#8f5902;font-style:italic></span>    <span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>a</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#204a87;font-weight:700>int</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#000>Math</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>pow</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>2</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>bit</span><span style=color:#ce5c00;font-weight:700>%</span><span style=color:#000>7</span><span style=color:#ce5c00;font-weight:700>)-</span><span style=color:#000>2</span><span style=color:#ce5c00;font-weight:700>;</span>
+    <span style=color:#000>md</span><span style=color:#ce5c00;font-weight:700>[</span><span style=color:#000>r</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>length</span><span style=color:#ce5c00;font-weight:700>-</span><span style=color:#000>1</span><span style=color:#ce5c00;font-weight:700>]</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#204a87;font-weight:700>byte</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>md</span><span style=color:#ce5c00;font-weight:700>[</span><span style=color:#000>r</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>length</span><span style=color:#ce5c00;font-weight:700>-</span><span style=color:#000>1</span><span style=color:#ce5c00;font-weight:700>]</span> <span style=color:#ce5c00;font-weight:700>&amp;</span> <span style=color:#000>a</span><span style=color:#ce5c00;font-weight:700>);</span>
+    <span style=color:#000>System</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>arraycopy</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>md</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>0</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>r</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>0</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>r</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>length</span><span style=color:#ce5c00;font-weight:700>);</span>
+    <span style=color:#204a87;font-weight:700>for</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>i</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#000>0</span><span style=color:#ce5c00;font-weight:700>;</span><span style=color:#000>i</span><span style=color:#ce5c00;font-weight:700>&lt;</span><span style=color:#000>r</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>length</span><span style=color:#ce5c00;font-weight:700>;</span><span style=color:#000>i</span><span style=color:#ce5c00;font-weight:700>++)</span> <span style=color:#ce5c00;font-weight:700>{</span>
+    	<span style=color:#204a87;font-weight:700>if</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>r</span><span style=color:#ce5c00;font-weight:700>[</span><span style=color:#000>i</span><span style=color:#ce5c00;font-weight:700>]&lt;</span><span style=color:#000>0</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#000>r</span><span style=color:#ce5c00;font-weight:700>[</span><span style=color:#000>i</span><span style=color:#ce5c00;font-weight:700>]</span> <span style=color:#ce5c00;font-weight:700>&amp;=</span> <span style=color:#000>127</span><span style=color:#ce5c00;font-weight:700>;</span>    
+    <span style=color:#ce5c00;font-weight:700>}</span>    
+    <span style=color:#204a87;font-weight:700>return</span> <span style=color:#000>r</span><span style=color:#ce5c00;font-weight:700>;</span>
+<span style=color:#ce5c00;font-weight:700>}</span>
+</code></pre></div><p>参数 bit 决定了最终 BucketId 空间的大小，空间大小集合是2的整数幂次的离散值。这里解释一下为何一个字节中只有7位可用，是因为 redis 存储 key 时需要是 ASCII（0~127），而不是 byte array。如果规划百亿级存储，计划每个桶分担10个kv，那么我们只需 2^30=1073741824 的桶个数即可，也就是最终 key 的个数。</p>
+<h3 id=减少碎片>减少碎片</h3>
+<p>碎片主要原因在于内存无法对齐、过期删除后，内存无法重新分配。通过上文描述的方式，我们可以将人口标签和mapping数据按照上面的方式去存储，这样的好处就是redis key是等长的。另外对于hashmap中的key我们也做了相关优化，截取cookie或者deviceid的后六位作为key，这样也可以保证内存对齐，理论上会有冲突的可能性，但在同一个桶内后缀相同的概率极低(试想id几乎是随机的字符串，随意10个由较长字符组成的id后缀相同的概率*桶样本数=发生冲突的期望值&#171;0.05,也就是说出现一个冲突样本则是极小概率事件，而且这个概率可以通过调整后缀保留长度控制期望值)。而 value 只存储 age、gender、geo 的编码，用三个字节去存储。</p>
+<p>另外提一下，减少碎片还有个很 low 但是有效的方法，将 slave 重启，然后强制的 failover 切换主从，这样相当于给master整理的内存的碎片。</p>
+<p>推荐 Google-tcmalloc， facebook-jemalloc 内存分配，可以在 value 不大时减少内存碎片和内存消耗。有人测过大 value 情况下反而libc更节约。</p>
+<style>.feedback--answer{display:inline-block}.feedback--answer-no{margin-left:1em}.feedback--response{display:none;margin-top:1em}.feedback--response__visible{display:block}</style>
+<div class=d-print-none>
+<h2 class=feedback--title>Feedback</h2>
+<p class=feedback--question>Was this page helpful?</p>
+<button class="btn btn-primary mb-4 feedback--answer feedback--answer-yes">Yes</button>
+<button class="btn btn-primary mb-4 feedback--answer feedback--answer-no">No</button>
+<p class="feedback--response feedback--response-yes">
+Glad to hear it! Please <a href=https://github.com/infilos/infilos.com/issues/new>tell us how we can improve</a>.
+</p>
+<p class="feedback--response feedback--response-no">
+Sorry to hear that. Please <a href=https://github.com/infilos/infilos.com/issues/new>tell us how we can improve</a>.
+</p>
+</div>
+<script>const yesButton=document.querySelector('.feedback--answer-yes'),noButton=document.querySelector('.feedback--answer-no'),yesResponse=document.querySelector('.feedback--response-yes'),noResponse=document.querySelector('.feedback--response-no'),disableButtons=()=>{yesButton.disabled=!0,noButton.disabled=!0},sendFeedback=b=>{if(typeof ga!='function')return;const a={command:'send',hitType:'event',category:'Helpful',action:'click',label:window.location.pathname,value:b};ga(a.command,a.hitType,a.category,a.action,a.label,a.value)};yesButton.addEventListener('click',()=>{yesResponse.classList.add('feedback--response__visible'),disableButtons(),sendFeedback(1)}),noButton.addEventListener('click',()=>{noResponse.classList.add('feedback--response__visible'),disableButtons(),sendFeedback(0)})</script>
+<br>
+</div>
+</main>
+</div>
+</div>
+<footer class="bg-dark py-5 row d-print-none">
+<div class="container-fluid mx-sm-5">
+<div class=row>
+<div class="col-6 col-sm-4 text-xs-center order-sm-2">
+</div>
+<div class="col-6 col-sm-4 text-right text-xs-center order-sm-3">
+<ul class="list-inline mb-0">
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Weibo aria-label=Weibo>
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://weibo.com/u/3848950217>
+<i class="fab fa-weibo"></i>
+</a>
+</li>
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Twitter aria-label=Twitter>
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://twitter.com/zhange_zzg>
+<i class="fab fa-twitter"></i>
+</a>
+</li>
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title="Stack Overflow" aria-label="Stack Overflow">
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://stackoverflow.com>
+<i class="fab fa-stack-overflow"></i>
+</a>
+</li>
+<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=GitHub aria-label=GitHub>
+<a class=text-white target=_blank rel="noopener noreferrer" href=https://github.com/infilos/infilos.com>
+<i class="fab fa-github"></i>
+</a>
+</li>
+</ul>
+</div>
+<div class="col-12 col-sm-4 text-center py-2 order-sm-2">
+<small class=text-white>&copy; 2022 infilos.com All Rights Reserved</small>
+</div>
+</div>
+</div>
+</footer>
+</div>
+<script src=/js/popper.min.js integrity=sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49 crossorigin=anonymous></script>
+<script src=/js/bootstrap.min.js integrity=sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy crossorigin=anonymous></script>
+<script src=/js/main.min.5c74b870c6953931a705f390a49c7e4c0a842ec5c83b24354758dd674343ed0d.js integrity="sha256-XHS4cMaVOTGnBfOQpJx+TAqELsXIOyQ1R1jdZ0ND7Q0=" crossorigin=anonymous></script>
+</body>
+</html>

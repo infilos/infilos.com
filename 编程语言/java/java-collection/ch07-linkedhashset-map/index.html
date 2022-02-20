@@ -18,7 +18,6 @@
 <meta property="og:description" content="概述  LinkedHashSet 和 LinkedHashMap 在 Java 中也是类似的实现，前者只是对后者的简单封装。 LinkedHashMap 实现了 Map 接口，允许放入 null key 和 null value。 同时满足 HashMap 和 linked list 的一些特性。 可以将 LinkedHashMap 看做是通过 linked list 增强的 HashMap。 LinkedHashMap 是 HashMap 的直接子类，二者唯一的区别是 LinkedHashMap 在 HashMap 的基础上，采用双向链表的形式将所有 entry 连接起来，以保证元素的迭代顺序和插入顺序相同。   如上图，相比 HashMap，在 entry 部分多了个属性用于连接所有 entry。而 header 用于指向双向链表的头部。
 这种结构体还有一个好处，迭代时不需要像 HashMap 那样遍历整个 table，只需要遍历 header 指向的双向链表即可。也就是说，LinkedHashMap 的迭代时间只和 entry 的数量相关，与 table 的大小无关。
 有两个参数可以影响 LinkedHashMap 的性能：初始容量(inital capacity)和负载系数(load factor)。初始容量指定了 table 的大小，负载系数用来指定自动扩容的临界值。当entry的数量超过capacity*load_factor时，容器将自动扩容并重新哈希。对于插入元素较多的场景，将初始容量设大可以减少重新哈希的次数。
-著作权归https://pdai.tech所有。 链接：https://www.pdai.tech/md/java/collection/java-map-LinkedHashMap&LinkedHashSet.html
 将对象放入到LinkedHashMap或LinkedHashSet中时，有两个方法需要特别关心: hashCode()和equals()。hashCode()方法决定了对象会被放到哪个bucket里，当多个对象的哈希值冲突时，equals()方法决定了这些对象是否是“同一个对象”。所以，如果要将自定义的对象放入到LinkedHashMap或LinkedHashSet中，需要重写 hashCode()和equals()方法。">
 <meta property="og:type" content="article">
 <meta property="og:url" content="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-collection/ch07-linkedhashset-map/"><meta property="article:section" content="编程语言">
@@ -27,15 +26,13 @@
 <meta itemprop=description content="概述  LinkedHashSet 和 LinkedHashMap 在 Java 中也是类似的实现，前者只是对后者的简单封装。 LinkedHashMap 实现了 Map 接口，允许放入 null key 和 null value。 同时满足 HashMap 和 linked list 的一些特性。 可以将 LinkedHashMap 看做是通过 linked list 增强的 HashMap。 LinkedHashMap 是 HashMap 的直接子类，二者唯一的区别是 LinkedHashMap 在 HashMap 的基础上，采用双向链表的形式将所有 entry 连接起来，以保证元素的迭代顺序和插入顺序相同。   如上图，相比 HashMap，在 entry 部分多了个属性用于连接所有 entry。而 header 用于指向双向链表的头部。
 这种结构体还有一个好处，迭代时不需要像 HashMap 那样遍历整个 table，只需要遍历 header 指向的双向链表即可。也就是说，LinkedHashMap 的迭代时间只和 entry 的数量相关，与 table 的大小无关。
 有两个参数可以影响 LinkedHashMap 的性能：初始容量(inital capacity)和负载系数(load factor)。初始容量指定了 table 的大小，负载系数用来指定自动扩容的临界值。当entry的数量超过capacity*load_factor时，容器将自动扩容并重新哈希。对于插入元素较多的场景，将初始容量设大可以减少重新哈希的次数。
-著作权归https://pdai.tech所有。 链接：https://www.pdai.tech/md/java/collection/java-map-LinkedHashMap&LinkedHashSet.html
 将对象放入到LinkedHashMap或LinkedHashSet中时，有两个方法需要特别关心: hashCode()和equals()。hashCode()方法决定了对象会被放到哪个bucket里，当多个对象的哈希值冲突时，equals()方法决定了这些对象是否是“同一个对象”。所以，如果要将自定义的对象放入到LinkedHashMap或LinkedHashSet中，需要重写 hashCode()和equals()方法。">
-<meta itemprop=wordCount content="391">
+<meta itemprop=wordCount content="389">
 <meta itemprop=keywords content><meta name=twitter:card content="summary">
 <meta name=twitter:title content="CH07-LinkedHashSet-Map">
 <meta name=twitter:description content="概述  LinkedHashSet 和 LinkedHashMap 在 Java 中也是类似的实现，前者只是对后者的简单封装。 LinkedHashMap 实现了 Map 接口，允许放入 null key 和 null value。 同时满足 HashMap 和 linked list 的一些特性。 可以将 LinkedHashMap 看做是通过 linked list 增强的 HashMap。 LinkedHashMap 是 HashMap 的直接子类，二者唯一的区别是 LinkedHashMap 在 HashMap 的基础上，采用双向链表的形式将所有 entry 连接起来，以保证元素的迭代顺序和插入顺序相同。   如上图，相比 HashMap，在 entry 部分多了个属性用于连接所有 entry。而 header 用于指向双向链表的头部。
 这种结构体还有一个好处，迭代时不需要像 HashMap 那样遍历整个 table，只需要遍历 header 指向的双向链表即可。也就是说，LinkedHashMap 的迭代时间只和 entry 的数量相关，与 table 的大小无关。
 有两个参数可以影响 LinkedHashMap 的性能：初始容量(inital capacity)和负载系数(load factor)。初始容量指定了 table 的大小，负载系数用来指定自动扩容的临界值。当entry的数量超过capacity*load_factor时，容器将自动扩容并重新哈希。对于插入元素较多的场景，将初始容量设大可以减少重新哈希的次数。
-著作权归https://pdai.tech所有。 链接：https://www.pdai.tech/md/java/collection/java-map-LinkedHashMap&LinkedHashSet.html
 将对象放入到LinkedHashMap或LinkedHashSet中时，有两个方法需要特别关心: hashCode()和equals()。hashCode()方法决定了对象会被放到哪个bucket里，当多个对象的哈希值冲突时，equals()方法决定了这些对象是否是“同一个对象”。所以，如果要将自定义的对象放入到LinkedHashMap或LinkedHashSet中，需要重写 hashCode()和equals()方法。">
 <script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga('create','UA-123062585-1','auto'),ga('send','pageview'))</script>
 <script async src=https://www.google-analytics.com/analytics.js></script>
@@ -730,7 +727,6 @@
 <p>如上图，相比 HashMap，在 entry 部分多了个属性用于连接所有 entry。而 header 用于指向双向链表的头部。</p>
 <p>这种结构体还有一个好处，迭代时不需要像 HashMap 那样遍历整个 table，只需要遍历 header 指向的双向链表即可。也就是说，LinkedHashMap 的迭代时间只和 entry 的数量相关，与 table 的大小无关。</p>
 <p>有两个参数可以影响 LinkedHashMap 的性能：初始容量(inital capacity)和负载系数(load factor)。初始容量指定了 table 的大小，负载系数用来指定自动扩容的临界值。当<code>entry</code>的数量超过<code>capacity*load_factor</code>时，容器将自动扩容并重新哈希。对于插入元素较多的场景，将初始容量设大可以减少重新哈希的次数。</p>
-<p>著作权归https://pdai.tech所有。 链接：https://www.pdai.tech/md/java/collection/java-map-LinkedHashMap&LinkedHashSet.html</p>
 <p>将对象放入到<em>LinkedHashMap</em>或<em>LinkedHashSet</em>中时，有两个方法需要特别关心: <code>hashCode()</code>和<code>equals()</code>。<strong><code>hashCode()</code>方法决定了对象会被放到哪个<code>bucket</code>里，当多个对象的哈希值冲突时，<code>equals()</code>方法决定了这些对象是否是“同一个对象”</strong>。所以，如果要将自定义的对象放入到<code>LinkedHashMap</code>或<code>LinkedHashSet</code>中，需要重写 <code>hashCode()</code>和<code>equals()</code>方法。</p>
 <h2 id=内部实现>内部实现</h2>
 <h3 id=get>get</h3>

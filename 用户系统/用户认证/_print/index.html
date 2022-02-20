@@ -135,6 +135,7 @@
 <h1 class=title>用户认证</h1>
 <ul>
 <li>1: <a href=#pg-8d3ba1e33da079cead82e764af80ae6d>认证方法</a></li>
+<li>2: <a href=#pg-efcbd19b995731f9bc6c49c40442a460>Token 多平台认证</a></li>
 </ul>
 <div class=content>
 <h2 id=working-in-progress>Working In Progress</h2>
@@ -535,6 +536,264 @@ Verify after 30s: False
 <li>如果必须处理高度敏感的数据，则你可能需要将 OTP 添加到身份验证流中。</li>
 </ol>
 <p>最后请记住，本文的示例仅仅是简单的演示。生产环境需要进一步的配置。</p>
+</div>
+<div class=td-content style=page-break-before:always>
+<h1 id=pg-efcbd19b995731f9bc6c49c40442a460>2 - Token 多平台认证</h1>
+<h2 id=概述>概述</h2>
+<p>在存在账号体系的信息系统中，对身份的鉴定是非常重要的事情。随着移动互联网时代到来，客户端的类型越来越多， 逐渐出现了 一个服务器，N 个客户端的格局 。</p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220220221550.png style=display:block;margin-left:auto;margin-right:auto;width:60% alt=20220220221550></div>
+<p>不同的客户端产生了不同的用户使用场景，这些场景：</p>
+<ul>
+<li>有不同的环境安全威胁</li>
+<li>不同的会话生存周期</li>
+<li>不同的用户权限控制体系</li>
+<li>不同级别的接口调用方式</li>
+</ul>
+<p>综上所述，它们的身份认证方式也存在一定的区别。</p>
+<h2 id=应用场景>应用场景</h2>
+<p>下面是一些在 IT 服务常见的一些使用场景:</p>
+<ul>
+<li>用户在web浏览器端登录系统,使用系统服务</li>
+<li>用户在手机端（Android/iOS）登录系统,使用系统服务</li>
+<li>用户使用开放接口登录系统,调用系统服务</li>
+<li>用户在PC处理登录状态时通过手机扫码授权手机登录（使用得比较少）</li>
+<li>用户在手机处理登录状态进通过手机扫码授权PC进行登录（比较常见）</li>
+</ul>
+<p>通过对场景的细分,得到如下不同的认证token类别：</p>
+<ol>
+<li>原始账户密码
+<ol>
+<li>用户名和密码</li>
+<li>API 应用 ID/KEY</li>
+</ol>
+</li>
+<li>会话 ID
+<ol>
+<li>浏览器端 token</li>
+<li>移动端 token</li>
+<li>API 应用 token</li>
+</ol>
+</li>
+<li>接口调用
+<ol>
+<li>接口访问 token</li>
+<li>身份授权</li>
+<li>PC 和移动端相互授权的 token</li>
+</ol>
+</li>
+</ol>
+<h2 id=token-的类别>Token 的类别</h2>
+<p>不同场景的 token 进行如下几个维度的对比：</p>
+<h3 id=天然属性对比>天然属性对比</h3>
+<ul>
+<li>
+<p>使用成本：本认证方式在使用的时候,造成的不便性。比如:</p>
+<ul>
+<li>
+<p>账号密码需要用户打开页面然后逐个键入</p>
+</li>
+<li>
+<p>二维码需要用户掏出手机进行扫码操作</p>
+</li>
+</ul>
+</li>
+<li>
+<p>变化成本：本认证方式,token发生变化时,用户需要做出的相应更改的成本:</p>
+<ul>
+<li>
+<p>用户名和密码发生变化时,用户需要额外记忆和重新键入新密码</p>
+</li>
+<li>
+<p>API应用ID/KEY发生变化时,第三方应用需要重新在代码中修改并部署</p>
+</li>
+<li>
+<p>授权二维码发生变化时,需要用户重新打开手机应用进行扫码</p>
+</li>
+</ul>
+</li>
+<li>
+<p>环境风险</p>
+<ul>
+<li>
+<p>被偷窥的风险</p>
+</li>
+<li>
+<p>被抓包的风险</p>
+</li>
+<li>
+<p>被伪造的风险</p>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id=可控属性对比>可控属性对比</h3>
+<ul>
+<li>使用频率
+<ul>
+<li>在网路中传送的频率。</li>
+</ul>
+</li>
+<li>有效时间
+<ul>
+<li>此token从创建到终结的生存时间</li>
+</ul>
+</li>
+</ul>
+<h3 id=最终目标安全和影响>最终目标：安全和影响</h3>
+<p>安全和隐私性主要体现在:</p>
+<ul>
+<li>token 不容易被窃取和盗用（通过对传送频率控制）</li>
+<li>token 即使被窃取,产生的影响也是可控的（通过对有效时间控制）</li>
+</ul>
+<p>关于隐私及隐私破坏后的后果,有如下的基本结论:</p>
+<ul>
+<li>曝光频率高的容易被截获</li>
+<li>生存周期长的在被截获后产生的影响更严重和深远</li>
+</ul>
+<p>遵守如下原则:</p>
+<ul>
+<li>变化成本高的token不要轻易变化</li>
+<li>不轻易变化的token要减少曝光频率（网络传输次数）</li>
+<li>曝光频率高的token的生存周期要尽量短</li>
+</ul>
+<p>将各类token的固有特点及可控属性进行调控后, 对每个指标进行量化评分（1~5分），我们可以得到如下的对比表：</p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220220222115.png style=display:block;margin-left:auto;margin-right:auto;width:80% alt=20220220222115></div>
+<blockquote>
+<p>备注：user_name/passwd 和 app_id/app_key 是等价的效果</p>
+</blockquote>
+<h2 id=token-的层级关系>Token 的层级关系</h2>
+<p>参考上一节的对比表，可以很容易对这些不同用途的token进行分层，主要可以分为4层：</p>
+<ul>
+<li>密码层：最传统的用户和系统之间约定的数字身份认证方式</li>
+<li>会话层：用户登录后的会话生命周期的会话认证</li>
+<li>调用层：用户在会话期间对应用程序接口的调用认证</li>
+<li>应用层：用户获取了接口访问调用权限后的一些场景或者身份认证应用</li>
+</ul>
+<p>Token 的分层图如下：</p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220220222208.png style=display:block;margin-left:auto;margin-right:auto;width:80% alt=20220220222208></div>
+<p>在一个多客户端的信息系统里面,这些token的产生及应用的内在联系如下:</p>
+<ul>
+<li>用户输入用户名和用户口令进行一次性认证</li>
+<li>在 不同 的终端里面生成拥有 不同 生命周期的会话token</li>
+<li>客户端会话token从服务端交换生命周期短但曝光 频繁 的接口访问token</li>
+<li>会话token可以生成和刷新延长 access_token 的生存时间</li>
+<li>access_token可以生成生存周期最短的用于授权的二维码的token</li>
+</ul>
+<p>使用如上的架构有如下的好处：</p>
+<ul>
+<li>良好的统一性：可以解决不同平台上认证token的生存周期的 归一化 问题</li>
+<li>良好的解耦性：核心接口调用服务器的认证 access_token 可以完成独立的实现和部署</li>
+<li>良好的层次性：不同平台的可以有完全不同的用户权限控制系统，这个控制可以在 会话层 中各平台解决掉</li>
+</ul>
+<h3 id=账户密码>账户密码</h3>
+<p>广义的 账号/密码 有如下的呈现方式:</p>
+<ul>
+<li>传统的注册用户名和密码</li>
+<li>应用程序的app_id/app_key</li>
+</ul>
+<p>它们的特点如下：</p>
+<ul>
+<li>会有特别的意义
+<ul>
+<li>比如：用户自己为了方便记忆，会设置有一定含义的账号和密码。</li>
+</ul>
+</li>
+<li>不常修改
+<ul>
+<li>账号密码对用户有特别含义，一般没有特殊情况不会愿意修改。而app_id/app_key则会写在应用程序中，修改会意味着重新发布上线的成本。</li>
+</ul>
+</li>
+<li><strong>一旦泄露影响深远</strong>
+<ul>
+<li>正因为不常修改，只要泄露了基本相当于用户的网络身份被泄露，而且只要没被察觉这种身份盗用就会一直存在。</li>
+<li>所以在认证系统中应该尽量减少传输的机会，避免泄露。</li>
+</ul>
+</li>
+</ul>
+<h3 id=客户端会话-token>客户端会话 Token</h3>
+<p><strong>功能</strong>：充当着session的角色，不同的客户端有不同的生命周期。</p>
+<p>使用步骤：用户使用账号密码，换取会话token。</p>
+<p>不同的平台的 token 有不同的特点：</p>
+<ul>
+<li>Web 平台生存周期短，主要原因是：
+<ul>
+<li>环境安全性：由于web登录环境一般很可能是公共环境，被他人盗取的风险值较大。</li>
+<li>输入便捷性：在PC上使用键盘输入会比较便捷。</li>
+</ul>
+</li>
+<li><strong>移动端生存周期长，主要原因是</strong>：
+<ul>
+<li>环境安全性：移动端平台是个人用户极其私密的平台，它人接触的机会不大。</li>
+<li>输入便捷性：在移动端上使用手指在小屏幕上触摸输入体验差，输入成本高。</li>
+</ul>
+</li>
+</ul>
+<h3 id=access_token>access_token</h3>
+<p>**功能：**服务端应用程序api接口访问和调用的凭证。</p>
+<p>**使用步骤：**使用具有较长生命周期的会话token来换取此接口访问token。</p>
+<p>其曝光频率直接和接口调用频率有关，属于高频使用的凭证。为了照顾到隐私性，尽量减少其生命周期，即使被截取了，也不至于产生严重的后果。</p>
+<blockquote>
+<p>注意：在客户端token之下还加上一个access_token， 主要是为了让具有不同生命周期的客户端token最后在调用 API 的时候， 能够具有统一的认证方式。</p>
+</blockquote>
+<h3 id=pam_token>pam_token</h3>
+<p>**功能：**由已经登录和认证的PC端生成的二维码的原始串号（Pc Auth Mobile）。</p>
+<p><strong>主要步骤如下：</strong></p>
+<ol>
+<li>PC上用户已经完成认证，登录了系统</li>
+<li>PC端生成一组和此用户相关联的pam_token</li>
+<li>PC端将此pam_token的使用链接生成二维码</li>
+<li>移动端扫码后，请求服务器，并和用户信息关联</li>
+<li>移动端获取refresh_token(长时效的会话)</li>
+<li>根据 refresh_token 获取 access_token</li>
+<li>完成正常的接口调用工作</li>
+</ol>
+<blockquote>
+<p>备注:</p>
+<ul>
+<li>生存周期为2分钟,2分钟后过期删除</li>
+<li>没有被使用时,每1分钟变一次</li>
+<li>被使用后,立刻删除掉</li>
+<li>此种认证模式一般不会被使用到</li>
+</ul>
+</blockquote>
+<h3 id=map_token>map_token</h3>
+<p>**功能：**由已经登录的移动app来扫码认证PC端系统，并完成PC端系统的登录（Mobile Auth Pc）。</p>
+<p><strong>主要步骤：</strong></p>
+<ol>
+<li>移动端完成用户身份的认证登录app</li>
+<li>未登录的PC生成匿名的 map_token</li>
+<li>移动端扫码后在db中生成 map_token 和用户关联（完成签名）</li>
+<li>db同时针对此用户生成 web_token</li>
+<li>PC端一直以 map_token 为参数查找此命名用户的 web_token</li>
+<li>PC端根据 web_token 去获取 access_token</li>
+<li>后续正常的调用接口调用工作</li>
+</ol>
+<blockquote>
+<p>备注:</p>
+<ul>
+<li>生存周期为2分钟,2分钟后过期删除</li>
+<li>没有被使用时,每1分钟变一次</li>
+<li>被使用后,立刻删除掉</li>
+</ul>
+</blockquote>
+<h2 id=总结>总结</h2>
+<p>本文所设计的基于token的身份认证系统，主要解决了如下的问题：</p>
+<ul>
+<li>token的分类问题</li>
+<li>token的隐私性参数设置问题</li>
+<li>token的使用场景问题</li>
+<li>不同生命周期的token分层转化关系</li>
+</ul>
+<p>本文中提到的设计方法，在 应用层 中可以适用于且不限于如下场景中：</p>
+<ul>
+<li>用户登录</li>
+<li>有时效的优惠券发放</li>
+<li>有时效的邀请码发放</li>
+<li>有时效的二维码授权</li>
+<li>具有时效 手机/邮件 验证码</li>
+<li>多个不同平台调用同一套API接口</li>
+<li>多个平台使用同一个身份认证中心</li>
+</ul>
 </div>
 </main>
 </div>

@@ -138,7 +138,7 @@
 <li>2: <a href=#pg-f5c77c7841949e1aa4080a8500b54dc8>URL 与资源</a></li>
 <li>3: <a href=#pg-3f9e6e84aa6b28fde606994de099bc1b>HTTP 报文</a></li>
 <li>4: <a href=#pg-99925a267a45bd0c179d4c1f7c667768>连接管理</a></li>
-<li>5: <a href=#pg-7a1e106ccc9be0b15fab7e1aaaadb524>性能探索</a></li>
+<li>5: <a href=#pg-73072acf63880145dbc20eae4c019a58>版本与性能</a></li>
 </ul>
 <div class=content>
 </div>
@@ -1382,8 +1382,13 @@ http://joe:joespasswd@www.joes-hardware.com/sales_info.txt
 </ol>
 </div>
 <div class=td-content style=page-break-before:always>
-<h1 id=pg-7a1e106ccc9be0b15fab7e1aaaadb524>5 - 性能探索</h1>
-<p><a href=https://www.mnot.net/blog/2016/04/22/ideal-http>Ideal HTTP Performance</a>一文的翻译，点击查看原文。</p>
+<h1 id=pg-73072acf63880145dbc20eae4c019a58>5 - 版本与性能</h1>
+<div class="pageinfo pageinfo-primary">
+<ul>
+<li><a href=https://www.mnot.net/blog/2016/04/22/ideal-http>原文连接：Ideal HTTP Performance</a></li>
+<li><a href=https://mp.weixin.qq.com/s/TKVbxbrKoxADB9mKKLwqbw>原文连接： HTTP / [ 0.9 | 1.0 | 1.1 | 2 | 3 ]</a></li>
+</ul>
+</div>
 <p>Web性能的隐性规则是减少终端用户能够感知到的延迟；在用户之前获得页面并使交互变得尽可能的快。</p>
 <p>至于HTTP而言，这意味着一个理想的协议交互看起来像这样：</p>
 <div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/WEB%E6%80%A7%E8%83%BD%E7%90%86%E6%83%B3%E7%9A%84%E5%8D%8F%E8%AE%AE%E4%BA%A4%E4%BA%92.jpg style=display:block;width:50% alt=NAME align=center> </div>
@@ -1391,7 +1396,143 @@ http://joe:joespasswd@www.joes-hardware.com/sales_info.txt
 <p>额外数数据同时意味着更多的转换时间和更多的出错机会，比如拥堵或者丢包，这将严重的影响性能。</p>
 <p>由于协议“隔阂(chattiness)”的更多往返次数会带来更多的延迟，尤其是移动网络(一个往返100ms可以作为你最好的预期)。</p>
 <p>如果这是最理想的情况，那HTTP是如何度量的？我们又如何来提升呢？</p>
+<h2 id=http09>HTTP/0.9</h2>
+<p>HTTP/0.9 诞生于 1991 年，是 HTTP 协议的最初版，构造十分简单：</p>
+<ul>
+<li>请求端只支持 GET 请求</li>
+<li>响应端只能返回 HTML 文本数据</li>
+</ul>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>GET /index.html
+
+&lt;html&gt;
+	&lt;body&gt;
+		Hello World
+	&lt;/body&gt;
+&lt;/html&gt;
+</code></pre></div><p>请求示意图如下：</p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219162422.png style=display:block;margin-left:auto;margin-right:auto;width:60% alt=20220219162422></div>
+<p>可以看到，HTTP/0.9 只能发送 GET 请求，且每一个请求都单独创建一个 TCP 连接，响应端只能返回 HTML 格式的数据，响应完成之后 TCP 请求断开。</p>
+<p>这样的请求方式虽然能够满足当时的使用需求，但也还是暴露出了一些问题。</p>
+<p>HTTP/0.9 痛点：</p>
+<ul>
+<li>请求方式唯一，返回格式唯一</li>
+<li>TCP 连接无法复用</li>
+</ul>
+<h2 id=http10>HTTP/1.0</h2>
+<p>HTTP/1.0 诞生于 1996 年，它在 HTTP/0.9 的基础上，增加了 HTTP 头部字段，极大扩展了 HTTP 的使用场景。这个版本的 HTTP 不仅可以传输文字，还能传输图像、视频、二进制文件，为互联网的迅速发展奠定了坚实的基础。</p>
+<p>核心特点如下：</p>
+<ul>
+<li>
+<p>请求端增加 HTTP 协议版本，响应端增加状态码。</p>
+</li>
+<li>
+<p>请求方法增加 POST、HEAD。</p>
+</li>
+<li>
+<p>请求端和响应端增加头部字段。</p>
+</li>
+<li>
+<ul>
+<li>Content-Type 让响应数据不只限于超文本。</li>
+<li>Expires、Last-Modified 缓存头。</li>
+<li>Authorization 身份认证。</li>
+<li>Connection: keep-alive 支持长连接，但非标准。</li>
+</ul>
+</li>
+</ul>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>GET /mypage.html HTTP/1.0
+User-Agent: NCSA_Mosaic/2.0 (Windows 3.1)
+
+200 OK
+Date: Tue, 15 Nov 1994 08:12:31 GMT
+Server: CERN/3.0 libwww/2.17
+Content-Type: text/html
+
+&lt;html&gt;
+  &lt;body&gt;
+    Hello World
+  &lt;/body&gt;
+&lt;/html&gt;
+</code></pre></div><p>请求示意图如下：</p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219162546.png style=display:block;margin-left:auto;margin-right:auto;width:60% alt=20220219162546></div>
+<p>HTTP/1.0 扩展了请求方法和响应状态码，并且支持定义 HTTP 头部字段，通过 <code>Content-Type</code> 头，我们就能传输任何格式的数据了。同时可以看出，HTTP/1.0 仍然是一个请求对应一个 TCP 连接，不能形成复用。</p>
+<p>HTTP/1.0 痛点：</p>
+<ul>
+<li>TCP 连接无法复用。</li>
+<li>HTTP 队头阻塞，一个 HTTP 请求响应结束之后，才能发起下一个 HTTP 请求。</li>
+<li>一台服务器只能提供一个 HTTP 服务。</li>
+</ul>
 <h2 id=http11>HTTP/1.1</h2>
+<p>HTTP/1.1 诞生于 1999 年，它进一步完善了 HTTP 协议，一直用到了 20 多年后的今天，仍然是使用最广的 HTTP 版本。</p>
+<p>核心特点如下：</p>
+<ul>
+<li>
+<p>持久连接。</p>
+<ul>
+<li>HTTP/1.1 默认开启持久连接，在 TCP 连接建立后不立即关闭，让多个 HTTP 请求得以复用。</li>
+</ul>
+</li>
+<li>
+<p>管线化技术。</p>
+<ul>
+<li>HTTP/1.1 中，多个 HTTP 请求不用排队发送，可以批量发送，这就解决了 HTTP 队头阻塞问题。但批量发送的 HTTP 请求，必须按照发送的顺序返回响应，相当于问题解决了一半，仍然不是最佳体验。</li>
+</ul>
+</li>
+<li>
+<p>支持响应分块。</p>
+<ul>
+<li>HTTP/1.1 实现了流式渲染，响应端可以不用一次返回所有数据，可以将数据拆分成多个模块，产生一块数据，就发送一块数据，这样客户端就可以同步对数据进行处理，减少响应延迟，降低白屏时间。</li>
+<li>Bigpipe 的实现就是基于这个特性，具体是通过定义 <code>Transfer-Encoding</code> 头来实现的。</li>
+</ul>
+</li>
+<li>
+<p>增加 Host 头。</p>
+<ul>
+<li>HTTP/1.1 实现了虚拟主机技术，将一台服务器分成若干个主机，这样就可以在一台服务器上部署多个网站了。</li>
+<li>通过配置 Host 的域名和端口号，即可支持多个 HTTP 服务：<code>Host: &lt;domain>:&lt;port></code></li>
+</ul>
+</li>
+<li>
+<p>其他扩展。</p>
+<ul>
+<li>增加 Cache-Control、E-Tag 缓存头。</li>
+<li>增加 PUT、PATCH、HEAD、 OPTIONS、DELETE 请求方法。</li>
+</ul>
+</li>
+</ul>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>GET /en-US/docs/Glossary/Simple_header HTTP/1.1
+Host: developer.mozilla.org
+User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.9; rv:50.0) Gecko/20100101 Firefox/50.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate, br
+Referer: https://developer.mozilla.org/en-US/docs/Glossary/Simple_header
+
+200 OK
+Connection: Keep-Alive
+Content-Encoding: gzip
+Content-Type: text/html; charset=utf-8
+Date: Wed, 20 Jul 2016 10:55:30 GMT
+Etag: &#34;547fa7e369ef56031dd3bff2ace9fc0832eb251a&#34;
+Keep-Alive: timeout=5, max=1000
+Last-Modified: Tue, 19 Jul 2016 00:59:33 GMT
+Server: Apache
+Transfer-Encoding: chunked
+Vary: Cookie, Accept-Encoding
+
+&lt;html&gt;
+  &lt;body&gt;
+    Hello World
+  &lt;/body&gt;
+&lt;/html&gt;
+</code></pre></div><p>请求示意图如下：</p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219162752.png style=display:block;margin-left:auto;margin-right:auto;width:60% alt=20220219162752></div>
+<p>可以看到，HTTP/1.1 可以并行发起多个请求，并且也能复用同一个 TCP 连接，传输效率得到了提升。但响应端只能按照发送的顺序进行返回，为此很多浏览器会为每个域名至多打开 6 个连接，用增加队列的方式减少 HTTP 队头阻塞。</p>
+<p>HTTP/1.1 痛点：</p>
+<ul>
+<li>HTTP 队头阻塞没有彻底解决，响应端必须按照 HTTP 的发送顺序进行返回，如果排序靠前的响应特别耗时，则会阻塞排序靠后的所有响应。</li>
+</ul>
+<h3 id=扩展阅读>扩展阅读</h3>
 <p>多种原因说明HTTP/1.1是一个很好的协议，但遗憾的是现代的Web工作方式意味着性能并不是其中之一。一个典型的页面加载方式看起来会是这样：</p>
 <div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/HTTP1.1.jpg style=display:block;width:50% alt=NAME align=center> </div>
 <p>这并不是特别的理想。</p>
@@ -1400,6 +1541,61 @@ http://joe:joespasswd@www.joes-hardware.com/sales_info.txt
 <p>最终，由于HTTP/1的<code>head-of-line blocking</code>问题(线头阻塞:队列首个packet由于他的目的端口正忙而被延迟转发)，将多个资源组装到一个大的CSS代码、内嵌或连接，成为了一个普遍的最佳实践。这些都是HTTP/1中漂亮的性能hack，但是他们同样有一个损失：他们下载了远多于客户端需求的数据来显示一个页面，这与我们的理想相悖，并不能做到尽可能快的展示页面。</p>
 <p>总的来说，HTTP/1并是不是一无是处，性能上的智能。举例来说，它拥有缓存，允许你在一个新的拷贝时完全不需要网络。还有受限制的请求，当有一个老的拷贝时避免你去转换大的东西。</p>
 <h2 id=http2>HTTP/2</h2>
+<p>HTTP/2 诞生于 2015 年，它的最大的特点是 All in 二进制，基于二进制的特性，对 HTTP 传输效率进行了深度优化。</p>
+<p>HTTP/2 将一个 HTTP 请求划分为 3 个部分：</p>
+<ul>
+<li>帧：一段二进制数据，是 HTTP/2 传输的最小单位。</li>
+<li>消息：一个请求或响应对应的一个或多个帧。</li>
+<li>数据流：已建立的连接内的双向字节流，可以承载一条或多条消息。</li>
+</ul>
+<p>HTTP/2 核心特点如下：</p>
+<ul>
+<li>
+<p>请求优先级</p>
+</li>
+<li>
+<ul>
+<li>多个 HTTP 请求同时发送时，会产生多个数据流，数据流中有一个优先级的标识，服务器端可以根据这个标识来决定响应的优先顺序。</li>
+</ul>
+</li>
+<li>
+<p>多路复用</p>
+</li>
+<li>
+<ul>
+<li>TCP 传输时，不用按照 HTTP 的发送顺序进行响应，可以交错发送，接收端根据帧首部的标识符，就能找到对应的流，进而重新组合得到最终数据。</li>
+</ul>
+</li>
+<li>
+<p>服务器端推送</p>
+</li>
+<li>
+<ul>
+<li>HTTP/2 允许服务器未经请求，主动向客户端发送资源，并缓存到客户端中，以避免二次请求。</li>
+<li>HTTP/1.1 中请求一个页面时，浏览器会先发送一个 HTTP 请求，然后得到响应的 HTML 内容并开始解析，如果发现有 <code>&lt;script src="xxxx.js"></code> 标签，则会再次发起 HTTP 请求获取对应的 JS 内容。而 HTTP/2 可以在返回 HTML 的同时，将需要用到的 JS、CSS 等内容一并返回给客户端，当浏览器解析到对应标签时，也就不需要再次发起请求了。</li>
+</ul>
+</li>
+<li>
+<p>头部压缩</p>
+</li>
+<li>
+<ul>
+<li>HTTP/1.1 的头部字段包含大量信息，而且每次请求都得带上，占用了大量的字节。</li>
+<li>HTTP/2.0 中通信双方各自缓存一份头部字段表，如：把 <code>Content-Type:text/html</code> 存入索引表中，后续如果要用到这个头，只需要发送对应的索引号就可以了。</li>
+</ul>
+</li>
+</ul>
+<p>除此之外，虽然 HTTP/2 没有规定必须使用 TLS 安全协议，但所有实现 HTTP/2 的 Web 浏览器都只支持配置过 TLS 的网站，这是为了鼓励大家使用更加安全的 HTTPS。</p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219162925.png style=display:block;margin-left:auto;margin-right:auto;width:60% alt=20220219162925></div>
+<p>可以看到，在 HTTP/2 中发送请求时，既不需要排队发送，也不需要排队返回，彻底解决了 HTTP 队头阻塞问题。对于头部信息，资源缓存等痛点也进行了优化，似乎已经是一种很完美的方案了。</p>
+<p>HTTP/2 在 HTTP + TCP 的架构上已经优化到了极致，如果要想继续优化，那就只能从这个架构入手了。</p>
+<p>首先需要优化的是 TCP，因为 TCP 核心是保证传输层的可靠性，传输效率其实并不好。</p>
+<ul>
+<li>TCP 也存在队头阻塞，TCP 在传输时使用序列号标识数据的顺序，一旦某个数据丢失，后面的数据需要等待这个数据重传后才能进行下一步处理。</li>
+<li>TCP 每一次建立都需要三次握手，释放连接需要四次挥手，无形中增加了传输时长。</li>
+<li>TCP 存在拥塞控制，内置了慢启动，拥塞避免等算法，传输效率并不稳定。</li>
+</ul>
+<h3 id=扩展阅读-1>扩展阅读</h3>
 <p>HTTP/2试图通过几种方式去解决HTTP/1.1中的问题：</p>
 <ol>
 <li>完全的<strong>复用</strong>意味着线头阻塞不再是问题。可以通过单个HTTP连接加载整个Web页面，而不用担心创建了多少个请求。数据浪费的优化技巧可以被丢下了。</li>
@@ -1418,6 +1614,53 @@ http://joe:joespasswd@www.joes-hardware.com/sales_info.txt
 <p>因为缓存摘要使用<code>Golumb Compressed Sets</code>，它实时计算并使用少一1000个字节将浏览器缓存告诉服务端，通过连接在前几个包发送给服务端。</p>
 <p>现在，我们避免了额外的往复次数，相关的数据浪费，直接嵌入和一些相似的hack，和非必须请求的数据浪费。这使我们里理想更进一步！</p>
 <p>缓存摘要只是一个提议，但在HTTP社区中已经表现出很明显的兴趣。</p>
+<h2 id=http3>HTTP/3</h2>
+<p>HTTP/3 目前还在草案阶段，它的主要特点是对传输层进行了优化，使用 QUIC 替换 TCP，彻底规避了 TCP 传输的效率问题。</p>
+<p>QUIC 由 Google 提出的基于 UDP 进行多路复用的传输协议。QUIC 没有连接的概念，不需要三次握手，在应用程序层面，实现了 TCP 的可靠性，TLS 的安全性和 HTTP2 的并发性。在设备支持层面，只需要客户端和服务端的应用程序支持 QUIC 协议即可，无操作系统和中间设备的限制。</p>
+<p>HTTP/3 核心特点如下：</p>
+<h3 id=传输层连接更快>传输层连接更快</h3>
+<p>HTTP/3 基于 QUIC 协议，可以实现 0-RTT 建立连接，而 TCP 需要 3-RTT 才能建立连接。</p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219163022.png style=display:block;margin-left:auto;margin-right:auto;width:60% alt=20220219163022></div>
+<h3 id=传输层多路复用>传输层多路复用</h3>
+<p>图中的 Stream 之间相互独立，如果 Stream2 丢了一个 Pakcet，不会影响 Stream3 和 Stream4 正常读取。</p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219163059.png style=display:block;margin-left:auto;margin-right:auto;width:60% alt=20220219163059></div>
+<p>HTTP/3 传输层使用 QUIC 协议，数据在传输时会被拆分成了多个 packet 包，每一个 packet 包都可以独立、交错发送，不用按顺序发送，也就避免了 TCP 队头阻塞。</p>
+<h3 id=改进的拥塞控制>改进的拥塞控制</h3>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219163223.png style=display:block;margin-left:auto;margin-right:auto;width:60% alt=20220219163223></div>
+<ul>
+<li><strong>单调递增的 Packet Number</strong>。在 TCP 中，每一个数据包都有一个序列号标识（seq），如果接收端超时没有收到，就会要求重发标识为 seq 的包，如果这时超时的包也接收到了，则无法区分哪个是超时的包，哪个是重传的包。QUIC 中的每一个包的标识（Packet Number）都是单调递增的，重传的 Packet Number 一定大于超时的 Packet Number，这样就能区分开了。</li>
+<li><strong>不允许 Reneging</strong>。在 TCP 中，如果接收方内存不够或 Buffer 溢出，则可能会把已接收的包丢弃（Reneging），这种行为对数据重传产生了很大的干扰，在 QUIC 中是明确禁止的。在 QUIC 中，一个包只要被确认，就一定是被正确接收了。</li>
+<li><strong>更多的 ACK 块</strong>。一般来说，接收方收到发送方的消息后都会发送一个 ACK 标识，表示收到了数据。但每收到一个数据就发送一个 ACK 效率太低了，通常是收到多个数据后再统一回复 ACK。TCP 中每收到 3 个数据包就要返回一个 ACK，而 QUIC 最多可以收到 256 个包之后，才返回 ACK。在丢包率比较严重的网络下，更多的 ACK 块可以减少重传量，提升网络效率。
+<ul>
+<li><strong>Ack Delay</strong>。TCP 计算 RTT 时没有考虑接收方处理数据的延迟，如下图所示，这段延迟即 ACK Delay。QUIC 考虑了这段延迟，使得 RTT 的计算更加准确。</li>
+</ul>
+</li>
+</ul>
+<h3 id=优化的流量控制>优化的流量控制</h3>
+<ul>
+<li>Stream 级别的流量控制中，<code>接收窗口 = 最大接收窗口- 已接收数据</code>。</li>
+<li>Connection 级别的流量控制中，<code>接收窗口 = Stream1接收窗口 + Stream2接收窗口 + ... + StreamN接收窗口</code>。</li>
+<li>TCP 通过滑动窗口来控制流量，如果某一个包丢失了，滑动窗口并不能跨过丢失的包继续滑动，而是会卡在丢失的位置，等待数据重传后，才能继续滑动。</li>
+<li>QUIC 流量控制的核心是：<strong>不能建立太多的连接，以免响应端处理不过来；不能让某一个连接占用大量的资源，让其他连接没有资源可用</strong>。为此 QUIC 流量控制分为 2 个级别：连接级别（Connection Level）和 Stream 级别（Stream Level）。</li>
+</ul>
+<h3 id=加密认证的报文>加密认证的报文</h3>
+<ul>
+<li>TCP 头部没有经过任何加密和认证，在传输过程中很容易被中间网络设备篡改，注入和窃听。</li>
+<li>QUIC 中报文都是经过加密和认证的，在传输过程中保证了数据的安全。</li>
+</ul>
+<h3 id=连接迁移>连接迁移</h3>
+<ul>
+<li>TCP 连接是由（源 IP，源端口，目的 IP，目的端口）组成，这四者中一旦有一项发生改变，这个连接也就不能用了。如果我们从 5G 网络切换到 WiFi 网络，IP 地址就会改变，这个时候 TCP 连接也自然断掉了。</li>
+<li>QUIC 使用客户端生成的 64 位 ID 来表示一条连接，只要 ID 不变，这条连接也就一直维持着，不会中断。</li>
+</ul>
+<h3 id=前向纠错机制>前向纠错机制</h3>
+<ul>
+<li>发送端需要发送三个包，QUIC 在传输时会计算出这三个包的异或值，并单独发出一个校验包，也就是总共发出了四个包。</li>
+<li>如果某一个包（非校验包）传输时丢失了，则可以通过另外三个包计算出丢失数据包的内容。</li>
+<li>当然这种技术只能用在丢失一个包的情况下，如果丢失了多个包，就只能进行重传了。</li>
+<li>QUIC 中发送数据时，除了发送本身的数据包，还会发送验证包，以减少数据丢失导致的重传。</li>
+</ul>
+<p>可以看出，QUIC 丢掉了 TCP 的包袱，基于 UDP，实现了一个安全高效可靠的 HTTP 通信协议。凭借着 0-RTT 建立连接、传输层多路复用、连接迁移、改进的拥塞控制、流量控制等特性，QUIC 在绝大多数场景下获得了比 HTTP/2 更好的效果，HTTP/3 真是未来可期。</p>
 <h2 id=tcp>TCP</h2>
 <p>目前为止，并没有谈到浏览器加载Web页面所使用的其他协议对性能的影响。</p>
 <p>然而，真正的问题要比下面图片暗示的要多，TCP在HTTP开始前需要三次握手，来协定一个新连接的参数。</p>

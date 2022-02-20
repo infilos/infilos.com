@@ -15,43 +15,37 @@
 <link rel=icon type=image/png href=/favicons/android-144x144.png sizes=144x144>
 <link rel=icon type=image/png href=/favicons/android-192x192.png sizes=192x192>
 <title>CH05-底层结构 | infilos.com</title><meta property="og:title" content="CH05-底层结构">
-<meta property="og:description" content="简单动态字符串：SDS 著作权归https://pdai.tech所有。 链接：https://www.pdai.tech/md/db/nosql-redis/db-redis-x-redis-ds.html
- Redis 是用 C 语言写的，但是对于Redis的字符串，却不是 C 语言中的字符串（即以空字符’\0’结尾的字符数组），它是自己构建了一种名为 简单动态字符串（simple dynamic string,SDS）的抽象类型，并将 SDS 作为 Redis的默认字符串表示。
+<meta property="og:description" content="简单动态字符串：SDS  Redis 是用 C 语言写的，但是对于Redis的字符串，却不是 C 语言中的字符串（即以空字符’\0’结尾的字符数组），它是自己构建了一种名为 简单动态字符串（simple dynamic string,SDS）的抽象类型，并将 SDS 作为 Redis的默认字符串表示。
  定义  这是一种用于存储二进制数据的一种结构, 具有动态扩容的特点. 其实现位于src/sds.h与src/sds.c中。
-  著作权归https://pdai.tech所有。 链接：https://www.pdai.tech/md/db/nosql-redis/db-redis-x-redis-ds.html
-其中sdshdr是头部, buf是真实存储用户数据的地方. 另外注意, 从命名上能看出来, 这个数据结构除了能存储二进制数据, 显然是用于设计作为字符串使用的, 所以在buf中, 用户数据后总跟着一个\0. 即图中 &#34;数据&#34; + &#34;\0&#34;是为所谓的buf。
+  其中sdshdr是头部, buf是真实存储用户数据的地方. 另外注意, 从命名上能看出来, 这个数据结构除了能存储二进制数据, 显然是用于设计作为字符串使用的, 所以在buf中, 用户数据后总跟着一个\0. 即图中 &#34;数据&#34; + &#34;\0&#34;是为所谓的buf。
 SDS有五种不同的头部. 其中sdshdr5实际并未使用到. 所以实际上有四种不同的头部, 分别如下:
- 著作权归https://pdai.tech所有。 链接：https://www.pdai.tech/md/db/nosql-redis/db-redis-x-redis-ds.html
-其中：
+ 其中：
  len 保存了SDS保存字符串的长度 buf[] 数组用来保存字符串的每个元素 alloc分别以uint8, uint16, uint32, uint64表示整个SDS, 除过头部与末尾的\0, 剩余的字节数. flags 始终为一字节, 以低三位标示着头部的类型, 高5位未使用.  为什么使用SDS  为什么不使用C语言字符串实现，而是使用 SDS呢？这样实现有什么好处？
-   常数复杂度获取字符串长度">
+   常数复杂度获取字符串长度
+由于 len 属性的存在，我们获取 SDS 字符串的长度只需要读取 len 属性，时间复杂度为 O(1)。而对于 C 语言，获取字符串的长度通常是经过遍历计数来实现的，时间复杂度为 O(n)。通过 strlen key 命令可以获取 key 的字符串长度。">
 <meta property="og:type" content="article">
 <meta property="og:url" content="/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/redis/ch05-%E5%BA%95%E5%B1%82%E7%BB%93%E6%9E%84/"><meta property="article:section" content="存储系统">
 <meta property="og:site_name" content="infilos.com">
 <meta itemprop=name content="CH05-底层结构">
-<meta itemprop=description content="简单动态字符串：SDS 著作权归https://pdai.tech所有。 链接：https://www.pdai.tech/md/db/nosql-redis/db-redis-x-redis-ds.html
- Redis 是用 C 语言写的，但是对于Redis的字符串，却不是 C 语言中的字符串（即以空字符’\0’结尾的字符数组），它是自己构建了一种名为 简单动态字符串（simple dynamic string,SDS）的抽象类型，并将 SDS 作为 Redis的默认字符串表示。
+<meta itemprop=description content="简单动态字符串：SDS  Redis 是用 C 语言写的，但是对于Redis的字符串，却不是 C 语言中的字符串（即以空字符’\0’结尾的字符数组），它是自己构建了一种名为 简单动态字符串（simple dynamic string,SDS）的抽象类型，并将 SDS 作为 Redis的默认字符串表示。
  定义  这是一种用于存储二进制数据的一种结构, 具有动态扩容的特点. 其实现位于src/sds.h与src/sds.c中。
-  著作权归https://pdai.tech所有。 链接：https://www.pdai.tech/md/db/nosql-redis/db-redis-x-redis-ds.html
-其中sdshdr是头部, buf是真实存储用户数据的地方. 另外注意, 从命名上能看出来, 这个数据结构除了能存储二进制数据, 显然是用于设计作为字符串使用的, 所以在buf中, 用户数据后总跟着一个\0. 即图中 &#34;数据&#34; + &#34;\0&#34;是为所谓的buf。
+  其中sdshdr是头部, buf是真实存储用户数据的地方. 另外注意, 从命名上能看出来, 这个数据结构除了能存储二进制数据, 显然是用于设计作为字符串使用的, 所以在buf中, 用户数据后总跟着一个\0. 即图中 &#34;数据&#34; + &#34;\0&#34;是为所谓的buf。
 SDS有五种不同的头部. 其中sdshdr5实际并未使用到. 所以实际上有四种不同的头部, 分别如下:
- 著作权归https://pdai.tech所有。 链接：https://www.pdai.tech/md/db/nosql-redis/db-redis-x-redis-ds.html
-其中：
+ 其中：
  len 保存了SDS保存字符串的长度 buf[] 数组用来保存字符串的每个元素 alloc分别以uint8, uint16, uint32, uint64表示整个SDS, 除过头部与末尾的\0, 剩余的字节数. flags 始终为一字节, 以低三位标示着头部的类型, 高5位未使用.  为什么使用SDS  为什么不使用C语言字符串实现，而是使用 SDS呢？这样实现有什么好处？
-   常数复杂度获取字符串长度">
-<meta itemprop=wordCount content="1118">
+   常数复杂度获取字符串长度
+由于 len 属性的存在，我们获取 SDS 字符串的长度只需要读取 len 属性，时间复杂度为 O(1)。而对于 C 语言，获取字符串的长度通常是经过遍历计数来实现的，时间复杂度为 O(n)。通过 strlen key 命令可以获取 key 的字符串长度。">
+<meta itemprop=wordCount content="1090">
 <meta itemprop=keywords content><meta name=twitter:card content="summary">
 <meta name=twitter:title content="CH05-底层结构">
-<meta name=twitter:description content="简单动态字符串：SDS 著作权归https://pdai.tech所有。 链接：https://www.pdai.tech/md/db/nosql-redis/db-redis-x-redis-ds.html
- Redis 是用 C 语言写的，但是对于Redis的字符串，却不是 C 语言中的字符串（即以空字符’\0’结尾的字符数组），它是自己构建了一种名为 简单动态字符串（simple dynamic string,SDS）的抽象类型，并将 SDS 作为 Redis的默认字符串表示。
+<meta name=twitter:description content="简单动态字符串：SDS  Redis 是用 C 语言写的，但是对于Redis的字符串，却不是 C 语言中的字符串（即以空字符’\0’结尾的字符数组），它是自己构建了一种名为 简单动态字符串（simple dynamic string,SDS）的抽象类型，并将 SDS 作为 Redis的默认字符串表示。
  定义  这是一种用于存储二进制数据的一种结构, 具有动态扩容的特点. 其实现位于src/sds.h与src/sds.c中。
-  著作权归https://pdai.tech所有。 链接：https://www.pdai.tech/md/db/nosql-redis/db-redis-x-redis-ds.html
-其中sdshdr是头部, buf是真实存储用户数据的地方. 另外注意, 从命名上能看出来, 这个数据结构除了能存储二进制数据, 显然是用于设计作为字符串使用的, 所以在buf中, 用户数据后总跟着一个\0. 即图中 &#34;数据&#34; + &#34;\0&#34;是为所谓的buf。
+  其中sdshdr是头部, buf是真实存储用户数据的地方. 另外注意, 从命名上能看出来, 这个数据结构除了能存储二进制数据, 显然是用于设计作为字符串使用的, 所以在buf中, 用户数据后总跟着一个\0. 即图中 &#34;数据&#34; + &#34;\0&#34;是为所谓的buf。
 SDS有五种不同的头部. 其中sdshdr5实际并未使用到. 所以实际上有四种不同的头部, 分别如下:
- 著作权归https://pdai.tech所有。 链接：https://www.pdai.tech/md/db/nosql-redis/db-redis-x-redis-ds.html
-其中：
+ 其中：
  len 保存了SDS保存字符串的长度 buf[] 数组用来保存字符串的每个元素 alloc分别以uint8, uint16, uint32, uint64表示整个SDS, 除过头部与末尾的\0, 剩余的字节数. flags 始终为一字节, 以低三位标示着头部的类型, 高5位未使用.  为什么使用SDS  为什么不使用C语言字符串实现，而是使用 SDS呢？这样实现有什么好处？
-   常数复杂度获取字符串长度">
+   常数复杂度获取字符串长度
+由于 len 属性的存在，我们获取 SDS 字符串的长度只需要读取 len 属性，时间复杂度为 O(1)。而对于 C 语言，获取字符串的长度通常是经过遍历计数来实现的，时间复杂度为 O(n)。通过 strlen key 命令可以获取 key 的字符串长度。">
 <script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga('create','UA-123062585-1','auto'),ga('send','pageview'))</script>
 <script async src=https://www.google-analytics.com/analytics.js></script>
 <link rel=preload href=/scss/main.min.847464b684a6e89d7276700a5c500c17ab494dd1755b2654a7b27d8b59e3347e.css as=style>
@@ -325,6 +319,16 @@ SDS有五种不同的头部. 其中sdshdr5实际并未使用到. 所以实际上
 <a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/redis/ch04-%E5%AF%B9%E8%B1%A1%E6%9C%BA%E5%88%B6/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fredisch04-e5afb9e8b1a1e69cbae588b6><span>CH04-对象机制</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child active-path" id=m-e5ad98e582a8e7b3bbe7bb9fredisch05-e5ba95e5b182e7bb93e69e84-li>
 <a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/redis/ch05-%E5%BA%95%E5%B1%82%E7%BB%93%E6%9E%84/ class="align-left pl-0 active td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fredisch05-e5ba95e5b182e7bb93e69e84><span class=td-sidebar-nav-active-item>CH05-底层结构</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fredisch06-e7bc93e5ad98e69cbae588b6-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/redis/ch06-%E7%BC%93%E5%AD%98%E6%9C%BA%E5%88%B6/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fredisch06-e7bc93e5ad98e69cbae588b6><span>CH06-缓存机制</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fredisch07-e9ab98e58fafe794a8e680a7-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/redis/ch07-%E9%AB%98%E5%8F%AF%E7%94%A8%E6%80%A7/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fredisch07-e9ab98e58fafe794a8e680a7><span>CH07-高可用性</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fredisch08-e799bee4babfe9878fe7baa7-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/redis/ch08-%E7%99%BE%E4%BA%BF%E9%87%8F%E7%BA%A7/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fredisch08-e799bee4babfe9878fe7baa7><span>CH08-百亿量级</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fredisch09-e5ae9ee78eb0e6909ce7b4a2-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/redis/ch09-%E5%AE%9E%E7%8E%B0%E6%90%9C%E7%B4%A2/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fredisch09-e5ae9ee78eb0e6909ce7b4a2><span>CH09-实现搜索</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fredisch10-e5b8b8e8a781e997aee9a298-li>
+<a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/redis/ch10-%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fredisch10-e5b8b8e8a781e997aee9a298><span>CH10-常见问题</span></a>
 </li>
 </ul>
 </li>
@@ -409,7 +413,6 @@ SDS有五种不同的头部. 其中sdshdr5实际并未使用到. 所以实际上
 </header>
 <div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20210504140959.png style=display:block;width:50% alt=NAME align=center> </div>
 <h2 id=简单动态字符串sds>简单动态字符串：SDS</h2>
-<p>著作权归https://pdai.tech所有。 链接：https://www.pdai.tech/md/db/nosql-redis/db-redis-x-redis-ds.html</p>
 <blockquote>
 <p>Redis 是用 C 语言写的，但是对于Redis的字符串，却不是 C 语言中的字符串（即以空字符’\0’结尾的字符数组），它是自己构建了一种名为 <strong>简单动态字符串（simple dynamic string,SDS</strong>）的抽象类型，并将 SDS 作为 Redis的默认字符串表示。</p>
 </blockquote>
@@ -418,11 +421,9 @@ SDS有五种不同的头部. 其中sdshdr5实际并未使用到. 所以实际上
 <p>这是一种用于存储二进制数据的一种结构, 具有动态扩容的特点. 其实现位于src/sds.h与src/sds.c中。</p>
 </blockquote>
 <div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20210504141111.png style=display:block;width:50% alt=NAME align=center> </div>
-<p>著作权归https://pdai.tech所有。 链接：https://www.pdai.tech/md/db/nosql-redis/db-redis-x-redis-ds.html</p>
 <p>其中<code>sdshdr</code>是头部, <code>buf</code>是真实存储用户数据的地方. 另外注意, 从命名上能看出来, 这个数据结构除了能存储二进制数据, 显然是用于设计作为字符串使用的, 所以在buf中, 用户数据后总跟着一个\0. 即图中 <code>"数据" + "\0"</code>是为所谓的buf。</p>
 <p>SDS有五种不同的头部. 其中sdshdr5实际并未使用到. 所以实际上有四种不同的头部, 分别如下:</p>
 <div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20210504145202.png style=display:block;width:50% alt=NAME align=center> </div>
-<p>著作权归https://pdai.tech所有。 链接：https://www.pdai.tech/md/db/nosql-redis/db-redis-x-redis-ds.html</p>
 <p>其中：</p>
 <ul>
 <li><code>len</code> 保存了SDS保存字符串的长度</li>
@@ -462,10 +463,9 @@ SDS有五种不同的头部. 其中sdshdr5实际并未使用到. 所以实际上
 </li>
 <li>
 <p><strong>兼容部分 C 字符串函数</strong></p>
-<p>虽然 SDS 是二进制安全的，但是一样遵从每个字符串都是以空字符串结尾的惯例，这样可以重用 C 语言库<code>&lt;string.h></code> 中的一部分函数。</p>
 </li>
 </ul>
-<p>著作权归https://pdai.tech所有。 链接：https://www.pdai.tech/md/db/nosql-redis/db-redis-x-redis-ds.html</p>
+<p>虽然 SDS 是二进制安全的，但是一样遵从每个字符串都是以空字符串结尾的惯例，这样可以重用 C 语言库<code>&lt;string.h></code> 中的一部分函数。</p>
 <h3 id=空间预分配补进一步理解>空间预分配补进一步理解</h3>
 <p>当执行追加操作时，比如现在给<code>key=‘Hello World’</code>的字符串后追加<code>‘ again!’</code>则这时的len=18，free由0变成了18，此时的<code>buf='Hello World again!\0....................'</code>(.表示空格)，也就是buf的内存空间是18+18+1=37个字节，其中‘\0’占1个字节redis给字符串多分配了18个字节的预分配空间，所以下次还有append追加的时候，如果预分配空间足够，就无须在进行空间分配了。在当前版本中，当新字符串的长度小于1M时，redis会分配他们所需大小一倍的空间，当大于1M的时候，就为他们额外多分配1M的空间。</p>
 <p>思考：<strong>这种分配策略会浪费内存资源吗</strong>？</p>
@@ -481,7 +481,6 @@ SDS有五种不同的头部. 其中sdshdr5实际并未使用到. 所以实际上
 <h3 id=ziplist-结构>ZipList 结构</h3>
 <p>整个ziplist在内存中的存储格式如下：</p>
 <div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20210504145727.png style=display:block;width:50% alt=NAME align=center> </div>
-<p>著作权归https://pdai.tech所有。 链接：https://www.pdai.tech/md/db/nosql-redis/db-redis-x-redis-ds.html</p>
 <ul>
 <li>
 <p><code>zlbytes</code>字段的类型是uint32_t, 这个字段中存储的是整个ziplist所占用的内存的字节数</p>
@@ -497,7 +496,6 @@ SDS有五种不同的头部. 其中sdshdr5实际并未使用到. 所以实际上
 </li>
 </ul>
 <h3 id=entry-结构>Entry 结构</h3>
-<p>著作权归https://pdai.tech所有。 链接：https://www.pdai.tech/md/db/nosql-redis/db-redis-x-redis-ds.html</p>
 <p><strong>第一种情况</strong>：一般结构 <code>&lt;prevlen> &lt;encoding> &lt;entry-data></code></p>
 <p><code>prevlen</code>：前一个entry的大小，编码方式见下文；</p>
 <p><code>encoding</code>：不同的情况下值不同，用于表示当前entry的类型和长度；</p>
@@ -583,7 +581,6 @@ SDS有五种不同的头部. 其中sdshdr5实际并未使用到. 所以实际上
 </li>
 </ul>
 <h2 id=快表quicklist>快表：QuickList</h2>
-<p>著作权归https://pdai.tech所有。 链接：https://www.pdai.tech/md/db/nosql-redis/db-redis-x-redis-ds.html</p>
 <blockquote>
 <p>quicklist这个结构是Redis在3.2版本后新加的, 之前的版本是list(即linkedlist)， 用于String数据类型中。</p>
 </blockquote>
@@ -601,7 +598,6 @@ SDS有五种不同的头部. 其中sdshdr5实际并未使用到. 所以实际上
 <h3 id=内存布局图>内存布局图</h3>
 <div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20210504150301.png style=display:block;width:50% alt=NAME align=center> </div>
 <h3 id=更多信息>更多信息</h3>
-<p>著作权归https://pdai.tech所有。 链接：https://www.pdai.tech/md/db/nosql-redis/db-redis-x-redis-ds.html</p>
 <p>下面是有关quicklist的更多额外信息:</p>
 <ul>
 <li>
@@ -641,7 +637,6 @@ SDS有五种不同的头部. 其中sdshdr5实际并未使用到. 所以实际上
 <p>quicklist有自己的优点, 也有缺点, 对于使用者来说, 其使用体验类似于线性数据结构, list作为最传统的双链表, 结点通过指针持有数据, 指针字段会耗费大量内存. ziplist解决了耗费内存这个问题. 但引入了新的问题: 每次写操作整个ziplist的内存都需要重分配. quicklist在两者之间做了一个平衡. 并且使用者可以通过自定义<code>quicklist.fill</code>, 根据实际业务情况, 经验主义调参.</p>
 <h2 id=字典dict>字典：Dict</h2>
 <h3 id=数据结构>数据结构</h3>
-<p>著作权归https://pdai.tech所有。 链接：https://www.pdai.tech/md/db/nosql-redis/db-redis-x-redis-ds.html</p>
 <p><strong>哈希表结构定义</strong>：</p>
 <div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=color:#204a87;font-weight:700>typedef</span> <span style=color:#204a87;font-weight:700>struct</span> <span style=color:#000>dictht</span><span style=color:#000;font-weight:700>{</span>
     <span style=color:#8f5902;font-style:italic>//哈希表数组
@@ -673,7 +668,6 @@ SDS有五种不同的头部. 其中sdshdr5实际并未使用到. 所以实际上
 <p>注意这里还有一个指向下一个哈希表节点的指针，我们知道哈希表最大的问题是存在哈希冲突，如何解决哈希冲突，有开放地址法和链地址法。这里采用的便是链地址法，通过next这个指针可以将多个哈希值相同的键值对连接在一起，用来<strong>解决哈希冲突</strong>。</p>
 <div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20210504150508.png style=display:block;width:50% alt=NAME align=center> </div>
 <h3 id=要点理解>要点理解</h3>
-<p>著作权归https://pdai.tech所有。 链接：https://www.pdai.tech/md/db/nosql-redis/db-redis-x-redis-ds.html</p>
 <ul>
 <li><strong>哈希算法</strong>：Redis计算哈希值和索引值方法如下：</li>
 </ul>
@@ -726,7 +720,6 @@ SDS有五种不同的头部. 其中sdshdr5实际并未使用到. 所以实际上
 <p>整数集合（intset）是集合类型的底层实现之一，当一个集合只包含整数值元素，并且这个集合的元素数量不多时，Redis 就会使用整数集合作为集合键的底层实现。</p>
 </blockquote>
 <h3 id=结构>结构</h3>
-<p>著作权归https://pdai.tech所有。 链接：https://www.pdai.tech/md/db/nosql-redis/db-redis-x-redis-ds.html</p>
 <p>首先看源码结构</p>
 <div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=color:#204a87;font-weight:700>typedef</span> <span style=color:#204a87;font-weight:700>struct</span> <span style=color:#000>intset</span> <span style=color:#000;font-weight:700>{</span>
     <span style=color:#204a87;font-weight:700>uint32_t</span> <span style=color:#000>encoding</span><span style=color:#000;font-weight:700>;</span>
@@ -748,7 +741,6 @@ SDS有五种不同的头部. 其中sdshdr5实际并未使用到. 所以实际上
 <div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20210504150750.png style=display:block;width:50% alt=NAME align=center> </div>
 <p>content数组里面每个元素的数据类型是由encoding来决定的，那么如果原来的数据类型是int16, 当我们再插入一个int32类型的数据时怎么办呢？这就是下面要说的intset的升级。</p>
 <h3 id=升级>升级</h3>
-<p>著作权归https://pdai.tech所有。 链接：https://www.pdai.tech/md/db/nosql-redis/db-redis-x-redis-ds.html</p>
 <p>当在一个int16类型的整数集合中插入一个int32类型的值，整个集合的所有元素都会转换成32类型。 整个过程有三步：</p>
 <ul>
 <li>根据新元素的类型（比如int32），扩展整数集合底层数组的空间大小，并为新元素分配空间。</li>
@@ -758,7 +750,6 @@ SDS有五种不同的头部. 其中sdshdr5实际并未使用到. 所以实际上
 <p><strong>那么如果我们删除掉刚加入的int32类型时，会不会做一个降级操作呢</strong>？</p>
 <p>不会。主要还是减少开销的权衡。</p>
 <h2 id=跳表zskiplist>跳表：ZSkipList</h2>
-<p>著作权归https://pdai.tech所有。 链接：https://www.pdai.tech/md/db/nosql-redis/db-redis-x-redis-ds.html</p>
 <blockquote>
 <p>跳跃表结构在 Redis 中的运用场景只有一个，那就是作为有序列表 (Zset) 的使用。跳跃表的性能可以保证在查找，删除，添加等操作的时候在对数期望时间内完成，这个性能是可以和平衡树来相比较的，而且在实现方面比平衡树要优雅，这就是跳跃表的长处。</p>
 <p>跳跃表的缺点就是需要的存储空间比较大，属于利用空间来换取时间的数据结构。</p>
@@ -788,7 +779,6 @@ SDS有五种不同的头部. 其中sdshdr5实际并未使用到. 所以实际上
 <span style=color:#000;font-weight:700>}</span> <span style=color:#000>zskiplist</span><span style=color:#000;font-weight:700>;</span>
 </code></pre></div><p>内存布局：</p>
 <div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20210504151129.png style=display:block;width:50% alt=NAME align=center> </div>
-<p>著作权归https://pdai.tech所有。 链接：https://www.pdai.tech/md/db/nosql-redis/db-redis-x-redis-ds.html</p>
 <p><strong>zskiplist的核心设计要点</strong></p>
 <ul>
 <li>

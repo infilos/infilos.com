@@ -21,7 +21,7 @@
 <meta property="og:site_name" content="infilos.com">
 <meta itemprop=name content="CH03-线程基础-1">
 <meta itemprop=description content="线程状态   New：新建，创建后尚未启动。 Runnable：可运行，可能正在运行，也可能在等待 CPU 时间片。  包含操作系统线程状态的 Running 和 Ready。   Blocking：等待获取一个排它锁，如果其他线程释放了锁就会结束该状态。 Waiting：无限期等待，需要其他线程唤醒，否则不会分配 CPU 时间片。  未设置 Timeout 参数的 Object.wait 方法，需要 Object.notify 或 Object.notifyAll 唤醒 未设置 Timeout 参数的 Thread.join 方法，被调用的线程执行完毕 LockSupport.park 调用   Timed Waiting：限时等待，在一定时间后自动唤醒。  调用 Thread.sleep 方法，线程睡眠 设置了 Timeout 参数调用 Object.wait 进入限期等待，挂起线程  睡眠和挂起用于表述行为，阻塞和等待用于描述状态 阻塞和等待的区别在于，阻塞是被动的，等待的是一个排它锁，锁的释放由其他线程决定。 等待是祖东的，等待的是一个时间点，是线程自身通过 Thread.sleep 或 Object.wait 主动触发的等待。   设置了 Timeout 参数调用 Thread.join 方法 LockSupport.parkNanos LockSupport.parkUntil   Terminated：死亡，线程结束任务之后自然死亡，或异常导致任务终止而死亡  应用方式  实现 Runnable 接口：无返回值 实现 Callable 接口：有返回值 继承 Thread 类  实现 Runnable 后 Callable 接口的类只能被当做是一个可以在线程中执行的任务，并不是真正意义上的线程实例，因此最后还是需要通过 Thread 类来调用。即任务是通过线程来执行的。">
-<meta itemprop=wordCount content="635">
+<meta itemprop=wordCount content="633">
 <meta itemprop=keywords content><meta name=twitter:card content="summary">
 <meta name=twitter:title content="CH03-线程基础-1">
 <meta name=twitter:description content="线程状态   New：新建，创建后尚未启动。 Runnable：可运行，可能正在运行，也可能在等待 CPU 时间片。  包含操作系统线程状态的 Running 和 Ready。   Blocking：等待获取一个排它锁，如果其他线程释放了锁就会结束该状态。 Waiting：无限期等待，需要其他线程唤醒，否则不会分配 CPU 时间片。  未设置 Timeout 参数的 Object.wait 方法，需要 Object.notify 或 Object.notifyAll 唤醒 未设置 Timeout 参数的 Thread.join 方法，被调用的线程执行完毕 LockSupport.park 调用   Timed Waiting：限时等待，在一定时间后自动唤醒。  调用 Thread.sleep 方法，线程睡眠 设置了 Timeout 参数调用 Object.wait 进入限期等待，挂起线程  睡眠和挂起用于表述行为，阻塞和等待用于描述状态 阻塞和等待的区别在于，阻塞是被动的，等待的是一个排它锁，锁的释放由其他线程决定。 等待是祖东的，等待的是一个时间点，是线程自身通过 Thread.sleep 或 Object.wait 主动触发的等待。   设置了 Timeout 参数调用 Thread.join 方法 LockSupport.parkNanos LockSupport.parkUntil   Terminated：死亡，线程结束任务之后自然死亡，或异常导致任务终止而死亡  应用方式  实现 Runnable 接口：无返回值 实现 Callable 接口：有返回值 继承 Thread 类  实现 Runnable 后 Callable 接口的类只能被当做是一个可以在线程中执行的任务，并不是真正意义上的线程实例，因此最后还是需要通过 Thread 类来调用。即任务是通过线程来执行的。">
@@ -895,10 +895,7 @@
 </ul>
 <h3 id=reentrantlock>ReentrantLock</h3>
 <p>ReentrantLock 是 java.util.concurrent(J.U.C)包中的锁。</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#f57900>著作权归https:</span><span style=color:#8f5902;font-style:italic>//pdai.tech所有。
-</span><span style=color:#8f5902;font-style:italic></span><span style=color:#000>链接</span><span style=color:#a40000>：</span><span style=color:#000>https</span><span style=color:#ce5c00;font-weight:700>:</span><span style=color:#8f5902;font-style:italic>//www.pdai.tech/md/java/thread/java-thread-x-thread-basic.html
-</span><span style=color:#8f5902;font-style:italic></span>
-<span style=color:#204a87;font-weight:700>private</span> <span style=color:#000>Lock</span> <span style=color:#000>lock</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>ReentrantLock</span><span style=color:#ce5c00;font-weight:700>();</span>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#204a87;font-weight:700>private</span> <span style=color:#000>Lock</span> <span style=color:#000>lock</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>ReentrantLock</span><span style=color:#ce5c00;font-weight:700>();</span>
 
 <span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>void</span> <span style=color:#000>func</span><span style=color:#ce5c00;font-weight:700>()</span> <span style=color:#ce5c00;font-weight:700>{</span>
     <span style=color:#000>lock</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>lock</span><span style=color:#ce5c00;font-weight:700>();</span>

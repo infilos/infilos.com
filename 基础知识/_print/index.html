@@ -188,6 +188,7 @@
 <li>5.4: <a href=#pg-f62d4cb6226e9f047de758a2f6013237>理解网络栈</a></li>
 <li>5.5: <a href=#pg-37e2b758555fb7d29a529a49a42088be>RFC-1180</a></li>
 <li>5.6: <a href=#pg-d0acfcbcdee747ffcca9e675d77b2e45>可靠性疑问</a></li>
+<li>5.7: <a href=#pg-e189f1bbb74298a50119621436bc002e>握手详解</a></li>
 </ul>
 <li>6: <a href=#pg-ca0af1407a820b60c8dc2adba3e45a48>HTTP</a></li>
 <ul>
@@ -195,16 +196,22 @@
 <li>6.2: <a href=#pg-f5c77c7841949e1aa4080a8500b54dc8>URL 与资源</a></li>
 <li>6.3: <a href=#pg-3f9e6e84aa6b28fde606994de099bc1b>HTTP 报文</a></li>
 <li>6.4: <a href=#pg-99925a267a45bd0c179d4c1f7c667768>连接管理</a></li>
-<li>6.5: <a href=#pg-7a1e106ccc9be0b15fab7e1aaaadb524>性能探索</a></li>
+<li>6.5: <a href=#pg-73072acf63880145dbc20eae4c019a58>版本与性能</a></li>
 </ul>
 <li>7: <a href=#pg-9c415192736b2fd96c31b69974401254>HTTPS</a></li>
 <ul>
+<li>7.1: <a href=#pg-30f1686e727eb7f10b57dbf9a5e2e3b5>基本原理</a></li>
 </ul>
-<li>8: <a href=#pg-2322589586a8ab3dc1c3acab8776151a>信息安全</a></li>
+<li>8: <a href=#pg-50e2c440d28844b9b29e7252308a644c>WebSocket</a></li>
 <ul>
-<li>8.1: <a href=#pg-ab1c4282ada86bba59bb549e0695ed8c>单向散列</a></li>
-<li>8.2: <a href=#pg-e16d765f99f50a6923a83e2f532a1e4a>对称加密</a></li>
-<li>8.3: <a href=#pg-3fd627c95305077c8b1f93a548fb93fd>WEB 安全</a></li>
+<li>8.1: <a href=#pg-770c05380758c58db861dd17a6d59161>MQTT Over WS</a></li>
+<li>8.2: <a href=#pg-05d963357f38e612b03f0a39cab46fda>SSE WS HTTP</a></li>
+</ul>
+<li>9: <a href=#pg-2322589586a8ab3dc1c3acab8776151a>信息安全</a></li>
+<ul>
+<li>9.1: <a href=#pg-ab1c4282ada86bba59bb549e0695ed8c>单向散列</a></li>
+<li>9.2: <a href=#pg-e16d765f99f50a6923a83e2f532a1e4a>对称加密</a></li>
+<li>9.3: <a href=#pg-3fd627c95305077c8b1f93a548fb93fd>WEB 安全</a></li>
 </ul>
 </ul>
 <div class=content>
@@ -4814,7 +4821,7 @@ DELETE /idX/delete HTTP/1.1   -&gt; Returns 404
 <li>数据帧格式</li>
 <li>如何维持连接</li>
 </ol>
-<h3 id=入门示例>入门示例</h3>
+<h2 id=入门示例>入门示例</h2>
 <p>在正式介绍协议细节前，先来看一个简单的例子，有个直观感受。例子包括了WebSocket服务端、WebSocket客户端（网页端）。</p>
 <p>这里服务端用了<code>ws</code>这个库。相比大家熟悉的<code>socket.io</code>，<code>ws</code>实现更轻量，更适合学习的目的。</p>
 <h3 id=1服务端>1、服务端</h3>
@@ -4862,7 +4869,9 @@ server: received hello
 <div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>client: ws connection is open
 client: received world
 </code></pre></div><h2 id=如何建立连接>如何建立连接</h2>
-<p>前面提到，WebSocket复用了HTTP的握手通道。具体指的是，客户端通过HTTP请求与WebSocket服务端协商升级协议。协议升级完成后，后续的数据交换则遵照WebSocket的协议。</p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220220153411.png style=display:block;margin-left:auto;margin-right:auto;width:70% alt=20220220153411></div>
+<p>WebSocket 协议本质上是一个基于 TCP 的协议，为了建立一个 WebSocket 连接，客户端浏览器首先要向服务器发起一个 HTTP 请求，这个请求相比较平时使用的 HTTP 请求多了一些信息。</p>
+<p>WebSocket 复用了 HTTP 的握手通道。具体指的是，客户端通过 HTTP 请求与 WebSocket 服务端协商升级协议。协议升级完成后，后续的数据交换则遵照 WebSocket 的协议。</p>
 <h3 id=1客户端申请协议升级>1、客户端：申请协议升级</h3>
 <p>首先，客户端发起协议升级请求。可以看到，采用的是标准的HTTP报文格式，且只支持<code>GET</code>方法。</p>
 <div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-http data-lang=http><span style=color:#000>GET</span> <span style=color:#000>/</span> <span style=color:#204a87;font-weight:700>HTTP</span><span style=color:#ce5c00;font-weight:700>/</span><span style=color:#0000cf;font-weight:700>1.1</span>
@@ -5093,6 +5102,8 @@ Sec-WebSocket-Accept: &lt;connection-key&gt;
 <p>最初的提案是对数据进行加密处理。基于安全、效率的考虑，最终采用了折中的方案：对数据载荷进行掩码处理。</p>
 <p>需要注意的是，这里只是限制了浏览器对数据载荷进行掩码处理，但是坏人完全可以实现自己的WebSocket客户端、服务端，不按规则来，攻击可以照常进行。</p>
 <p>但是对浏览器加上这个限制后，可以大大增加攻击的难度，以及攻击的影响范围。如果没有这个限制，只需要在网上放个钓鱼网站骗人去访问，一下子就可以在短时间内展开大范围的攻击。</p>
+<h2 id=项目示例>项目示例</h2>
+<p><a href=https://github.com/infilos/spring-boot-ws-chat>Github: spring-boot-ws-chat</a></p>
 </div>
 <div class=td-content style=page-break-before:always>
 <h1 id=pg-b77ad5cb463157199c767f5bd5e73bed>4.7 - DNS 服务</h1>
@@ -7889,6 +7900,547 @@ net.ipv4.conf.default.accept_source_route = 0
 <p>如果不满足以上两点的任何一点，那么就没有任何一方能够判断它收到的消息是不是最后一条。</p>
 </div>
 <div class=td-content style=page-break-before:always>
+<h1 id=pg-e189f1bbb74298a50119621436bc002e>5.7 - 握手详解</h1>
+<h2 id=概览>概览</h2>
+<ol>
+<li>
+<p>TCP 基本认识</p>
+<ol>
+<li>TCP 头部格式</li>
+<li>为什么需要 TCP 协议？TCP 工作在那一层？</li>
+<li>什么是 TCP？</li>
+<li>什么是 TCP 连接？</li>
+<li>如何唯一确定一个 TCP 连接？</li>
+<li>TCP 最大连接数？</li>
+<li>UDP 与 TCP 的区别？各自应用场景？</li>
+<li>为什么 UDP 头部没有“首部长度”字段，而 TCP 头部有“首部长度”字段？</li>
+<li>为什么 UDP 头部有“包长度”字段，而 TCP 头部没有“包长度”字段？</li>
+</ol>
+</li>
+<li>
+<p>TCP 建立连接</p>
+<ol>
+<li>TCP 三次握手过程和状态变迁</li>
+<li>如何在 Linux 系统中查看 TCP 状态？</li>
+<li>为什么是三次握手？不是两次或四次？</li>
+<li>为什么客户端和服务端的初始需要 ISN 是不同的？</li>
+<li>初始序号 ISN 是如何随机生成的？</li>
+<li>既然 IP 层会分片，为什么 TCP 层还需要 MSS？</li>
+<li>什么是 SYN 攻击？如何避免 SYN 攻击？</li>
+</ol>
+</li>
+<li>
+<p>TCP 断开连接</p>
+<ol>
+<li>TCP 四次挥手过程和状态变迁</li>
+<li>为什么挥手需要四次？</li>
+<li>为什么 TIME_WAIT 等待的时间是 2MSL？</li>
+<li>为什么需要 TIME_WAIT 状态？</li>
+<li>TIME_WAIT 过程有什么危害？</li>
+<li>如何优化 TIME_WAIT？</li>
+<li>如何已经建立了连接，但是客户端突然出现故障了怎么办？</li>
+</ol>
+</li>
+<li>
+<p>Socket 编程</p>
+<ol>
+<li>针对 TCP 应该如何 Socket 编程？</li>
+<li>Listen 时候参数 backlog 的意义？</li>
+<li>accept 发送在三次握手的哪一步？</li>
+<li>客户端调用 close 了，连接断开的流程是什么？</li>
+</ol>
+</li>
+</ol>
+<h2 id=1-tcp-基本认识>1. TCP 基本认识</h2>
+<h3 id=11-tcp-头部格式>1.1 TCP 头部格式</h3>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219142228.png style=display:block;margin-left:auto;margin-right:auto;width:80% alt=20220219142228></div>
+<ul>
+<li><strong>序列号</strong>：在建立连接时由计算机生成的随机数作为其初始值，通过 SYN 包传给接收端主机，每发送一次数据，就「累加」一次该「数据字节数」的大小。<strong>用来解决网络包乱序问题。</strong></li>
+<li><strong>确认应答号</strong>：指下一次「期望」收到的数据的序列号，发送端收到这个确认应答以后可以认为在这个序号以前的数据都已经被正常接收。<strong>用来解决不丢包的问题。</strong></li>
+<li><strong>控制位</strong>：
+<ul>
+<li><em>ACK</em>：该位为 <code>1</code> 时，「确认应答」的字段变为有效，TCP 规定除了最初建立连接时的 <code>SYN</code> 包之外该位必须设置为 <code>1</code> 。</li>
+<li><em>RST</em>：该位为 <code>1</code> 时，表示 TCP 连接中出现异常必须强制断开连接。</li>
+<li><em>SYC</em>：该位为 <code>1</code> 时，表示希望建立连，并在其「序列号」的字段进行序列号初始值的设定。</li>
+<li><em>FIN</em>：该位为 <code>1</code> 时，表示今后不会再有数据发送，希望断开连接。当通信结束希望断开连接时，通信双方的主机之间就可以相互交换 <code>FIN</code> 位置为 1 的 TCP 段。</li>
+</ul>
+</li>
+</ul>
+<h3 id=12-为什么需要-tcp-协议tcp-工作在那一层>1.2 为什么需要 TCP 协议？TCP 工作在那一层？</h3>
+<p><code>IP</code> 层是「不可靠」的，它不保证网络包的交付、不保证网络包的按序交付、也不保证网络包中的数据的完整性。</p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219142608.png style=display:block;margin-left:auto;margin-right:auto;width:40% alt=20220219142608></div>
+<p>如果需要保障网络数据包的可靠性，那么就需要由上层（传输层）的 <code>TCP</code> 协议来负责。</p>
+<p>因为 TCP 是一个工作在<strong>传输层</strong>的<strong>可靠</strong>数据传输的服务，它能确保接收端接收的网络包是<strong>无损坏、无间隔、非冗余和按序的。</strong></p>
+<h3 id=13-什么是-tcp>1.3 什么是 TCP？</h3>
+<p>TCP 是<strong>面向连接的、可靠的、基于字节流</strong>的传输层通信协议。</p>
+<ul>
+<li><strong>面向连接</strong>：一定是「一对一」才能连接，不能像 UDP 协议 可以一个主机同时向多个主机发送消息，也就是一对多是无法做到的；</li>
+<li><strong>可靠的</strong>：无论的网络链路中出现了怎样的链路变化，TCP 都可以保证一个报文一定能够到达接收端；</li>
+<li><strong>字节流</strong>：消息是「没有边界」的，所以无论我们消息有多大都可以进行传输。并且消息是「有序的」，当「前一个」消息没有收到的时候，即使它先收到了后面的字节已经收到，那么也不能扔给应用层去处理，同时对「重复」的报文会自动丢弃。</li>
+</ul>
+<h3 id=14-什么是-tcp-连接>1.4 什么是 TCP 连接？</h3>
+<p>我们来看看 RFC 793 是如何定义「连接」的：</p>
+<blockquote>
+<p><em>Connections:</em></p>
+<p><em>The reliability and flow control mechanisms described above require that TCPs initialize and maintain certain status information for each data stream.</em></p>
+<p><em>The combination of this information, including sockets, sequence numbers, and window sizes, is called a connection.</em></p>
+</blockquote>
+<p>简单来说就是，<strong>用于保证可靠性和流量控制维护的某些状态信息，这些信息的组合，包括 Socket、序列号和窗口大小称为连接。</strong></p>
+<p>建立一个 TCP 连接是需要客户端与服务器端达成上述三个信息的共识：</p>
+<ul>
+<li><strong>Socket</strong>：由 IP 地址和端口号组成</li>
+<li><strong>序列号</strong>：用来解决乱序问题等</li>
+<li><strong>窗口大小</strong>：用来做流量控制</li>
+</ul>
+<h3 id=15-如何唯一确定一个-tcp-连接>1.5 如何唯一确定一个 TCP 连接？</h3>
+<p>TCP 四元组可以唯一的确定一个连接，四元组包括如下：</p>
+<ul>
+<li>源地址</li>
+<li>源端口</li>
+<li>目的地址</li>
+<li>目的端口</li>
+</ul>
+<p><strong>源地址和目的地址的字段（32位）是在 IP 头部中，作用是通过 IP 协议发送报文给对方主机。</strong></p>
+<p><strong>源端口和目的端口的字段（16位）是在 TCP 头部中，作用是告诉 TCP 协议应该把报文发给哪个进程。</strong></p>
+<h3 id=16-tcp-的最大连接数是多少>1.6 TCP 的最大连接数是多少？</h3>
+<p>服务器通常固定在某个本地端口上监听，等待客户端的连接请求。因此，客户端 IP 和 端口是可变的，其理论值计算公式如下:</p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219144257.png style=display:block;margin-left:auto;margin-right:auto;width:80% alt=20220219144257></div>
+<p>对 IPv4，客户端的 IP 数最多为 <code>2</code> 的 <code>32</code> 次方，客户端的端口数最多为 <code>2</code> 的 <code>16</code> 次方，也就是服务端单机最大 TCP 连接数，约为 <code>2</code> 的 <code>48</code> 次方。</p>
+<p><strong>当然，服务端最大并发 TCP 连接数远不能达到理论上限。</strong></p>
+<ul>
+<li>首先主要是<strong>文件描述符限制</strong>，Socket 都是文件，所以首先要通过 <code>ulimit</code> 配置文件描述符的数目；</li>
+<li>另一个是<strong>内存限制</strong>，每个 TCP 连接都要占用一定内存，操作系统是有限的。</li>
+</ul>
+<h3 id=17--udp-与-tcp-的区别各自应用场景>1.7 UDP 与 TCP 的区别？各自应用场景？</h3>
+<p><strong>UDP 不提供复杂的控制机制，利用 IP 提供面向「无连接」的通信服务。</strong></p>
+<p>UDP 协议真的非常简，头部只有 <code>8</code> 个字节（ 64 位），UDP 的头部格式如下：</p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219144515.png style=display:block;margin-left:auto;margin-right:auto;width:50% alt=20220219144515></div>
+<ul>
+<li>目标和源端口：主要是告诉 UDP 协议应该把报文发给哪个进程。</li>
+<li>包长度：该字段保存了 UDP 首部的长度跟数据的长度之和。</li>
+<li>校验和：校验和是为了提供可靠的 UDP 首部和数据而设计。</li>
+</ul>
+<p><strong>TCP 和 UDP 区别：</strong></p>
+<ul>
+<li>连接
+<ul>
+<li>TCP 是面向连接的传输层协议，传输数据前先要建立连接。</li>
+<li>UDP 是不需要连接，即刻传输数据。</li>
+</ul>
+</li>
+<li>服务对象
+<ul>
+<li>TCP 是一对一的两点服务，即一条连接只有两个端点。</li>
+<li>UDP 支持一对一、一对多、多对多的交互通信</li>
+</ul>
+</li>
+<li>可靠性
+<ul>
+<li>TCP 是可靠交付数据的，数据可以无差错、不丢失、不重复、按需到达。</li>
+<li>UDP 是尽最大努力交付，不保证可靠交付数据。</li>
+</ul>
+</li>
+<li>拥塞控制、流量控制
+<ul>
+<li>TCP 有拥塞控制和流量控制机制，保证数据传输的安全性。</li>
+<li>UDP 则没有，即使网络非常拥堵了，也不会影响 UDP 的发送速率。</li>
+</ul>
+</li>
+<li>首部开销
+<ul>
+<li>TCP 首部长度较长，会有一定的开销，首部在没有使用「选项」字段时是 <code>20</code> 个字节，如果使用了「选项」字段则会变长的。</li>
+<li>UDP 首部只有 8 个字节，并且是固定不变的，开销较小。</li>
+</ul>
+</li>
+</ul>
+<p><strong>TCP 和 UDP 应用场景：</strong></p>
+<ul>
+<li>
+<p>由于 TCP 是面向连接，能保证数据的可靠性交付，因此经常用于：</p>
+<ul>
+<li>
+<p><code>FTP</code> 文件传输</p>
+</li>
+<li>
+<p><code>HTTP</code> / <code>HTTPS</code></p>
+</li>
+</ul>
+</li>
+<li>
+<p>由于 UDP 面向无连接，它可以随时发送数据，再加上UDP本身的处理既简单又高效，因此经常用于：</p>
+<ul>
+<li>
+<p>包总量较少的通信，如 <code>DNS</code> 、<code>SNMP</code> 等</p>
+</li>
+<li>
+<p>视频、音频等多媒体通信</p>
+</li>
+<li>
+<p>广播通信</p>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id=18-头部字段首部长度>1.8 头部字段：首部长度</h3>
+<p>为什么 UDP 头部没有「首部长度」字段，而 TCP 头部有「首部长度」字段呢？</p>
+<p>原因是 TCP 有<strong>可变长</strong>的「选项」字段，而 UDP 头部长度则是<strong>不会变化</strong>的，无需多一个字段去记录 UDP 的首部长度。</p>
+<h3 id=19-头部字段包长度>1.9 头部字段：包长度</h3>
+<p>为什么 UDP 头部有「包长度」字段，而 TCP 头部则没有「包长度」字段呢？</p>
+<p>先说说 TCP 是如何计算负载数据长度：</p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219145016.png style=display:block;margin-left:auto;margin-right:auto;width:80% alt=20220219145016></div>
+<p>其中 IP 总长度 和 IP 首部长度，在 IP 首部格式是已知的。TCP 首部长度，则是在 TCP 首部格式已知的，所以就可以求得 TCP 数据的长度。</p>
+<p>大家这时就奇怪了问：“ UDP 也是基于 IP 层的呀，那 UDP 的数据长度也可以通过这个公式计算呀？为何还要有「包长度」呢？”</p>
+<p>这么一问，确实感觉 UDP 「包长度」是冗余的。</p>
+<p><strong>因为为了网络设备硬件设计和处理方便，首部长度需要是 <code>4</code>字节的整数倍。</strong></p>
+<p>如果去掉 UDP 「包长度」字段，那 UDP 首部长度就不是 <code>4</code> 字节的整数倍了，所以小林觉得这可能是为了补全 UDP 首部长度是 <code>4</code> 字节的整数倍，才补充了「包长度」字段。</p>
+<h2 id=2-tcp-建立连接>2. TCP 建立连接</h2>
+<h3 id=21-tcp-三次握手过程和状态变迁>2.1 TCP 三次握手过程和状态变迁</h3>
+<p>TCP 是面向连接的协议，所以使用 TCP 前必须先建立连接，而<strong>建立连接是通过三次握手而进行的。</strong></p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219145240.png style=display:block;margin-left:auto;margin-right:auto;width:60% alt=20220219145240></div>
+<ol>
+<li>一开始，客户端和服务端都处于 <code>CLOSED</code> 状态。先是服务端主动监听某个端口，处于 <code>LISTEN</code> 状态</li>
+</ol>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219145333.png style=display:block;margin-left:auto;margin-right:auto;width:60% alt=20220219145333></div>
+<ol start=2>
+<li>客户端会随机初始化序号（<code>client_isn</code>），将此序号置于 TCP 首部的「序号」字段中，同时把 <code>SYN</code> 标志位置为 <code>1</code> ，表示 <code>SYN</code> 报文。接着把第一个 SYN 报文发送给服务端，表示向服务端发起连接，该报文不包含应用层数据，之后客户端处于 <code>SYN-SENT</code> 状态。</li>
+</ol>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219145504.png style=display:block;margin-left:auto;margin-right:auto;width:60% alt=20220219145504></div>
+<ol start=3>
+<li>服务端收到客户端的 <code>SYN</code> 报文后，首先服务端也随机初始化自己的序号（<code>server_isn</code>），将此序号填入 TCP 首部的「序号」字段中，其次把 TCP 首部的「确认应答号」字段填入 <code>client_isn + 1</code>, 接着把 <code>SYN</code> 和 <code>ACK</code> 标志位置为 <code>1</code>。最后把该报文发给客户端，该报文也不包含应用层数据，之后服务端处于 <code>SYN-RCVD</code> 状态。</li>
+</ol>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219145626.png style=display:block;margin-left:auto;margin-right:auto;width:60% alt=20220219145626></div>
+<ol start=4>
+<li>
+<p>客户端收到服务端报文后，还要向服务端回应最后一个应答报文，首先该应答报文 TCP 首部 <code>ACK</code> 标志位置为 <code>1</code>，其次「确认应答号」字段填入 <code>server_isn + 1</code> ，最后把报文发送给服务端，这次报文可以携带客户到服务器的数据，之后客户端处于 <code>ESTABLISHED</code> 状态。</p>
+</li>
+<li>
+<p>服务器收到客户端的应答报文后，也进入 <code>ESTABLISHED</code> 状态。</p>
+</li>
+</ol>
+<p>从上面的过程可以发现<strong>第三次握手是可以携带数据的，前两次握手是不可以携带数据的</strong>，这也是面试常问的题。</p>
+<p>一旦完成三次握手，双方都处于 <code>ESTABLISHED</code> 状态，此致连接就已建立完成，客户端和服务端就可以相互发送数据了。</p>
+<h3 id=22-如何在-linux-系统中查看-tcp-状态>2.2 如何在 Linux 系统中查看 TCP 状态？</h3>
+<p>TCP 的连接状态查看，在 Linux 可以通过 <code>netstat -napt</code> 命令查看。</p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219145957.png style=display:block;margin-left:auto;margin-right:auto;width:80% alt=20220219145957></div>
+<h3 id=23-为什么是三次握手不是两次四次>2.3 为什么是三次握手？不是两次、四次？</h3>
+<p>相信大家比较常回答的是：“因为三次握手才能保证双方具有接收和发送的能力。”</p>
+<p>这回答是没问题，但这回答是片面的，并没有说出主要的原因。</p>
+<p>在前面我们知道了什么是 <strong>TCP 连接</strong>：</p>
+<ul>
+<li>用于保证可靠性和流量控制维护的某些状态信息，这些信息的组合，包括<strong>Socket、序列号和窗口大小</strong>称为连接。</li>
+</ul>
+<p>所以，重要的是<strong>为什么三次握手才可以初始化Socket、序列号和窗口大小并建立 TCP 连接。</strong></p>
+<p>接下来以三个方面分析三次握手的原因：</p>
+<ul>
+<li><strong>三次握手才可以阻止历史重复连接的初始化（主要原因）</strong></li>
+<li><strong>三次握手才可以同步双方的初始序列号</strong></li>
+<li><strong>三次握手才可以避免资源浪费</strong></li>
+</ul>
+<h4 id=原因一避免历史连接><em>原因一：避免历史连接</em></h4>
+<p>我们来看看 RFC 793 指出的 TCP 连接使用三次握手的<strong>首要原因</strong>：</p>
+<blockquote>
+<p><em>The principle reason for the three-way handshake is to prevent old duplicate connection initiations from causing confusion.</em></p>
+</blockquote>
+<p>简单来说，三次握手的<strong>首要原因是为了防止旧的重复连接初始化造成混乱。</strong></p>
+<p>网络环境是错综复杂的，往往并不是如我们期望的一样，先发送的数据包，就先到达目标主机，反而它很骚，可能会由于网络拥堵等乱七八糟的原因，会使得旧的数据包，先到达目标主机，那么这种情况下 TCP 三次握手是如何避免的呢？</p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219150219.png style=display:block;margin-left:auto;margin-right:auto;width:60% alt=20220219150219></div>
+<p>客户端连续发送多次 SYN 建立连接的报文，在网络拥堵等情况下：</p>
+<ul>
+<li>一个「旧 SYN 报文」比「最新的 SYN 」 报文早到达了服务端；</li>
+<li>那么此时服务端就会回一个 <code>SYN + ACK</code> 报文给客户端；</li>
+<li>客户端收到后可以根据自身的上下文，判断这是一个历史连接（序列号过期或超时），那么客户端就会发送 <code>RST</code> 报文给服务端，表示中止这一次连接。</li>
+</ul>
+<p>如果是两次握手连接，就不能判断当前连接是否是历史连接，三次握手则可以在客户端（发送方）准备发送第三次报文时，客户端因有足够的上下文来判断当前连接是否是历史连接：</p>
+<ul>
+<li>如果是历史连接（序列号过期或超时），则第三次握手发送的报文是 <code>RST</code> 报文，以此中止历史连接；</li>
+<li>如果不是历史连接，则第三次发送的报文是 <code>ACK</code> 报文，通信双方就会成功建立连接；</li>
+</ul>
+<p>所以， TCP 使用三次握手建立连接的最主要原因是<strong>防止历史连接初始化了连接。</strong></p>
+<h4 id=原因二同步双方初始序列号><em>原因二：同步双方初始序列号</em></h4>
+<p>TCP 协议的通信双方， 都必须各自维护一个「序列号」， 序列号是可靠传输的一个关键因素，它的作用：</p>
+<ul>
+<li>接收方可以去除重复的数据；</li>
+<li>接收方可以根据数据包的序列号按序接收；</li>
+<li>可以标识发送出去的数据包中， 哪些是已经被对方收到的；</li>
+</ul>
+<p>可见，序列号在 TCP 连接中占据着非常重要的作用，所以当客户端发送携带「初始序列号」的 <code>SYN</code> 报文的时候，需要服务端回一个 <code>ACK</code> 应答报文，表示客户端的 SYN 报文已被服务端成功接收，那当服务端发送「初始序列号」给客户端的时候，依然也要得到客户端的应答回应，<strong>这样一来一回，才能确保双方的初始序列号能被可靠的同步。</strong></p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219151359.png style=display:block;margin-left:auto;margin-right:auto;width:60% alt=20220219151359></div>
+<p>四次握手其实也能够可靠的同步双方的初始化序号，但由于<strong>第二步和第三步可以优化成一步</strong>，所以就成了「三次握手」。</p>
+<p>而两次握手只保证了一方的初始序列号能被对方成功接收，没办法保证双方的初始序列号都能被确认接收。</p>
+<h4 id=原因三避免资源浪费><em>原因三：避免资源浪费</em></h4>
+<p>如果只有「两次握手」，当客户端的 <code>SYN</code> 请求连接在网络中阻塞，客户端没有接收到 <code>ACK</code> 报文，就会重新发送 <code>SYN</code> ，由于没有第三次握手，服务器不清楚客户端是否收到了自己发送的建立连接的 <code>ACK</code> 确认信号，所以每收到一个 <code>SYN</code> 就只能先主动建立一个连接，这会造成什么情况呢？</p>
+<p>如果客户端的 <code>SYN</code> 阻塞了，重复发送多次 <code>SYN</code> 报文，那么服务器在收到请求后就会<strong>建立多个冗余的无效链接，造成不必要的资源浪费。</strong></p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219151502.png style=display:block;margin-left:auto;margin-right:auto;width:60% alt=20220219151502></div>
+<p>即两次握手会造成消息滞留情况下，服务器重复接受无用的连接请求 <code>SYN</code> 报文，而造成重复分配资源。</p>
+<h4 id=总结>总结</h4>
+<p>TCP 建立连接时，通过三次握手<strong>能防止历史连接的建立，能减少双方不必要的资源开销，能帮助双方同步初始化序列号</strong>。序列号能够保证数据包不重复、不丢弃和按序传输。</p>
+<p>不使用「两次握手」和「四次握手」的原因：</p>
+<ul>
+<li>「两次握手」：无法防止历史连接的建立，会造成双方资源的浪费，也无法可靠的同步双方序列号；</li>
+<li>「四次握手」：三次握手就已经理论上最少可靠连接建立，所以不需要使用更多的通信次数。</li>
+</ul>
+<h3 id=24-为什么客户端和服务端的初始序列号-isn-是不相同的>2.4 为什么客户端和服务端的初始序列号 ISN 是不相同的？</h3>
+<p>因为网络中的报文<strong>会延迟、会复制重发、也有可能丢失</strong>，这样会造成的不同连接之间产生互相影响，所以为了避免互相影响，客户端和服务端的初始序列号是随机且不同的。</p>
+<h3 id=25-初始序列号-isn-是如何随机产生的>2.5 初始序列号 ISN 是如何随机产生的？</h3>
+<p>起始 <code>ISN</code> 是基于时钟的，每 4 毫秒 + 1，转一圈要 4.55 个小时。</p>
+<p>RFC1948 中提出了一个较好的初始化序列号 ISN 随机生成算法。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>ISN = M + F (localhost, localport, remotehost, remoteport)
+</code></pre></div><ul>
+<li><code>M</code> 是一个计时器，这个计时器每隔 4 毫秒加 1。</li>
+<li><code>F</code> 是一个 Hash 算法，根据源 IP、目的 IP、源端口、目的端口生成一个随机数值。要保证 Hash 算法不能被外部轻易推算得出，用 MD5 算法是一个比较好的选择。</li>
+</ul>
+<h3 id=26-既然-ip-层会分片为什么-tcp-层还需要-mss-呢>2.6 既然 IP 层会分片，为什么 TCP 层还需要 MSS 呢？</h3>
+<p>我们先来认识下 MTU 和 MSS</p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219151936.png style=display:block;margin-left:auto;margin-right:auto;width:80% alt=20220219151936></div>
+<ul>
+<li><code>MTU</code>：一个网络包的最大长度，以太网中一般为 <code>1500</code> 字节；</li>
+<li><code>MSS</code>：除去 IP 和 TCP 头部之后，一个网络包所能容纳的 TCP 数据的最大长度；</li>
+</ul>
+<p>如果TCP 的整个报文（头部 + 数据）交给 IP 层进行分片，会有什么异常呢？</p>
+<p>当 IP 层有一个超过 <code>MTU</code> 大小的数据（TCP 头部 + TCP 数据）要发送，那么 IP 层就要进行分片，把数据分片成若干片，保证每一个分片都小于 MTU。把一份 IP 数据报进行分片以后，由目标主机的 IP 层来进行重新组装后，在交给上一层 TCP 传输层。</p>
+<p>这看起来井然有序，但这存在隐患的，<strong>那么当如果一个 IP 分片丢失，整个 IP 报文的所有分片都得重传</strong>。</p>
+<p>因为 IP 层本身没有超时重传机制，它由传输层的 TCP 来负责超时和重传。</p>
+<p>当接收方发现 TCP 报文（头部 + 数据）的某一片丢失后，则不会响应 ACK 给对方，那么发送方的 TCP 在超时后，就会重发「整个 TCP 报文（头部 + 数据）」。</p>
+<p>因此，可以得知由 IP 层进行分片传输，是非常没有效率的。</p>
+<p>所以，为了达到最佳的传输效能 TCP 协议在<strong>建立连接的时候通常要协商双方的 MSS 值</strong>，当 TCP 层发现数据超过 MSS 时，则就先会进行分片，当然由它形成的 IP 包的长度也就不会大于 MTU ，自然也就不用 IP 分片了。</p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219152140.png style=display:block;margin-left:auto;margin-right:auto;width:80% alt=20220219152140></div>
+<p>经过 TCP 层分片后，如果一个 TCP 分片丢失后，<strong>进行重发时也是以 MSS 为单位</strong>，而不用重传所有的分片，大大增加了重传的效率。</p>
+<h3 id=27-什么是-syn-攻击如何避免-syn-攻击>2.7 什么是 SYN 攻击？如何避免 SYN 攻击？</h3>
+<h4 id=syn-攻击><em>SYN 攻击</em></h4>
+<p>我们都知道 TCP 连接建立是需要三次握手，假设攻击者短时间伪造不同 IP 地址的 <code>SYN</code> 报文，服务端每接收到一个 <code>SYN</code> 报文，就进入<code>SYN_RCVD</code> 状态，但服务端发送出去的 <code>ACK + SYN</code> 报文，无法得到未知 IP 主机的 <code>ACK</code> 应答，久而久之就会<strong>占满服务端的 SYN 接收队列（未连接队列）</strong>，使得服务器不能为正常用户服务。</p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219152234.png style=display:block;margin-left:auto;margin-right:auto;width:50% alt=20220219152234></div>
+<h4 id=避免-syn-攻击方式一><em>避免 SYN 攻击方式一</em></h4>
+<p>其中一种解决方式是通过修改 Linux 内核参数，控制队列大小和当队列满时应做什么处理。</p>
+<ul>
+<li>
+<p>当网卡接收数据包的速度大于内核处理的速度时，会有一个队列保存这些数据包。控制该队列的最大值如下参数：</p>
+<ul>
+<li><code>net.core.netdev_max_backlog</code></li>
+</ul>
+</li>
+<li>
+<p>SYN_RCVD 状态连接的最大个数：</p>
+<ul>
+<li><code>net.ipv4.tcp_max_syn_backlog</code></li>
+</ul>
+</li>
+<li>
+<p>超出处理能时，对新的 SYN 直接回 RST，丢弃连接：</p>
+<ul>
+<li><code>net.ipv4.tcp_abort_on_overflow</code></li>
+</ul>
+</li>
+</ul>
+<h4 id=避免-syn-攻击方式二><em>避免 SYN 攻击方式二</em></h4>
+<p>我们先来看下Linux 内核的 <code>SYN</code> （未完成连接建立）队列与 <code>Accpet</code> （已完成连接建立）队列是如何工作的？</p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219152359.png style=display:block;margin-left:auto;margin-right:auto;width:60% alt=20220219152359></div>
+<p>正常流程：</p>
+<ul>
+<li>当服务端接收到客户端的 SYN 报文时，会将其加入到内核的「 SYN 队列」；</li>
+<li>接着发送 SYN + ACK 给客户端，等待客户端回应 ACK 报文；</li>
+<li>服务端接收到 ACK 报文后，从「 SYN 队列」移除放入到「 Accept 队列」；</li>
+<li>应用通过调用 <code>accpet()</code> socket 接口，从「 Accept 队列」取出的连接。</li>
+</ul>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219152423.png style=display:block;margin-left:auto;margin-right:auto;width:60% alt=20220219152423></div>
+<p>应用程序过慢：</p>
+<ul>
+<li>如果应用程序过慢时，就会导致「 Accept 队列」被占满。</li>
+</ul>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219152457.png style=display:block;margin-left:auto;margin-right:auto;width:60% alt=20220219152457></div>
+<p>受到 SYN 攻击：</p>
+<ul>
+<li>如果不断受到 SYN 攻击，就会导致「 SYN 队列」被占满。</li>
+</ul>
+<p><code>tcp_syncookies</code> 的方式可以应对 SYN 攻击的方法：<code>net.ipv4.tcp_syncookies = 1</code></p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219152553.png style=display:block;margin-left:auto;margin-right:auto;width:60% alt=20220219152553></div>
+<ul>
+<li>当 「 SYN 队列」满之后，后续服务器收到 SYN 包，不进入「 SYN 队列」；</li>
+<li>计算出一个 <code>cookie</code> 值，再以 SYN + ACK 中的「序列号」返回客户端，</li>
+<li>服务端接收到客户端的应答报文时，服务器会检查这个 ACK 包的合法性。如果合法，直接放入到「 Accept 队列」。</li>
+<li>最后应用通过调用 <code>accpet()</code> socket 接口，从「 Accept 队列」取出的连接。</li>
+</ul>
+<h2 id=3-tcp-断开连接>3. TCP 断开连接</h2>
+<h3 id=31-tcp-四次挥手过程和状态变迁>3.1 TCP 四次挥手过程和状态变迁</h3>
+<p>天下没有不散的宴席，对于 TCP 连接也是这样， TCP 断开连接是通过<strong>四次挥手</strong>方式。</p>
+<p>双方都可以主动断开连接，断开连接后主机中的「资源」将被释放。</p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219152719.png style=display:block;margin-left:auto;margin-right:auto;width:60% alt=20220219152719></div>
+<ul>
+<li>客户端打算关闭连接，此时会发送一个 TCP 首部 <code>FIN</code> 标志位被置为 <code>1</code> 的报文，也即 <code>FIN</code> 报文，之后客户端进入 <code>FIN_WAIT_1</code> 状态。</li>
+<li>服务端收到该报文后，就向客户端发送 <code>ACK</code> 应答报文，接着服务端进入 <code>CLOSED_WAIT</code> 状态。</li>
+<li>客户端收到服务端的 <code>ACK</code> 应答报文后，之后进入 <code>FIN_WAIT_2</code> 状态。</li>
+<li>等待服务端处理完数据后，也向客户端发送 <code>FIN</code> 报文，之后服务端进入 <code>LAST_ACK</code> 状态。</li>
+<li>客户端收到服务端的 <code>FIN</code> 报文后，回一个 <code>ACK</code> 应答报文，之后进入 <code>TIME_WAIT</code> 状态</li>
+<li>服务器收到了 <code>ACK</code> 应答报文后，就进入了 <code>CLOSE</code> 状态，至此服务端已经完成连接的关闭。</li>
+<li>客户端在经过 <code>2MSL</code> 一段时间后，自动进入 <code>CLOSE</code> 状态，至此客户端也完成连接的关闭。</li>
+</ul>
+<p>你可以看到，每个方向都需要<strong>一个 FIN 和一个 ACK</strong>，因此通常被称为<strong>四次挥手</strong>。</p>
+<p>这里一点需要注意是：<strong>主动关闭连接的，才有 TIME_WAIT 状态。</strong></p>
+<h3 id=32-为什么挥手需要四次>3.2 为什么挥手需要四次？</h3>
+<p>再来回顾下四次挥手双方发 <code>FIN</code> 包的过程，就能理解为什么需要四次了。</p>
+<ul>
+<li>关闭连接时，客户端向服务端发送 <code>FIN</code> 时，仅仅表示客户端不再发送数据了但是还能接收数据。</li>
+<li>服务器收到客户端的 <code>FIN</code> 报文时，先回一个 <code>ACK</code> 应答报文，而服务端可能还有数据需要处理和发送，等服务端不再发送数据时，才发送 <code>FIN</code> 报文给客户端来表示同意现在关闭连接。</li>
+</ul>
+<p>从上面过程可知，服务端通常需要等待完成数据的发送和处理，所以服务端的 <code>ACK</code> 和 <code>FIN</code> 一般都会分开发送，从而比三次握手导致多了一次。</p>
+<h3 id=33-为什么-time_wait-等待的时间是-2msl>3.3 为什么 TIME_WAIT 等待的时间是 2MSL？</h3>
+<p><code>MSL</code> 是 Maximum Segment Lifetime，<strong>报文最大生存时间</strong>，它是任何报文在网络上存在的最长时间，超过这个时间报文将被丢弃。因为 TCP 报文基于是 IP 协议的，而 IP 头中有一个 <code>TTL</code> 字段，是 IP 数据报可以经过的最大路由数，每经过一个处理他的路由器此值就减 1，当此值为 0 则数据报将被丢弃，同时发送 ICMP 报文通知源主机。</p>
+<p>MSL 与 TTL 的区别：MSL 的单位是时间，而 TTL 是经过路由跳数。所以 <strong>MSL 应该要大于等于 TTL 消耗为 0 的时间</strong>，以确保报文已被自然消亡。</p>
+<p>TIME_WAIT 等待 2 倍的 MSL，比较合理的解释是：网络中可能存在来自发送方的数据包，当这些发送方的数据包被接收方处理后又会向对方发送响应，所以<strong>一来一回需要等待 2 倍的时间</strong>。</p>
+<p>比如，如果被动关闭方没有收到断开连接的最后的 ACK 报文，就会触发超时重发 Fin 报文，另一方接收到 FIN 后，会重发 ACK 给被动关闭方， 一来一去正好 2 个 MSL。</p>
+<p><code>2MSL</code> 的时间是从<strong>客户端接收到 FIN 后发送 ACK 开始计时的</strong>。如果在 TIME-WAIT 时间内，因为客户端的 ACK 没有传输到服务端，客户端又接收到了服务端重发的 FIN 报文，那么 <strong>2MSL 时间将重新计时</strong>。</p>
+<p>在 Linux 系统里 <code>2MSL</code> 默认是 <code>60</code> 秒，那么一个 <code>MSL</code> 也就是 <code>30</code> 秒。<strong>Linux 系统停留在 TIME_WAIT 的时间为固定的 60 秒</strong>。</p>
+<p>其定义在 Linux 内核代码里的名称为 TCP_TIMEWAIT_LEN：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>#define TCP_TIMEWAIT_LEN (60*HZ) /* how long to wait to destroy TIME-WAIT 
+                                    state, about 60 seconds  */
+</code></pre></div><p>如果要修改 TIME_WAIT 的时间长度，只能修改 Linux 内核代码里 TCP_TIMEWAIT_LEN 的值，并重新编译 Linux 内核。</p>
+<h3 id=34-为什么需要-time_wait-状态>3.4 为什么需要 TIME_WAIT 状态？</h3>
+<p>主动发起关闭连接的一方，才会有 <code>TIME-WAIT</code> 状态。</p>
+<p>需要 TIME-WAIT 状态，主要是两个原因：</p>
+<ul>
+<li>防止具有相同「四元组」的「旧」数据包被收到；</li>
+<li>保证「被动关闭连接」的一方能被正确的关闭，即保证最后的 ACK 能让被动关闭方接收，从而帮助其正常关闭；</li>
+</ul>
+<h4 id=原因一防止旧连接的数据包><em>原因一：防止旧连接的数据包</em></h4>
+<p>假设 TIME-WAIT 没有等待时间或时间过短，被延迟的数据包抵达后会发生什么呢？</p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219153619.png style=display:block;margin-left:auto;margin-right:auto;width:60% alt=20220219153619></div>
+<ul>
+<li>如上图黄色框框服务端在关闭连接之前发送的 <code>SEQ = 301</code> 报文，被网络延迟了。</li>
+<li>这时有相同端口的 TCP 连接被复用后，被延迟的 <code>SEQ = 301</code> 抵达了客户端，那么客户端是有可能正常接收这个过期的报文，这就会产生数据错乱等严重的问题。</li>
+</ul>
+<p>所以，TCP 就设计出了这么一个机制，经过 <code>2MSL</code> 这个时间，<strong>足以让两个方向上的数据包都被丢弃，使得原来连接的数据包在网络中都自然消失，再出现的数据包一定都是新建立连接所产生的。</strong></p>
+<h4 id=原因二保证连接正确关闭><em>原因二：保证连接正确关闭</em></h4>
+<p>在 RFC 793 指出 TIME-WAIT 另一个重要的作用是：</p>
+<blockquote>
+<p><em>TIME-WAIT - represents waiting for enough time to pass to be sure the remote TCP received the acknowledgment of its connection termination request.</em></p>
+</blockquote>
+<p>也就是说，TIME-WAIT 作用是<strong>等待足够的时间以确保最后的 ACK 能让被动关闭方接收，从而帮助其正常关闭。</strong></p>
+<p>假设 TIME-WAIT 没有等待时间或时间过短，断开连接会造成什么问题呢？</p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219153845.png style=display:block;margin-left:auto;margin-right:auto;width:60% alt=20220219153845></div>
+<ul>
+<li>如上图红色框框客户端四次挥手的最后一个 <code>ACK</code> 报文如果在网络中被丢失了，此时如果客户端 <code>TIME-WAIT</code> 过短或没有，则就直接进入了 <code>CLOSE</code> 状态了，那么服务端则会一直处在 <code>LASE-ACK</code> 状态。</li>
+<li>当客户端发起建立连接的 <code>SYN</code> 请求报文后，服务端会发送 <code>RST</code> 报文给客户端，连接建立的过程就会被终止。</li>
+</ul>
+<p>如果 TIME-WAIT 等待足够长的情况就会遇到两种情况：</p>
+<ul>
+<li>服务端正常收到四次挥手的最后一个 <code>ACK</code> 报文，则服务端正常关闭连接。</li>
+<li>服务端没有收到四次挥手的最后一个 <code>ACK</code> 报文时，则会重发 <code>FIN</code> 关闭连接报文并等待新的 <code>ACK</code> 报文。</li>
+</ul>
+<p>所以客户端在 <code>TIME-WAIT</code> 状态等待 <code>2MSL</code> 时间后，就可以<strong>保证双方的连接都可以正常的关闭。</strong></p>
+<h3 id=35-time_wait-过多有什么危害>3.5 TIME_WAIT 过多有什么危害？</h3>
+<p>如果服务器有处于 TIME-WAIT 状态的 TCP，则说明是由服务器方主动发起的断开请求。</p>
+<p>过多的 TIME-WAIT 状态主要的危害有两种：</p>
+<ul>
+<li>第一是内存资源占用；</li>
+<li>第二是对端口资源的占用，一个 TCP 连接至少消耗一个本地端口；</li>
+</ul>
+<p>第二个危害是会造成严重的后果的，要知道，端口资源也是有限的，一般可以开启的端口为 <code>32768～61000</code>，也可以通过如下参数设置指定 <code>net.ipv4.ip_local_port_range</code>。</p>
+<p><strong>如果服务端 TIME_WAIT 状态过多，占满了所有端口资源，则会导致无法创建新连接。</strong></p>
+<h3 id=36-如何优化-time_wait>3.6 如何优化 TIME_WAIT？</h3>
+<p>这里给出优化 TIME-WAIT 的几个方式，都是有利有弊：</p>
+<ul>
+<li>打开 <code>net.ipv4.tcp_tw_reuse</code> 和 <code>net.ipv4.tcp_timestamps</code> 选项；</li>
+<li><code>net.ipv4.tcp_max_tw_buckets</code></li>
+<li>程序中使用 SO_LINGER ，应用强制使用 RST 关闭。</li>
+</ul>
+<h4 id=方式一netipv4tcp_tw_reuse-和-tcp_timestamps><em>方式一：net.ipv4.tcp_tw_reuse 和 tcp_timestamps</em></h4>
+<p>如下的 Linux 内核参数开启后，则可以<strong>复用处于 TIME_WAIT 的 socket 为新的连接所用</strong>。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>net.ipv4.tcp_tw_reuse = 1
+</code></pre></div><p>使用这个选项，还有一个前提，需要打开对 TCP 时间戳的支持，即</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>net.ipv4.tcp_timestamps=1（默认即为 1）
+</code></pre></div><p>这个时间戳的字段是在 TCP 头部的「选项」里，用于记录 TCP 发送方的当前时间戳和从对端接收到的最新时间戳。</p>
+<p>由于引入了时间戳，我们在前面提到的 <code>2MSL</code> 问题就不复存在了，因为重复的数据包会因为时间戳过期被自然丢弃。</p>
+<p>温馨提醒：<code>net.ipv4.tcp_tw_reuse</code>要慎用，因为使用了它就必然要打开时间戳的支持 <code>net.ipv4.tcp_timestamps</code>，<strong>当客户端与服务端主机时间不同步时，客户端的发送的消息会被直接拒绝掉</strong>。</p>
+<h4 id=方式二netipv4tcp_max_tw_buckets><em>方式二：net.ipv4.tcp_max_tw_buckets</em></h4>
+<p>这个值默认为 18000，当系统中处于 TIME_WAIT 的连接<strong>一旦超过这个值时，系统就会将所有的 TIME_WAIT 连接状态重置。</strong></p>
+<p>这个方法过于暴力，而且治标不治本，带来的问题远比解决的问题多，不推荐使用。</p>
+<h4 id=方式三程序中使用-so_linger><em>方式三：程序中使用 SO_LINGER</em></h4>
+<p>我们可以通过设置 socket 选项，来设置调用 close 关闭连接行为。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>struct linger so_linger;
+so_linger.l_onoff = 1;
+so_linger.l_linger = 0;
+setsockopt(s, SOL_SOCKET, SO_LINGER, &amp;so_linger,sizeof(so_linger));
+</code></pre></div><p>如果<code>l_onoff</code>为非 0， 且<code>l_linger</code>值为 0，那么调用<code>close</code>后，会立该发送一个<code>RST</code>标志给对端，该 TCP 连接将跳过四次挥手，也就跳过了<code>TIME_WAIT</code>状态，直接关闭。</p>
+<p>但这为跨越<code>TIME_WAIT</code>状态提供了一个可能，不过是一个非常危险的行为，不值得提倡。</p>
+<h3 id=37-如果已经建立了连接但是客户端突然出现故障了怎么办>3.7 如果已经建立了连接，但是客户端突然出现故障了怎么办？</h3>
+<p>TCP 有一个机制是<strong>保活机制</strong>。这个机制的原理是这样的：</p>
+<p>定义一个时间段，在这个时间段内，如果没有任何连接相关的活动，TCP 保活机制会开始作用，每隔一个时间间隔，发送一个探测报文，该探测报文包含的数据非常少，如果连续几个探测报文都没有得到响应，则认为当前的 TCP 连接已经死亡，系统内核将错误信息通知给上层应用程序。</p>
+<p>在 Linux 内核可以有对应的参数可以设置保活时间、保活探测的次数、保活探测的时间间隔，以下都为默认值：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>net.ipv4.tcp_keepalive_time=7200
+net.ipv4.tcp_keepalive_intvl=75  
+net.ipv4.tcp_keepalive_probes=9
+</code></pre></div><ul>
+<li>tcp_keepalive_time=7200：表示保活时间是 7200 秒（2小时），也就 2 小时内如果没有任何连接相关的活动，则会启动保活机制</li>
+<li>tcp_keepalive_intvl=75：表示每次检测间隔 75 秒；</li>
+<li>tcp_keepalive_probes=9：表示检测 9 次无响应，认为对方是不可达的，从而中断本次的连接。</li>
+</ul>
+<p>也就是说在 Linux 系统中，最少需要经过 2 小时 11 分 15 秒才可以发现一个「死亡」连接。</p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219154603.png style=display:block;margin-left:auto;margin-right:auto;width:80% alt=20220219154603></div>
+<p>这个时间是有点长的，我们也可以根据实际的需求，对以上的保活相关的参数进行设置。</p>
+<p>如果开启了 TCP 保活，需要考虑以下几种情况：</p>
+<ul>
+<li>
+<p>第一种，对端程序是正常工作的。当 TCP 保活的探测报文发送给对端, 对端会正常响应，这样 <strong>TCP 保活时间会被重置</strong>，等待下一个 TCP 保活时间的到来。</p>
+</li>
+<li>
+<p>第二种，对端程序崩溃并重启。当 TCP 保活的探测报文发送给对端后，对端是可以响应的，但由于没有该连接的有效信息，<strong>会产生一个 RST 报文</strong>，这样很快就会发现 TCP 连接已经被重置。</p>
+</li>
+<li>
+<p>第三种，是对端程序崩溃，或对端由于其他原因导致报文不可达。当 TCP 保活的探测报文发送给对端后，石沉大海，没有响应，连续几次，达到保活探测次数后，<strong>TCP 会报告该 TCP 连接已经死亡</strong>。</p>
+</li>
+</ul>
+<h2 id=4-socket-编程>4. Socket 编程</h2>
+<h3 id=41-针对-tcp-应该如何-socket-编程>4.1 针对 TCP 应该如何 Socket 编程？</h3>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219154722.png style=display:block;margin-left:auto;margin-right:auto;width:60% alt=20220219154722></div>
+<ul>
+<li>服务端和客户端初始化 <code>socket</code>，得到文件描述符；</li>
+<li>服务端调用 <code>bind</code>，将绑定在 IP 地址和端口;</li>
+<li>服务端调用 <code>listen</code>，进行监听；</li>
+<li>服务端调用 <code>accept</code>，等待客户端连接；</li>
+<li>客户端调用 <code>connect</code>，向服务器端的地址和端口发起连接请求；</li>
+<li>服务端 <code>accept</code> 返回用于传输的 <code>socket</code> 的文件描述符；</li>
+<li>客户端调用 <code>write</code> 写入数据；服务端调用 <code>read</code> 读取数据；</li>
+<li>客户端断开连接时，会调用 <code>close</code>，那么服务端 <code>read</code> 读取数据的时候，就会读取到了 <code>EOF</code>，待处理完数据后，服务端调用 <code>close</code>，表示连接关闭。</li>
+</ul>
+<p>这里需要注意的是，服务端调用 <code>accept</code> 时，连接成功了会返回一个已完成连接的 socket，后续用来传输数据。</p>
+<p>所以，监听的 socket 和真正用来传送数据的 socket，是「两个」 socket，一个叫作<strong>监听 socket</strong>，一个叫作<strong>已完成连接 socket</strong>。</p>
+<p>成功连接建立之后，双方开始通过 read 和 write 函数来读写数据，就像往一个文件流里面写东西一样。</p>
+<h3 id=42-listen-时候参数-backlog-的意义>4.2 listen 时候参数 backlog 的意义？</h3>
+<p>Linux内核中会维护两个队列：</p>
+<ul>
+<li>未完成连接队列（SYN 队列）：接收到一个 SYN 建立连接请求，处于 SYN_RCVD 状态；</li>
+<li>已完成连接队列（Accpet 队列）：已完成 TCP 三次握手过程，处于 ESTABLISHED 状态；</li>
+</ul>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219154905.png style=display:block;margin-left:auto;margin-right:auto;width:60% alt=20220219154905></div>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>int listen (int socketfd, int backlog)
+</code></pre></div><ul>
+<li>参数一 socketfd 为 socketfd 文件描述符</li>
+<li>参数二 backlog，这参数在历史有一定的变化</li>
+</ul>
+<p>在早期 Linux 内核 backlog 是 SYN 队列大小，也就是未完成的队列大小。</p>
+<p>在 Linux 内核 2.2 之后，backlog 变成 accept 队列，也就是已完成连接建立的队列长度，<strong>所以现在通常认为 backlog 是 accept 队列。</strong></p>
+<h3 id=43-accept-发送在三次握手的哪一步>4.3 accept 发送在三次握手的哪一步？</h3>
+<p>我们先看看客户端连接服务端时，发送了什么？</p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219155034.png style=display:block;margin-left:auto;margin-right:auto;width:60% alt=20220219155034></div>
+<ul>
+<li>客户端的协议栈向服务器端发送了 SYN 包，并告诉服务器端当前发送序列号 client_isn，客户端进入 SYNC_SENT 状态；</li>
+<li>服务器端的协议栈收到这个包之后，和客户端进行 ACK 应答，应答的值为 client_isn+1，表示对 SYN 包 client_isn 的确认，同时服务器也发送一个 SYN 包，告诉客户端当前我的发送序列号为 server_isn，服务器端进入 SYNC_RCVD 状态；</li>
+<li>客户端协议栈收到 ACK 之后，使得应用程序从 <code>connect</code> 调用返回，表示客户端到服务器端的单向连接建立成功，客户端的状态为 ESTABLISHED，同时客户端协议栈也会对服务器端的 SYN 包进行应答，应答数据为 server_isn+1；</li>
+<li>应答包到达服务器端后，服务器端协议栈使得 <code>accept</code> 阻塞调用返回，这个时候服务器端到客户端的单向连接也建立成功，服务器端也进入 ESTABLISHED 状态。</li>
+</ul>
+<p>从上面的描述过程，我们可以得知<strong>客户端 connect 成功返回是在第二次握手，服务端 accept 成功返回是在三次握手成功之后。</strong></p>
+<h3 id=44-客户端调用-close-了连接是断开的流程是什么>4.4 客户端调用 close 了，连接是断开的流程是什么？</h3>
+<p>我们看看客户端主动调用了 <code>close</code>，会发生什么？</p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219155234.png style=display:block;margin-left:auto;margin-right:auto;width:60% alt=20220219155234></div>
+<ul>
+<li>客户端调用 <code>close</code>，表明客户端没有数据需要发送了，则此时会向服务端发送 FIN 报文，进入 FIN_WAIT_1 状态；</li>
+<li>服务端接收到了 FIN 报文，TCP 协议栈会为 FIN 包插入一个文件结束符 <code>EOF</code> 到接收缓冲区中，应用程序可以通过 <code>read</code> 调用来感知这个 FIN 包。这个 <code>EOF</code> 会被<strong>放在已排队等候的其他已接收的数据之后</strong>，这就意味着服务端需要处理这种异常情况，因为 EOF 表示在该连接上再无额外数据到达。此时，服务端进入 CLOSE_WAIT 状态；</li>
+<li>接着，当处理完数据后，自然就会读到 <code>EOF</code>，于是也调用 <code>close</code> 关闭它的套接字，这会使得会发出一个 FIN 包，之后处于 LAST_ACK 状态；</li>
+<li>客户端接收到服务端的 FIN 包，并发送 ACK 确认包给服务端，此时客户端将进入 TIME_WAIT 状态；</li>
+<li>服务端收到 ACK 确认包后，就进入了最后的 CLOSE 状态；</li>
+<li>客户端进过 <code>2MSL</code> 时间之后，也进入 CLOSED 状态；</li>
+</ul>
+</div>
+<div class=td-content style=page-break-before:always>
 <h1 id=pg-ca0af1407a820b60c8dc2adba3e45a48>6 - HTTP</h1>
 </div>
 <div class=td-content>
@@ -9130,8 +9682,13 @@ http://joe:joespasswd@www.joes-hardware.com/sales_info.txt
 </ol>
 </div>
 <div class=td-content style=page-break-before:always>
-<h1 id=pg-7a1e106ccc9be0b15fab7e1aaaadb524>6.5 - 性能探索</h1>
-<p><a href=https://www.mnot.net/blog/2016/04/22/ideal-http>Ideal HTTP Performance</a>一文的翻译，点击查看原文。</p>
+<h1 id=pg-73072acf63880145dbc20eae4c019a58>6.5 - 版本与性能</h1>
+<div class="pageinfo pageinfo-primary">
+<ul>
+<li><a href=https://www.mnot.net/blog/2016/04/22/ideal-http>原文连接：Ideal HTTP Performance</a></li>
+<li><a href=https://mp.weixin.qq.com/s/TKVbxbrKoxADB9mKKLwqbw>原文连接： HTTP / [ 0.9 | 1.0 | 1.1 | 2 | 3 ]</a></li>
+</ul>
+</div>
 <p>Web性能的隐性规则是减少终端用户能够感知到的延迟；在用户之前获得页面并使交互变得尽可能的快。</p>
 <p>至于HTTP而言，这意味着一个理想的协议交互看起来像这样：</p>
 <div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/WEB%E6%80%A7%E8%83%BD%E7%90%86%E6%83%B3%E7%9A%84%E5%8D%8F%E8%AE%AE%E4%BA%A4%E4%BA%92.jpg style=display:block;width:50% alt=NAME align=center> </div>
@@ -9139,7 +9696,143 @@ http://joe:joespasswd@www.joes-hardware.com/sales_info.txt
 <p>额外数数据同时意味着更多的转换时间和更多的出错机会，比如拥堵或者丢包，这将严重的影响性能。</p>
 <p>由于协议“隔阂(chattiness)”的更多往返次数会带来更多的延迟，尤其是移动网络(一个往返100ms可以作为你最好的预期)。</p>
 <p>如果这是最理想的情况，那HTTP是如何度量的？我们又如何来提升呢？</p>
+<h2 id=http09>HTTP/0.9</h2>
+<p>HTTP/0.9 诞生于 1991 年，是 HTTP 协议的最初版，构造十分简单：</p>
+<ul>
+<li>请求端只支持 GET 请求</li>
+<li>响应端只能返回 HTML 文本数据</li>
+</ul>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>GET /index.html
+
+&lt;html&gt;
+	&lt;body&gt;
+		Hello World
+	&lt;/body&gt;
+&lt;/html&gt;
+</code></pre></div><p>请求示意图如下：</p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219162422.png style=display:block;margin-left:auto;margin-right:auto;width:60% alt=20220219162422></div>
+<p>可以看到，HTTP/0.9 只能发送 GET 请求，且每一个请求都单独创建一个 TCP 连接，响应端只能返回 HTML 格式的数据，响应完成之后 TCP 请求断开。</p>
+<p>这样的请求方式虽然能够满足当时的使用需求，但也还是暴露出了一些问题。</p>
+<p>HTTP/0.9 痛点：</p>
+<ul>
+<li>请求方式唯一，返回格式唯一</li>
+<li>TCP 连接无法复用</li>
+</ul>
+<h2 id=http10>HTTP/1.0</h2>
+<p>HTTP/1.0 诞生于 1996 年，它在 HTTP/0.9 的基础上，增加了 HTTP 头部字段，极大扩展了 HTTP 的使用场景。这个版本的 HTTP 不仅可以传输文字，还能传输图像、视频、二进制文件，为互联网的迅速发展奠定了坚实的基础。</p>
+<p>核心特点如下：</p>
+<ul>
+<li>
+<p>请求端增加 HTTP 协议版本，响应端增加状态码。</p>
+</li>
+<li>
+<p>请求方法增加 POST、HEAD。</p>
+</li>
+<li>
+<p>请求端和响应端增加头部字段。</p>
+</li>
+<li>
+<ul>
+<li>Content-Type 让响应数据不只限于超文本。</li>
+<li>Expires、Last-Modified 缓存头。</li>
+<li>Authorization 身份认证。</li>
+<li>Connection: keep-alive 支持长连接，但非标准。</li>
+</ul>
+</li>
+</ul>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>GET /mypage.html HTTP/1.0
+User-Agent: NCSA_Mosaic/2.0 (Windows 3.1)
+
+200 OK
+Date: Tue, 15 Nov 1994 08:12:31 GMT
+Server: CERN/3.0 libwww/2.17
+Content-Type: text/html
+
+&lt;html&gt;
+  &lt;body&gt;
+    Hello World
+  &lt;/body&gt;
+&lt;/html&gt;
+</code></pre></div><p>请求示意图如下：</p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219162546.png style=display:block;margin-left:auto;margin-right:auto;width:60% alt=20220219162546></div>
+<p>HTTP/1.0 扩展了请求方法和响应状态码，并且支持定义 HTTP 头部字段，通过 <code>Content-Type</code> 头，我们就能传输任何格式的数据了。同时可以看出，HTTP/1.0 仍然是一个请求对应一个 TCP 连接，不能形成复用。</p>
+<p>HTTP/1.0 痛点：</p>
+<ul>
+<li>TCP 连接无法复用。</li>
+<li>HTTP 队头阻塞，一个 HTTP 请求响应结束之后，才能发起下一个 HTTP 请求。</li>
+<li>一台服务器只能提供一个 HTTP 服务。</li>
+</ul>
 <h2 id=http11>HTTP/1.1</h2>
+<p>HTTP/1.1 诞生于 1999 年，它进一步完善了 HTTP 协议，一直用到了 20 多年后的今天，仍然是使用最广的 HTTP 版本。</p>
+<p>核心特点如下：</p>
+<ul>
+<li>
+<p>持久连接。</p>
+<ul>
+<li>HTTP/1.1 默认开启持久连接，在 TCP 连接建立后不立即关闭，让多个 HTTP 请求得以复用。</li>
+</ul>
+</li>
+<li>
+<p>管线化技术。</p>
+<ul>
+<li>HTTP/1.1 中，多个 HTTP 请求不用排队发送，可以批量发送，这就解决了 HTTP 队头阻塞问题。但批量发送的 HTTP 请求，必须按照发送的顺序返回响应，相当于问题解决了一半，仍然不是最佳体验。</li>
+</ul>
+</li>
+<li>
+<p>支持响应分块。</p>
+<ul>
+<li>HTTP/1.1 实现了流式渲染，响应端可以不用一次返回所有数据，可以将数据拆分成多个模块，产生一块数据，就发送一块数据，这样客户端就可以同步对数据进行处理，减少响应延迟，降低白屏时间。</li>
+<li>Bigpipe 的实现就是基于这个特性，具体是通过定义 <code>Transfer-Encoding</code> 头来实现的。</li>
+</ul>
+</li>
+<li>
+<p>增加 Host 头。</p>
+<ul>
+<li>HTTP/1.1 实现了虚拟主机技术，将一台服务器分成若干个主机，这样就可以在一台服务器上部署多个网站了。</li>
+<li>通过配置 Host 的域名和端口号，即可支持多个 HTTP 服务：<code>Host: &lt;domain>:&lt;port></code></li>
+</ul>
+</li>
+<li>
+<p>其他扩展。</p>
+<ul>
+<li>增加 Cache-Control、E-Tag 缓存头。</li>
+<li>增加 PUT、PATCH、HEAD、 OPTIONS、DELETE 请求方法。</li>
+</ul>
+</li>
+</ul>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>GET /en-US/docs/Glossary/Simple_header HTTP/1.1
+Host: developer.mozilla.org
+User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.9; rv:50.0) Gecko/20100101 Firefox/50.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate, br
+Referer: https://developer.mozilla.org/en-US/docs/Glossary/Simple_header
+
+200 OK
+Connection: Keep-Alive
+Content-Encoding: gzip
+Content-Type: text/html; charset=utf-8
+Date: Wed, 20 Jul 2016 10:55:30 GMT
+Etag: &#34;547fa7e369ef56031dd3bff2ace9fc0832eb251a&#34;
+Keep-Alive: timeout=5, max=1000
+Last-Modified: Tue, 19 Jul 2016 00:59:33 GMT
+Server: Apache
+Transfer-Encoding: chunked
+Vary: Cookie, Accept-Encoding
+
+&lt;html&gt;
+  &lt;body&gt;
+    Hello World
+  &lt;/body&gt;
+&lt;/html&gt;
+</code></pre></div><p>请求示意图如下：</p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219162752.png style=display:block;margin-left:auto;margin-right:auto;width:60% alt=20220219162752></div>
+<p>可以看到，HTTP/1.1 可以并行发起多个请求，并且也能复用同一个 TCP 连接，传输效率得到了提升。但响应端只能按照发送的顺序进行返回，为此很多浏览器会为每个域名至多打开 6 个连接，用增加队列的方式减少 HTTP 队头阻塞。</p>
+<p>HTTP/1.1 痛点：</p>
+<ul>
+<li>HTTP 队头阻塞没有彻底解决，响应端必须按照 HTTP 的发送顺序进行返回，如果排序靠前的响应特别耗时，则会阻塞排序靠后的所有响应。</li>
+</ul>
+<h3 id=扩展阅读>扩展阅读</h3>
 <p>多种原因说明HTTP/1.1是一个很好的协议，但遗憾的是现代的Web工作方式意味着性能并不是其中之一。一个典型的页面加载方式看起来会是这样：</p>
 <div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/HTTP1.1.jpg style=display:block;width:50% alt=NAME align=center> </div>
 <p>这并不是特别的理想。</p>
@@ -9148,6 +9841,61 @@ http://joe:joespasswd@www.joes-hardware.com/sales_info.txt
 <p>最终，由于HTTP/1的<code>head-of-line blocking</code>问题(线头阻塞:队列首个packet由于他的目的端口正忙而被延迟转发)，将多个资源组装到一个大的CSS代码、内嵌或连接，成为了一个普遍的最佳实践。这些都是HTTP/1中漂亮的性能hack，但是他们同样有一个损失：他们下载了远多于客户端需求的数据来显示一个页面，这与我们的理想相悖，并不能做到尽可能快的展示页面。</p>
 <p>总的来说，HTTP/1并是不是一无是处，性能上的智能。举例来说，它拥有缓存，允许你在一个新的拷贝时完全不需要网络。还有受限制的请求，当有一个老的拷贝时避免你去转换大的东西。</p>
 <h2 id=http2>HTTP/2</h2>
+<p>HTTP/2 诞生于 2015 年，它的最大的特点是 All in 二进制，基于二进制的特性，对 HTTP 传输效率进行了深度优化。</p>
+<p>HTTP/2 将一个 HTTP 请求划分为 3 个部分：</p>
+<ul>
+<li>帧：一段二进制数据，是 HTTP/2 传输的最小单位。</li>
+<li>消息：一个请求或响应对应的一个或多个帧。</li>
+<li>数据流：已建立的连接内的双向字节流，可以承载一条或多条消息。</li>
+</ul>
+<p>HTTP/2 核心特点如下：</p>
+<ul>
+<li>
+<p>请求优先级</p>
+</li>
+<li>
+<ul>
+<li>多个 HTTP 请求同时发送时，会产生多个数据流，数据流中有一个优先级的标识，服务器端可以根据这个标识来决定响应的优先顺序。</li>
+</ul>
+</li>
+<li>
+<p>多路复用</p>
+</li>
+<li>
+<ul>
+<li>TCP 传输时，不用按照 HTTP 的发送顺序进行响应，可以交错发送，接收端根据帧首部的标识符，就能找到对应的流，进而重新组合得到最终数据。</li>
+</ul>
+</li>
+<li>
+<p>服务器端推送</p>
+</li>
+<li>
+<ul>
+<li>HTTP/2 允许服务器未经请求，主动向客户端发送资源，并缓存到客户端中，以避免二次请求。</li>
+<li>HTTP/1.1 中请求一个页面时，浏览器会先发送一个 HTTP 请求，然后得到响应的 HTML 内容并开始解析，如果发现有 <code>&lt;script src="xxxx.js"></code> 标签，则会再次发起 HTTP 请求获取对应的 JS 内容。而 HTTP/2 可以在返回 HTML 的同时，将需要用到的 JS、CSS 等内容一并返回给客户端，当浏览器解析到对应标签时，也就不需要再次发起请求了。</li>
+</ul>
+</li>
+<li>
+<p>头部压缩</p>
+</li>
+<li>
+<ul>
+<li>HTTP/1.1 的头部字段包含大量信息，而且每次请求都得带上，占用了大量的字节。</li>
+<li>HTTP/2.0 中通信双方各自缓存一份头部字段表，如：把 <code>Content-Type:text/html</code> 存入索引表中，后续如果要用到这个头，只需要发送对应的索引号就可以了。</li>
+</ul>
+</li>
+</ul>
+<p>除此之外，虽然 HTTP/2 没有规定必须使用 TLS 安全协议，但所有实现 HTTP/2 的 Web 浏览器都只支持配置过 TLS 的网站，这是为了鼓励大家使用更加安全的 HTTPS。</p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219162925.png style=display:block;margin-left:auto;margin-right:auto;width:60% alt=20220219162925></div>
+<p>可以看到，在 HTTP/2 中发送请求时，既不需要排队发送，也不需要排队返回，彻底解决了 HTTP 队头阻塞问题。对于头部信息，资源缓存等痛点也进行了优化，似乎已经是一种很完美的方案了。</p>
+<p>HTTP/2 在 HTTP + TCP 的架构上已经优化到了极致，如果要想继续优化，那就只能从这个架构入手了。</p>
+<p>首先需要优化的是 TCP，因为 TCP 核心是保证传输层的可靠性，传输效率其实并不好。</p>
+<ul>
+<li>TCP 也存在队头阻塞，TCP 在传输时使用序列号标识数据的顺序，一旦某个数据丢失，后面的数据需要等待这个数据重传后才能进行下一步处理。</li>
+<li>TCP 每一次建立都需要三次握手，释放连接需要四次挥手，无形中增加了传输时长。</li>
+<li>TCP 存在拥塞控制，内置了慢启动，拥塞避免等算法，传输效率并不稳定。</li>
+</ul>
+<h3 id=扩展阅读-1>扩展阅读</h3>
 <p>HTTP/2试图通过几种方式去解决HTTP/1.1中的问题：</p>
 <ol>
 <li>完全的<strong>复用</strong>意味着线头阻塞不再是问题。可以通过单个HTTP连接加载整个Web页面，而不用担心创建了多少个请求。数据浪费的优化技巧可以被丢下了。</li>
@@ -9166,6 +9914,53 @@ http://joe:joespasswd@www.joes-hardware.com/sales_info.txt
 <p>因为缓存摘要使用<code>Golumb Compressed Sets</code>，它实时计算并使用少一1000个字节将浏览器缓存告诉服务端，通过连接在前几个包发送给服务端。</p>
 <p>现在，我们避免了额外的往复次数，相关的数据浪费，直接嵌入和一些相似的hack，和非必须请求的数据浪费。这使我们里理想更进一步！</p>
 <p>缓存摘要只是一个提议，但在HTTP社区中已经表现出很明显的兴趣。</p>
+<h2 id=http3>HTTP/3</h2>
+<p>HTTP/3 目前还在草案阶段，它的主要特点是对传输层进行了优化，使用 QUIC 替换 TCP，彻底规避了 TCP 传输的效率问题。</p>
+<p>QUIC 由 Google 提出的基于 UDP 进行多路复用的传输协议。QUIC 没有连接的概念，不需要三次握手，在应用程序层面，实现了 TCP 的可靠性，TLS 的安全性和 HTTP2 的并发性。在设备支持层面，只需要客户端和服务端的应用程序支持 QUIC 协议即可，无操作系统和中间设备的限制。</p>
+<p>HTTP/3 核心特点如下：</p>
+<h3 id=传输层连接更快>传输层连接更快</h3>
+<p>HTTP/3 基于 QUIC 协议，可以实现 0-RTT 建立连接，而 TCP 需要 3-RTT 才能建立连接。</p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219163022.png style=display:block;margin-left:auto;margin-right:auto;width:60% alt=20220219163022></div>
+<h3 id=传输层多路复用>传输层多路复用</h3>
+<p>图中的 Stream 之间相互独立，如果 Stream2 丢了一个 Pakcet，不会影响 Stream3 和 Stream4 正常读取。</p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219163059.png style=display:block;margin-left:auto;margin-right:auto;width:60% alt=20220219163059></div>
+<p>HTTP/3 传输层使用 QUIC 协议，数据在传输时会被拆分成了多个 packet 包，每一个 packet 包都可以独立、交错发送，不用按顺序发送，也就避免了 TCP 队头阻塞。</p>
+<h3 id=改进的拥塞控制>改进的拥塞控制</h3>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219163223.png style=display:block;margin-left:auto;margin-right:auto;width:60% alt=20220219163223></div>
+<ul>
+<li><strong>单调递增的 Packet Number</strong>。在 TCP 中，每一个数据包都有一个序列号标识（seq），如果接收端超时没有收到，就会要求重发标识为 seq 的包，如果这时超时的包也接收到了，则无法区分哪个是超时的包，哪个是重传的包。QUIC 中的每一个包的标识（Packet Number）都是单调递增的，重传的 Packet Number 一定大于超时的 Packet Number，这样就能区分开了。</li>
+<li><strong>不允许 Reneging</strong>。在 TCP 中，如果接收方内存不够或 Buffer 溢出，则可能会把已接收的包丢弃（Reneging），这种行为对数据重传产生了很大的干扰，在 QUIC 中是明确禁止的。在 QUIC 中，一个包只要被确认，就一定是被正确接收了。</li>
+<li><strong>更多的 ACK 块</strong>。一般来说，接收方收到发送方的消息后都会发送一个 ACK 标识，表示收到了数据。但每收到一个数据就发送一个 ACK 效率太低了，通常是收到多个数据后再统一回复 ACK。TCP 中每收到 3 个数据包就要返回一个 ACK，而 QUIC 最多可以收到 256 个包之后，才返回 ACK。在丢包率比较严重的网络下，更多的 ACK 块可以减少重传量，提升网络效率。
+<ul>
+<li><strong>Ack Delay</strong>。TCP 计算 RTT 时没有考虑接收方处理数据的延迟，如下图所示，这段延迟即 ACK Delay。QUIC 考虑了这段延迟，使得 RTT 的计算更加准确。</li>
+</ul>
+</li>
+</ul>
+<h3 id=优化的流量控制>优化的流量控制</h3>
+<ul>
+<li>Stream 级别的流量控制中，<code>接收窗口 = 最大接收窗口- 已接收数据</code>。</li>
+<li>Connection 级别的流量控制中，<code>接收窗口 = Stream1接收窗口 + Stream2接收窗口 + ... + StreamN接收窗口</code>。</li>
+<li>TCP 通过滑动窗口来控制流量，如果某一个包丢失了，滑动窗口并不能跨过丢失的包继续滑动，而是会卡在丢失的位置，等待数据重传后，才能继续滑动。</li>
+<li>QUIC 流量控制的核心是：<strong>不能建立太多的连接，以免响应端处理不过来；不能让某一个连接占用大量的资源，让其他连接没有资源可用</strong>。为此 QUIC 流量控制分为 2 个级别：连接级别（Connection Level）和 Stream 级别（Stream Level）。</li>
+</ul>
+<h3 id=加密认证的报文>加密认证的报文</h3>
+<ul>
+<li>TCP 头部没有经过任何加密和认证，在传输过程中很容易被中间网络设备篡改，注入和窃听。</li>
+<li>QUIC 中报文都是经过加密和认证的，在传输过程中保证了数据的安全。</li>
+</ul>
+<h3 id=连接迁移>连接迁移</h3>
+<ul>
+<li>TCP 连接是由（源 IP，源端口，目的 IP，目的端口）组成，这四者中一旦有一项发生改变，这个连接也就不能用了。如果我们从 5G 网络切换到 WiFi 网络，IP 地址就会改变，这个时候 TCP 连接也自然断掉了。</li>
+<li>QUIC 使用客户端生成的 64 位 ID 来表示一条连接，只要 ID 不变，这条连接也就一直维持着，不会中断。</li>
+</ul>
+<h3 id=前向纠错机制>前向纠错机制</h3>
+<ul>
+<li>发送端需要发送三个包，QUIC 在传输时会计算出这三个包的异或值，并单独发出一个校验包，也就是总共发出了四个包。</li>
+<li>如果某一个包（非校验包）传输时丢失了，则可以通过另外三个包计算出丢失数据包的内容。</li>
+<li>当然这种技术只能用在丢失一个包的情况下，如果丢失了多个包，就只能进行重传了。</li>
+<li>QUIC 中发送数据时，除了发送本身的数据包，还会发送验证包，以减少数据丢失导致的重传。</li>
+</ul>
+<p>可以看出，QUIC 丢掉了 TCP 的包袱，基于 UDP，实现了一个安全高效可靠的 HTTP 通信协议。凭借着 0-RTT 建立连接、传输层多路复用、连接迁移、改进的拥塞控制、流量控制等特性，QUIC 在绝大多数场景下获得了比 HTTP/2 更好的效果，HTTP/3 真是未来可期。</p>
 <h2 id=tcp>TCP</h2>
 <p>目前为止，并没有谈到浏览器加载Web页面所使用的其他协议对性能的影响。</p>
 <p>然而，真正的问题要比下面图片暗示的要多，TCP在HTTP开始前需要三次握手，来协定一个新连接的参数。</p>
@@ -9188,11 +9983,227 @@ http://joe:joespasswd@www.joes-hardware.com/sales_info.txt
 <div class=td-content style=page-break-before:always>
 <h1 id=pg-9c415192736b2fd96c31b69974401254>7 - HTTPS</h1>
 </div>
+<div class=td-content>
+<h1 id=pg-30f1686e727eb7f10b57dbf9a5e2e3b5>7.1 - 基本原理</h1>
+<h2 id=http-不安全>HTTP 不安全</h2>
+<p>HTTP 之所以被 HTTPS 取代，最大的原因就是不安全，至于为什么不安全，看了下面这张图就一目了然了。</p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219165644.png style=display:block;margin-left:auto;margin-right:auto;width:80% alt=20220219165644></div>
+<p>由图可见，HTTP 在传输数据的过程中，所有的数据都是明文传输，自然没有安全性可言，特别是一些敏感数据，比如用户密码和信用卡信息等，一旦被第三方获取，后果不堪设想。这里可能有人会说，我在前端页面对敏感数据进行加密不就行了，比如 MD5 加盐加密。这么想就太简单了。</p>
+<p>首先 MD5 并不是加密算法，其全称是 Message Digest Algorithm MD5，意为信息摘要算法，是一种不可逆的哈希算法，也就是说经过前端 MD5 处理过的数据在服务器端是无法复原的。这里以密码举例，前端把用户密码通过 MD5 进行处理，并把得到的哈希值发送给服务器，服务器由于无法复原密码，就会直接用这个哈希值处理用户请求。所以第三方在获取这个哈希值后，可以绕过前端登录页面直接访问服务器，造成安全问题。另外，MD5 算法本身的安全性也存在缺陷，这里就不展开谈了。</p>
+<p>总之 MD5，SHA-1 之类的哈希算法并不能让 HTTP 变得更安全。要想让 HTTP 更安全，只能使用真正的加密算法，因为加密算法可以用密钥加密或还原数据，只要确保密钥不被第三方获取，那就能确保数据传输的安全了。而这正是 HTTPS 的解决方案，那下面就来了解一下加密算法吧。</p>
+<h2 id=加密算法>加密算法</h2>
+<p>HTTPS 解决数据传输安全问题的方案就是使用加密算法，具体来说是混合加密算法，也就是对称加密和非对称加密的混合使用，这里有必要先了解一下这两种加密算法的区别和优缺点。</p>
+<h3 id=对称加密>对称加密</h3>
+<p>对称加密，顾名思义就是加密和解密都是使用同一个密钥，常见的对称加密算法有 DES、3DES 和 AES 等，其优缺点如下：</p>
+<ul>
+<li>优点：算法公开、计算量小、加密速度快、加密效率高，适合加密比较大的数据。</li>
+<li>缺点：
+<ol>
+<li>交易双方需要使用相同的密钥，也就无法避免密钥的传输，而密钥在传输过程中无法保证不被截获，因此对称加密的安全性得不到保证。</li>
+<li>每对用户每次使用对称加密算法时，都需要使用其他人不知道的惟一密钥，这会使得发收信双方所拥有的钥匙数量急剧增长，密钥管理成为双方的负担。对称加密算法在分布式网络系统上使用较为困难，主要是因为密钥管理困难，使用成本较高。</li>
+</ol>
+</li>
+</ul>
+<p>如果直接将对称加密算法用在 HTTP 中，会是下面的效果：</p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219165814.png style=display:block;margin-left:auto;margin-right:auto;width:80% alt=20220219165814></div>
+<p>从图中可以看出，被加密的数据在传输过程中是无规则的乱码，即便被第三方截获，在没有密钥的情况下也无法解密数据，也就保证了数据的安全。但是有一个致命的问题，那就是既然双方要使用相同的密钥，那就必然要在传输数据之前先由一方把密钥传给另一方，那么在此过程中密钥就很有可能被截获，这样一来加密的数据也会被轻松解密。那如何确保密钥在传输过程中的安全呢？这就要用到非对称加密了。</p>
+<h3 id=非对称加密>非对称加密</h3>
+<p>非对称加密，顾名思义，就是加密和解密需要使用两个不同的密钥：公钥（public key）和私钥（private key）。公钥与私钥是一对，如果用公钥对数据进行加密，只有用对应的私钥才能解密；如果用私钥对数据进行加密，那么只有用对应的公钥才能解密。非对称加密算法实现机密信息交换的基本过程是：甲方生成一对密钥并将其中的一把作为公钥对外公开；得到该公钥的乙方使用公钥对机密信息进行加密后再发送给甲方；甲方再用自己保存的私钥对加密后的信息进行解密。如果对公钥和私钥不太理解，可以想象成一把钥匙和一个锁头，只是全世界只有你一个人有这把钥匙，你可以把锁头给别人，别人可以用这个锁把重要的东西锁起来，然后发给你，因为只有你一个人有这把钥匙，所以只有你才能看到被这把锁锁起来的东西。常用的非对称加密算法是 RSA 算法，其优缺点如下：</p>
+<ul>
+<li>优点：算法公开，加密和解密使用不同的钥匙，私钥不需要通过网络进行传输，安全性很高。</li>
+<li>缺点：计算量比较大，加密和解密速度相比对称加密慢很多。</li>
+</ul>
+<p>由于非对称加密的强安全性，可以用它完美解决对称加密的密钥泄露问题，效果图如下：</p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219165853.png style=display:block;margin-left:auto;margin-right:auto;width:80% alt=20220219165853></div>
+<p>在上述过程中，客户端在拿到服务器的公钥后，会生成一个随机码 (用 KEY 表示，这个 KEY 就是后续双方用于对称加密的密钥)，然后客户端使用公钥把 KEY 加密后再发送给服务器，服务器使用私钥将其解密，这样双方就有了同一个密钥 KEY，然后双方再使用 KEY 进行对称加密交互数据。在非对称加密传输 KEY 的过程中，即便第三方获取了公钥和加密后的 KEY，在没有私钥的情况下也无法破解 KEY (私钥存在服务器，泄露风险极小)，也就保证了接下来对称加密的数据安全。而上面这个流程图正是 HTTPS 的雏形，HTTPS 正好综合了这两种加密算法的优点，不仅保证了通信安全，还保证了数据传输效率。</p>
+<h2 id=https-应用过程>HTTPS 应用过程</h2>
+<p>先看一下维基百科对 HTTPS 的定义</p>
+<blockquote>
+<p>Hypertext Transfer Protocol Secure (HTTPS) is an extension of the Hypertext Transfer Protocol (HTTP). It is used for secure communication over a computer network, and is widely used on the Internet. In HTTPS, the communication protocol is encrypted using Transport Layer Security (TLS) or, formerly, its predecessor, Secure Sockets Layer (SSL). The protocol is therefore also often referred to as HTTP over TLS, or HTTP over SSL.</p>
+<p>HTTPS (Hypertext Transfer Protocol Secure) 是基于 HTTP 的扩展，用于计算机网络的安全通信，已经在互联网得到广泛应用。在 HTTPS 中，原有的 HTTP 协议会得到 TLS (安全传输层协议) 或其前辈 SSL (安全套接层) 的加密。因此 HTTPS 也常指 HTTP over TLS 或 HTTP over SSL。</p>
+</blockquote>
+<p>可见HTTPS 并非独立的通信协议，而是对 HTTP 的扩展，保证了通信安全，二者关系如下：</p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219165923.png style=display:block;margin-left:auto;margin-right:auto;width:60% alt=20220219165923></div>
+<p>也就是说 HTTPS = HTTP + SSL / TLS。</p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219165946.png style=display:block;margin-left:auto;margin-right:auto;width:80% alt=20220219165946></div>
+<p>看上去眼花缭乱，不要怕，且听我细细道来。HTTPS 的整个通信过程可以分为两大阶段：证书验证和数据传输阶段，数据传输阶段又可以分为非对称加密和对称加密两个阶段。具体流程按图中的序号讲解。</p>
+<ol>
+<li>客户端请求 HTTPS 网址，然后连接到 server 的 443 端口 (HTTPS 默认端口，类似于 HTTP 的80端口)。</li>
+<li>采用 HTTPS 协议的服务器必须要有一套数字 CA (Certification Authority)证书，证书是需要申请的，并由专门的数字证书认证机构(CA)通过非常严格的审核之后颁发的电子证书 (当然了是要钱的，安全级别越高价格越贵)。颁发证书的同时会产生一个私钥和公钥。私钥由服务端自己保存，不可泄漏。公钥则是附带在证书的信息中，可以公开的。证书本身也附带一个证书电子签名，这个签名用来验证证书的完整性和真实性，可以防止证书被篡改。</li>
+<li>服务器响应客户端请求，将证书传递给客户端，证书包含公钥和大量其他信息，比如证书颁发机构信息，公司信息和证书有效期等。Chrome 浏览器点击地址栏的锁标志再点击证书就可以看到证书详细信息。
+<ul>
+<li>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219170008.png style=display:block;margin-left:auto;margin-right:auto;width:50% alt=20220219170008></div>
+</li>
+</ul>
+</li>
+<li>客户端解析证书并对其进行验证。如果证书不是可信机构颁布，或者证书中的域名与实际域名不一致，或者证书已经过期，就会向访问者显示一个警告，由其选择是否还要继续通信。就像下面这样：
+<ul>
+<li>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219170032.png style=display:block;margin-left:auto;margin-right:auto;width:50% alt=20220219170032></div>
+</li>
+<li>如果证书没有问题，客户端就会从服务器证书中取出服务器的公钥A。然后客户端还会生成一个随机码 KEY，并使用公钥A将其加密。</li>
+</ul>
+</li>
+<li>客户端把加密后的随机码 KEY 发送给服务器，作为后面对称加密的密钥。</li>
+<li>服务器在收到随机码 KEY 之后会使用私钥B将其解密。经过以上这些步骤，客户端和服务器终于建立了安全连接，完美解决了对称加密的密钥泄露问题，接下来就可以用对称加密愉快地进行通信了。</li>
+<li>服务器使用密钥 (随机码 KEY)对数据进行对称加密并发送给客户端，客户端使用相同的密钥 (随机码 KEY)解密数据。</li>
+<li>双方使用对称加密愉快地传输所有数据。</li>
+</ol>
+<h3 id=数字签名与证书>数字签名与证书</h3>
+<p>黑客虽然拿不到会话密钥，无法破解密文，但可以通过窃听收集到足够多的密文，再尝试着修改、重组后发给网站。因为没有完整性保证，服务器只能“照单全收”，然后他就可以通过服务器的响应获取进一步的线索，最终就会破解出明文。</p>
+<p>另外，黑客也可以伪造身份发布公钥。如果你拿到了假的公钥，混合加密就完全失效了。你以为自己是在和“某宝”通信，实际上网线的另一端却是黑客，银行卡号、密码等敏感信息就在“安全”的通信过程中被窃取了。</p>
+<p>所以，在机密性的基础上还必须加上完整性、身份认证等特性，才能实现真正的安全。</p>
+<h3 id=摘要算法>摘要算法</h3>
+<p>实现完整性的手段主要是摘要算法（Digest Algorithm），也就是常说的散列函数、哈希函数（Hash Function）。</p>
+<p>你可以把摘要算法近似地理解成一种特殊的压缩算法，它能够把任意长度的数据“压缩”成固定长度、而且独一无二的“摘要”字符串，就好像是给这段数据生成了一个数字“指纹”。</p>
+<p>换一个角度，也可以把摘要算法理解成特殊的“单向”加密算法，它只有算法，没有密钥，加密后的数据无法解密，不能从摘要逆推出原文。</p>
+<p>摘要算法实际上是把数据从一个“大空间”映射到了“小空间”，所以就存在“冲突”（collision，也叫碰撞）的可能性，就如同现实中的指纹一样，可能会有两份不同的原文对应相同的摘要。好的摘要算法必须能够“抵抗冲突”，让这种可能性尽量地小。</p>
+<p>因为摘要算法对输入具有“单向性”和“雪崩效应”，输入的微小不同会导致输出的剧烈变化，所以也被 TLS 用来生成伪随机数（PRF，pseudo random function）。</p>
+<p>你一定在日常工作中听过、或者用过 MD5（Message-Digest 5）、SHA-1（Secure Hash Algorithm 1），它们就是最常用的两个摘要算法，能够生成 16 字节和 20 字节长度的数字摘要。但这两个算法的安全强度比较低，不够安全，在 TLS 里已经被禁止使用了。</p>
+<p>目前 TLS 推荐使用的是 SHA-1 的后继者：SHA-2。</p>
+<p>SHA-2 实际上是一系列摘要算法的统称，总共有 6 种，常用的有 SHA224、SHA256、SHA384，分别能够生成 28 字节、32 字节、48 字节的摘要。</p>
+<h3 id=完整性>完整性</h3>
+<p>摘要算法保证了“数字摘要”和原文是完全等价的。所以，我们只要在原文后附上它的摘要，就能够保证数据的完整性。</p>
+<p>比如，你发了条消息：“转账 1000 元”，然后再加上一个 SHA-2 的摘要。网站收到后也计算一下消息的摘要，把这两份“指纹”做个对比，如果一致，就说明消息是完整可信的，没有被修改。</p>
+<p>如果黑客在中间哪怕改动了一个标点符号，摘要也会完全不同，网站计算比对就会发现消息被窜改，是不可信的。</p>
+<p>不过摘要算法不具有机密性，如果明文传输，那么黑客可以修改消息后把摘要也一起改了，网站还是鉴别不出完整性。</p>
+<p>所以，真正的完整性必须要建立在机密性之上，在混合加密系统里用会话密钥加密消息和摘要，这样黑客无法得知明文，也就没有办法动手脚了。</p>
+<p>这有个术语，叫哈希消息认证码（HMAC）。</p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219171121.png style=display:block;margin-left:auto;margin-right:auto;width:60% alt=20220219171121></div>
+<h3 id=数字签名>数字签名</h3>
+<p>加密算法结合摘要算法，我们的通信过程可以说是比较安全了。但这里还有漏洞，就是通信的两个端点（endpoint）。</p>
+<p>就像一开始所说的，黑客可以伪装成网站来窃取信息。而反过来，他也可以伪装成你，向网站发送支付、转账等消息，网站没有办法确认你的身份，钱可能就这么被偷走了。</p>
+<p>现实生活中，解决身份认证的手段是签名和印章，只要在纸上写下签名或者盖个章，就能够证明这份文件确实是由本人而不是其他人发出的。</p>
+<p>在这里，使用非对称加密里的“私钥”再加上摘要算法，就能够实现“数字签名”，同时实现“身份认证”和“不可否认”。</p>
+<p>数字签名的原理其实很简单，就是把公钥私钥的用法反过来，之前是公钥加密、私钥解密，现在是私钥加密、公钥解密。</p>
+<p>但又因为非对称加密效率太低，所以私钥只加密原文的摘要，这样运算量就小的多，而且得到的数字签名也很小，方便保管和传输。</p>
+<p>签名和公钥一样完全公开，任何人都可以获取。但这个签名只有用私钥对应的公钥才能解开，拿到摘要后，再比对原文验证完整性，就可以像签署文件一样证明消息确实是你发的。</p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219171200.png style=display:block;margin-left:auto;margin-right:auto;width:60% alt=20220219171200></div>
+<h3 id=数字证书和-ca>数字证书和 CA</h3>
+<blockquote>
+<p>到现在，综合使用对称加密、非对称加密和摘要算法，是不是已经完美了呢？</p>
+</blockquote>
+<p>不是的，这里还有一个“公钥的信任”问题。因为谁都可以发布公钥，我们还缺少防止黑客伪造公钥的手段，也就是说，怎么来判断这个公钥就是你或者某宝的公钥呢？</p>
+<p>真是“按下葫芦又起了瓢”，安全还真是个麻烦事啊，“一环套一环”的。</p>
+<p>我们可以用类似密钥交换的方法来解决公钥认证问题，用别的私钥来给公钥签名，显然，这又会陷入“无穷递归”。但这次实在是“没招”了，要终结这个“死循环”，就必须引入“外力”，找一个公认的可信第三方，让它作为“信任的起点，递归的终点”，构建起公钥的信任链。</p>
+<p>这个“第三方”就是我们常说的 CA（Certificate Authority，证书认证机构）。它就像网络世界里的公安局、教育部、公证中心，具有极高的可信度，由它来给各个公钥签名，用自身的信誉来保证公钥无法伪造，是可信的。CA 对公钥的签名认证也是有格式的，不是简单地把公钥绑定在持有者身份上就完事了，还要包含序列号、用途、颁发者、有效时间等等，把这些打成一个包再签名，完整地证明公钥关联的各种信息，形成“数字证书”（Certificate）。</p>
+<p>知名的 CA 全世界就那么几家，比如 DigiCert、VeriSign、Entrust、Let’s Encrypt 等，它们签发的证书分 DV、OV、EV 三种，区别在于可信程度。</p>
+<p>DV 是最低的，只是域名级别的可信，背后是谁不知道。EV 是最高的，经过了法律和审计的严格核查，可以证明网站拥有者的身份（在浏览器地址栏会显示出公司的名字，例如 Apple、GitHub 的网站）。</p>
+<blockquote>
+<p>不过，CA 怎么证明自己呢？</p>
+</blockquote>
+<p>这还是信任链的问题。小一点的 CA 可以让大 CA 签名认证，但链条的最后，也就是Root CA，就只能自己证明自己了，这个就叫“自签名证书”（Self-Signed Certificate）或者“根证书”（Root Certificate）。你必须相信，否则整个证书信任链就走不下去了。</p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219171233.png style=display:block;margin-left:auto;margin-right:auto;width:60% alt=20220219171233></div>
+<p>有了这个证书体系，操作系统和浏览器都内置了各大 CA 的根证书，上网的时候只要服务器发过来它的证书，就可以验证证书里的签名，顺着证书链（Certificate Chain）一层层地验证，直到找到根证书，就能够确定证书是可信的，从而里面的公钥也是可信的。</p>
+<h3 id=证书体系的弱点>证书体系的弱点</h3>
+<p>证书体系（PKI，Public Key Infrastructure）虽然是目前整个网络世界的安全基础设施，但绝对的安全是不存在的，它也有弱点，还是关键的“信任”二字。</p>
+<p>如果 CA 失误或者被欺骗，签发了错误的证书，虽然证书是真的，可它代表的网站却是假的。</p>
+<p>还有一种更危险的情况，CA 被黑客攻陷，或者 CA 有恶意，因为它（即根证书）是信任的源头，整个信任链里的所有证书也就都不可信了。</p>
+<p>这两种事情并不是“耸人听闻”，都曾经实际出现过。所以，需要再给证书体系打上一些补丁。</p>
+<p>针对第一种，开发出了 CRL（证书吊销列表，Certificate revocation list）和 OCSP（在线证书状态协议，Online Certificate Status Protocol），及时废止有问题的证书。</p>
+<p>对于第二种，因为涉及的证书太多，就只能操作系统或者浏览器从根上“下狠手”了，撤销对 CA 的信任，列入“黑名单”，这样它颁发的所有证书就都会被认为是不安全的。</p>
+<h2 id=https-建立连接>HTTPS 建立连接</h2>
+<p>当你在浏览器地址栏里键入“https”开头的 URI，再按下回车，会发生什么呢？</p>
+<p>浏览器首先要从 URI 里提取出协议名和域名。因为协议名是“https”，所以浏览器就知道了端口号是默认的 443，它再用 DNS 解析域名，得到目标的 IP 地址，然后就可以使用三次握手与网站建立 TCP 连接了。</p>
+<p>在 HTTP 协议里，建立连接后，浏览器会立即发送请求报文。但现在是 HTTPS 协议，它需要再用另外一个“握手”过程，在 TCP 上建立安全连接，之后才是收发 HTTP 报文。</p>
+<p>这个“握手”过程与 TCP 有些类似，是 HTTPS 和 TLS 协议里最重要、最核心的部分，懂了它，你就可以自豪地说自己“掌握了 HTTPS”。</p>
+<h2 id=tls-协议的组成>TLS 协议的组成</h2>
+<p>在讲 TLS 握手之前，我先简单介绍一下 TLS 协议的组成。</p>
+<p>TLS 包含几个子协议，你也可以理解为它是由几个不同职责的模块组成，比较常用的有<strong>记录协议、警报协议、握手协议、变更密码规范协议</strong>等。</p>
+<ul>
+<li>记录协议（Record Protocol）规定了 TLS 收发数据的基本单位：记录（record）。它有点像是 TCP 里的 segment，所有的其他子协议都需要通过记录协议发出。但多个记录数据可以在一个 TCP 包里一次性发出，也并不需要像 TCP 那样返回 ACK。</li>
+<li>警报协议（Alert Protocol）的职责是向对方发出警报信息，有点像是 HTTP 协议里的状态码。比如，protocol_version 就是不支持旧版本，bad_certificate 就是证书有问题，收到警报后另一方可以选择继续，也可以立即终止连接。</li>
+<li>握手协议（Handshake Protocol）是 TLS 里最复杂的子协议，要比 TCP 的 SYN/ACK 复杂的多，浏览器和服务器会在握手过程中协商 TLS 版本号、随机数、密码套件等信息，然后交换证书和密钥参数，最终双方协商得到会话密钥，用于后续的混合加密系统。</li>
+<li>最后一个是变更密码规范协议（Change Cipher Spec Protocol），它非常简单，就是一个“通知”，告诉对方，后续的数据都将使用加密保护。那么反过来，在它之前，数据都是明文的。</li>
+</ul>
+<p>下面的这张图简要地描述了 TLS 的握手过程，其中每一个“框”都是一个记录，多个记录组合成一个 TCP 包发送。所以，最多经过两次消息往返（4 个消息）就可以完成握手，然后就可以在安全的通信环境里发送 HTTP 报文，实现 HTTPS 协议。</p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219171405.png style=display:block;margin-left:auto;margin-right:auto;width:60% alt=20220219171405></div>
+<h3 id=ecdhe-握手过程>ECDHE 握手过程</h3>
+<p>刚才你看到的是握手过程的简要图，又画了一个详细图，下面我就用这个图来仔细剖析 TLS 的握手过程。</p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219171431.png style=display:block;margin-left:auto;margin-right:auto;width:60% alt=20220219171431></div>
+<p>在 TCP 建立连接之后，浏览器会首先发一个“Client Hello”消息，也就是跟服务器“打招呼”。里面有客户端的版本号、支持的密码套件，还有一个随机数（Client Random），用于后续生成会话密钥。</p>
+<p><img src=https://common.cnblogs.com/images/copycode.gif alt=复制代码></p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>Handshake Protocol: Client Hello
+Version: TLS 1.2 (0x0303)
+Random: 1cbf803321fd2623408dfe…
+Cipher Suites (17 suites)
+Cipher Suite: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256 (0xc02f)
+Cipher Suite: TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384 (0xc030)
+</code></pre></div><p><img src=https://common.cnblogs.com/images/copycode.gif alt=复制代码></p>
+<p>这个的意思就是：“我这边有这些这些信息，你看看哪些是能用的，关键的随机数可得留着。”复制代码</p>
+<p>作为“礼尚往来”，服务器收到“Client Hello”后，会返回一个“Server Hello”消息。把版本号对一下，也给出一个随机数（Server Random），然后从客户端的列表里选一个作为本次通信使用的密码套件，在这里它选择了“TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384”。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>Handshake Protocol: Server Hello
+Version: TLS 1.2 (0x0303)
+Random: 0e6320f21bae50842e96…
+Cipher Suite: TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384 (0xc030)
+</code></pre></div><p>这个的意思就是：“版本号对上了，可以加密，你的密码套件挺多，我选一个最合适的吧，用椭圆曲线加 RSA、AES、SHA384。我也给你一个随机数，你也得留着。”复制代码</p>
+<p>然后，服务器为了证明自己的身份，就把证书也发给了客户端（Server Certificate）。</p>
+<p>接下来是一个关键的操作，因为服务器选择了 ECDHE 算法，所以它会在证书后发送“Server Key Exchange”消息，里面是椭圆曲线的公钥（Server Params），用来实现密钥交换算法，再加上自己的私钥签名认证。</p>
+<p><img src=https://common.cnblogs.com/images/copycode.gif alt=复制代码></p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>Handshake Protocol: Server Key Exchange
+EC Diffie-Hellman Server Params
+Curve Type: named_curve (0x03)
+Named Curve: x25519 (0x001d)
+Pubkey: 3b39deaf00217894e...
+Signature Algorithm: rsa_pkcs1_sha512 (0x0601)
+Signature: 37141adac38ea4...
+</code></pre></div><p><img src=https://common.cnblogs.com/images/copycode.gif alt=复制代码></p>
+<p>这相当于说：“刚才我选的密码套件有点复杂，所以再给你个算法的参数，和刚才的随机数一样有用，别丢了。为了防止别人冒充，我又盖了个章。”复制代码</p>
+<p>之后是“Server Hello Done”消息，服务器说：“我的信息就是这些，打招呼完毕。”</p>
+<p>这样第一个消息往返就结束了（两个 TCP 包），结果是客户端和服务器通过明文共享了三个信息：Client Random、Server Random 和 Server Params。</p>
+<p>客户端这时也拿到了服务器的证书，那这个证书是不是真实有效的呢？</p>
+<p>这就要用到第 25 讲里的知识了，开始走证书链逐级验证，确认证书的真实性，再用证书公钥验证签名，就确认了服务器的身份：“刚才跟我打招呼的不是骗子，可以接着往下走。”</p>
+<p>然后，客户端按照密码套件的要求，也生成一个椭圆曲线的公钥（Client Params），用“Client Key Exchange”消息发给服务器。</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>Handshake Protocol: Client Key Exchange
+　　EC Diffie-Hellman Client Params
+　　　　Pubkey: 8c674d0e08dc27b5eaa…
+</code></pre></div><p>现在客户端和服务器手里都拿到了密钥交换算法的两个参数（Client Params、Server Params），就用 ECDHE 算法一阵算，算出了一个新的东西，叫“Pre-Master”，其实也是一个随机数。</p>
+<p>至于具体的计算原理和过程，因为太复杂就不细说了，但算法可以保证即使黑客截获了之前的参数，也是绝对算不出这个随机数的。</p>
+<p>现在客户端和服务器手里有了三个随机数：Client Random、Server Random 和 Pre-Master。用这三个作为原始材料，就可以生成用于加密会 话的主密钥，叫“Master Secret”。而黑客因为拿不到“Pre-Master”，所以也就得不到主密钥。</p>
+<p>为什么非得这么麻烦，非要三个随机数呢？</p>
+<p>这就必须说 TLS 的设计者考虑得非常周到了，他们不信任客户端或服务器伪随机数的可靠性，为了保证真正的“完全随机”“不可预测”，把三个不可靠的随机数混合起来，那么“随机”的程度就非常高了，足够让黑客难以猜测。</p>
+<p>你一定很想知道“Master Secret”究竟是怎么算出来的吧，贴一下 RFC 里的公式：</p>
+<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>master_secret = PRF(pre_master_secret, &#34;master secret&#34;,ClientHello.random + ServerHello.random)
+</code></pre></div><p>这里的“PRF”就是伪随机数函数，它基于密码套件里的最后一个参数，比如这次的 SHA384，通过摘要算法来再一次强化“Master Secret”的随机性。复制代码</p>
+<p>主密钥有 48 字节，但它也不是最终用于通信的会话密钥，还会再用 PRF 扩展出更多的密钥，比如客户端发送用的会话密钥（client_write_key）、服务器发送用的会话密钥（server_write_key）等等，避免只用一个密钥带来的安全隐患。</p>
+<p>有了主密钥和派生的会话密钥，握手就快结束了。客户端发一个“Change Cipher Spec”，然后再发一个“Finished”消息，把之前所有发送的数据做个摘要，再加密一下，让服务器做个验证。</p>
+<p>意思就是告诉服务器：“后面都改用对称算法加密通信了啊，用的就是打招呼时说的 AES，加密对不对还得你测一下。”</p>
+<p>服务器也是同样的操作，发“Change Cipher Spec”和“Finished”消息，双方都验证加密解密 OK，握手正式结束，后面就收发被加密的 HTTP 请求和响应了。</p>
+<h3 id=rsa-握手过程>RSA 握手过程</h3>
+<p>整个握手过程可真是够复杂的，但你可能会问了，好像这个过程和其他地方看到的不一样呢？</p>
+<p>刚才说的其实是如今主流的 TLS 握手过程，这与传统的握手有两点不同。</p>
+<p>第一个，使用 ECDHE 实现密钥交换，而不是 RSA，所以会在服务器端发出“Server Key Exchange”消息。</p>
+<p>第二个，因为使用了 ECDHE，客户端可以不用等到服务器发回“Finished”确认握手完毕，立即就发出 HTTP 报文，省去了一个消息往返的时间浪费。这个叫“TLS False Start”，意思就是“抢跑”，和“TCP Fast Open”有点像，都是不等连接完全建立就提前发应用数据，提高传输的效率。</p>
+<p>这里我也画了个图。</p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219171507.png style=display:block;margin-left:auto;margin-right:auto;width:60% alt=20220219171507></div>
+<p>大体的流程没有变，只是“Pre-Master”不再需要用算法生成，而是客户端直接生成随机数，然后用服务器的公钥加密，通过“Client Key Exchange”消息发给服务器。服务器再用私钥解密，这样双方也实现了共享三个随机数，就可以生成主密钥。</p>
+<h2 id=双向认证>双向认证</h2>
+<p>到这里 TLS 握手就基本讲完了。</p>
+<p>不过上面说的是“单向认证”握手过程，只认证了服务器的身份，而没有认证客户端的身份。这是因为通常单向认证通过后已经建立了安全通信，用账号、密码等简单的手段就能够确认用户的真实身份。</p>
+<p>但为了防止账号、密码被盗，有的时候（比如网上银行）还会使用 U 盾给用户颁发客户端证书，实现“双向认证”，这样会更加安全。</p>
+<p>双向认证的流程也没有太多变化，只是在“Server Hello Done”之后，“Client Key Exchange”之前，客户端要发送“Client Certificate”消息，服务器收到后也把证书链走一遍，验证客户端的身份。</p>
+</div>
 <div class=td-content style=page-break-before:always>
-<h1 id=pg-2322589586a8ab3dc1c3acab8776151a>8 - 信息安全</h1>
+<h1 id=pg-50e2c440d28844b9b29e7252308a644c>8 - WebSocket</h1>
 </div>
 <div class=td-content>
-<h1 id=pg-ab1c4282ada86bba59bb549e0695ed8c>8.1 - 单向散列</h1>
+<h1 id=pg-770c05380758c58db861dd17a6d59161>8.1 - MQTT Over WS</h1>
+<div class="pageinfo pageinfo-primary">
+<p><a href=https://www.hivemq.com/blog/mqtt-essentials-special-mqtt-over-websockets/>MQTT over WebSockets - MQTT Essentials Special</a></p>
+</div>
+</div>
+<div class=td-content style=page-break-before:always>
+<h1 id=pg-05d963357f38e612b03f0a39cab46fda>8.2 - SSE WS HTTP</h1>
+<div class="pageinfo pageinfo-primary">
+<p><a href=https://www.mnot.net/blog/2022/02/20/websockets>Server-Sent Events, WebSockets and HTTP, How to Choose</a></p>
+</div>
+</div>
+<div class=td-content style=page-break-before:always>
+<h1 id=pg-2322589586a8ab3dc1c3acab8776151a>9 - 信息安全</h1>
+</div>
+<div class=td-content>
+<h1 id=pg-ab1c4282ada86bba59bb549e0695ed8c>9.1 - 单向散列</h1>
 <div class="pageinfo pageinfo-primary">
 <p>原文链接：<a href=https://mp.weixin.qq.com/s/LrhMAXfxhnlPLxv9B_39sg>单向散列函数</a></p>
 </div>
@@ -9522,7 +10533,7 @@ SHA-512  ba3253876aed6bc22d4a6ff53d8406c6ad864195ed144ab5c87621b6c233b548baeae69
 <div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211118001214.png style=display:block;width:80% alt=NAME align=center> </div>
 </div>
 <div class=td-content style=page-break-before:always>
-<h1 id=pg-e16d765f99f50a6923a83e2f532a1e4a>8.2 - 对称加密</h1>
+<h1 id=pg-e16d765f99f50a6923a83e2f532a1e4a>9.2 - 对称加密</h1>
 <div class="pageinfo pageinfo-primary">
 <p>原文链接：<a href=https://mp.weixin.qq.com/s/Jr3aKhd9NEIZ7quWmBJAow>对称加密</a></p>
 </div>
@@ -9702,7 +10713,7 @@ private static Key getKey(byte[] key, String algorithm) throws Exception {
 </code></pre></div>
 </div>
 <div class=td-content style=page-break-before:always>
-<h1 id=pg-3fd627c95305077c8b1f93a548fb93fd>8.3 - WEB 安全</h1>
+<h1 id=pg-3fd627c95305077c8b1f93a548fb93fd>9.3 - WEB 安全</h1>
 <div class="pageinfo pageinfo-primary">
 <p><a href=https://github.com/riramar/Web-Attack-Cheat-Sheet>WEB 攻击速查手册</a></p>
 </div>

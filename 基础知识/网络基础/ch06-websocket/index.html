@@ -41,7 +41,7 @@ var app = require('express')(); var server = require('http').Server(app); var We
 这里服务端用了ws这个库。相比大家熟悉的socket.io，ws实现更轻量，更适合学习的目的。
 1、服务端 代码如下，监听8080端口。当有新的连接请求到达时，打印日志，同时向客户端发送消息。当收到到来自客户端的消息时，同样打印日志。
 var app = require('express')(); var server = require('http').Server(app); var WebSocket = require('ws'); var wss = new WebSocket.Server({ port: 8080 }); wss.on('connection', function connection(ws) { console.log('server: receive connection.'); ws.on('message', function incoming(message) { console.log('server: received: %s', message); }); ws.send('world'); }); app.">
-<meta itemprop=wordCount content="770">
+<meta itemprop=wordCount content="792">
 <meta itemprop=keywords content><meta name=twitter:card content="summary">
 <meta name=twitter:title content="WebSocket">
 <meta name=twitter:description content="概览 WebSocket的出现，使得浏览器具备了实时双向通信的能力。本文由浅入深，介绍了WebSocket如何建立连接、交换数据的细节，以及数据帧的格式。此外，还简要介绍了针对WebSocket的安全攻击，以及协议是如何抵御类似攻击的。
@@ -268,6 +268,8 @@ var app = require('express')(); var server = require('http').Server(app); var We
 <a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/tcp-ip/ch05-rfc-1180/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86tcp-ipch05-rfc-1180><span>RFC-1180</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86tcp-ipch06-e58fafe99da0e680a7e79691e997ae-li>
 <a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/tcp-ip/ch06-%E5%8F%AF%E9%9D%A0%E6%80%A7%E7%96%91%E9%97%AE/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86tcp-ipch06-e58fafe99da0e680a7e79691e997ae><span>可靠性疑问</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86tcp-ipch07-e68fa1e6898be8afa6e8a7a3-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/tcp-ip/ch07-%E6%8F%A1%E6%89%8B%E8%AF%A6%E8%A7%A3/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86tcp-ipch07-e68fa1e6898be8afa6e8a7a3><span>握手详解</span></a>
 </li>
 </ul>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e59fbae7a180e79fa5e8af86http-li>
@@ -281,12 +283,26 @@ var app = require('express')(); var server = require('http').Server(app); var We
 <a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/http/ch03-http%E6%8A%A5%E6%96%87/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86httpch03-httpe68aa5e69687><span>HTTP 报文</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86httpch04-e8bf9ee68ea5e7aea1e79086-li>
 <a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/http/ch04-%E8%BF%9E%E6%8E%A5%E7%AE%A1%E7%90%86/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86httpch04-e8bf9ee68ea5e7aea1e79086><span>连接管理</span></a>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86httpch99-e680a7e883bde68ea2e7b4a2-li>
-<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/http/ch99-%E6%80%A7%E8%83%BD%E6%8E%A2%E7%B4%A2/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86httpch99-e680a7e883bde68ea2e7b4a2><span>性能探索</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86httpch99-e78988e69cace4b88ee680a7e883bd-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/http/ch99-%E7%89%88%E6%9C%AC%E4%B8%8E%E6%80%A7%E8%83%BD/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86httpch99-e78988e69cace4b88ee680a7e883bd><span>版本与性能</span></a>
 </li>
 </ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e59fbae7a180e79fa5e8af86https-li>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e59fbae7a180e79fa5e8af86https-li>
 <a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/https/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e59fbae7a180e79fa5e8af86https><span>HTTPS</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86httpsch01-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/https/ch01/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86httpsch01><span>基本原理</span></a>
+</li>
+</ul>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e59fbae7a180e79fa5e8af86websocket-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/websocket/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e59fbae7a180e79fa5e8af86websocket><span>WebSocket</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86websocketmqtt-over-ws-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/websocket/mqtt-over-ws/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86websocketmqtt-over-ws><span>MQTT Over WS</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86websocketsse-ws-http-li>
+<a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/websocket/sse-ws-http/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86websocketsse-ws-http><span>SSE WS HTTP</span></a>
+</li>
+</ul>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e59fbae7a180e79fa5e8af86e4bfa1e681afe5ae89e585a8-li>
 <a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E4%BF%A1%E6%81%AF%E5%AE%89%E5%85%A8/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e59fbae7a180e79fa5e8af86e4bfa1e681afe5ae89e585a8><span>信息安全</span></a>
 <ul class="ul-2 foldable">
@@ -323,7 +339,10 @@ var app = require('express')(); var server = require('http').Server(app); var We
 <ul>
 <li><a href=#1有哪些优点>1、有哪些优点</a></li>
 <li><a href=#2需要学习哪些东西>2、需要学习哪些东西</a></li>
-<li><a href=#入门示例>入门示例</a></li>
+</ul>
+</li>
+<li><a href=#入门示例>入门示例</a>
+<ul>
 <li><a href=#1服务端>1、服务端</a></li>
 <li><a href=#2客户端>2、客户端</a></li>
 <li><a href=#3运行结果>3、运行结果</a></li>
@@ -357,6 +376,7 @@ var app = require('express')(); var server = require('http').Server(app); var We
 <li><a href=#2当前解决方案>2、当前解决方案</a></li>
 </ul>
 </li>
+<li><a href=#项目示例>项目示例</a></li>
 </ul>
 </nav></div>
 </aside>
@@ -406,7 +426,7 @@ var app = require('express')(); var server = require('http').Server(app); var We
 <li>数据帧格式</li>
 <li>如何维持连接</li>
 </ol>
-<h3 id=入门示例>入门示例</h3>
+<h2 id=入门示例>入门示例</h2>
 <p>在正式介绍协议细节前，先来看一个简单的例子，有个直观感受。例子包括了WebSocket服务端、WebSocket客户端（网页端）。</p>
 <p>这里服务端用了<code>ws</code>这个库。相比大家熟悉的<code>socket.io</code>，<code>ws</code>实现更轻量，更适合学习的目的。</p>
 <h3 id=1服务端>1、服务端</h3>
@@ -454,7 +474,9 @@ server: received hello
 <div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>client: ws connection is open
 client: received world
 </code></pre></div><h2 id=如何建立连接>如何建立连接</h2>
-<p>前面提到，WebSocket复用了HTTP的握手通道。具体指的是，客户端通过HTTP请求与WebSocket服务端协商升级协议。协议升级完成后，后续的数据交换则遵照WebSocket的协议。</p>
+<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220220153411.png style=display:block;margin-left:auto;margin-right:auto;width:70% alt=20220220153411></div>
+<p>WebSocket 协议本质上是一个基于 TCP 的协议，为了建立一个 WebSocket 连接，客户端浏览器首先要向服务器发起一个 HTTP 请求，这个请求相比较平时使用的 HTTP 请求多了一些信息。</p>
+<p>WebSocket 复用了 HTTP 的握手通道。具体指的是，客户端通过 HTTP 请求与 WebSocket 服务端协商升级协议。协议升级完成后，后续的数据交换则遵照 WebSocket 的协议。</p>
 <h3 id=1客户端申请协议升级>1、客户端：申请协议升级</h3>
 <p>首先，客户端发起协议升级请求。可以看到，采用的是标准的HTTP报文格式，且只支持<code>GET</code>方法。</p>
 <div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-http data-lang=http><span style=color:#000>GET</span> <span style=color:#000>/</span> <span style=color:#204a87;font-weight:700>HTTP</span><span style=color:#ce5c00;font-weight:700>/</span><span style=color:#0000cf;font-weight:700>1.1</span>
@@ -685,6 +707,8 @@ Sec-WebSocket-Accept: &lt;connection-key&gt;
 <p>最初的提案是对数据进行加密处理。基于安全、效率的考虑，最终采用了折中的方案：对数据载荷进行掩码处理。</p>
 <p>需要注意的是，这里只是限制了浏览器对数据载荷进行掩码处理，但是坏人完全可以实现自己的WebSocket客户端、服务端，不按规则来，攻击可以照常进行。</p>
 <p>但是对浏览器加上这个限制后，可以大大增加攻击的难度，以及攻击的影响范围。如果没有这个限制，只需要在网上放个钓鱼网站骗人去访问，一下子就可以在短时间内展开大范围的攻击。</p>
+<h2 id=项目示例>项目示例</h2>
+<p><a href=https://github.com/infilos/spring-boot-ws-chat>Github: spring-boot-ws-chat</a></p>
 <style>.feedback--answer{display:inline-block}.feedback--answer-no{margin-left:1em}.feedback--response{display:none;margin-top:1em}.feedback--response__visible{display:block}</style>
 <div class=d-print-none>
 <h2 class=feedback--title>Feedback</h2>

@@ -136,6 +136,7 @@
 <ul>
 <li>1: <a href=#pg-48a0a26d799785ff90a26134bb574e2a>模式概览</a></li>
 <li>2: <a href=#pg-dd6db4b797aa2962f9ccb731c9d41b43>微服务灾难</a></li>
+<li>3: <a href=#pg-be29368873456b94ebb19aa8df624bc0>故障容错模式</a></li>
 </ul>
 <div class=content>
 </div>
@@ -404,6 +405,40 @@
 <blockquote>
 <p>原文链接：https://world.hey.com/joaoqalves/disasters-i-ve-seen-in-a-microservices-world-a9137a51</p>
 </blockquote>
+</div>
+<div class=td-content style=page-break-before:always>
+<h1 id=pg-be29368873456b94ebb19aa8df624bc0>3 - 故障容错模式</h1>
+<p>软件故障的容错方法如果用一句话来简单概况的话也简单：通过定义规则来容忍系统缺陷。但这样的定义未免过于大而空，我们需要切实有效可落地的方式。下面介绍9种常用的处理方式。</p>
+<h2 id=容错熔断隔离>容错、熔断、隔离？</h2>
+<ul>
+<li>
+<p>“隔离”是一种异常检测机制，常用的检测方法是请求超时、流量过大等。一般的设置参数包括超时时间、同时并发请求个数等。</p>
+</li>
+<li>
+<p>“熔断”是一种异常反应机制，“熔断”依赖于“隔离”。熔断通常基于错误率来实现。一般的设置参数包括统计请求的个数、错误率等。</p>
+</li>
+<li>
+<p>“容错”是一种异常处理机制，“容错”依赖于“熔断”。熔断以后，会调用“容错”的方法。一般的设置参数包括调用容错方法的次数等。</p>
+</li>
+</ul>
+<h2 id=process-pairs><strong>Process Pairs</strong></h2>
+<p>也就是最简单的backup方案，保证系统在某一个时刻总能有一个进程来处理客户的输入请求，能处理短暂的软件错误。</p>
+<h2 id=graceful-degradation><strong>Graceful Degradation</strong></h2>
+<p>就是我们常说的降级，在系统遭遇某个错误之后不提供完整功能，只给用户开放部分基础能力，此解决方案通常是上面的backup方案持续性不work的时候采取的保护措施。</p>
+<h2 id=selective-retry><strong>Selective Retry</strong></h2>
+<p>选择性重试也是可选的方案之一，它主要适用于是突发式高负载资源短缺的场景，例如，网络瞬时打满峰值不可访问或者内存资源短缺，重试能够增加资源分配成功的可能性。</p>
+<h2 id=state-handling><strong>State Handling</strong></h2>
+<p>在系统不能提供服务后，又要保证client的无状态属性。服务端需要持续保存当前的状态，用于故障后的重试。</p>
+<h2 id=linking-process><strong>Linking Process</strong></h2>
+<p>有些程序进程是相互依赖的，如果某个进程出错，其他依赖的进程需要侦测到错误，明确做相应的处理，通常是结束全部依赖进程。</p>
+<h2 id=checkpoint><strong>Checkpoint</strong></h2>
+<p>周期性的保存进程的状态。如果需要保证数据正确，回滚到最近保存的状态即可，只是会有部分的数据丢失。</p>
+<h2 id=update-lost><strong>Update Lost</strong></h2>
+<p>上面方案的补充版，在两个checkpoint之间系统故障，需要保存客户请求，在rollback前一个版本之后重新处理这些请求。</p>
+<h2 id=process-pools><strong>Process Pools</strong></h2>
+<p>使用资源预分配技术，按照经验设定好某些请求资源的需求量，为程序分配合适的资源。就像我们为某个任务分配线程池大小一样。</p>
+<h2 id=micro-reboot><strong>Micro reboot</strong></h2>
+<p>通过解耦系统组件，使得系统在遭遇故障时，只需要重启需要的组件，而不必重启整个系统。核心是组件和数据分离，数据的处理通过持久化存储的方式保证一致。</p>
 </div>
 </main>
 </div>
