@@ -57,7 +57,22 @@ Life is too short to depend on unstable software!  [__Read more...](https://blog
 ## ORM
 
 - [ObjectiveSql](https://github.com/braisdom/ObjectiveSql): ORM framework in Java based on ActiveRecord pattern.
+- [jdbi](https://github.com/jdbi/jdbi)
 
 ## SQL Parser
 
 - [jOOQ SQL Parser](https://www.jooq.org/doc/latest/manual/sql-building/sql-parser/)
+- [JSqlParser](https://github.com/JSQLParser/JSqlParser)
+
+## Distributed
+
+- [akka](https://github.com/akka/akka)
+- [zookeeper](https://github.com/apache/zookeeper)
+- [helix](https://github.com/apache/helix)
+- [dbqueue](https://github.com/jkrasnay/dbqueue): Database-based queue abstraction in Java.
+- [ShedLock](https://github.com/lukas-krecan/ShedLock): Distributed lock for your scheduled tasks.
+- [bucket4j](https://github.com/vladimir-bukhtoyarov/bucket4j): Java rate limiting library based on token/leaky-bucket algorithm.
+- [ratelimitj](https://github.com/mokies/ratelimitj)
+- [failsafe](https://github.com/failsafe-lib/failsafe)
+- [resilience4j](https://github.com/resilience4j/resilience4j): Fault tolerance library designed for Java8 and functional programming.
+- [retry4j](https://github.com/elennick/retry4j)

@@ -1,5 +1,6 @@
 ---
-type: docs title: "Java Agent"
+type: docs 
+title: "Java Agent"
 linkTitle: "Java Agent"
 weight: 5
 ---
