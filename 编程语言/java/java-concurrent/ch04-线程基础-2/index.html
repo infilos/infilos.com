@@ -2,7 +2,7 @@
 <head>
 <meta charset=utf-8>
 <meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no">
-<meta name=generator content="Hugo 0.92.2">
+<meta name=generator content="Hugo 0.93.0">
 <meta name=ROBOTS content="INDEX, FOLLOW">
 <link rel="shortcut icon" href=/favicons/favicon.ico>
 <link rel=apple-touch-icon href=/favicons/apple-touch-icon-180x180.png sizes=180x180>
@@ -15,55 +15,53 @@
 <link rel=icon type=image/png href=/favicons/android-144x144.png sizes=144x144>
 <link rel=icon type=image/png href=/favicons/android-192x192.png sizes=192x192>
 <title>CH04-线程基础-2 | infilos.com</title><meta property="og:title" content="CH04-线程基础-2">
-<meta property="og:description" content="Create Thread  What happens when creating a Thread instance  Thread thread = new Thread(){ @Override public void run() { // code  } }; // at this point the thread is in NEW state, all you have a simple java object, // no actual thread is created  thread.start(); // when start() is invoked, at some unspecified point in the near future // the thread will go into RUNNABLE state, this means an actual thread will be created.">
+<meta property="og:description" content="Create Thread  What happens when creating a Thread instance  Thread thread = new Thread(){  @Override  public void run() {  // code  } }; // at this point the thread is in NEW state, all you have a simple java object, // no actual thread is created  thread.start(); // when start() is invoked, at some unspecified point in the near future // the thread will go into RUNNABLE state, this means an actual thread will be created.">
 <meta property="og:type" content="article">
 <meta property="og:url" content="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch04-%E7%BA%BF%E7%A8%8B%E5%9F%BA%E7%A1%80-2/"><meta property="article:section" content="编程语言">
 <meta property="og:site_name" content="infilos.com">
 <meta itemprop=name content="CH04-线程基础-2">
-<meta itemprop=description content="Create Thread  What happens when creating a Thread instance  Thread thread = new Thread(){ @Override public void run() { // code  } }; // at this point the thread is in NEW state, all you have a simple java object, // no actual thread is created  thread.start(); // when start() is invoked, at some unspecified point in the near future // the thread will go into RUNNABLE state, this means an actual thread will be created.">
+<meta itemprop=description content="Create Thread  What happens when creating a Thread instance  Thread thread = new Thread(){  @Override  public void run() {  // code  } }; // at this point the thread is in NEW state, all you have a simple java object, // no actual thread is created  thread.start(); // when start() is invoked, at some unspecified point in the near future // the thread will go into RUNNABLE state, this means an actual thread will be created.">
 <meta itemprop=wordCount content="323">
 <meta itemprop=keywords content><meta name=twitter:card content="summary">
 <meta name=twitter:title content="CH04-线程基础-2">
-<meta name=twitter:description content="Create Thread  What happens when creating a Thread instance  Thread thread = new Thread(){ @Override public void run() { // code  } }; // at this point the thread is in NEW state, all you have a simple java object, // no actual thread is created  thread.start(); // when start() is invoked, at some unspecified point in the near future // the thread will go into RUNNABLE state, this means an actual thread will be created.">
-<script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga('create','UA-123062585-1','auto'),ga('send','pageview'))</script>
+<meta name=twitter:description content="Create Thread  What happens when creating a Thread instance  Thread thread = new Thread(){  @Override  public void run() {  // code  } }; // at this point the thread is in NEW state, all you have a simple java object, // no actual thread is created  thread.start(); // when start() is invoked, at some unspecified point in the near future // the thread will go into RUNNABLE state, this means an actual thread will be created.">
+<script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga("create","UA-123062585-1","auto"),ga("send","pageview"))</script>
 <script async src=https://www.google-analytics.com/analytics.js></script>
 <link rel=preload href=/scss/main.min.847464b684a6e89d7276700a5c500c17ab494dd1755b2654a7b27d8b59e3347e.css as=style>
 <link href=/scss/main.min.847464b684a6e89d7276700a5c500c17ab494dd1755b2654a7b27d8b59e3347e.css rel=stylesheet integrity>
 <script src=/js/jquery-3.5.1.min.js integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin=anonymous></script>
-</head>
-<body class=td-page>
+</head><body class=td-page>
 <header>
-<nav class="js-navbar-scroll navbar navbar-expand navbar-dark flex-column flex-md-row td-navbar">
+<nav class="js-navbar-scroll navbar navbar-expand-lg navbar-dark td-navbar">
 <a class=navbar-brand href=/>
-<span class=navbar-logo><svg id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512" style="enable-background:new 0 0 512 512"><path style="fill:#ffc107" d="M432.384 143.616c-4.165-4.164-10.917-4.164-15.083.0l-60.352 60.352c-4.164 4.165-4.164 10.917.0 15.083 21.187 20.463 54.951 19.876 75.413-1.311 19.962-20.668 19.962-53.435.0-74.102L432.384 143.616z"/><path style="fill:#607d8b" d="M42.667 277.334c-5.891.003-10.669-4.771-10.672-10.662-.002-4.338 2.623-8.245 6.64-9.882l234.667-96c5.455-2.233 11.687.38 13.92 5.835s-.38 11.687-5.835 13.92l-234.667 96C45.433 277.069 44.056 277.337 42.667 277.334z"/><path style="fill:#546e7a" d="M391.552 56.448l-32-32C343.938 8.745 322.689-.059 300.544.0h-3.755c-46.082.024-83.432 37.374-83.456 83.456v3.755c-.053 22.138 8.75 43.377 24.448 58.987l32 32c4.165 4.164 10.917 4.164 15.083.0L391.531 71.531C395.701 67.372 395.71 60.62 391.552 56.448z"/><path style="fill:#607d8b" d="M160 469.334c-3.279.006-6.379-1.497-8.405-4.075L34.261 315.926c-3.635-4.636-2.823-11.341 1.813-14.976s11.341-2.823 14.976 1.813l117.333 149.333c3.629 4.641 2.809 11.344-1.832 14.973C164.681 468.533 162.375 469.329 160 469.334z"/><path style="fill:#455a64" d="M487.467 86.848l-3.669-3.648c-37.687-36.557-97.71-36.197-134.955.811l-51.413 51.413c-36.996 37.25-37.357 97.263-.811 134.955l3.584 3.669c1.7 2.457 4.671 3.706 7.616 3.2 2.831.005 5.548-1.115 7.552-3.115l172.181-172.181c4.189-4.143 4.226-10.896.083-15.085-.028-.028-.055-.056-.083-.083L487.467 86.848z"/><g><path style="fill:#ffc107" d="M501.333 192H480c-5.891.0-10.667-4.776-10.667-10.667s4.776-10.667 10.667-10.667h21.333c5.891.0 10.667 4.776 10.667 10.667S507.225 192 501.333 192z"/><path style="fill:#ffc107" d="M394.667 298.667c-5.891.0-10.667-4.776-10.667-10.667v-21.333c0-5.891 4.776-10.667 10.667-10.667 5.891.0 10.667 4.776 10.667 10.667V288C405.333 293.891 400.558 298.667 394.667 298.667z"/><path style="fill:#ffc107" d="M480 277.334c-2.831.005-5.548-1.115-7.552-3.115l-21.333-21.333c-4.093-4.237-3.975-10.99.262-15.083 4.134-3.993 10.687-3.993 14.821.0l21.333 21.333c4.159 4.172 4.148 10.926-.024 15.085C485.514 276.209 482.815 277.327 480 277.334z"/></g><g><path style="fill:#455a64" d="M266.667 448H96c-29.455.0-53.333 23.878-53.333 53.333.0 5.891 4.776 10.667 10.667 10.667h256c5.891.0 10.667-4.776 10.667-10.667C320 471.878 296.122 448 266.667 448z"/><circle style="fill:#455a64" cx="32" cy="288" r="32"/></g><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/></svg></span><span class=font-weight-bold>infilos.com</span>
+<span class=navbar-logo><svg id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512" style="enable-background:new 0 0 512 512"><path style="fill:#ffc107" d="M432.384 143.616c-4.165-4.164-10.917-4.164-15.083.0l-60.352 60.352c-4.164 4.165-4.164 10.917.0 15.083 21.187 20.463 54.951 19.876 75.413-1.311 19.962-20.668 19.962-53.435.0-74.102L432.384 143.616z"/><path style="fill:#607d8b" d="M42.667 277.334c-5.891.003-10.669-4.771-10.672-10.662-.002-4.338 2.623-8.245 6.64-9.882l234.667-96c5.455-2.233 11.687.38 13.92 5.835s-.38 11.687-5.835 13.92l-234.667 96C45.433 277.069 44.056 277.337 42.667 277.334z"/><path style="fill:#546e7a" d="M391.552 56.448l-32-32C343.938 8.745 322.689-.059 300.544.0h-3.755c-46.082.024-83.432 37.374-83.456 83.456v3.755c-.053 22.138 8.75 43.377 24.448 58.987l32 32c4.165 4.164 10.917 4.164 15.083.0L391.531 71.531C395.701 67.372 395.71 60.62 391.552 56.448z"/><path style="fill:#607d8b" d="M160 469.334c-3.279.006-6.379-1.497-8.405-4.075L34.261 315.926c-3.635-4.636-2.823-11.341 1.813-14.976s11.341-2.823 14.976 1.813l117.333 149.333c3.629 4.641 2.809 11.344-1.832 14.973C164.681 468.533 162.375 469.329 160 469.334z"/><path style="fill:#455a64" d="M487.467 86.848l-3.669-3.648c-37.687-36.557-97.71-36.197-134.955.811l-51.413 51.413c-36.996 37.25-37.357 97.263-.811 134.955l3.584 3.669c1.7 2.457 4.671 3.706 7.616 3.2 2.831.005 5.548-1.115 7.552-3.115l172.181-172.181c4.189-4.143 4.226-10.896.083-15.085-.028-.028-.055-.056-.083-.083L487.467 86.848z"/><g><path style="fill:#ffc107" d="M501.333 192H480c-5.891.0-10.667-4.776-10.667-10.667s4.776-10.667 10.667-10.667h21.333c5.891.0 10.667 4.776 10.667 10.667S507.225 192 501.333 192z"/><path style="fill:#ffc107" d="M394.667 298.667c-5.891.0-10.667-4.776-10.667-10.667v-21.333c0-5.891 4.776-10.667 10.667-10.667 5.891.0 10.667 4.776 10.667 10.667V288C405.333 293.891 400.558 298.667 394.667 298.667z"/><path style="fill:#ffc107" d="M480 277.334c-2.831.005-5.548-1.115-7.552-3.115l-21.333-21.333c-4.093-4.237-3.975-10.99.262-15.083 4.134-3.993 10.687-3.993 14.821.0l21.333 21.333c4.159 4.172 4.148 10.926-.024 15.085C485.514 276.209 482.815 277.327 480 277.334z"/></g><g><path style="fill:#455a64" d="M266.667 448H96c-29.455.0-53.333 23.878-53.333 53.333.0 5.891 4.776 10.667 10.667 10.667h256c5.891.0 10.667-4.776 10.667-10.667C320 471.878 296.122 448 266.667 448z"/><circle style="fill:#455a64" cx="32" cy="288" r="32"/></g><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/></svg></span>
+<span class=font-weight-bold>infilos.com</span>
 </a>
+<button class=navbar-toggler type=button data-toggle=collapse data-target=#navbarSupportedContent aria-controls=navbarSupportedContent aria-expanded=false aria-label="Toggle navigation">
+<span class=navbar-toggler-icon></span>
+</button>
 <div class="collapse navbar-collapse" id=navbarSupportedContent>
 <ul class="navbar-nav mr-auto">
 <li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86>
 <span>基础</span>
 </a>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80>
 <span>语言</span>
 </a>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93>
 <span>框架库</span>
 </a>
-</li>
-<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+</li><li class="nav-item dropdown" style=max-width:90px;min-width:10px>
 <a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
 分布式
 <span>+</span>
 </a>
 <div class=dropdown-menu aria-labelledby=navbarDropdown>
 <a class=dropdown-item href=/%e5%88%86%e5%b8%83%e5%bc%8f/base>基本构成</a>
-</div>
-</li>
-<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+</div></li><li class="nav-item dropdown" style=max-width:90px;min-width:10px>
 <a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
 大数据
 <span>+</span>
@@ -74,9 +72,7 @@
 <a class=dropdown-item href=/%e6%b6%88%e6%81%af%e7%b3%bb%e7%bb%9f>消息系统</a>
 <a class=dropdown-item href=/%e5%a4%84%e7%90%86%e7%b3%bb%e7%bb%9f>处理系统</a>
 <a class=dropdown-item href=/%e6%95%b0%e6%8d%ae%e6%b2%bb%e7%90%86>数据治理</a>
-</div>
-</li>
-<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+</div></li><li class="nav-item dropdown" style=max-width:90px;min-width:10px>
 <a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
 中后台
 <span>+</span>
@@ -86,38 +82,26 @@
 <a class=dropdown-item href=/%e7%94%a8%e6%88%b7%e7%b3%bb%e7%bb%9f>用户系统</a>
 <a class=dropdown-item href=/%e4%ba%a4%e4%ba%92%e7%95%8c%e9%9d%a2>交互界面</a>
 <a class=dropdown-item href=/%e4%b8%9a%e5%8a%a1%e7%b3%bb%e7%bb%9f>业务系统</a>
-</div>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</div></li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e6%a8%a1%e5%bc%8f%e6%9e%b6%e6%9e%84>
 <span>模式架构</span>
 </a>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e9%9d%a2%e8%af%95%e9%97%ae%e7%ad%94>
 <span>面试</span>
 </a>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e7%ae%a1%e7%90%86%e8%b7%af%e5%be%84>
 <span>管理</span>
 </a>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e5%bc%80%e6%ba%90%e9%a1%b9%e7%9b%ae>
 <span>开源</span>
 </a>
-</li>
-</ul>
-<div class="form-inline my-2 my-lg-0">
+</li></ul><div class="form-inline my-2 my-lg-0">
 <div class="nav-item nav-search-item my-2 my-md-0">
 <input type=search class="form-control td-search-input" placeholder="&#xf002; 站内搜索…" aria-label=站内搜索… autocomplete=off>
-</div>
-</div>
-</div>
-</nav>
-</header>
-<div class="container-fluid td-outer">
+</div></div></div></nav></header><div class="container-fluid td-outer">
 <div class=td-main>
 <div class="row flex-xl-nowrap">
 <aside class="col-12 col-md-3 col-xl-2 td-sidebar d-print-none">
@@ -127,10 +111,7 @@
 <input type=search class="form-control td-search-input" placeholder="&#xf002; 站内搜索…" aria-label=站内搜索… autocomplete=off>
 <button class="btn btn-link td-sidebar__toggle d-md-none p-0 ml-3 fas fa-bars" type=button data-toggle=collapse data-target=#td-section-nav aria-controls=td-docs-nav aria-expanded=false aria-label="Toggle section navigation">
 </button>
-</form>
-</div>
-<div id=content-desktop></div>
-<nav class="collapse td-sidebar-nav" id=td-section-nav>
+</form></div><div id=content-desktop></div><nav class="collapse td-sidebar-nav" id=td-section-nav>
 <ul class="td-sidebar-nav__section pr-md-3 ul-0">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e7bc96e7a88be8afade8a880-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section tree-root" id=m-e7bc96e7a88be8afade8a880><span>编程语言</span></a>
@@ -157,9 +138,7 @@
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-base/ch07-%E5%8F%8D%E5%B0%84%E6%9C%BA%E5%88%B6/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-basech07-e58f8de5b084e69cbae588b6><span>CH07-反射机制</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-basech08-spie69cbae588b6-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-base/ch08-spi%E6%9C%BA%E5%88%B6/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-basech08-spie69cbae588b6><span>CH08-SPI 机制</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e7bc96e7a88be8afade8a880javajava-collection-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e7bc96e7a88be8afade8a880javajava-collection-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-collection/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880javajava-collection><span>Java 集合</span></a>
 <ul class="ul-3 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-collectionch01-e99b86e59088e7bb93e69e84-li>
@@ -182,9 +161,7 @@
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-collection/ch09-weakhashmap/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-collectionch09-weakhashmap><span>CH09-WeakHashMap</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-collectionch10-stream-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-collection/ch10-stream/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-collectionch10-stream><span>CH10-Stream</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e7bc96e7a88be8afade8a880javajava-concurrent-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e7bc96e7a88be8afade8a880javajava-concurrent-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880javajava-concurrent><span>Java 并发</span></a>
 <ul class="ul-3 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch01-e5b9b6e58f91e4bd93e7b3bb-li>
@@ -251,9 +228,7 @@
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch31-allqueues/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch31-allqueues><span>CH31-AllQueues</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch32-allpools-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch32-allpools/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch32-allpools><span>CH32-AllPools</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e7bc96e7a88be8afade8a880javajava-io-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e7bc96e7a88be8afade8a880javajava-io-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-io/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880javajava-io><span>Java I/0</span></a>
 <ul class="ul-3 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-ioch01-ioe58886e7b1bb-li>
@@ -282,9 +257,7 @@
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-io/ch12-%E9%9B%B6%E6%8B%B7%E8%B4%9D/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-ioch12-e99bb6e68bb7e8b49d><span>CH12-零拷贝</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-ioch13-e58685e5ad98e698a0e5b084-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-io/ch13-%E5%86%85%E5%AD%98%E6%98%A0%E5%B0%84/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-ioch13-e58685e5ad98e698a0e5b084><span>CH13-内存映射</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e7bc96e7a88be8afade8a880javajava-effective-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e7bc96e7a88be8afade8a880javajava-effective-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-effective/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880javajava-effective><span>Java Effective</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e7bc96e7a88be8afade8a880javajava-debug-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-debug/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880javajava-debug><span>Java Debug</span></a>
@@ -297,17 +270,15 @@
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-debug/linux-cmd/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-debuglinux-cmd><span>Linux 命令</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-debugjdk-tools-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-debug/jdk-tools/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-debugjdk-tools><span>调试工具集</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-debugjava-agent-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-debug/java-agent/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-debugjava-agent><span>Java Agent</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-debugdynamic-debug-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-debug/dynamic-debug/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-debugdynamic-debug><span>动态调试技术</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-debugarthas-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-debug/arthas/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-debugarthas><span>Arthas</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-debuglocal-debug-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-debug/local-debug/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-debuglocal-debug><span>本地调试</span></a>
-</li>
-</ul>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e7bc96e7a88be8afade8a880jvm-core-li>
+</li></ul></li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e7bc96e7a88be8afade8a880jvm-core-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-core><span>JVM 核心</span></a>
 <ul class="ul-2 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-li>
@@ -343,9 +314,7 @@
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm/ch14-jvm%E8%B0%83%E8%AF%95%E5%B7%A5%E5%85%B7/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch14-jvme8b083e8af95e5b7a5e585b7><span>CH14-JVM调试工具</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch15-jvme58aa8e68081e8b083e8af95-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm/ch15-jvm%E5%8A%A8%E6%80%81%E8%B0%83%E8%AF%95/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch15-jvme58aa8e68081e8b083e8af95><span>CH15-JVM动态调试</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-133-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-133-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/jmm-133/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-133><span>JSR 133</span></a>
 <ul class="ul-3 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-133ch01-e68c87e4bba4e9878de68e92-li>
@@ -356,9 +325,7 @@
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/jmm-133/ch03-%E5%A4%9A%E5%A4%84%E7%90%86%E5%99%A8/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-133ch03-e5a49ae5a484e79086e599a8><span>CH03-多处理器</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-133ch04-e5bc80e58f91e68c87e58d97-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/jmm-133/ch04-%E5%BC%80%E5%8F%91%E6%8C%87%E5%8D%97/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-133ch04-e5bc80e58f91e68c87e58d97><span>CH04-开发指南</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-spec-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-spec-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/jmm-spec/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-spec><span>JMM 规范</span></a>
 <ul class="ul-3 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-specch01-jmme8a784e88c83-li>
@@ -371,9 +338,7 @@
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/jmm-spec/ch04-jsr133-faq/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-specch04-jsr133-faq><span>CH04-JSR133-FAQ</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-specch05-jsr133-cook-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/jmm-spec/ch05-jsr133-cook/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-specch05-jsr133-cook><span>CH05-JSR133-Cook</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v2/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2><span>JVM 深入理解 V2</span></a>
 <ul class="ul-3 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch01-e8b5b0e8bf9bjava-li>
@@ -406,13 +371,9 @@
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v2/endix-b-%E6%8C%87%E4%BB%A4%E8%A1%A8/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2endix-b-e68c87e4bba4e8a1a8><span>Endix-B-字节码指令</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2endix-c-e58f82e695b0e8a1a8-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v2/endix-c-%E5%8F%82%E6%95%B0%E8%A1%A8/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2endix-c-e58f82e695b0e8a1a8><span>Endix-C-虚拟机参数</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v3-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v3-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v3/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v3><span>JVM 深入理解 V3</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e7bc96e7a88be8afade8a880jvm-concurrent-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e7bc96e7a88be8afade8a880jvm-concurrent-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-concurrent><span>JVM 并发</span></a>
 <ul class="ul-2 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practice-li>
@@ -450,9 +411,7 @@
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/java-con-practice/ch15-%E5%8E%9F%E5%AD%90%E4%B8%8E%E9%9D%9E%E9%98%BB%E5%A1%9E%E5%90%8C%E6%AD%A5/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech15-e58e9fe5ad90e4b88ee99d9ee998bbe5a19ee5908ce6ada5><span>CH15-原子与非阻塞同步</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech16-e58685e5ad98e6a8a1e59e8b-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/java-con-practice/ch16-%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech16-e58685e5ad98e6a8a1e59e8b><span>CH16-内存模型</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-pattern-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-pattern-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/java-con-pattern/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-pattern><span>Java 并发模式</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallel-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/dive-parallel/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallel><span>深入理解并行</span></a>
@@ -489,9 +448,7 @@
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/dive-parallel/ch15/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch15><span>CH15-高级同步-内存序</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelendix-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/dive-parallel/endix/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelendix><span>ENDIX-C-内存屏障</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-model-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-model-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/seven-con-model/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-model><span>七并发模型</span></a>
 <ul class="ul-3 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-modelch01-li>
@@ -512,10 +469,41 @@
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/seven-con-model/ch08/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-modelch08><span>CH08-Lambda 架构</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-modelch09-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/seven-con-model/ch09/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-modelch09><span>CH09-未来方向</span></a>
-</li>
-</ul>
-</li>
-</ul>
+</li></ul></li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e7bc96e7a88be8afade8a880jvm-dismantle-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-dismantle/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-dismantle><span>JVM 拆解</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech01-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-dismantle/ch01/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech01><span>CH01-开始运行</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech02-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-dismantle/ch02/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech02><span>CH02-基本类型</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech03-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-dismantle/ch03/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech03><span>CH03-类加载</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech04-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-dismantle/ch04/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech04><span>CH04-方法调用-上</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech05-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-dismantle/ch05/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech05><span>CH05-方法调用-下</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech06-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-dismantle/ch06/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech06><span>CH06-异常处理</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech07-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-dismantle/ch07/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech07><span>CH07-实现反射</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech08-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-dismantle/ch08/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech08><span>CH08-invokedynamic-上</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech09-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-dismantle/ch09/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech09><span>CH09-invokedynamic-下</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech10-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-dismantle/ch10/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech10><span>CH10-对象内存布局</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech11-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-dismantle/ch11/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech11><span>CH11-垃圾回收-上</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech12-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-dismantle/ch12/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech12><span>CH12-垃圾回收-下</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech13-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-dismantle/ch13/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech13><span>CH13-内存模型</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech14-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-dismantle/ch14/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech14><span>CH14-Synchronized</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech99-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-dismantle/ch99/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech99><span>CH99-常用工具</span></a>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e7bc96e7a88be8afade8a880jvm-performance-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-performance/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-performance><span>JVM 性能</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e7bc96e7a88be8afade8a880scala-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880scala><span>Scala 编程</span></a>
 <ul class="ul-2 foldable">
@@ -614,9 +602,7 @@
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/async-programming/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coreasync-programming><span>异步编程</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-corescala-style-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/scala-style/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-corescala-style><span>战略Scala风格</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-func-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-func-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-func/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880scalascala-func><span>Scala 函数式</span></a>
 <ul class="ul-3 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-funcch00-e7b2bee8a681-li>
@@ -629,11 +615,7 @@
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-func/ch03-%E6%95%B0%E6%8D%AE/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-funcch03-e695b0e68dae><span>CH03-数据</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-funcch04-e5bc82e5b8b8-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-func/ch04-%E5%BC%82%E5%B8%B8/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-funcch04-e5bc82e5b8b8><span>CH04-异常</span></a>
-</li>
-</ul>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e7bc96e7a88be8afade8a880rust-li>
+</li></ul></li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e7bc96e7a88be8afade8a880rust-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/rust/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880rust><span>Rust 编程</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e7bc96e7a88be8afade8a880golang-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/golang/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880golang><span>Golang 编程</span></a>
@@ -654,274 +636,114 @@
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/frontend/vue/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880frontendvue><span>Vue 3</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880frontendreact-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/frontend/react/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880frontendreact><span>React</span></a>
-</li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-</nav>
-</div>
-</aside>
-<aside class="d-none d-xl-block col-xl-2 td-sidebar-toc d-print-none">
+</li></ul></li></ul></li></ul></nav></div></aside><aside class="d-none d-xl-block col-xl-2 td-sidebar-toc d-print-none">
 <div class="td-page-meta ml-2 pb-1 pt-2 mb-0">
 <a href=https://github.com/infilos/infilos.com/edit/master/content/zh/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/java/java-concurrent/CH04-%e7%ba%bf%e7%a8%8b%e5%9f%ba%e7%a1%80-2.md target=_blank><i class="fa fa-edit fa-fw"></i> 编辑此页</a>
 <a href="https://github.com/infilos/infilos.com/new/master/content/zh/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/java/java-concurrent/CH04-%e7%ba%bf%e7%a8%8b%e5%9f%ba%e7%a1%80-2.md?filename=change-me.md&value=---%0Atitle%3A+%22Long+Page+Title%22%0AlinkTitle%3A+%22Short+Nav+Title%22%0Aweight%3A+100%0Adescription%3A+%3E-%0A+++++Page+description+for+heading+and+indexes.%0A---%0A%0A%23%23+Heading%0A%0AEdit+this+template+to+create+your+new+page.%0A%0A%2A+Give+it+a+good+name%2C+ending+in+%60.md%60+-+e.g.+%60getting-started.md%60%0A%2A+Edit+the+%22front+matter%22+section+at+the+top+of+the+page+%28weight+controls+how+its+ordered+amongst+other+pages+in+the+same+directory%3B+lowest+number+first%29.%0A%2A+Add+a+good+commit+message+at+the+bottom+of+the+page+%28%3C80+characters%3B+use+the+extended+description+field+for+more+detail%29.%0A%2A+Create+a+new+branch+so+you+can+preview+your+new+file+and+request+a+review+via+Pull+Request.%0A" target=_blank><i class="fa fa-edit fa-fw"></i> 添加子页面</a>
 <a href="https://github.com/infilos/infilos.com/issues/new?title=CH04-%e7%ba%bf%e7%a8%8b%e5%9f%ba%e7%a1%80-2" target=_blank><i class="fab fa-github fa-fw"></i> 提交文档问题</a>
 <a id=print href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/_print/><i class="fa fa-print fa-fw"></i> 整节打印</a>
-</div>
-<div class=td-toc><nav id=TableOfContents>
+</div><div class=td-toc><nav id=TableOfContents>
 <ul>
-<li><a href=#create-thread>Create Thread</a></li>
-<li><a href=#用户空间--内核空间>用户空间 & 内核空间</a>
+<li><a href=#create-thread>Create Thread</a></li><li><a href=#用户空间--内核空间>用户空间 & 内核空间</a>
 <ul>
-<li><a href=#那为什么要区分用户态和内核态呢><strong>那为什么要区分用户态和内核态呢</strong>？</a></li>
-</ul>
-</li>
-<li><a href=#操作系统线程>操作系统线程</a>
+<li><a href=#那为什么要区分用户态和内核态呢><strong>那为什么要区分用户态和内核态呢</strong>？</a></li></ul></li><li><a href=#操作系统线程>操作系统线程</a>
 <ul>
-<li><a href=#在用户空间实现线程>在用户空间实现线程</a></li>
-<li><a href=#在内核空间中实现线程>在内核空间中实现线程</a></li>
-</ul>
-</li>
-<li><a href=#java-thread>Java Thread</a></li>
-<li><a href=#java线程调度>Java线程调度</a>
+<li><a href=#在用户空间实现线程>在用户空间实现线程</a></li><li><a href=#在内核空间中实现线程>在内核空间中实现线程</a></li></ul></li><li><a href=#java-thread>Java Thread</a></li><li><a href=#java线程调度>Java线程调度</a>
 <ul>
-<li><a href=#java-线程状态转换>Java 线程状态转换</a></li>
-<li><a href=#threadsleep>Thread.sleep</a></li>
-</ul>
-</li>
-</ul>
-</nav></div>
-</aside>
-<main class="col-12 col-md-9 col-xl-8 pl-md-5" role=main>
+<li><a href=#java-线程状态转换>Java 线程状态转换</a></li><li><a href=#threadsleep>Thread.sleep</a></li></ul></li></ul></nav></div></aside><main class="col-12 col-md-9 col-xl-8 pl-md-5" role=main>
 <nav aria-label=breadcrumb class="d-none d-md-block d-print-none">
 <ol class="breadcrumb spb-1">
 <li class=breadcrumb-item>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/>编程语言</a>
-</li>
-<li class=breadcrumb-item>
+</li><li class=breadcrumb-item>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/>Java 编程</a>
-</li>
-<li class=breadcrumb-item>
+</li><li class=breadcrumb-item>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/>Java 并发</a>
-</li>
-<li class="breadcrumb-item active" aria-current=page>
+</li><li class="breadcrumb-item active" aria-current=page>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch04-%E7%BA%BF%E7%A8%8B%E5%9F%BA%E7%A1%80-2/>CH04-线程基础-2</a>
-</li>
-</ol>
-</nav>
-<div class=td-content>
-<h1>CH04-线程基础-2</h1>
-<header class=article-meta>
-</header>
-<h2 id=create-thread>Create Thread</h2>
-<ul>
-<li>What happens when creating a Thread instance</li>
-</ul>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#000>Thread</span> <span style=color:#000>thread</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>Thread</span><span style=color:#ce5c00;font-weight:700>(){</span>
-    <span style=color:#5c35cc;font-weight:700>@Override</span>
-    <span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>void</span> <span style=color:#000>run</span><span style=color:#ce5c00;font-weight:700>()</span> <span style=color:#ce5c00;font-weight:700>{</span>
-        <span style=color:#8f5902;font-style:italic>// code
-</span><span style=color:#8f5902;font-style:italic></span>    <span style=color:#ce5c00;font-weight:700>}</span>
-<span style=color:#ce5c00;font-weight:700>};</span> 
-<span style=color:#8f5902;font-style:italic>// at this point the thread is in NEW state, all you have a simple java object, 
-</span><span style=color:#8f5902;font-style:italic>// no actual thread is created
-</span><span style=color:#8f5902;font-style:italic></span>
-<span style=color:#000>thread</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>start</span><span style=color:#ce5c00;font-weight:700>();</span>
-<span style=color:#8f5902;font-style:italic>// when start() is invoked, at some unspecified point in the near future 
-</span><span style=color:#8f5902;font-style:italic>// the thread will go into RUNNABLE state, this means an actual thread will be created.  
-</span><span style=color:#8f5902;font-style:italic>// That can happen before start() returns.
-</span></code></pre></div><ul>
-<li>通过 <code>new </code> 创建线程时，你只是创建了一个 Thread 类的实例，该 Thread 实例的状态为 NEW。</li>
-<li>通过 <code>thread.start()</code> 调用线程时，该 Thread 实例的状态将会在未来某个时刻变为 RUNNABLE，这表示 OS 级别的线程将被创建，这部分工作由 JVM 完成。</li>
-</ul>
-<h2 id=用户空间--内核空间>用户空间 & 内核空间</h2>
-<p>在操作系统中，内存通常会被分成用户空间（User space）与内核空间（Kernel space）这两个部分。当进程/线程运行在用户空间时就处于用户态，运行在内核空间时就处于内核态：</p>
-<ul>
-<li>运行在内核态的程序可以访问用户空间和内核空间，或者说它可以访问计算机的任何资源，不受限制，为所欲为，例如协调 CPU 资源，分配内存资源，提供稳定的环境供应用程序运行等</li>
-<li>而应用程序基本都是运行在用户态的，或者说用户态就是提供应用程序运行的空间。运行在用户态的程序只能访问用户空间</li>
-</ul>
-<h3 id=那为什么要区分用户态和内核态呢><strong>那为什么要区分用户态和内核态呢</strong>？</h3>
-<p>早期操作系统是不区分用户态和内核态的，也就是说应用程序可以访问任意内存空间，如果程序不稳定常常会让系统崩溃，比如清除了操作系统的内存数据。为此大佬们设计出了一套规则：对于那些比较危险的操作需要切到内核态才能运行，比如 CPU、内存、设备等资源管理器程序就应该在内核态运行，否则安全性没有保证。</p>
-<p><strong>用户态的程序不能随意操作内核地址空间，这样有效地防止了操作系统程序受到应用程序的侵害</strong>。</p>
-<p>那如果处于用户态的程序想要访问内核空间的话怎么办呢？就需要进行系统调用从用户态切换到内核态。</p>
-<h2 id=操作系统线程>操作系统线程</h2>
-<h3 id=在用户空间实现线程>在用户空间实现线程</h3>
-<p>在<strong>早期</strong>的操作系统中，所有的线程都是在用户空间下实现的，操作系统只能看到线程所属的进程，而不能看到线程。</p>
-<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20210429212415.png style=display:block;width:50% alt=NAME align=center> </div>
-<p>从我们开发者的角度来理解用户级线程就是说：在这种模型下，我们需要自己定义线程的数据结构、创建、销毁、调度和维护等，这些线程运行在操作系统的某个进程内，然后操作系统直接对进程进行调度。</p>
-<p>这种方式的好处一目了然，首先第一点，就是即使操作系统原生不支持线程，我们也可以通过库函数来支持线程；第二点，线程的调度只发生在用户态，避免了操作系统从内核态到用户态的转换开销。</p>
-<p>当然缺点也很明显：由于操作系统看不见线程，不知道线程的存在，而 CPU 的时间片切换是以进程为维度的，所以如果进程中某个线程进行了耗时比较长的操作，那么由于用户空间中没有时钟中断机制，就会导致此进程中的其它线程因为得不到 CPU 资源而长时间的持续等待；另外，如果某个线程进行系统调用时比如缺页中断而导致了线程阻塞，此时操作系统也会阻塞住整个进程，即使这个进程中其它线程还在工作。</p>
-<h3 id=在内核空间中实现线程>在内核空间中实现线程</h3>
-<p>所谓内核级线程就是运行在内核空间的线程， 直接由内核负责，只能由内核来完成线程的调度。</p>
-<p>每个内核线程可以视为内核的一个分身，这样操作系统就有能力同时处理多件事情，<strong>支持多线程的内核就叫做多线程内核</strong>（Multi-Threads Kernel）。</p>
-<p>从我们开发者的角度来理解内核级线程就是说：我们可以直接使用操作系统中已经内置好的线程，线程的创建、销毁、调度和维护等，都是直接由操作系统的内核来实现，我们只需要使用系统调用就好了，不需要像用户级线程那样自己设计线程调度等。</p>
-<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20210429212532.png style=display:block;width:50% alt=NAME align=center> </div>
-<p>上图画的是 1：1 的线程模型，所谓线程模型，也就是用户线程和内核线程之间的关联方式，线程模型当然不止 1：1 这一种，下面我们来详细解释以下这三种多线程模型：</p>
-<h4 id=1-多对一线程模型><strong>1. 多对一线程模型</strong>：</h4>
-<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20210429212627.png style=display:block;width:50% alt=NAME align=center> </div>
-<ul>
-<li>在多对一模型中，多个用户级线程映射到某一个内核线程上</li>
-<li>线程管理由用户空间中的线程库处理，这非常有效</li>
-<li>但是，如果进行了阻塞系统调用，那么即使其他用户线程能够继续，整个进程也会阻塞</li>
-<li>由于单个内核线程只能在单个 CPU 上运行，因此多对一模型不允许在多个 CPU 之间拆分单个进程</li>
-</ul>
-<p>从并发性角度来总结下，虽然多对一模型允许开发人员创建任意多的用户线程，但是由于内核只能一次调度一个线程，所以并未增加并发性。现在已经几乎没有操作系统来使用这个模型了，因为它无法利用多个处理核。</p>
-<h4 id=2-一对一线程模型><strong>2. 一对一线程模型</strong>：</h4>
-<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/88c73a25-6223-4b64-98cc-9284552ed1e1.png style=display:block;width:50% alt=NAME align=center> </div>
-<ul>
-<li>一对一模型克服了多对一模型的问题</li>
-<li>一对一模型创建一个单独的内核线程来处理每个用户线程</li>
-<li>但是，管理一对一模型的开销更大，涉及更多开销和减慢系统速度</li>
-<li>此模型的大多数实现都限制了可以创建的线程数</li>
-</ul>
-<p>从并发性角度来总结下，虽然一对一模型提供了更大的并发性，但是开发人员应注意不要在应用程序内创建太多线程（有时系统可能会限制创建线程的数量），因为管理一对一模型的开销更大。</p>
-<h4 id=3-多对多线程模型><strong>3. 多对多线程模型</strong>：</h4>
-<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20210429212753.png style=display:block;width:50% alt=NAME align=center> </div>
-<ul>
-<li>多对多模型将任意数量的用户线程复用到相同或更少数量的内核线程上，结合了一对一和多对一模型的最佳特性</li>
-<li>用户对创建的线程数没有限制</li>
-<li>阻止内核系统调用不会阻止整个进程</li>
-<li>进程可以分布在多个处理器上</li>
-<li>可以为各个进程分配可变数量的内核线程，具体取决于存在的 CPU 数量和其他因素</li>
-</ul>
-<h2 id=java-thread>Java Thread</h2>
-<p>在上面的模型介绍中，我们提到了通过线程库来创建、管理线程，那么什么是线程库呢？</p>
-<p><strong>线程库就是为开发人员提供创建和管理线程的一套 API</strong>。</p>
-<p>当然，线程库不仅可以在用户空间中实现，还可以在内核空间中实现。前者涉及仅在用户空间内实现的 API 函数，没有内核支持。后者涉及系统调用，也就是说调用库中的一个 API 函数将会导致对内核的系统调用，并且需要具有线程库支持的内核。</p>
-<p>下面简单介绍下三个主要的线程库：</p>
-<ol>
+</li></ol></nav><div class=td-content>
+<h1>CH04-线程基础-2</h1><header class=article-meta>
+</header><h2 id=create-thread>Create Thread</h2><ul>
+<li>What happens when creating a Thread instance</li></ul><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=display:flex><span><span style=color:#000>Thread</span> <span style=color:#000>thread</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>Thread</span><span style=color:#ce5c00;font-weight:700>(){</span>
+</span></span><span style=display:flex><span>    <span style=color:#5c35cc;font-weight:700>@Override</span>
+</span></span><span style=display:flex><span>    <span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>void</span> <span style=color:#000>run</span><span style=color:#ce5c00;font-weight:700>()</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>        <span style=color:#8f5902;font-style:italic>// code
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic></span>    <span style=color:#ce5c00;font-weight:700>}</span>
+</span></span><span style=display:flex><span><span style=color:#ce5c00;font-weight:700>};</span> 
+</span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic>// at this point the thread is in NEW state, all you have a simple java object, 
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic>// no actual thread is created
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic></span>
+</span></span><span style=display:flex><span><span style=color:#000>thread</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>start</span><span style=color:#ce5c00;font-weight:700>();</span>
+</span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic>// when start() is invoked, at some unspecified point in the near future 
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic>// the thread will go into RUNNABLE state, this means an actual thread will be created.  
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic>// That can happen before start() returns.
+</span></span></span></code></pre></div><ul>
+<li>通过 <code>new </code> 创建线程时，你只是创建了一个 Thread 类的实例，该 Thread 实例的状态为 NEW。</li><li>通过 <code>thread.start()</code> 调用线程时，该 Thread 实例的状态将会在未来某个时刻变为 RUNNABLE，这表示 OS 级别的线程将被创建，这部分工作由 JVM 完成。</li></ul><h2 id=用户空间--内核空间>用户空间 & 内核空间</h2><p>在操作系统中，内存通常会被分成用户空间（User space）与内核空间（Kernel space）这两个部分。当进程/线程运行在用户空间时就处于用户态，运行在内核空间时就处于内核态：</p><ul>
+<li>运行在内核态的程序可以访问用户空间和内核空间，或者说它可以访问计算机的任何资源，不受限制，为所欲为，例如协调 CPU 资源，分配内存资源，提供稳定的环境供应用程序运行等</li><li>而应用程序基本都是运行在用户态的，或者说用户态就是提供应用程序运行的空间。运行在用户态的程序只能访问用户空间</li></ul><h3 id=那为什么要区分用户态和内核态呢><strong>那为什么要区分用户态和内核态呢</strong>？</h3><p>早期操作系统是不区分用户态和内核态的，也就是说应用程序可以访问任意内存空间，如果程序不稳定常常会让系统崩溃，比如清除了操作系统的内存数据。为此大佬们设计出了一套规则：对于那些比较危险的操作需要切到内核态才能运行，比如 CPU、内存、设备等资源管理器程序就应该在内核态运行，否则安全性没有保证。</p><p><strong>用户态的程序不能随意操作内核地址空间，这样有效地防止了操作系统程序受到应用程序的侵害</strong>。</p><p>那如果处于用户态的程序想要访问内核空间的话怎么办呢？就需要进行系统调用从用户态切换到内核态。</p><h2 id=操作系统线程>操作系统线程</h2><h3 id=在用户空间实现线程>在用户空间实现线程</h3><p>在<strong>早期</strong>的操作系统中，所有的线程都是在用户空间下实现的，操作系统只能看到线程所属的进程，而不能看到线程。</p><div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20210429212415.png style=display:block;width:50% alt=NAME align=center> </div><p>从我们开发者的角度来理解用户级线程就是说：在这种模型下，我们需要自己定义线程的数据结构、创建、销毁、调度和维护等，这些线程运行在操作系统的某个进程内，然后操作系统直接对进程进行调度。</p><p>这种方式的好处一目了然，首先第一点，就是即使操作系统原生不支持线程，我们也可以通过库函数来支持线程；第二点，线程的调度只发生在用户态，避免了操作系统从内核态到用户态的转换开销。</p><p>当然缺点也很明显：由于操作系统看不见线程，不知道线程的存在，而 CPU 的时间片切换是以进程为维度的，所以如果进程中某个线程进行了耗时比较长的操作，那么由于用户空间中没有时钟中断机制，就会导致此进程中的其它线程因为得不到 CPU 资源而长时间的持续等待；另外，如果某个线程进行系统调用时比如缺页中断而导致了线程阻塞，此时操作系统也会阻塞住整个进程，即使这个进程中其它线程还在工作。</p><h3 id=在内核空间中实现线程>在内核空间中实现线程</h3><p>所谓内核级线程就是运行在内核空间的线程， 直接由内核负责，只能由内核来完成线程的调度。</p><p>每个内核线程可以视为内核的一个分身，这样操作系统就有能力同时处理多件事情，<strong>支持多线程的内核就叫做多线程内核</strong>（Multi-Threads Kernel）。</p><p>从我们开发者的角度来理解内核级线程就是说：我们可以直接使用操作系统中已经内置好的线程，线程的创建、销毁、调度和维护等，都是直接由操作系统的内核来实现，我们只需要使用系统调用就好了，不需要像用户级线程那样自己设计线程调度等。</p><div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20210429212532.png style=display:block;width:50% alt=NAME align=center> </div><p>上图画的是 1：1 的线程模型，所谓线程模型，也就是用户线程和内核线程之间的关联方式，线程模型当然不止 1：1 这一种，下面我们来详细解释以下这三种多线程模型：</p><h4 id=1-多对一线程模型><strong>1. 多对一线程模型</strong>：</h4><div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20210429212627.png style=display:block;width:50% alt=NAME align=center> </div><ul>
+<li>在多对一模型中，多个用户级线程映射到某一个内核线程上</li><li>线程管理由用户空间中的线程库处理，这非常有效</li><li>但是，如果进行了阻塞系统调用，那么即使其他用户线程能够继续，整个进程也会阻塞</li><li>由于单个内核线程只能在单个 CPU 上运行，因此多对一模型不允许在多个 CPU 之间拆分单个进程</li></ul><p>从并发性角度来总结下，虽然多对一模型允许开发人员创建任意多的用户线程，但是由于内核只能一次调度一个线程，所以并未增加并发性。现在已经几乎没有操作系统来使用这个模型了，因为它无法利用多个处理核。</p><h4 id=2-一对一线程模型><strong>2. 一对一线程模型</strong>：</h4><div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/88c73a25-6223-4b64-98cc-9284552ed1e1.png style=display:block;width:50% alt=NAME align=center> </div><ul>
+<li>一对一模型克服了多对一模型的问题</li><li>一对一模型创建一个单独的内核线程来处理每个用户线程</li><li>但是，管理一对一模型的开销更大，涉及更多开销和减慢系统速度</li><li>此模型的大多数实现都限制了可以创建的线程数</li></ul><p>从并发性角度来总结下，虽然一对一模型提供了更大的并发性，但是开发人员应注意不要在应用程序内创建太多线程（有时系统可能会限制创建线程的数量），因为管理一对一模型的开销更大。</p><h4 id=3-多对多线程模型><strong>3. 多对多线程模型</strong>：</h4><div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20210429212753.png style=display:block;width:50% alt=NAME align=center> </div><ul>
+<li>多对多模型将任意数量的用户线程复用到相同或更少数量的内核线程上，结合了一对一和多对一模型的最佳特性</li><li>用户对创建的线程数没有限制</li><li>阻止内核系统调用不会阻止整个进程</li><li>进程可以分布在多个处理器上</li><li>可以为各个进程分配可变数量的内核线程，具体取决于存在的 CPU 数量和其他因素</li></ul><h2 id=java-thread>Java Thread</h2><p>在上面的模型介绍中，我们提到了通过线程库来创建、管理线程，那么什么是线程库呢？</p><p><strong>线程库就是为开发人员提供创建和管理线程的一套 API</strong>。</p><p>当然，线程库不仅可以在用户空间中实现，还可以在内核空间中实现。前者涉及仅在用户空间内实现的 API 函数，没有内核支持。后者涉及系统调用，也就是说调用库中的一个 API 函数将会导致对内核的系统调用，并且需要具有线程库支持的内核。</p><p>下面简单介绍下三个主要的线程库：</p><ol>
 <li>
-<p>POSIX Pthreads：可以作为用户或内核库提供，作为 POSIX 标准的扩展</p>
-</li>
-<li>
-<p>Win32 线程：用于 Window 操作系统的内核级线程库</p>
-</li>
-<li>
-<p>Java 线程：<strong>Java 线程 API 通常采用宿主系统的线程库来实现</strong>，也就是说在 Win 系统上，Java 线程 API 通常采用 Win API 来实现，在 UNIX 类系统上，采用 Pthread 来实现。</p>
-</li>
-</ol>
-<p>事实上，<strong>在 JDK 1.2 之前</strong>，Java 线程是基于称为 &ldquo;绿色线程&rdquo;（Green Threads）的用户级线程实现的，也就是说程序员大佬们为 JVM 开发了自己的一套线程库或者说线程管理机制。</p>
-<p>而<strong>在 JDK 1.2 及以后</strong>，JVM 选择了更加稳定且方便使用的操作系统原生的内核级线程，通过系统调用，将线程的调度交给了操作系统内核。而对于不同的操作系统来说，它们本身的设计思路基本上是完全不一样的，因此它们各自对于线程的设计也存在种种差异，所以 JVM 中明确声明了：<strong>虚拟机中的线程状态，不反应任何操作系统中的线程状态</strong>。</p>
-<p>也就是说，在 JDK 1.2 及之后的版本中，Java 的线程很大程度上依赖于操作系统采用什么样的线程模型，这点在不同的平台上没有办法达成一致，JVM 规范中也并未限定 Java 线程需要使用哪种线程模型来实现，可能是一对一，也可能是多对多或多对一。</p>
-<p>总结来说，<strong>现今 Java 中线程的本质，其实就是操作系统中的线程，其线程库和线程模型很大程度上依赖于操作系统（宿主系统）的具体实现，比如在 Windows 中 Java 就是基于 Wind32 线程库来管理线程，且 Windows 采用的是一对一的线程模型</strong>。</p>
-<h2 id=java线程调度>Java线程调度</h2>
-<p>线程调度是指系统为线程分配处理使用权的过程，调度主要方式有两种，分别是<strong>协同式（Cooperative Threads-Scheduling）线程调度</strong>和<strong>抢占式（Preemptive Threads-Scheduling）线程调度</strong>。</p>
-<ul>
+<p>POSIX Pthreads：可以作为用户或内核库提供，作为 POSIX 标准的扩展</p></li><li>
+<p>Win32 线程：用于 Window 操作系统的内核级线程库</p></li><li>
+<p>Java 线程：<strong>Java 线程 API 通常采用宿主系统的线程库来实现</strong>，也就是说在 Win 系统上，Java 线程 API 通常采用 Win API 来实现，在 UNIX 类系统上，采用 Pthread 来实现。</p></li></ol><p>事实上，<strong>在 JDK 1.2 之前</strong>，Java 线程是基于称为 &ldquo;绿色线程&rdquo;（Green Threads）的用户级线程实现的，也就是说程序员大佬们为 JVM 开发了自己的一套线程库或者说线程管理机制。</p><p>而<strong>在 JDK 1.2 及以后</strong>，JVM 选择了更加稳定且方便使用的操作系统原生的内核级线程，通过系统调用，将线程的调度交给了操作系统内核。而对于不同的操作系统来说，它们本身的设计思路基本上是完全不一样的，因此它们各自对于线程的设计也存在种种差异，所以 JVM 中明确声明了：<strong>虚拟机中的线程状态，不反应任何操作系统中的线程状态</strong>。</p><p>也就是说，在 JDK 1.2 及之后的版本中，Java 的线程很大程度上依赖于操作系统采用什么样的线程模型，这点在不同的平台上没有办法达成一致，JVM 规范中也并未限定 Java 线程需要使用哪种线程模型来实现，可能是一对一，也可能是多对多或多对一。</p><p>总结来说，<strong>现今 Java 中线程的本质，其实就是操作系统中的线程，其线程库和线程模型很大程度上依赖于操作系统（宿主系统）的具体实现，比如在 Windows 中 Java 就是基于 Wind32 线程库来管理线程，且 Windows 采用的是一对一的线程模型</strong>。</p><h2 id=java线程调度>Java线程调度</h2><p>线程调度是指系统为线程分配处理使用权的过程，调度主要方式有两种，分别是<strong>协同式（Cooperative Threads-Scheduling）线程调度</strong>和<strong>抢占式（Preemptive Threads-Scheduling）线程调度</strong>。</p><ul>
 <li><strong>协同式线程调度</strong>：线程的执行时间由线程本身来控制，线程把自己的工作执行完了之后，要主动通知系统切换到另外一个线程上去。
 <strong>优点</strong>：实现简单，切换操作对线程自己是可知的，所以一般没有什么线程同步问题。
-<strong>缺点</strong>：线程执行时间不可控制，甚至如果一个线程的代码编写有问题，一直不告知系统进行线程切换，那么程序就会一直阻塞在那里。</li>
-<li><strong>抢占式线程调度</strong>：每个线程将由系统来分配执行时间，线程的切换不由线程本身来决定。
+<strong>缺点</strong>：线程执行时间不可控制，甚至如果一个线程的代码编写有问题，一直不告知系统进行线程切换，那么程序就会一直阻塞在那里。</li><li><strong>抢占式线程调度</strong>：每个线程将由系统来分配执行时间，线程的切换不由线程本身来决定。
 <strong>优点</strong>：可以主动让出执行时间（例如Java的<code>Thread::yield()</code>方法），并且线程的执行时间是系统可控的，也不会有一个线程导致整个系统阻塞的问题。
-<strong>缺点</strong>：无法主动获取执行时间。</li>
-</ul>
-<p>Java使用的就是抢占式线程调度，虽然这种方式的线程调度是系统自己的完成的，但是我们可以给操作系统一些建议，就是通过设置线程优先级来实现。Java语言一共设置了10个级别的线程优先级。在两个线程同时处于Ready状态时，优先级越高的线程越容易被系统选择执行。</p>
-<blockquote>
-<p><strong>不过由于各个系统的提供的优先级数量不一致，所以导致Java提供的10个级别的线程优先级并不见得能与各系统的优先级都一一对应</strong>。</p>
-</blockquote>
-<h3 id=java-线程状态转换>Java 线程状态转换</h3>
-<p>Java语言定义了6种线程状态，在任意一个时间点钟，一个线程只能有且只有其中的一种状态，并且可以通过特定的方法在不同状态之间切换。</p>
-<ul>
-<li><strong>新建（New）</strong>：创建后尚未启动的线程处于这种状态。</li>
-<li><strong>运行（Runnable）</strong>：包括操作系统线程状态中的Running和Ready，也就是处理此状态的线程有可能正在执行，也有可能正在等待着操作系统为它分配执行时间。</li>
-<li><strong>无限期等待（Waiting）</strong>：处于这种状态的线程不会被分配处理器执行时间，它们要等待被其他线程显示唤醒。
+<strong>缺点</strong>：无法主动获取执行时间。</li></ul><p>Java使用的就是抢占式线程调度，虽然这种方式的线程调度是系统自己的完成的，但是我们可以给操作系统一些建议，就是通过设置线程优先级来实现。Java语言一共设置了10个级别的线程优先级。在两个线程同时处于Ready状态时，优先级越高的线程越容易被系统选择执行。</p><blockquote>
+<p><strong>不过由于各个系统的提供的优先级数量不一致，所以导致Java提供的10个级别的线程优先级并不见得能与各系统的优先级都一一对应</strong>。</p></blockquote><h3 id=java-线程状态转换>Java 线程状态转换</h3><p>Java语言定义了6种线程状态，在任意一个时间点钟，一个线程只能有且只有其中的一种状态，并且可以通过特定的方法在不同状态之间切换。</p><ul>
+<li><strong>新建（New）</strong>：创建后尚未启动的线程处于这种状态。</li><li><strong>运行（Runnable）</strong>：包括操作系统线程状态中的Running和Ready，也就是处理此状态的线程有可能正在执行，也有可能正在等待着操作系统为它分配执行时间。</li><li><strong>无限期等待（Waiting）</strong>：处于这种状态的线程不会被分配处理器执行时间，它们要等待被其他线程显示唤醒。
 以下方法会让线程陷入无限期等待状态：
 <strong>1</strong>、没有设置Timeout参数的<code>Object::wait()</code>方法；
 <strong>2</strong>、没有设置Timeout参数的<code>Thread::join()</code>方法；
-<strong>3</strong>、<code>LockSupport::park()</code>方法。</li>
-<li><strong>限期等待（Timed Waiting）</strong>：处于这种状态的线程也不会被分配处理器执行时间，不过无须等待被其他线程显式唤醒，在一定时间之后它们会由系统自动唤醒。
+<strong>3</strong>、<code>LockSupport::park()</code>方法。</li><li><strong>限期等待（Timed Waiting）</strong>：处于这种状态的线程也不会被分配处理器执行时间，不过无须等待被其他线程显式唤醒，在一定时间之后它们会由系统自动唤醒。
 以下方法会让线程进入限期等待状态：
 <strong>1</strong>、<code>Thread::sleep()</code>方法；
 <strong>2</strong>、设置了Timeout参数的<code>Object::wait()</code>方法；
 <strong>3</strong>、设置了Timeout参数的<code>Thread::join()</code>方法；
 <strong>4</strong>、<code>LockSupport::parkNanos()</code>方法；
-<strong>5</strong>、<code>LockSupport::parkUntil()</code>方法；</li>
-<li><strong>阻塞（Blocked）</strong>：线程被阻塞了，“阻塞状态”与“等待状态”的区别是“阻塞状态”在等待着获取到一个排他锁，这个事件将在另外一个线程放弃这个锁的时候发生；而“等待状态”则是在等待一段时间 ，或者唤醒动作发生。在程序进入同步区域的时候，线程将进入这种状态。</li>
-<li><strong>结束（Terminated）</strong>：已终止线程的线程状态，线程已经结束执行。</li>
-</ul>
-<h3 id=threadsleep>Thread.sleep</h3>
-<p>如果执行了 Thread.sleep, 底层的执行流程:</p>
-<ol>
-<li>JVM 调用底层 OS 的线程 API</li>
-<li>因为 JVM 采用关于内核线性一对一的线程模型, JVM 会要求操作系统在执行的时间内将线程的使用权归还给 CPU</li>
-<li>一旦休眠时间到期, OS 调度器将会通过中断来唤醒线程, 并为线性分配 CPU 时间片以恢复该线程的执行</li>
-</ol>
-<p>这里的关键点是， JVM 层面的这个线程在休眠期间是完全无法被复用的。</p>
-<ul>
+<strong>5</strong>、<code>LockSupport::parkUntil()</code>方法；</li><li><strong>阻塞（Blocked）</strong>：线程被阻塞了，“阻塞状态”与“等待状态”的区别是“阻塞状态”在等待着获取到一个排他锁，这个事件将在另外一个线程放弃这个锁的时候发生；而“等待状态”则是在等待一段时间 ，或者唤醒动作发生。在程序进入同步区域的时候，线程将进入这种状态。</li><li><strong>结束（Terminated）</strong>：已终止线程的线程状态，线程已经结束执行。</li></ul><h3 id=threadsleep>Thread.sleep</h3><p>如果执行了 Thread.sleep, 底层的执行流程:</p><ol>
+<li>JVM 调用底层 OS 的线程 API</li><li>因为 JVM 采用关于内核线性一对一的线程模型, JVM 会要求操作系统在执行的时间内将线程的使用权归还给 CPU</li><li>一旦休眠时间到期, OS 调度器将会通过中断来唤醒线程, 并为线性分配 CPU 时间片以恢复该线程的执行</li></ol><p>这里的关键点是， JVM 层面的这个线程在休眠期间是完全无法被复用的。</p><ul>
 <li>
-<p>但是一个 JVM 内部能够创建的线程数量是有限的的，创建过多则会引起 OOM。</p>
-<ul>
-<li>java.lang.OutOfMemoryError : unable to create new native Thread</li>
-</ul>
-</li>
-<li>
-<p>JVM 中的每个线程都会带来昂贵的内存开销，它会附带一个线程栈。</p>
-</li>
-<li>
-<p>太多的 JVM 线程将产生开销，因为上下文切换非常昂贵，而且它们共享有限的硬件资源。</p>
-</li>
-<li>
-<p><a href=https://medium.com/@daniel.sebban/how-to-thread-sleep-without-blocking-on-the-jvm-3bc3fac08011>How to Thread.sleep without blocking on the JVM | by Daniel Sebban | Medium</a></p>
-</li>
-</ul>
-<style>.feedback--answer{display:inline-block}.feedback--answer-no{margin-left:1em}.feedback--response{display:none;margin-top:1em}.feedback--response__visible{display:block}</style>
-<div class=d-print-none>
-<h2 class=feedback--title>Feedback</h2>
-<p class=feedback--question>Was this page helpful?</p>
-<button class="btn btn-primary mb-4 feedback--answer feedback--answer-yes">Yes</button>
+<p>但是一个 JVM 内部能够创建的线程数量是有限的的，创建过多则会引起 OOM。</p><ul>
+<li>java.lang.OutOfMemoryError : unable to create new native Thread</li></ul></li><li>
+<p>JVM 中的每个线程都会带来昂贵的内存开销，它会附带一个线程栈。</p></li><li>
+<p>太多的 JVM 线程将产生开销，因为上下文切换非常昂贵，而且它们共享有限的硬件资源。</p></li><li>
+<p><a href=https://medium.com/@daniel.sebban/how-to-thread-sleep-without-blocking-on-the-jvm-3bc3fac08011>How to Thread.sleep without blocking on the JVM | by Daniel Sebban | Medium</a></p></li></ul><style>.feedback--answer{display:inline-block}.feedback--answer-no{margin-left:1em}.feedback--response{display:none;margin-top:1em}.feedback--response__visible{display:block}</style><div class=d-print-none>
+<h2 class=feedback--title>Feedback</h2><p class=feedback--question>Was this page helpful?</p><button class="btn btn-primary mb-4 feedback--answer feedback--answer-yes">Yes</button>
 <button class="btn btn-primary mb-4 feedback--answer feedback--answer-no">No</button>
 <p class="feedback--response feedback--response-yes">
 Glad to hear it! Please <a href=https://github.com/infilos/infilos.com/issues/new>tell us how we can improve</a>.
-</p>
-<p class="feedback--response feedback--response-no">
+</p><p class="feedback--response feedback--response-no">
 Sorry to hear that. Please <a href=https://github.com/infilos/infilos.com/issues/new>tell us how we can improve</a>.
-</p>
-</div>
-<script>const yesButton=document.querySelector('.feedback--answer-yes'),noButton=document.querySelector('.feedback--answer-no'),yesResponse=document.querySelector('.feedback--response-yes'),noResponse=document.querySelector('.feedback--response-no'),disableButtons=()=>{yesButton.disabled=!0,noButton.disabled=!0},sendFeedback=b=>{if(typeof ga!='function')return;const a={command:'send',hitType:'event',category:'Helpful',action:'click',label:window.location.pathname,value:b};ga(a.command,a.hitType,a.category,a.action,a.label,a.value)};yesButton.addEventListener('click',()=>{yesResponse.classList.add('feedback--response__visible'),disableButtons(),sendFeedback(1)}),noButton.addEventListener('click',()=>{noResponse.classList.add('feedback--response__visible'),disableButtons(),sendFeedback(0)})</script>
+</p></div><script>const yesButton=document.querySelector(".feedback--answer-yes"),noButton=document.querySelector(".feedback--answer-no"),yesResponse=document.querySelector(".feedback--response-yes"),noResponse=document.querySelector(".feedback--response-no"),disableButtons=()=>{yesButton.disabled=!0,noButton.disabled=!0},sendFeedback=t=>{if(typeof ga!="function")return;const e={command:"send",hitType:"event",category:"Helpful",action:"click",label:window.location.pathname,value:t};ga(e.command,e.hitType,e.category,e.action,e.label,e.value)};yesButton.addEventListener("click",()=>{yesResponse.classList.add("feedback--response__visible"),disableButtons(),sendFeedback(1)}),noButton.addEventListener("click",()=>{noResponse.classList.add("feedback--response__visible"),disableButtons(),sendFeedback(0)})</script>
 <br>
-</div>
-</main>
-</div>
-</div>
-<footer class="bg-dark py-5 row d-print-none">
+</div></main></div></div><footer class="bg-dark py-5 row d-print-none">
 <div class="container-fluid mx-sm-5">
 <div class=row>
 <div class="col-6 col-sm-4 text-xs-center order-sm-2">
-</div>
-<div class="col-6 col-sm-4 text-right text-xs-center order-sm-3">
+</div><div class="col-6 col-sm-4 text-right text-xs-center order-sm-3">
 <ul class="list-inline mb-0">
 <li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Weibo aria-label=Weibo>
 <a class=text-white target=_blank rel="noopener noreferrer" href=https://weibo.com/u/3848950217>
 <i class="fab fa-weibo"></i>
 </a>
-</li>
-<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Twitter aria-label=Twitter>
+</li><li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Twitter aria-label=Twitter>
 <a class=text-white target=_blank rel="noopener noreferrer" href=https://twitter.com/zhange_zzg>
 <i class="fab fa-twitter"></i>
 </a>
-</li>
-<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title="Stack Overflow" aria-label="Stack Overflow">
+</li><li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title="Stack Overflow" aria-label="Stack Overflow">
 <a class=text-white target=_blank rel="noopener noreferrer" href=https://stackoverflow.com>
 <i class="fab fa-stack-overflow"></i>
 </a>
-</li>
-<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=GitHub aria-label=GitHub>
+</li><li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=GitHub aria-label=GitHub>
 <a class=text-white target=_blank rel="noopener noreferrer" href=https://github.com/infilos/infilos.com>
 <i class="fab fa-github"></i>
 </a>
-</li>
-</ul>
-</div>
-<div class="col-12 col-sm-4 text-center py-2 order-sm-2">
+</li></ul></div><div class="col-12 col-sm-4 text-center py-2 order-sm-2">
 <small class=text-white>&copy; 2022 infilos.com All Rights Reserved</small>
-</div>
-</div>
-</div>
-</footer>
-</div>
-<script src=/js/popper.min.js integrity=sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49 crossorigin=anonymous></script>
+</div></div></div></footer></div><script src=/js/popper.min.js integrity=sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49 crossorigin=anonymous></script>
 <script src=/js/bootstrap.min.js integrity=sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy crossorigin=anonymous></script>
-<script src=/js/main.min.5c74b870c6953931a705f390a49c7e4c0a842ec5c83b24354758dd674343ed0d.js integrity="sha256-XHS4cMaVOTGnBfOQpJx+TAqELsXIOyQ1R1jdZ0ND7Q0=" crossorigin=anonymous></script>
-</body>
-</html>
+<script src=/js/main.min.3f3f4f1e22307ccbb13271a98be2e4dbb8386b7e67c3d606db44d3d0649f485e.js integrity="sha256-Pz9PHiIwfMuxMnGpi+Lk27g4a35nw9YG20TT0GSfSF4=" crossorigin=anonymous></script>
+</body></html>

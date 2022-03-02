@@ -2,7 +2,7 @@
 <head>
 <meta charset=utf-8>
 <meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no">
-<meta name=generator content="Hugo 0.92.2">
+<meta name=generator content="Hugo 0.93.0">
 <meta name=ROBOTS content="INDEX, FOLLOW">
 <link rel="shortcut icon" href=/favicons/favicon.ico>
 <link rel=apple-touch-icon href=/favicons/apple-touch-icon-180x180.png sizes=180x180>
@@ -40,45 +40,43 @@ Netty 中 ByteBuffer 替代是 ByteBuf，一个强大的实现，解决 JDK 的 
 Buffer API 主要包括
  ByteBuf ByteBufHolder  Netty 使用 reference-counting(引用计数)来判断何时可以释放 ByteBuf 或 ByteBufHolder 和其他相关资源，从而可以利用池和其他技巧来提高性能和降低内存的消耗。这一点上不需要开发人员做任何事情，但是在开发 Netty 应用程序时，尤其是使用 ByteBuf 和 ByteBufHolder 时，你应该尽可能早地释放池资源。 Netty 缓冲 API 提供了几个优势：
  可以自定义缓冲类型 通过一个内置的复合缓冲类型实现零拷贝 扩展性好，比如 StringBuilder 不需要调用 flip() 来切换读/写模式 读取和写入索引分开 方法链 引用计数 Pooling(池)  ByteBuf - 字节数据的容器 因为所有的网络通信最终都是基于底层的字节流传输，因此一个高效、方便、易用的数据接口是必要的，而 Netty 的 ByteBuf 满足这些需求。">
-<script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga('create','UA-123062585-1','auto'),ga('send','pageview'))</script>
+<script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga("create","UA-123062585-1","auto"),ga("send","pageview"))</script>
 <script async src=https://www.google-analytics.com/analytics.js></script>
 <link rel=preload href=/scss/main.min.847464b684a6e89d7276700a5c500c17ab494dd1755b2654a7b27d8b59e3347e.css as=style>
 <link href=/scss/main.min.847464b684a6e89d7276700a5c500c17ab494dd1755b2654a7b27d8b59e3347e.css rel=stylesheet integrity>
 <script src=/js/jquery-3.5.1.min.js integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin=anonymous></script>
-</head>
-<body class=td-page>
+</head><body class=td-page>
 <header>
-<nav class="js-navbar-scroll navbar navbar-expand navbar-dark flex-column flex-md-row td-navbar">
+<nav class="js-navbar-scroll navbar navbar-expand-lg navbar-dark td-navbar">
 <a class=navbar-brand href=/>
-<span class=navbar-logo><svg id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512" style="enable-background:new 0 0 512 512"><path style="fill:#ffc107" d="M432.384 143.616c-4.165-4.164-10.917-4.164-15.083.0l-60.352 60.352c-4.164 4.165-4.164 10.917.0 15.083 21.187 20.463 54.951 19.876 75.413-1.311 19.962-20.668 19.962-53.435.0-74.102L432.384 143.616z"/><path style="fill:#607d8b" d="M42.667 277.334c-5.891.003-10.669-4.771-10.672-10.662-.002-4.338 2.623-8.245 6.64-9.882l234.667-96c5.455-2.233 11.687.38 13.92 5.835s-.38 11.687-5.835 13.92l-234.667 96C45.433 277.069 44.056 277.337 42.667 277.334z"/><path style="fill:#546e7a" d="M391.552 56.448l-32-32C343.938 8.745 322.689-.059 300.544.0h-3.755c-46.082.024-83.432 37.374-83.456 83.456v3.755c-.053 22.138 8.75 43.377 24.448 58.987l32 32c4.165 4.164 10.917 4.164 15.083.0L391.531 71.531C395.701 67.372 395.71 60.62 391.552 56.448z"/><path style="fill:#607d8b" d="M160 469.334c-3.279.006-6.379-1.497-8.405-4.075L34.261 315.926c-3.635-4.636-2.823-11.341 1.813-14.976s11.341-2.823 14.976 1.813l117.333 149.333c3.629 4.641 2.809 11.344-1.832 14.973C164.681 468.533 162.375 469.329 160 469.334z"/><path style="fill:#455a64" d="M487.467 86.848l-3.669-3.648c-37.687-36.557-97.71-36.197-134.955.811l-51.413 51.413c-36.996 37.25-37.357 97.263-.811 134.955l3.584 3.669c1.7 2.457 4.671 3.706 7.616 3.2 2.831.005 5.548-1.115 7.552-3.115l172.181-172.181c4.189-4.143 4.226-10.896.083-15.085-.028-.028-.055-.056-.083-.083L487.467 86.848z"/><g><path style="fill:#ffc107" d="M501.333 192H480c-5.891.0-10.667-4.776-10.667-10.667s4.776-10.667 10.667-10.667h21.333c5.891.0 10.667 4.776 10.667 10.667S507.225 192 501.333 192z"/><path style="fill:#ffc107" d="M394.667 298.667c-5.891.0-10.667-4.776-10.667-10.667v-21.333c0-5.891 4.776-10.667 10.667-10.667 5.891.0 10.667 4.776 10.667 10.667V288C405.333 293.891 400.558 298.667 394.667 298.667z"/><path style="fill:#ffc107" d="M480 277.334c-2.831.005-5.548-1.115-7.552-3.115l-21.333-21.333c-4.093-4.237-3.975-10.99.262-15.083 4.134-3.993 10.687-3.993 14.821.0l21.333 21.333c4.159 4.172 4.148 10.926-.024 15.085C485.514 276.209 482.815 277.327 480 277.334z"/></g><g><path style="fill:#455a64" d="M266.667 448H96c-29.455.0-53.333 23.878-53.333 53.333.0 5.891 4.776 10.667 10.667 10.667h256c5.891.0 10.667-4.776 10.667-10.667C320 471.878 296.122 448 266.667 448z"/><circle style="fill:#455a64" cx="32" cy="288" r="32"/></g><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/></svg></span><span class=font-weight-bold>infilos.com</span>
+<span class=navbar-logo><svg id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512" style="enable-background:new 0 0 512 512"><path style="fill:#ffc107" d="M432.384 143.616c-4.165-4.164-10.917-4.164-15.083.0l-60.352 60.352c-4.164 4.165-4.164 10.917.0 15.083 21.187 20.463 54.951 19.876 75.413-1.311 19.962-20.668 19.962-53.435.0-74.102L432.384 143.616z"/><path style="fill:#607d8b" d="M42.667 277.334c-5.891.003-10.669-4.771-10.672-10.662-.002-4.338 2.623-8.245 6.64-9.882l234.667-96c5.455-2.233 11.687.38 13.92 5.835s-.38 11.687-5.835 13.92l-234.667 96C45.433 277.069 44.056 277.337 42.667 277.334z"/><path style="fill:#546e7a" d="M391.552 56.448l-32-32C343.938 8.745 322.689-.059 300.544.0h-3.755c-46.082.024-83.432 37.374-83.456 83.456v3.755c-.053 22.138 8.75 43.377 24.448 58.987l32 32c4.165 4.164 10.917 4.164 15.083.0L391.531 71.531C395.701 67.372 395.71 60.62 391.552 56.448z"/><path style="fill:#607d8b" d="M160 469.334c-3.279.006-6.379-1.497-8.405-4.075L34.261 315.926c-3.635-4.636-2.823-11.341 1.813-14.976s11.341-2.823 14.976 1.813l117.333 149.333c3.629 4.641 2.809 11.344-1.832 14.973C164.681 468.533 162.375 469.329 160 469.334z"/><path style="fill:#455a64" d="M487.467 86.848l-3.669-3.648c-37.687-36.557-97.71-36.197-134.955.811l-51.413 51.413c-36.996 37.25-37.357 97.263-.811 134.955l3.584 3.669c1.7 2.457 4.671 3.706 7.616 3.2 2.831.005 5.548-1.115 7.552-3.115l172.181-172.181c4.189-4.143 4.226-10.896.083-15.085-.028-.028-.055-.056-.083-.083L487.467 86.848z"/><g><path style="fill:#ffc107" d="M501.333 192H480c-5.891.0-10.667-4.776-10.667-10.667s4.776-10.667 10.667-10.667h21.333c5.891.0 10.667 4.776 10.667 10.667S507.225 192 501.333 192z"/><path style="fill:#ffc107" d="M394.667 298.667c-5.891.0-10.667-4.776-10.667-10.667v-21.333c0-5.891 4.776-10.667 10.667-10.667 5.891.0 10.667 4.776 10.667 10.667V288C405.333 293.891 400.558 298.667 394.667 298.667z"/><path style="fill:#ffc107" d="M480 277.334c-2.831.005-5.548-1.115-7.552-3.115l-21.333-21.333c-4.093-4.237-3.975-10.99.262-15.083 4.134-3.993 10.687-3.993 14.821.0l21.333 21.333c4.159 4.172 4.148 10.926-.024 15.085C485.514 276.209 482.815 277.327 480 277.334z"/></g><g><path style="fill:#455a64" d="M266.667 448H96c-29.455.0-53.333 23.878-53.333 53.333.0 5.891 4.776 10.667 10.667 10.667h256c5.891.0 10.667-4.776 10.667-10.667C320 471.878 296.122 448 266.667 448z"/><circle style="fill:#455a64" cx="32" cy="288" r="32"/></g><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/></svg></span>
+<span class=font-weight-bold>infilos.com</span>
 </a>
+<button class=navbar-toggler type=button data-toggle=collapse data-target=#navbarSupportedContent aria-controls=navbarSupportedContent aria-expanded=false aria-label="Toggle navigation">
+<span class=navbar-toggler-icon></span>
+</button>
 <div class="collapse navbar-collapse" id=navbarSupportedContent>
 <ul class="navbar-nav mr-auto">
 <li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86>
 <span>基础</span>
 </a>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80>
 <span>语言</span>
 </a>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93>
 <span>框架库</span>
 </a>
-</li>
-<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+</li><li class="nav-item dropdown" style=max-width:90px;min-width:10px>
 <a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
 分布式
 <span>+</span>
 </a>
 <div class=dropdown-menu aria-labelledby=navbarDropdown>
 <a class=dropdown-item href=/%e5%88%86%e5%b8%83%e5%bc%8f/base>基本构成</a>
-</div>
-</li>
-<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+</div></li><li class="nav-item dropdown" style=max-width:90px;min-width:10px>
 <a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
 大数据
 <span>+</span>
@@ -89,9 +87,7 @@ Buffer API 主要包括
 <a class=dropdown-item href=/%e6%b6%88%e6%81%af%e7%b3%bb%e7%bb%9f>消息系统</a>
 <a class=dropdown-item href=/%e5%a4%84%e7%90%86%e7%b3%bb%e7%bb%9f>处理系统</a>
 <a class=dropdown-item href=/%e6%95%b0%e6%8d%ae%e6%b2%bb%e7%90%86>数据治理</a>
-</div>
-</li>
-<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+</div></li><li class="nav-item dropdown" style=max-width:90px;min-width:10px>
 <a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
 中后台
 <span>+</span>
@@ -101,38 +97,26 @@ Buffer API 主要包括
 <a class=dropdown-item href=/%e7%94%a8%e6%88%b7%e7%b3%bb%e7%bb%9f>用户系统</a>
 <a class=dropdown-item href=/%e4%ba%a4%e4%ba%92%e7%95%8c%e9%9d%a2>交互界面</a>
 <a class=dropdown-item href=/%e4%b8%9a%e5%8a%a1%e7%b3%bb%e7%bb%9f>业务系统</a>
-</div>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</div></li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e6%a8%a1%e5%bc%8f%e6%9e%b6%e6%9e%84>
 <span>模式架构</span>
 </a>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e9%9d%a2%e8%af%95%e9%97%ae%e7%ad%94>
 <span>面试</span>
 </a>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e7%ae%a1%e7%90%86%e8%b7%af%e5%be%84>
 <span>管理</span>
 </a>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e5%bc%80%e6%ba%90%e9%a1%b9%e7%9b%ae>
 <span>开源</span>
 </a>
-</li>
-</ul>
-<div class="form-inline my-2 my-lg-0">
+</li></ul><div class="form-inline my-2 my-lg-0">
 <div class="nav-item nav-search-item my-2 my-md-0">
 <input type=search class="form-control td-search-input" placeholder="&#xf002; 站内搜索…" aria-label=站内搜索… autocomplete=off>
-</div>
-</div>
-</div>
-</nav>
-</header>
-<div class="container-fluid td-outer">
+</div></div></div></nav></header><div class="container-fluid td-outer">
 <div class=td-main>
 <div class="row flex-xl-nowrap">
 <aside class="col-12 col-md-3 col-xl-2 td-sidebar d-print-none">
@@ -142,10 +126,7 @@ Buffer API 主要包括
 <input type=search class="form-control td-search-input" placeholder="&#xf002; 站内搜索…" aria-label=站内搜索… autocomplete=off>
 <button class="btn btn-link td-sidebar__toggle d-md-none p-0 ml-3 fas fa-bars" type=button data-toggle=collapse data-target=#td-section-nav aria-controls=td-docs-nav aria-expanded=false aria-label="Toggle section navigation">
 </button>
-</form>
-</div>
-<div id=content-desktop></div>
-<nav class="collapse td-sidebar-nav" id=td-section-nav>
+</form></div><div id=content-desktop></div><nav class="collapse td-sidebar-nav" id=td-section-nav>
 <ul class="td-sidebar-nav__section pr-md-3 ul-0">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e6a186e69eb6e4b88ee5ba93-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section tree-root" id=m-e6a186e69eb6e4b88ee5ba93><span>框架库</span></a>
@@ -195,9 +176,7 @@ Buffer API 主要包括
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/spring/ch21/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93springch21><span>CH21-跨域问题</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93springch22-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/spring/ch22/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93springch22><span>CH22-SpEL表达式</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a186e69eb6e4b88ee5ba93spring-ioc-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a186e69eb6e4b88ee5ba93spring-ioc-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/spring-ioc/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a186e69eb6e4b88ee5ba93spring-ioc><span>Spring IOC</span></a>
 <ul class="ul-2 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93spring-iocch01-li>
@@ -216,18 +195,14 @@ Buffer API 主要包括
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/spring-ioc/ch07/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93spring-iocch07><span>CH07-生命周期扩展</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93spring-iocch08-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/spring-ioc/ch08/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93spring-iocch08><span>CH08-控制加载顺序</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a186e69eb6e4b88ee5ba93spring-aop-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a186e69eb6e4b88ee5ba93spring-aop-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/spring-aop/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a186e69eb6e4b88ee5ba93spring-aop><span>Spring AOP</span></a>
 <ul class="ul-2 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93spring-aopch01-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/spring-aop/ch01/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93spring-aopch01><span>AOP 理论</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93spring-aopch02-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/spring-aop/ch02/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93spring-aopch02><span>AOP 实战</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a186e69eb6e4b88ee5ba93mybatis-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a186e69eb6e4b88ee5ba93mybatis-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/mybatis/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a186e69eb6e4b88ee5ba93mybatis><span>Mybatis</span></a>
 <ul class="ul-2 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93mybatisch01-li>
@@ -266,9 +241,7 @@ Buffer API 主要包括
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/mybatis/ch17/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93mybatisch17><span>CH17-二级缓存原理</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93mybatisch18-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/mybatis/ch18/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93mybatisch18><span>CH18-性能优化</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a186e69eb6e4b88ee5ba93hikari-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a186e69eb6e4b88ee5ba93hikari-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/hikari/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a186e69eb6e4b88ee5ba93hikari><span>Hikari</span></a>
 <ul class="ul-2 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93hikarich01-li>
@@ -295,18 +268,14 @@ Buffer API 主要包括
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/hikari/ch11/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93hikarich11><span>常见问题</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93hikarich12-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/hikari/ch12/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93hikarich12><span>扩展技术</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a186e69eb6e4b88ee5ba93unified-udf-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a186e69eb6e4b88ee5ba93unified-udf-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/unified-udf/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a186e69eb6e4b88ee5ba93unified-udf><span>Udf Modeling</span></a>
 <ul class="ul-2 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93unified-udftransport-at-linkedin-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/unified-udf/transport-at-linkedin/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93unified-udftransport-at-linkedin><span>Transport UDF at Linkedin</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93unified-udfflink-type-system-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/unified-udf/flink-type-system/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93unified-udfflink-type-system><span>Flink Type System</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a186e69eb6e4b88ee5ba93parboiled-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a186e69eb6e4b88ee5ba93parboiled-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/parboiled/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a186e69eb6e4b88ee5ba93parboiled><span>Parboiled</span></a>
 <ul class="ul-2 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93parboiledch01-motivation-li>
@@ -327,9 +296,7 @@ Buffer API 主要包括
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/parboiled/ch08-scala-apis/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93parboiledch08-scala-apis><span>CH08-Scala APIs</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93parboiledch09-advanced-topics-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/parboiled/ch09-advanced-topics/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93parboiledch09-advanced-topics><span>CH09-Advanced Topics</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e6a186e69eb6e4b88ee5ba93netty-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e6a186e69eb6e4b88ee5ba93netty-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/netty/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a186e69eb6e4b88ee5ba93netty><span>Netty</span></a>
 <ul class="ul-2 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a186e69eb6e4b88ee5ba93nettych01-li>
@@ -362,9 +329,7 @@ Buffer API 主要包括
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/netty/ch15/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93nettych15><span>CH15-EventLoop 与线程模型</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a186e69eb6e4b88ee5ba93nettych03-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/netty/ch03/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93nettych03><span></span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a186e69eb6e4b88ee5ba93reactor-netty-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a186e69eb6e4b88ee5ba93reactor-netty-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/reactor-netty/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a186e69eb6e4b88ee5ba93reactor-netty><span>Reactor Netty</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a186e69eb6e4b88ee5ba93thymeleaf-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/thymeleaf/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a186e69eb6e4b88ee5ba93thymeleaf><span>Thymeleaf</span></a>
@@ -391,747 +356,273 @@ Buffer API 主要包括
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/thymeleaf/ch10/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93thymeleafch10><span>CH10-注释及注释块</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93thymeleafch11-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/thymeleaf/ch11/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93thymeleafch11><span>CH11-内联</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a186e69eb6e4b88ee5ba93spring-cloud-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a186e69eb6e4b88ee5ba93spring-cloud-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/spring-cloud/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a186e69eb6e4b88ee5ba93spring-cloud><span>Spring Cloud</span></a>
 <ul class="ul-2 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93spring-cloudch01-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/spring-cloud/ch01/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93spring-cloudch01><span>Gateway 请求过程</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a186e69eb6e4b88ee5ba93dubbo-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a186e69eb6e4b88ee5ba93dubbo-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/dubbo/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a186e69eb6e4b88ee5ba93dubbo><span>Dubbo</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a186e69eb6e4b88ee5ba93guava-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/guava/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a186e69eb6e4b88ee5ba93guava><span>Guava</span></a>
 <ul class="ul-2 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93guavaratelimiter-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/guava/ratelimiter/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93guavaratelimiter><span>RateLimiter</span></a>
-</li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-</nav>
-</div>
-</aside>
-<aside class="d-none d-xl-block col-xl-2 td-sidebar-toc d-print-none">
+</li></ul></li></ul></li></ul></nav></div></aside><aside class="d-none d-xl-block col-xl-2 td-sidebar-toc d-print-none">
 <div class="td-page-meta ml-2 pb-1 pt-2 mb-0">
 <a href=https://github.com/infilos/infilos.com/edit/master/content/zh/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93/netty/CH05.md target=_blank><i class="fa fa-edit fa-fw"></i> 编辑此页</a>
 <a href="https://github.com/infilos/infilos.com/new/master/content/zh/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93/netty/CH05.md?filename=change-me.md&value=---%0Atitle%3A+%22Long+Page+Title%22%0AlinkTitle%3A+%22Short+Nav+Title%22%0Aweight%3A+100%0Adescription%3A+%3E-%0A+++++Page+description+for+heading+and+indexes.%0A---%0A%0A%23%23+Heading%0A%0AEdit+this+template+to+create+your+new+page.%0A%0A%2A+Give+it+a+good+name%2C+ending+in+%60.md%60+-+e.g.+%60getting-started.md%60%0A%2A+Edit+the+%22front+matter%22+section+at+the+top+of+the+page+%28weight+controls+how+its+ordered+amongst+other+pages+in+the+same+directory%3B+lowest+number+first%29.%0A%2A+Add+a+good+commit+message+at+the+bottom+of+the+page+%28%3C80+characters%3B+use+the+extended+description+field+for+more+detail%29.%0A%2A+Create+a+new+branch+so+you+can+preview+your+new+file+and+request+a+review+via+Pull+Request.%0A" target=_blank><i class="fa fa-edit fa-fw"></i> 添加子页面</a>
 <a href="https://github.com/infilos/infilos.com/issues/new?title=CH05-Buffer" target=_blank><i class="fab fa-github fa-fw"></i> 提交文档问题</a>
 <a id=print href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/netty/_print/><i class="fa fa-print fa-fw"></i> 整节打印</a>
-</div>
-<div class=td-toc><nav id=TableOfContents>
+</div><div class=td-toc><nav id=TableOfContents>
 <ul>
-<li><a href=#buffer-api>Buffer API</a></li>
-</ul>
-<ul>
+<li><a href=#buffer-api>Buffer API</a></li></ul><ul>
 <li>
 <ul>
-<li><a href=#bytebuf-如何在工作>ByteBuf 如何在工作？</a></li>
-<li><a href=#bytebuf-使用模式>ByteBuf 使用模式</a></li>
-</ul>
-</li>
-<li><a href=#字节级别的操作>字节级别的操作</a>
+<li><a href=#bytebuf-如何在工作>ByteBuf 如何在工作？</a></li><li><a href=#bytebuf-使用模式>ByteBuf 使用模式</a></li></ul></li><li><a href=#字节级别的操作>字节级别的操作</a>
 <ul>
-<li><a href=#随机访问索引>随机访问索引</a></li>
-<li><a href=#可丢弃字节的字节>可丢弃字节的字节</a></li>
-<li><a href=#可读字节>可读字节</a></li>
-<li><a href=#索引管理>索引管理</a></li>
-<li><a href=#查询操作>查询操作</a></li>
-<li><a href=#衍生的缓冲区>衍生的缓冲区</a></li>
-<li><a href=#读写操作>读/写操作</a></li>
-<li><a href=#更多操作>更多操作</a></li>
-</ul>
-</li>
-<li><a href=#bytebufholder>ByteBufHolder</a></li>
-<li><a href=#bytebuf-分配>ByteBuf 分配</a>
+<li><a href=#随机访问索引>随机访问索引</a></li><li><a href=#可丢弃字节的字节>可丢弃字节的字节</a></li><li><a href=#可读字节>可读字节</a></li><li><a href=#索引管理>索引管理</a></li><li><a href=#查询操作>查询操作</a></li><li><a href=#衍生的缓冲区>衍生的缓冲区</a></li><li><a href=#读写操作>读/写操作</a></li><li><a href=#更多操作>更多操作</a></li></ul></li><li><a href=#bytebufholder>ByteBufHolder</a></li><li><a href=#bytebuf-分配>ByteBuf 分配</a>
 <ul>
-<li><a href=#bytebufallocator>ByteBufAllocator</a></li>
-<li><a href=#unpooled-非池化缓存>Unpooled （非池化）缓存</a></li>
-<li><a href=#bytebufutil>ByteBufUtil</a></li>
-</ul>
-</li>
-<li><a href=#引用计数器>引用计数器</a></li>
-<li><a href=#总结>总结</a></li>
-</ul>
-</nav></div>
-</aside>
-<main class="col-12 col-md-9 col-xl-8 pl-md-5" role=main>
+<li><a href=#bytebufallocator>ByteBufAllocator</a></li><li><a href=#unpooled-非池化缓存>Unpooled （非池化）缓存</a></li><li><a href=#bytebufutil>ByteBufUtil</a></li></ul></li><li><a href=#引用计数器>引用计数器</a></li><li><a href=#总结>总结</a></li></ul></nav></div></aside><main class="col-12 col-md-9 col-xl-8 pl-md-5" role=main>
 <nav aria-label=breadcrumb class="d-none d-md-block d-print-none">
 <ol class="breadcrumb spb-1">
 <li class=breadcrumb-item>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/>框架库</a>
-</li>
-<li class=breadcrumb-item>
+</li><li class=breadcrumb-item>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/netty/>Netty</a>
-</li>
-<li class="breadcrumb-item active" aria-current=page>
+</li><li class="breadcrumb-item active" aria-current=page>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/netty/ch05/>CH05-Buffer</a>
-</li>
-</ol>
-</nav>
-<div class=td-content>
-<h1>CH05-Buffer</h1>
-<header class=article-meta>
-</header>
-<p>正如我们先前所指出的，网络数据的基本单位永远是 byte(字节)。Java NIO 提供 ByteBuffer 作为字节的容器，但这个类是过于复杂，有点 难以使用。</p>
-<p>Netty 中 ByteBuffer 替代是 ByteBuf，一个强大的实现，解决 JDK 的 API 的限制，以及为网络应用程序开发者一个更好的工具。 但 ByteBuf 并不仅仅暴露操作一个字节序列的方法;这也是专门的Netty 的 ChannelPipeline 的语义设计。</p>
-<p>在本章中，我们会说明相比于 JDK 的 API，ByteBuf 所提供的卓越的功能和灵活性。这也将使我们能够更好地理解了 Netty 的数据处理。</p>
-<h2 id=buffer-api>Buffer API</h2>
-<p>主要包括</p>
-<ul>
-<li>ByteBuf</li>
-<li>ByteBufHolder</li>
-</ul>
-<p>Netty 使用 reference-counting(引用计数)来判断何时可以释放 ByteBuf 或 ByteBufHolder 和其他相关资源，从而可以利用池和其他技巧来提高性能和降低内存的消耗。这一点上不需要开发人员做任何事情，但是在开发 Netty 应用程序时，尤其是使用 ByteBuf 和 ByteBufHolder 时，你应该尽可能早地释放池资源。 Netty 缓冲 API 提供了几个优势：</p>
-<ul>
-<li>可以自定义缓冲类型</li>
-<li>通过一个内置的复合缓冲类型实现零拷贝</li>
-<li>扩展性好，比如 StringBuilder</li>
-<li>不需要调用 flip() 来切换读/写模式</li>
-<li>读取和写入索引分开</li>
-<li>方法链</li>
-<li>引用计数</li>
-<li>Pooling(池)</li>
-</ul>
-<h1 id=bytebuf---字节数据的容器>ByteBuf - 字节数据的容器</h1>
-<p>因为所有的网络通信最终都是基于底层的字节流传输，因此一个高效、方便、易用的数据接口是必要的，而 Netty 的 ByteBuf 满足这些需求。</p>
-<p>ByteBuf 是一个很好的经过优化的数据容器，我们可以将字节数据有效的添加到 ByteBuf 中或从 ByteBuf 中获取数据。ByteBuf 有2部分：一个用于读，一个用于写。我们可以按顺序的读取数据，也可以通过调整读取数据的索引或者直接将读取位置索引作为参数传递给get方法来重复读取数据。</p>
-<h3 id=bytebuf-如何在工作>ByteBuf 如何在工作？</h3>
-<p>写入数据到 ByteBuf 后，writerIndex（写入索引）增加。开始读字节后，readerIndex（读取索引）增加。你可以读取字节，直到写入索引和读取索引处在相同的位置，ByteBuf 变为不可读。当访问数据超过数组的最后位，则会抛出 IndexOutOfBoundsException。</p>
-<p>调用 ByteBuf 的 &ldquo;read&rdquo; 或 &ldquo;write&rdquo; 开头的任何方法都会提升 相应的索引。另一方面，&ldquo;set&rdquo; 、 &ldquo;get"操作字节将不会移动索引位置；他们只会操作相关的通过参数传入方法的相对索引。</p>
-<p>可以给ByteBuf指定一个最大容量值，这个值限制着ByteBuf的容量。任何尝试将写入索引超过这个值的行为都将导致抛出异常。ByteBuf 的默认最大容量限制是 Integer.MAX_VALUE。</p>
-<p>ByteBuf 类似于一个字节数组，最大的区别是读和写的索引可以用来控制对缓冲区数据的访问。下图显示了一个容量为16的空的 ByteBuf 的布局和状态，writerIndex 和 readerIndex 都在索引位置 0 ：</p>
-<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211019220923.png style=display:block;width:80% alt=NAME align=center> </div>
-<h3 id=bytebuf-使用模式>ByteBuf 使用模式</h3>
-<h4 id=heap-buffer堆缓冲区>HEAP BUFFER(堆缓冲区)</h4>
-<p>最常用的模式是 ByteBuf 将数据存储在 JVM 的堆空间，这是通过将数据存储在数组的实现。堆缓冲区可以快速分配，当不使用时也可以快速释放。它还提供了直接访问数组的方法，通过 ByteBuf.array() 来获取 byte[]数据。 这种方法，正如清单5.1中所示的那样，是非常适合用来处理遗留数据的。</p>
-<p>Listing 5.1 Backing array</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#000>ByteBuf</span> <span style=color:#000>heapBuf</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>...;</span>
-<span style=color:#204a87;font-weight:700>if</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>heapBuf</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>hasArray</span><span style=color:#ce5c00;font-weight:700>())</span> <span style=color:#ce5c00;font-weight:700>{</span>                <span style=color:#8f5902;font-style:italic>//1
-</span><span style=color:#8f5902;font-style:italic></span>    <span style=color:#204a87;font-weight:700>byte</span><span style=color:#ce5c00;font-weight:700>[]</span> <span style=color:#000>array</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>heapBuf</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>array</span><span style=color:#ce5c00;font-weight:700>();</span>        <span style=color:#8f5902;font-style:italic>//2
-</span><span style=color:#8f5902;font-style:italic></span>    <span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>offset</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>heapBuf</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>arrayOffset</span><span style=color:#ce5c00;font-weight:700>()</span> <span style=color:#ce5c00;font-weight:700>+</span> <span style=color:#000>heapBuf</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>readerIndex</span><span style=color:#ce5c00;font-weight:700>();</span>                <span style=color:#8f5902;font-style:italic>//3
-</span><span style=color:#8f5902;font-style:italic></span>    <span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>length</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>heapBuf</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>readableBytes</span><span style=color:#ce5c00;font-weight:700>();</span><span style=color:#8f5902;font-style:italic>//4
-</span><span style=color:#8f5902;font-style:italic></span>    <span style=color:#000>handleArray</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>array</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>offset</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>length</span><span style=color:#ce5c00;font-weight:700>);</span> <span style=color:#8f5902;font-style:italic>//5
-</span><span style=color:#8f5902;font-style:italic></span><span style=color:#ce5c00;font-weight:700>}</span>
-</code></pre></div><p>1.检查 ByteBuf 是否有支持数组。</p>
-<p>2.如果有的话，得到引用数组。</p>
-<p>3.计算第一字节的偏移量。</p>
-<p>4.获取可读的字节数。</p>
-<p>5.使用数组，偏移量和长度作为调用方法的参数。</p>
-<p>注意：</p>
-<ul>
-<li>访问非堆缓冲区 ByteBuf 的数组会导致UnsupportedOperationException， 可以使用 ByteBuf.hasArray()来检查是否支持访问数组。</li>
-<li>这个用法与 JDK 的 ByteBuffer 类似</li>
-</ul>
-<h4 id=direct-buffer直接缓冲区>DIRECT BUFFER(直接缓冲区)</h4>
-<p>“直接缓冲区”是另一个 ByteBuf 模式。对象的所有内存分配发生在 堆，对不对？好吧，并非总是如此。在 JDK1.4 中被引入 NIO 的ByteBuffer 类允许 JVM 通过本地方法调用分配内存，其目的是</p>
-<ul>
-<li>通过免去中间交换的内存拷贝, 提升IO处理速度; 直接缓冲区的内容可以驻留在垃圾回收扫描的堆区以外。</li>
-<li>DirectBuffer 在 -XX:MaxDirectMemorySize=xxM大小限制下, 使用 Heap 之外的内存, GC对此”无能为力”,也就意味着规避了在高负载下频繁的GC过程对应用线程的中断影响.(详见<a href=https://docs.oracle.com/javase/7/docs/api/java/nio/ByteBuffer.html.>http://docs.oracle.com/javase/7/docs/api/java/nio/ByteBuffer.html.</a>)</li>
-</ul>
-<p>这就解释了为什么“直接缓冲区”对于那些通过 socket 实现数据传输的应用来说，是一种非常理想的方式。如果你的数据是存放在堆中分配的缓冲区，那么实际上，在通过 socket 发送数据之前，JVM 需要将先数据复制到直接缓冲区。</p>
-<p>但是直接缓冲区的缺点是在内存空间的分配和释放上比堆缓冲区更复杂，另外一个缺点是如果要将数据传递给遗留代码处理，因为数据不是在堆上，你可能不得不作出一个副本，如下：</p>
-<p>Listing 5.2 Direct buffer data access</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#000>ByteBuf</span> <span style=color:#000>directBuf</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>...</span>
-<span style=color:#204a87;font-weight:700>if</span> <span style=color:#ce5c00;font-weight:700>(!</span><span style=color:#000>directBuf</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>hasArray</span><span style=color:#ce5c00;font-weight:700>())</span> <span style=color:#ce5c00;font-weight:700>{</span>            <span style=color:#8f5902;font-style:italic>//1
-</span><span style=color:#8f5902;font-style:italic></span>    <span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>length</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>directBuf</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>readableBytes</span><span style=color:#ce5c00;font-weight:700>();</span><span style=color:#8f5902;font-style:italic>//2
-</span><span style=color:#8f5902;font-style:italic></span>    <span style=color:#204a87;font-weight:700>byte</span><span style=color:#ce5c00;font-weight:700>[]</span> <span style=color:#000>array</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#204a87;font-weight:700>byte</span><span style=color:#ce5c00;font-weight:700>[</span><span style=color:#000>length</span><span style=color:#ce5c00;font-weight:700>];</span>    <span style=color:#8f5902;font-style:italic>//3
-</span><span style=color:#8f5902;font-style:italic></span>    <span style=color:#000>directBuf</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>getBytes</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>directBuf</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>readerIndex</span><span style=color:#ce5c00;font-weight:700>(),</span> <span style=color:#000>array</span><span style=color:#ce5c00;font-weight:700>);</span>        <span style=color:#8f5902;font-style:italic>//4    
-</span><span style=color:#8f5902;font-style:italic></span>    <span style=color:#000>handleArray</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>array</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>0</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>length</span><span style=color:#ce5c00;font-weight:700>);</span>  <span style=color:#8f5902;font-style:italic>//5
-</span><span style=color:#8f5902;font-style:italic></span><span style=color:#ce5c00;font-weight:700>}</span>
-</code></pre></div><p>1.检查 ByteBuf 是不是由数组支持。如果不是，这是一个直接缓冲区。</p>
-<p>2.获取可读的字节数</p>
-<p>3.分配一个新的数组来保存字节</p>
-<p>4.字节复制到数组</p>
-<p>5.将数组，偏移量和长度作为参数调用某些处理方法</p>
-<p>显然，这比使用数组要多做一些工作。因此，如果你事前就知道容器里的数据将作为一个数组被访问，你可能更愿意使用堆内存。</p>
-<h4 id=composite-buffer复合缓冲区>COMPOSITE BUFFER(复合缓冲区)</h4>
-<p>最后一种模式是复合缓冲区，我们可以创建多个不同的 ByteBuf，然后提供一个这些 ByteBuf 组合的视图。复合缓冲区就像一个列表，我们可以动态的添加和删除其中的 ByteBuf，JDK 的 ByteBuffer 没有这样的功能。</p>
-<p>Netty 提供了 ByteBuf 的子类 CompositeByteBuf 类来处理复合缓冲区，CompositeByteBuf 只是一个视图。</p>
-<p><em>警告</em></p>
-<p><em>CompositeByteBuf.hasArray() 总是返回 false，因为它可能既包含堆缓冲区，也包含直接缓冲区</em></p>
-<p>例如，一条消息由 header 和 body 两部分组成，将 header 和 body 组装成一条消息发送出去，可能 body 相同，只是 header 不同，使用CompositeByteBuf 就不用每次都重新分配一个新的缓冲区。下图显示CompositeByteBuf 组成 header 和 body：</p>
-<p>Figure 5.2 CompositeByteBuf holding a header and body</p>
-<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211018224844.png style=display:block;width:80% alt=NAME align=center> </div>
-<p>下面代码显示了使用 JDK 的 ByteBuffer 的一个实现。两个 ByteBuffer 的数组创建保存消息的组件，第三个创建用于保存所有数据的副本。</p>
-<p>Listing 5.3 Composite buffer pattern using ByteBuffer</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#8f5902;font-style:italic>// 使用数组保存消息的各个部分
-</span><span style=color:#8f5902;font-style:italic></span><span style=color:#000>ByteBuffer</span><span style=color:#ce5c00;font-weight:700>[]</span> <span style=color:#000>message</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>{</span> <span style=color:#000>header</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>body</span> <span style=color:#ce5c00;font-weight:700>};</span>
-
-<span style=color:#8f5902;font-style:italic>// 使用副本来合并这两个部分
-</span><span style=color:#8f5902;font-style:italic></span><span style=color:#000>ByteBuffer</span> <span style=color:#000>message2</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>ByteBuffer</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>allocate</span><span style=color:#ce5c00;font-weight:700>(</span>
-        <span style=color:#000>header</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>remaining</span><span style=color:#ce5c00;font-weight:700>()</span> <span style=color:#ce5c00;font-weight:700>+</span> <span style=color:#000>body</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>remaining</span><span style=color:#ce5c00;font-weight:700>());</span>
-<span style=color:#000>message2</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>put</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>header</span><span style=color:#ce5c00;font-weight:700>);</span>
-<span style=color:#000>message2</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>put</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>body</span><span style=color:#ce5c00;font-weight:700>);</span>
-<span style=color:#000>message2</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>flip</span><span style=color:#ce5c00;font-weight:700>();</span>
-</code></pre></div><p>这种做法显然是低效的;分配和复制操作不是最优的方法，操纵数组使代码显得很笨拙。</p>
-<p>下面看使用 CompositeByteBuf 的改进版本</p>
-<p>Listing 5.4 Composite buffer pattern using CompositeByteBuf</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#000>CompositeByteBuf</span> <span style=color:#000>messageBuf</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>...;</span>
-<span style=color:#000>ByteBuf</span> <span style=color:#000>headerBuf</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>...;</span> <span style=color:#8f5902;font-style:italic>// 可以支持或直接
-</span><span style=color:#8f5902;font-style:italic></span><span style=color:#000>ByteBuf</span> <span style=color:#000>bodyBuf</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>...;</span> <span style=color:#8f5902;font-style:italic>// 可以支持或直接
-</span><span style=color:#8f5902;font-style:italic></span><span style=color:#000>messageBuf</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>addComponents</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>headerBuf</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>bodyBuf</span><span style=color:#ce5c00;font-weight:700>);</span>
-<span style=color:#8f5902;font-style:italic>// ....
-</span><span style=color:#8f5902;font-style:italic></span><span style=color:#000>messageBuf</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>removeComponent</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>0</span><span style=color:#ce5c00;font-weight:700>);</span> <span style=color:#8f5902;font-style:italic>// 移除头    //2
-</span><span style=color:#8f5902;font-style:italic></span>
-<span style=color:#204a87;font-weight:700>for</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>i</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>0</span><span style=color:#ce5c00;font-weight:700>;</span> <span style=color:#000>i</span> <span style=color:#ce5c00;font-weight:700>&lt;</span> <span style=color:#000>messageBuf</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>numComponents</span><span style=color:#ce5c00;font-weight:700>();</span> <span style=color:#000>i</span><span style=color:#ce5c00;font-weight:700>++)</span> <span style=color:#ce5c00;font-weight:700>{</span>                        <span style=color:#8f5902;font-style:italic>//3
-</span><span style=color:#8f5902;font-style:italic></span>    <span style=color:#000>System</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>out</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>println</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>messageBuf</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>component</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>i</span><span style=color:#ce5c00;font-weight:700>).</span><span style=color:#c4a000>toString</span><span style=color:#ce5c00;font-weight:700>());</span>
-<span style=color:#ce5c00;font-weight:700>}</span>
-</code></pre></div><p>1.追加 ByteBuf 实例的 CompositeByteBuf</p>
-<p>2.删除 索引1的 ByteBuf</p>
-<p>3.遍历所有 ByteBuf 实例。</p>
-<p>清单5.4 所示，你可以简单地把 CompositeByteBuf 当作一个可迭代遍历的容器。 CompositeByteBuf 不允许访问其内部可能存在的支持数组，也不允许直接访问数据，这一点类似于直接缓冲区模式，如图5.5所示。</p>
-<p>Listing 5.5 Access data</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#000>CompositeByteBuf</span> <span style=color:#000>compBuf</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>...;</span>
-<span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>length</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>compBuf</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>readableBytes</span><span style=color:#ce5c00;font-weight:700>();</span>    <span style=color:#8f5902;font-style:italic>//1
-</span><span style=color:#8f5902;font-style:italic></span><span style=color:#204a87;font-weight:700>byte</span><span style=color:#ce5c00;font-weight:700>[]</span> <span style=color:#000>array</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#204a87;font-weight:700>byte</span><span style=color:#ce5c00;font-weight:700>[</span><span style=color:#000>length</span><span style=color:#ce5c00;font-weight:700>];</span>        <span style=color:#8f5902;font-style:italic>//2
-</span><span style=color:#8f5902;font-style:italic></span><span style=color:#000>compBuf</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>getBytes</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>compBuf</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>readerIndex</span><span style=color:#ce5c00;font-weight:700>(),</span> <span style=color:#000>array</span><span style=color:#ce5c00;font-weight:700>);</span>    <span style=color:#8f5902;font-style:italic>//3
-</span><span style=color:#8f5902;font-style:italic></span><span style=color:#000>handleArray</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>array</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>0</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>length</span><span style=color:#ce5c00;font-weight:700>);</span>    <span style=color:#8f5902;font-style:italic>//4
-</span></code></pre></div><p>1.得到的可读的字节数。</p>
-<p>2.分配一个新的数组,数组长度为可读字节长度。</p>
-<p>3.读取字节到数组</p>
-<p>4.使用数组，把偏移量和长度作为参数</p>
-<p>Netty 尝试使用 CompositeByteBuf 优化 socket I/O 操作，消除 原生 JDK 中可能存在的的性能低和内存消耗问题。虽然这是在Netty 的核心代码中进行的优化，并且是不对外暴露的，但是作为开发者还是应该意识到其影响。</p>
-<p><em>CompositeByteBuf API</em></p>
-<p><em>CompositeByteBuf 提供了大量的附加功能超出了它所继承的 ByteBuf。请参阅的 Netty 的 Javadoc 文档 API。</em></p>
-<h2 id=字节级别的操作>字节级别的操作</h2>
-<p>除了基本的读写操作， ByteBuf 还提供了它所包含的数据的修改方法。</p>
-<h3 id=随机访问索引>随机访问索引</h3>
-<p>ByteBuf 使用zero-based 的 indexing(从0开始的索引)，第一个字节的索引是 0，最后一个字节的索引是 ByteBuf 的 capacity - 1，下面代码是遍历 ByteBuf 的所有字节：</p>
-<p>Listing 5.6 Access data</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#000>ByteBuf</span> <span style=color:#000>buffer</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>...;</span>
-<span style=color:#204a87;font-weight:700>for</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>i</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>0</span><span style=color:#ce5c00;font-weight:700>;</span> <span style=color:#000>i</span> <span style=color:#ce5c00;font-weight:700>&lt;</span> <span style=color:#000>buffer</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>capacity</span><span style=color:#ce5c00;font-weight:700>();</span> <span style=color:#000>i</span><span style=color:#ce5c00;font-weight:700>++)</span> <span style=color:#ce5c00;font-weight:700>{</span>
-    <span style=color:#204a87;font-weight:700>byte</span> <span style=color:#000>b</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>buffer</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>getByte</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>i</span><span style=color:#ce5c00;font-weight:700>);</span>
-    <span style=color:#000>System</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>out</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>println</span><span style=color:#ce5c00;font-weight:700>((</span><span style=color:#204a87;font-weight:700>char</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#000>b</span><span style=color:#ce5c00;font-weight:700>);</span>
-<span style=color:#ce5c00;font-weight:700>}</span>
-</code></pre></div><p>注意通过索引访问时不会推进 readerIndex （读索引）和 writerIndex（写索引），我们可以通过 ByteBuf 的 readerIndex(index) 或 writerIndex(index) 来分别推进读索引或写索引</p>
-<p>顺序访问索引</p>
-<p>ByteBuf 提供两个指针变量支付读和写操作，读操作是使用 readerIndex()，写操作时使用 writerIndex()。这和JDK的ByteBuffer不同，ByteBuffer只有一个方法来设置索引，所以需要使用 flip() 方法来切换读和写模式。</p>
-<p>ByteBuf 一定符合：0 &lt;= readerIndex &lt;= writerIndex &lt;= capacity。</p>
-<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211019220957.png style=display:block;width:80% alt=NAME align=center> </div>
-<p>1.字节，可以被丢弃，因为它们已经被读</p>
-<p>2.还没有被读的字节是：“readable bytes（可读字节）”</p>
-<p>3.空间可加入多个字节的是：“writeable bytes（写字节）”</p>
-<h3 id=可丢弃字节的字节>可丢弃字节的字节</h3>
-<p>标有“可丢弃字节”的段包含已经被读取的字节。他们可以被丢弃，通过调用discardReadBytes() 来回收空间。这个段的初始大小存储在readerIndex，为 0，当“read”操作被执行时递增（“get”操作不会移动 readerIndex）。</p>
-<p>图5.4示出了在 图5.3 中的缓冲区中调用 discardReadBytes() 所示的结果。你可以看到，在丢弃字节段的空间已变得可用写。需要注意的是不能保证对可写的段之后的内容在 discardReadBytes() 方法之后已经被调用。</p>
-<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211019221024.png style=display:block;width:80% alt=NAME align=center> </div>
-<p>1.字节尚未被读出（readerIndex 现在 0）。 2.可用的空间，由于空间被回收而增大。</p>
-<p>ByteBuf.discardReadBytes() 可以用来清空 ByteBuf 中已读取的数据，从而使 ByteBuf 有多余的空间容纳新的数据，但是discardReadBytes() 可能会涉及内存复制，因为它需要移动 ByteBuf 中可读的字节到开始位置，这样的操作会影响性能，一般在需要马上释放内存的时候使用收益会比较大。</p>
-<h3 id=可读字节>可读字节</h3>
-<p>ByteBuf 的“可读字节”分段存储的是实际数据。新分配，包装，或复制的缓冲区的 readerIndex 的默认值为 0 。任何操作，其名称以 &ldquo;read&rdquo; 或 &ldquo;skip&rdquo; 开头的都将检索或跳过该数据在当前 readerIndex ，并且通过读取的字节数来递增。</p>
-<p>如果所谓的读操作是一个指定 ByteBuf 参数作为写入的对象，并且没有一个目标索引参数，目标缓冲区的 writerIndex 也会增加了。例如：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#000>readBytes</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>ByteBuf</span> <span style=color:#000>dest</span><span style=color:#ce5c00;font-weight:700>);</span>
-</code></pre></div><p>如果试图从缓冲器读取已经用尽的可读的字节，则抛出IndexOutOfBoundsException。清单5.8显示了如何读取所有可读字节。</p>
-<p>Listing 5.7 Read all data</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#8f5902;font-style:italic>//遍历缓冲区的可读字节
-</span><span style=color:#8f5902;font-style:italic></span><span style=color:#000>ByteBuf</span> <span style=color:#000>buffer</span><span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>...;</span>
-<span style=color:#204a87;font-weight:700>while</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>buffer</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>isReadable</span><span style=color:#ce5c00;font-weight:700>())</span> <span style=color:#ce5c00;font-weight:700>{</span>
-    <span style=color:#000>System</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>out</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>println</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>buffer</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>readByte</span><span style=color:#ce5c00;font-weight:700>());</span>
-<span style=color:#ce5c00;font-weight:700>}</span>
-</code></pre></div><p>这段是未定义内容的地方，准备好写。一个新分配的缓冲区的 writerIndex 的默认值是 0 。任何操作，其名称 &ldquo;write"开头的操作在当前的 writerIndex 写入数据时，递增字节写入的数量。如果写操作的目标也是 ByteBuf ，且未指定源索引，则源缓冲区的 readerIndex 将增加相同的量。例如：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#000>writeBytes</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>ByteBuf</span> <span style=color:#000>dest</span><span style=color:#ce5c00;font-weight:700>);</span>
-</code></pre></div><p>如果试图写入超出目标的容量，则抛出 IndexOutOfBoundException。</p>
-<p>下面的例子展示了填充随机整数到缓冲区中，直到耗尽空间。该方法writableBytes() 被用在这里确定是否存在足够的缓冲空间。</p>
-<p>Listing 5.8 Write data</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#8f5902;font-style:italic>//填充随机整数到缓冲区中
-</span><span style=color:#8f5902;font-style:italic></span><span style=color:#000>ByteBuf</span> <span style=color:#000>buffer</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>...;</span>
-<span style=color:#204a87;font-weight:700>while</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>buffer</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>writableBytes</span><span style=color:#ce5c00;font-weight:700>()</span> <span style=color:#ce5c00;font-weight:700>&gt;=</span> <span style=color:#000>4</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>
-    <span style=color:#000>buffer</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>writeInt</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>random</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>nextInt</span><span style=color:#ce5c00;font-weight:700>());</span>
-<span style=color:#ce5c00;font-weight:700>}</span>
-</code></pre></div><h3 id=索引管理>索引管理</h3>
-<p>在 JDK 的 InputStream 定义了 mark(int readlimit) 和 reset()方法。这些是分别用来标记流中的当前位置和复位流到该位置。</p>
-<p>同样，您可以设置和重新定位ByteBuf readerIndex 和 writerIndex 通过调用 markReaderIndex(), markWriterIndex(), resetReaderIndex() 和 resetWriterIndex()。这些类似于InputStream 的调用，所不同的是，没有 readlimit 参数来指定当标志变为无效。</p>
-<p>您也可以通过调用 readerIndex(int) 或 writerIndex(int) 将指标移动到指定的位置。在尝试任何无效位置上设置一个索引将导致 IndexOutOfBoundsException 异常。</p>
-<p>调用 clear() 可以同时设置 readerIndex 和 writerIndex 为 0。注意，这不会清除内存中的内容。让我们看看它是如何工作的。 （图5.5图重复5.3 ）</p>
-<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211019221047.png style=display:block;width:80% alt=NAME align=center> </div>
-<p>调用之前，包含3个段，下面显示了调用之后</p>
-<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211019221104.png style=display:block;width:80% alt=NAME align=center> </div>
-<p>现在 整个 ByteBuf 空间都是可写的了。</p>
-<p>clear() 比 discardReadBytes() 更低成本，因为他只是重置了索引，而没有内存拷贝。</p>
-<h3 id=查询操作>查询操作</h3>
-<p>有几种方法，以确定在所述缓冲器中的指定值的索引。最简单的是使用 indexOf() 方法。更复杂的搜索执行以 ByteBufProcessor 为参数的方法。这个接口定义了一个方法，boolean process(byte value)，它用来报告输入值是否是一个正在寻求的值。</p>
-<p>ByteBufProcessor 定义了很多方便实现共同目标值。例如，假设您的应用程序需要集成所谓的“<a href=http://help.adobe.com/en_US/as3/dev/WSb2ba3b1aad8a27b0-181c51321220efd9d1c-8000.html>Flash sockets</a>”，将使用 NULL 结尾的内容。调用</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#000>forEachByte</span><span style=color:#a40000>（</span><span style=color:#000>ByteBufProcessor</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>FIND_NUL</span><span style=color:#a40000>）</span>
-</code></pre></div><p>通过减少的，因为少量的 “边界检查”的处理过程中执行了，从而使 消耗 Flash 数据变得 编码工作量更少、效率更高。</p>
-<p>下面例子展示了寻找一个回车符，<code>\ r</code>的一个例子。</p>
-<p>Listing 5.9 Using ByteBufProcessor to find <code>\r</code></p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#000>ByteBuf</span> <span style=color:#000>buffer</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>...;</span>
-<span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>index</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>buffer</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>forEachByte</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>ByteBufProcessor</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>FIND_CR</span><span style=color:#ce5c00;font-weight:700>);</span>
-</code></pre></div><h3 id=衍生的缓冲区>衍生的缓冲区</h3>
-<p>“衍生的缓冲区”是代表一个专门的展示 ByteBuf 内容的“视图”。这种视图是由 duplicate(), slice(), slice(int, int),readOnly(), 和 order(ByteOrder) 方法创建的。所有这些都返回一个新的 ByteBuf 实例包括它自己的 reader, writer 和标记索引。然而，内部数据存储共享就像在一个 NIO 的 ByteBuffer。这使得衍生的缓冲区创建、修改其 内容，以及修改其“源”实例更廉价。</p>
-<p><em>ByteBuf 拷贝</em></p>
-<p><em>如果需要已有的缓冲区的全新副本，使用 copy() 或者 copy(int, int)。不同于派生缓冲区，这个调用返回的 ByteBuf 有数据的独立副本。</em></p>
-<p>若需要操作某段数据，使用 slice(int, int)，下面展示了用法：</p>
-<p>Listing 5.10 Slice a ByteBuf</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#000>Charset</span> <span style=color:#000>utf8</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>Charset</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>forName</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;UTF-8&#34;</span><span style=color:#ce5c00;font-weight:700>);</span>
-<span style=color:#000>ByteBuf</span> <span style=color:#000>buf</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>Unpooled</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>copiedBuffer</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;Netty in Action rocks!&#34;</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>utf8</span><span style=color:#ce5c00;font-weight:700>);</span> <span style=color:#8f5902;font-style:italic>//1
-</span><span style=color:#8f5902;font-style:italic></span>
-<span style=color:#000>ByteBuf</span> <span style=color:#000>sliced</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>buf</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>slice</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>0</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>14</span><span style=color:#ce5c00;font-weight:700>);</span>          <span style=color:#8f5902;font-style:italic>//2
-</span><span style=color:#8f5902;font-style:italic></span><span style=color:#000>System</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>out</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>println</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>sliced</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>toString</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>utf8</span><span style=color:#ce5c00;font-weight:700>));</span>  <span style=color:#8f5902;font-style:italic>//3
-</span><span style=color:#8f5902;font-style:italic></span>
-<span style=color:#000>buf</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>setByte</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>0</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#204a87;font-weight:700>byte</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#39;J&#39;</span><span style=color:#ce5c00;font-weight:700>);</span>                 <span style=color:#8f5902;font-style:italic>//4
-</span><span style=color:#8f5902;font-style:italic></span><span style=color:#204a87;font-weight:700>assert</span> <span style=color:#000>buf</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>getByte</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>0</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>==</span> <span style=color:#000>sliced</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>getByte</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>0</span><span style=color:#ce5c00;font-weight:700>);</span>
-</code></pre></div><p>1.创建一个 ByteBuf 保存特定字节串。</p>
-<p>2.创建从索引 0 开始，并在 14 结束的 ByteBuf 的新 slice。</p>
-<p>3.打印 Netty in Action</p>
-<p>4.更新索引 0 的字节。</p>
-<p>5.断言成功，因为数据是共享的，并以一个地方所做的修改将在其他地方可见。</p>
-<p>下面看下如何将一个 ByteBuf 段的副本不同于 slice。</p>
-<p>Listing 5.11 Copying a ByteBuf</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#000>Charset</span> <span style=color:#000>utf8</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>Charset</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>forName</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;UTF-8&#34;</span><span style=color:#ce5c00;font-weight:700>);</span>
-<span style=color:#000>ByteBuf</span> <span style=color:#000>buf</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>Unpooled</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>copiedBuffer</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;Netty in Action rocks!&#34;</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>utf8</span><span style=color:#ce5c00;font-weight:700>);</span>     <span style=color:#8f5902;font-style:italic>//1
-</span><span style=color:#8f5902;font-style:italic></span>
-<span style=color:#000>ByteBuf</span> <span style=color:#000>copy</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>buf</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>copy</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>0</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>14</span><span style=color:#ce5c00;font-weight:700>);</span>               <span style=color:#8f5902;font-style:italic>//2
-</span><span style=color:#8f5902;font-style:italic></span><span style=color:#000>System</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>out</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>println</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>copy</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>toString</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>utf8</span><span style=color:#ce5c00;font-weight:700>));</span>      <span style=color:#8f5902;font-style:italic>//3
-</span><span style=color:#8f5902;font-style:italic></span>
-<span style=color:#000>buf</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>setByte</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>0</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#204a87;font-weight:700>byte</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#39;J&#39;</span><span style=color:#ce5c00;font-weight:700>);</span>                   <span style=color:#8f5902;font-style:italic>//4
-</span><span style=color:#8f5902;font-style:italic></span><span style=color:#204a87;font-weight:700>assert</span> <span style=color:#000>buf</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>getByte</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>0</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>!=</span> <span style=color:#000>copy</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>getByte</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>0</span><span style=color:#ce5c00;font-weight:700>);</span>
-</code></pre></div><p>1.创建一个 ByteBuf 保存特定字节串。</p>
-<p>2.创建从索引0开始和 14 结束 的 ByteBuf 的段的拷贝。</p>
-<p>3.打印 Netty in Action</p>
-<p>4.更新索引 0 的字节。</p>
-<p>5.断言成功，因为数据不是共享的，并以一个地方所做的修改将不影响其他。</p>
-<p>代码几乎是相同的，但所 衍生的 ByteBuf 效果是不同的。因此，使用一个 slice 可以尽可能避免复制内存。</p>
-<h3 id=读写操作>读/写操作</h3>
-<p>读/写操作主要由2类：</p>
-<ul>
-<li>gget()/set() 操作从给定的索引开始，保持不变</li>
-<li>read()/write() 操作从给定的索引开始，与字节访问的数量来适用，递增当前的写索引或读索引</li>
-</ul>
-<p>ByteBuf 的各种读写方法或其他一些检查方法可以看 ByteBuf 的 API，下面是常见的 get() 操作：</p>
-<p>Table 5.1 get() operations</p>
-<table>
+</li></ol></nav><div class=td-content>
+<h1>CH05-Buffer</h1><header class=article-meta>
+</header><p>正如我们先前所指出的，网络数据的基本单位永远是 byte(字节)。Java NIO 提供 ByteBuffer 作为字节的容器，但这个类是过于复杂，有点 难以使用。</p><p>Netty 中 ByteBuffer 替代是 ByteBuf，一个强大的实现，解决 JDK 的 API 的限制，以及为网络应用程序开发者一个更好的工具。 但 ByteBuf 并不仅仅暴露操作一个字节序列的方法;这也是专门的Netty 的 ChannelPipeline 的语义设计。</p><p>在本章中，我们会说明相比于 JDK 的 API，ByteBuf 所提供的卓越的功能和灵活性。这也将使我们能够更好地理解了 Netty 的数据处理。</p><h2 id=buffer-api>Buffer API</h2><p>主要包括</p><ul>
+<li>ByteBuf</li><li>ByteBufHolder</li></ul><p>Netty 使用 reference-counting(引用计数)来判断何时可以释放 ByteBuf 或 ByteBufHolder 和其他相关资源，从而可以利用池和其他技巧来提高性能和降低内存的消耗。这一点上不需要开发人员做任何事情，但是在开发 Netty 应用程序时，尤其是使用 ByteBuf 和 ByteBufHolder 时，你应该尽可能早地释放池资源。 Netty 缓冲 API 提供了几个优势：</p><ul>
+<li>可以自定义缓冲类型</li><li>通过一个内置的复合缓冲类型实现零拷贝</li><li>扩展性好，比如 StringBuilder</li><li>不需要调用 flip() 来切换读/写模式</li><li>读取和写入索引分开</li><li>方法链</li><li>引用计数</li><li>Pooling(池)</li></ul><h1 id=bytebuf---字节数据的容器>ByteBuf - 字节数据的容器</h1><p>因为所有的网络通信最终都是基于底层的字节流传输，因此一个高效、方便、易用的数据接口是必要的，而 Netty 的 ByteBuf 满足这些需求。</p><p>ByteBuf 是一个很好的经过优化的数据容器，我们可以将字节数据有效的添加到 ByteBuf 中或从 ByteBuf 中获取数据。ByteBuf 有2部分：一个用于读，一个用于写。我们可以按顺序的读取数据，也可以通过调整读取数据的索引或者直接将读取位置索引作为参数传递给get方法来重复读取数据。</p><h3 id=bytebuf-如何在工作>ByteBuf 如何在工作？</h3><p>写入数据到 ByteBuf 后，writerIndex（写入索引）增加。开始读字节后，readerIndex（读取索引）增加。你可以读取字节，直到写入索引和读取索引处在相同的位置，ByteBuf 变为不可读。当访问数据超过数组的最后位，则会抛出 IndexOutOfBoundsException。</p><p>调用 ByteBuf 的 &ldquo;read&rdquo; 或 &ldquo;write&rdquo; 开头的任何方法都会提升 相应的索引。另一方面，&ldquo;set&rdquo; 、 &ldquo;get"操作字节将不会移动索引位置；他们只会操作相关的通过参数传入方法的相对索引。</p><p>可以给ByteBuf指定一个最大容量值，这个值限制着ByteBuf的容量。任何尝试将写入索引超过这个值的行为都将导致抛出异常。ByteBuf 的默认最大容量限制是 Integer.MAX_VALUE。</p><p>ByteBuf 类似于一个字节数组，最大的区别是读和写的索引可以用来控制对缓冲区数据的访问。下图显示了一个容量为16的空的 ByteBuf 的布局和状态，writerIndex 和 readerIndex 都在索引位置 0 ：</p><div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211019220923.png style=display:block;width:80% alt=NAME align=center> </div><h3 id=bytebuf-使用模式>ByteBuf 使用模式</h3><h4 id=heap-buffer堆缓冲区>HEAP BUFFER(堆缓冲区)</h4><p>最常用的模式是 ByteBuf 将数据存储在 JVM 的堆空间，这是通过将数据存储在数组的实现。堆缓冲区可以快速分配，当不使用时也可以快速释放。它还提供了直接访问数组的方法，通过 ByteBuf.array() 来获取 byte[]数据。 这种方法，正如清单5.1中所示的那样，是非常适合用来处理遗留数据的。</p><p>Listing 5.1 Backing array</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=display:flex><span><span style=color:#000>ByteBuf</span> <span style=color:#000>heapBuf</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>...;</span>
+</span></span><span style=display:flex><span><span style=color:#204a87;font-weight:700>if</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>heapBuf</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>hasArray</span><span style=color:#ce5c00;font-weight:700>())</span> <span style=color:#ce5c00;font-weight:700>{</span>                <span style=color:#8f5902;font-style:italic>//1
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic></span>    <span style=color:#204a87;font-weight:700>byte</span><span style=color:#ce5c00;font-weight:700>[]</span> <span style=color:#000>array</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>heapBuf</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>array</span><span style=color:#ce5c00;font-weight:700>();</span>        <span style=color:#8f5902;font-style:italic>//2
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic></span>    <span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>offset</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>heapBuf</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>arrayOffset</span><span style=color:#ce5c00;font-weight:700>()</span> <span style=color:#ce5c00;font-weight:700>+</span> <span style=color:#000>heapBuf</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>readerIndex</span><span style=color:#ce5c00;font-weight:700>();</span>                <span style=color:#8f5902;font-style:italic>//3
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic></span>    <span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>length</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>heapBuf</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>readableBytes</span><span style=color:#ce5c00;font-weight:700>();</span><span style=color:#8f5902;font-style:italic>//4
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic></span>    <span style=color:#000>handleArray</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>array</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>offset</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>length</span><span style=color:#ce5c00;font-weight:700>);</span> <span style=color:#8f5902;font-style:italic>//5
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic></span><span style=color:#ce5c00;font-weight:700>}</span>
+</span></span></code></pre></div><p>1.检查 ByteBuf 是否有支持数组。</p><p>2.如果有的话，得到引用数组。</p><p>3.计算第一字节的偏移量。</p><p>4.获取可读的字节数。</p><p>5.使用数组，偏移量和长度作为调用方法的参数。</p><p>注意：</p><ul>
+<li>访问非堆缓冲区 ByteBuf 的数组会导致UnsupportedOperationException， 可以使用 ByteBuf.hasArray()来检查是否支持访问数组。</li><li>这个用法与 JDK 的 ByteBuffer 类似</li></ul><h4 id=direct-buffer直接缓冲区>DIRECT BUFFER(直接缓冲区)</h4><p>“直接缓冲区”是另一个 ByteBuf 模式。对象的所有内存分配发生在 堆，对不对？好吧，并非总是如此。在 JDK1.4 中被引入 NIO 的ByteBuffer 类允许 JVM 通过本地方法调用分配内存，其目的是</p><ul>
+<li>通过免去中间交换的内存拷贝, 提升IO处理速度; 直接缓冲区的内容可以驻留在垃圾回收扫描的堆区以外。</li><li>DirectBuffer 在 -XX:MaxDirectMemorySize=xxM大小限制下, 使用 Heap 之外的内存, GC对此”无能为力”,也就意味着规避了在高负载下频繁的GC过程对应用线程的中断影响.(详见<a href=https://docs.oracle.com/javase/7/docs/api/java/nio/ByteBuffer.html.>http://docs.oracle.com/javase/7/docs/api/java/nio/ByteBuffer.html.</a>)</li></ul><p>这就解释了为什么“直接缓冲区”对于那些通过 socket 实现数据传输的应用来说，是一种非常理想的方式。如果你的数据是存放在堆中分配的缓冲区，那么实际上，在通过 socket 发送数据之前，JVM 需要将先数据复制到直接缓冲区。</p><p>但是直接缓冲区的缺点是在内存空间的分配和释放上比堆缓冲区更复杂，另外一个缺点是如果要将数据传递给遗留代码处理，因为数据不是在堆上，你可能不得不作出一个副本，如下：</p><p>Listing 5.2 Direct buffer data access</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=display:flex><span><span style=color:#000>ByteBuf</span> <span style=color:#000>directBuf</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>...</span>
+</span></span><span style=display:flex><span><span style=color:#204a87;font-weight:700>if</span> <span style=color:#ce5c00;font-weight:700>(!</span><span style=color:#000>directBuf</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>hasArray</span><span style=color:#ce5c00;font-weight:700>())</span> <span style=color:#ce5c00;font-weight:700>{</span>            <span style=color:#8f5902;font-style:italic>//1
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic></span>    <span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>length</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>directBuf</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>readableBytes</span><span style=color:#ce5c00;font-weight:700>();</span><span style=color:#8f5902;font-style:italic>//2
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic></span>    <span style=color:#204a87;font-weight:700>byte</span><span style=color:#ce5c00;font-weight:700>[]</span> <span style=color:#000>array</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#204a87;font-weight:700>byte</span><span style=color:#ce5c00;font-weight:700>[</span><span style=color:#000>length</span><span style=color:#ce5c00;font-weight:700>];</span>    <span style=color:#8f5902;font-style:italic>//3
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic></span>    <span style=color:#000>directBuf</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>getBytes</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>directBuf</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>readerIndex</span><span style=color:#ce5c00;font-weight:700>(),</span> <span style=color:#000>array</span><span style=color:#ce5c00;font-weight:700>);</span>        <span style=color:#8f5902;font-style:italic>//4    
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic></span>    <span style=color:#000>handleArray</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>array</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>0</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>length</span><span style=color:#ce5c00;font-weight:700>);</span>  <span style=color:#8f5902;font-style:italic>//5
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic></span><span style=color:#ce5c00;font-weight:700>}</span>
+</span></span></code></pre></div><p>1.检查 ByteBuf 是不是由数组支持。如果不是，这是一个直接缓冲区。</p><p>2.获取可读的字节数</p><p>3.分配一个新的数组来保存字节</p><p>4.字节复制到数组</p><p>5.将数组，偏移量和长度作为参数调用某些处理方法</p><p>显然，这比使用数组要多做一些工作。因此，如果你事前就知道容器里的数据将作为一个数组被访问，你可能更愿意使用堆内存。</p><h4 id=composite-buffer复合缓冲区>COMPOSITE BUFFER(复合缓冲区)</h4><p>最后一种模式是复合缓冲区，我们可以创建多个不同的 ByteBuf，然后提供一个这些 ByteBuf 组合的视图。复合缓冲区就像一个列表，我们可以动态的添加和删除其中的 ByteBuf，JDK 的 ByteBuffer 没有这样的功能。</p><p>Netty 提供了 ByteBuf 的子类 CompositeByteBuf 类来处理复合缓冲区，CompositeByteBuf 只是一个视图。</p><p><em>警告</em></p><p><em>CompositeByteBuf.hasArray() 总是返回 false，因为它可能既包含堆缓冲区，也包含直接缓冲区</em></p><p>例如，一条消息由 header 和 body 两部分组成，将 header 和 body 组装成一条消息发送出去，可能 body 相同，只是 header 不同，使用CompositeByteBuf 就不用每次都重新分配一个新的缓冲区。下图显示CompositeByteBuf 组成 header 和 body：</p><p>Figure 5.2 CompositeByteBuf holding a header and body</p><div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211018224844.png style=display:block;width:80% alt=NAME align=center> </div><p>下面代码显示了使用 JDK 的 ByteBuffer 的一个实现。两个 ByteBuffer 的数组创建保存消息的组件，第三个创建用于保存所有数据的副本。</p><p>Listing 5.3 Composite buffer pattern using ByteBuffer</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=display:flex><span><span style=color:#8f5902;font-style:italic>// 使用数组保存消息的各个部分
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic></span><span style=color:#000>ByteBuffer</span><span style=color:#ce5c00;font-weight:700>[]</span> <span style=color:#000>message</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>{</span> <span style=color:#000>header</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>body</span> <span style=color:#ce5c00;font-weight:700>};</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic>// 使用副本来合并这两个部分
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic></span><span style=color:#000>ByteBuffer</span> <span style=color:#000>message2</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>ByteBuffer</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>allocate</span><span style=color:#ce5c00;font-weight:700>(</span>
+</span></span><span style=display:flex><span>        <span style=color:#000>header</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>remaining</span><span style=color:#ce5c00;font-weight:700>()</span> <span style=color:#ce5c00;font-weight:700>+</span> <span style=color:#000>body</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>remaining</span><span style=color:#ce5c00;font-weight:700>());</span>
+</span></span><span style=display:flex><span><span style=color:#000>message2</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>put</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>header</span><span style=color:#ce5c00;font-weight:700>);</span>
+</span></span><span style=display:flex><span><span style=color:#000>message2</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>put</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>body</span><span style=color:#ce5c00;font-weight:700>);</span>
+</span></span><span style=display:flex><span><span style=color:#000>message2</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>flip</span><span style=color:#ce5c00;font-weight:700>();</span>
+</span></span></code></pre></div><p>这种做法显然是低效的;分配和复制操作不是最优的方法，操纵数组使代码显得很笨拙。</p><p>下面看使用 CompositeByteBuf 的改进版本</p><p>Listing 5.4 Composite buffer pattern using CompositeByteBuf</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=display:flex><span><span style=color:#000>CompositeByteBuf</span> <span style=color:#000>messageBuf</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>...;</span>
+</span></span><span style=display:flex><span><span style=color:#000>ByteBuf</span> <span style=color:#000>headerBuf</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>...;</span> <span style=color:#8f5902;font-style:italic>// 可以支持或直接
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic></span><span style=color:#000>ByteBuf</span> <span style=color:#000>bodyBuf</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>...;</span> <span style=color:#8f5902;font-style:italic>// 可以支持或直接
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic></span><span style=color:#000>messageBuf</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>addComponents</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>headerBuf</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>bodyBuf</span><span style=color:#ce5c00;font-weight:700>);</span>
+</span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic>// ....
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic></span><span style=color:#000>messageBuf</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>removeComponent</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>0</span><span style=color:#ce5c00;font-weight:700>);</span> <span style=color:#8f5902;font-style:italic>// 移除头    //2
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic></span>
+</span></span><span style=display:flex><span><span style=color:#204a87;font-weight:700>for</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>i</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>0</span><span style=color:#ce5c00;font-weight:700>;</span> <span style=color:#000>i</span> <span style=color:#ce5c00;font-weight:700>&lt;</span> <span style=color:#000>messageBuf</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>numComponents</span><span style=color:#ce5c00;font-weight:700>();</span> <span style=color:#000>i</span><span style=color:#ce5c00;font-weight:700>++)</span> <span style=color:#ce5c00;font-weight:700>{</span>                        <span style=color:#8f5902;font-style:italic>//3
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic></span>    <span style=color:#000>System</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>out</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>println</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>messageBuf</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>component</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>i</span><span style=color:#ce5c00;font-weight:700>).</span><span style=color:#c4a000>toString</span><span style=color:#ce5c00;font-weight:700>());</span>
+</span></span><span style=display:flex><span><span style=color:#ce5c00;font-weight:700>}</span>
+</span></span></code></pre></div><p>1.追加 ByteBuf 实例的 CompositeByteBuf</p><p>2.删除 索引1的 ByteBuf</p><p>3.遍历所有 ByteBuf 实例。</p><p>清单5.4 所示，你可以简单地把 CompositeByteBuf 当作一个可迭代遍历的容器。 CompositeByteBuf 不允许访问其内部可能存在的支持数组，也不允许直接访问数据，这一点类似于直接缓冲区模式，如图5.5所示。</p><p>Listing 5.5 Access data</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=display:flex><span><span style=color:#000>CompositeByteBuf</span> <span style=color:#000>compBuf</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>...;</span>
+</span></span><span style=display:flex><span><span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>length</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>compBuf</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>readableBytes</span><span style=color:#ce5c00;font-weight:700>();</span>    <span style=color:#8f5902;font-style:italic>//1
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic></span><span style=color:#204a87;font-weight:700>byte</span><span style=color:#ce5c00;font-weight:700>[]</span> <span style=color:#000>array</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#204a87;font-weight:700>byte</span><span style=color:#ce5c00;font-weight:700>[</span><span style=color:#000>length</span><span style=color:#ce5c00;font-weight:700>];</span>        <span style=color:#8f5902;font-style:italic>//2
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic></span><span style=color:#000>compBuf</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>getBytes</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>compBuf</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>readerIndex</span><span style=color:#ce5c00;font-weight:700>(),</span> <span style=color:#000>array</span><span style=color:#ce5c00;font-weight:700>);</span>    <span style=color:#8f5902;font-style:italic>//3
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic></span><span style=color:#000>handleArray</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>array</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>0</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>length</span><span style=color:#ce5c00;font-weight:700>);</span>    <span style=color:#8f5902;font-style:italic>//4
+</span></span></span></code></pre></div><p>1.得到的可读的字节数。</p><p>2.分配一个新的数组,数组长度为可读字节长度。</p><p>3.读取字节到数组</p><p>4.使用数组，把偏移量和长度作为参数</p><p>Netty 尝试使用 CompositeByteBuf 优化 socket I/O 操作，消除 原生 JDK 中可能存在的的性能低和内存消耗问题。虽然这是在Netty 的核心代码中进行的优化，并且是不对外暴露的，但是作为开发者还是应该意识到其影响。</p><p><em>CompositeByteBuf API</em></p><p><em>CompositeByteBuf 提供了大量的附加功能超出了它所继承的 ByteBuf。请参阅的 Netty 的 Javadoc 文档 API。</em></p><h2 id=字节级别的操作>字节级别的操作</h2><p>除了基本的读写操作， ByteBuf 还提供了它所包含的数据的修改方法。</p><h3 id=随机访问索引>随机访问索引</h3><p>ByteBuf 使用zero-based 的 indexing(从0开始的索引)，第一个字节的索引是 0，最后一个字节的索引是 ByteBuf 的 capacity - 1，下面代码是遍历 ByteBuf 的所有字节：</p><p>Listing 5.6 Access data</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=display:flex><span><span style=color:#000>ByteBuf</span> <span style=color:#000>buffer</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>...;</span>
+</span></span><span style=display:flex><span><span style=color:#204a87;font-weight:700>for</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>i</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>0</span><span style=color:#ce5c00;font-weight:700>;</span> <span style=color:#000>i</span> <span style=color:#ce5c00;font-weight:700>&lt;</span> <span style=color:#000>buffer</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>capacity</span><span style=color:#ce5c00;font-weight:700>();</span> <span style=color:#000>i</span><span style=color:#ce5c00;font-weight:700>++)</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>    <span style=color:#204a87;font-weight:700>byte</span> <span style=color:#000>b</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>buffer</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>getByte</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>i</span><span style=color:#ce5c00;font-weight:700>);</span>
+</span></span><span style=display:flex><span>    <span style=color:#000>System</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>out</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>println</span><span style=color:#ce5c00;font-weight:700>((</span><span style=color:#204a87;font-weight:700>char</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#000>b</span><span style=color:#ce5c00;font-weight:700>);</span>
+</span></span><span style=display:flex><span><span style=color:#ce5c00;font-weight:700>}</span>
+</span></span></code></pre></div><p>注意通过索引访问时不会推进 readerIndex （读索引）和 writerIndex（写索引），我们可以通过 ByteBuf 的 readerIndex(index) 或 writerIndex(index) 来分别推进读索引或写索引</p><p>顺序访问索引</p><p>ByteBuf 提供两个指针变量支付读和写操作，读操作是使用 readerIndex()，写操作时使用 writerIndex()。这和JDK的ByteBuffer不同，ByteBuffer只有一个方法来设置索引，所以需要使用 flip() 方法来切换读和写模式。</p><p>ByteBuf 一定符合：0 &lt;= readerIndex &lt;= writerIndex &lt;= capacity。</p><div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211019220957.png style=display:block;width:80% alt=NAME align=center> </div><p>1.字节，可以被丢弃，因为它们已经被读</p><p>2.还没有被读的字节是：“readable bytes（可读字节）”</p><p>3.空间可加入多个字节的是：“writeable bytes（写字节）”</p><h3 id=可丢弃字节的字节>可丢弃字节的字节</h3><p>标有“可丢弃字节”的段包含已经被读取的字节。他们可以被丢弃，通过调用discardReadBytes() 来回收空间。这个段的初始大小存储在readerIndex，为 0，当“read”操作被执行时递增（“get”操作不会移动 readerIndex）。</p><p>图5.4示出了在 图5.3 中的缓冲区中调用 discardReadBytes() 所示的结果。你可以看到，在丢弃字节段的空间已变得可用写。需要注意的是不能保证对可写的段之后的内容在 discardReadBytes() 方法之后已经被调用。</p><div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211019221024.png style=display:block;width:80% alt=NAME align=center> </div><p>1.字节尚未被读出（readerIndex 现在 0）。 2.可用的空间，由于空间被回收而增大。</p><p>ByteBuf.discardReadBytes() 可以用来清空 ByteBuf 中已读取的数据，从而使 ByteBuf 有多余的空间容纳新的数据，但是discardReadBytes() 可能会涉及内存复制，因为它需要移动 ByteBuf 中可读的字节到开始位置，这样的操作会影响性能，一般在需要马上释放内存的时候使用收益会比较大。</p><h3 id=可读字节>可读字节</h3><p>ByteBuf 的“可读字节”分段存储的是实际数据。新分配，包装，或复制的缓冲区的 readerIndex 的默认值为 0 。任何操作，其名称以 &ldquo;read&rdquo; 或 &ldquo;skip&rdquo; 开头的都将检索或跳过该数据在当前 readerIndex ，并且通过读取的字节数来递增。</p><p>如果所谓的读操作是一个指定 ByteBuf 参数作为写入的对象，并且没有一个目标索引参数，目标缓冲区的 writerIndex 也会增加了。例如：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=display:flex><span><span style=color:#000>readBytes</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>ByteBuf</span> <span style=color:#000>dest</span><span style=color:#ce5c00;font-weight:700>);</span>
+</span></span></code></pre></div><p>如果试图从缓冲器读取已经用尽的可读的字节，则抛出IndexOutOfBoundsException。清单5.8显示了如何读取所有可读字节。</p><p>Listing 5.7 Read all data</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=display:flex><span><span style=color:#8f5902;font-style:italic>//遍历缓冲区的可读字节
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic></span><span style=color:#000>ByteBuf</span> <span style=color:#000>buffer</span><span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>...;</span>
+</span></span><span style=display:flex><span><span style=color:#204a87;font-weight:700>while</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>buffer</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>isReadable</span><span style=color:#ce5c00;font-weight:700>())</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>    <span style=color:#000>System</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>out</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>println</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>buffer</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>readByte</span><span style=color:#ce5c00;font-weight:700>());</span>
+</span></span><span style=display:flex><span><span style=color:#ce5c00;font-weight:700>}</span>
+</span></span></code></pre></div><p>这段是未定义内容的地方，准备好写。一个新分配的缓冲区的 writerIndex 的默认值是 0 。任何操作，其名称 &ldquo;write"开头的操作在当前的 writerIndex 写入数据时，递增字节写入的数量。如果写操作的目标也是 ByteBuf ，且未指定源索引，则源缓冲区的 readerIndex 将增加相同的量。例如：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=display:flex><span><span style=color:#000>writeBytes</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>ByteBuf</span> <span style=color:#000>dest</span><span style=color:#ce5c00;font-weight:700>);</span>
+</span></span></code></pre></div><p>如果试图写入超出目标的容量，则抛出 IndexOutOfBoundException。</p><p>下面的例子展示了填充随机整数到缓冲区中，直到耗尽空间。该方法writableBytes() 被用在这里确定是否存在足够的缓冲空间。</p><p>Listing 5.8 Write data</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=display:flex><span><span style=color:#8f5902;font-style:italic>//填充随机整数到缓冲区中
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic></span><span style=color:#000>ByteBuf</span> <span style=color:#000>buffer</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>...;</span>
+</span></span><span style=display:flex><span><span style=color:#204a87;font-weight:700>while</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>buffer</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>writableBytes</span><span style=color:#ce5c00;font-weight:700>()</span> <span style=color:#ce5c00;font-weight:700>&gt;=</span> <span style=color:#000>4</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>    <span style=color:#000>buffer</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>writeInt</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>random</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>nextInt</span><span style=color:#ce5c00;font-weight:700>());</span>
+</span></span><span style=display:flex><span><span style=color:#ce5c00;font-weight:700>}</span>
+</span></span></code></pre></div><h3 id=索引管理>索引管理</h3><p>在 JDK 的 InputStream 定义了 mark(int readlimit) 和 reset()方法。这些是分别用来标记流中的当前位置和复位流到该位置。</p><p>同样，您可以设置和重新定位ByteBuf readerIndex 和 writerIndex 通过调用 markReaderIndex(), markWriterIndex(), resetReaderIndex() 和 resetWriterIndex()。这些类似于InputStream 的调用，所不同的是，没有 readlimit 参数来指定当标志变为无效。</p><p>您也可以通过调用 readerIndex(int) 或 writerIndex(int) 将指标移动到指定的位置。在尝试任何无效位置上设置一个索引将导致 IndexOutOfBoundsException 异常。</p><p>调用 clear() 可以同时设置 readerIndex 和 writerIndex 为 0。注意，这不会清除内存中的内容。让我们看看它是如何工作的。 （图5.5图重复5.3 ）</p><div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211019221047.png style=display:block;width:80% alt=NAME align=center> </div><p>调用之前，包含3个段，下面显示了调用之后</p><div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211019221104.png style=display:block;width:80% alt=NAME align=center> </div><p>现在 整个 ByteBuf 空间都是可写的了。</p><p>clear() 比 discardReadBytes() 更低成本，因为他只是重置了索引，而没有内存拷贝。</p><h3 id=查询操作>查询操作</h3><p>有几种方法，以确定在所述缓冲器中的指定值的索引。最简单的是使用 indexOf() 方法。更复杂的搜索执行以 ByteBufProcessor 为参数的方法。这个接口定义了一个方法，boolean process(byte value)，它用来报告输入值是否是一个正在寻求的值。</p><p>ByteBufProcessor 定义了很多方便实现共同目标值。例如，假设您的应用程序需要集成所谓的“<a href=http://help.adobe.com/en_US/as3/dev/WSb2ba3b1aad8a27b0-181c51321220efd9d1c-8000.html>Flash sockets</a>”，将使用 NULL 结尾的内容。调用</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=display:flex><span><span style=color:#000>forEachByte</span><span style=color:#a40000>（</span><span style=color:#000>ByteBufProcessor</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>FIND_NUL</span><span style=color:#a40000>）</span>
+</span></span></code></pre></div><p>通过减少的，因为少量的 “边界检查”的处理过程中执行了，从而使 消耗 Flash 数据变得 编码工作量更少、效率更高。</p><p>下面例子展示了寻找一个回车符，<code>\ r</code>的一个例子。</p><p>Listing 5.9 Using ByteBufProcessor to find <code>\r</code></p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=display:flex><span><span style=color:#000>ByteBuf</span> <span style=color:#000>buffer</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>...;</span>
+</span></span><span style=display:flex><span><span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>index</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>buffer</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>forEachByte</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>ByteBufProcessor</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>FIND_CR</span><span style=color:#ce5c00;font-weight:700>);</span>
+</span></span></code></pre></div><h3 id=衍生的缓冲区>衍生的缓冲区</h3><p>“衍生的缓冲区”是代表一个专门的展示 ByteBuf 内容的“视图”。这种视图是由 duplicate(), slice(), slice(int, int),readOnly(), 和 order(ByteOrder) 方法创建的。所有这些都返回一个新的 ByteBuf 实例包括它自己的 reader, writer 和标记索引。然而，内部数据存储共享就像在一个 NIO 的 ByteBuffer。这使得衍生的缓冲区创建、修改其 内容，以及修改其“源”实例更廉价。</p><p><em>ByteBuf 拷贝</em></p><p><em>如果需要已有的缓冲区的全新副本，使用 copy() 或者 copy(int, int)。不同于派生缓冲区，这个调用返回的 ByteBuf 有数据的独立副本。</em></p><p>若需要操作某段数据，使用 slice(int, int)，下面展示了用法：</p><p>Listing 5.10 Slice a ByteBuf</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=display:flex><span><span style=color:#000>Charset</span> <span style=color:#000>utf8</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>Charset</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>forName</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;UTF-8&#34;</span><span style=color:#ce5c00;font-weight:700>);</span>
+</span></span><span style=display:flex><span><span style=color:#000>ByteBuf</span> <span style=color:#000>buf</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>Unpooled</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>copiedBuffer</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;Netty in Action rocks!&#34;</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>utf8</span><span style=color:#ce5c00;font-weight:700>);</span> <span style=color:#8f5902;font-style:italic>//1
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic></span>
+</span></span><span style=display:flex><span><span style=color:#000>ByteBuf</span> <span style=color:#000>sliced</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>buf</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>slice</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>0</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>14</span><span style=color:#ce5c00;font-weight:700>);</span>          <span style=color:#8f5902;font-style:italic>//2
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic></span><span style=color:#000>System</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>out</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>println</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>sliced</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>toString</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>utf8</span><span style=color:#ce5c00;font-weight:700>));</span>  <span style=color:#8f5902;font-style:italic>//3
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic></span>
+</span></span><span style=display:flex><span><span style=color:#000>buf</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>setByte</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>0</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#204a87;font-weight:700>byte</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#39;J&#39;</span><span style=color:#ce5c00;font-weight:700>);</span>                 <span style=color:#8f5902;font-style:italic>//4
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic></span><span style=color:#204a87;font-weight:700>assert</span> <span style=color:#000>buf</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>getByte</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>0</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>==</span> <span style=color:#000>sliced</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>getByte</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>0</span><span style=color:#ce5c00;font-weight:700>);</span>
+</span></span></code></pre></div><p>1.创建一个 ByteBuf 保存特定字节串。</p><p>2.创建从索引 0 开始，并在 14 结束的 ByteBuf 的新 slice。</p><p>3.打印 Netty in Action</p><p>4.更新索引 0 的字节。</p><p>5.断言成功，因为数据是共享的，并以一个地方所做的修改将在其他地方可见。</p><p>下面看下如何将一个 ByteBuf 段的副本不同于 slice。</p><p>Listing 5.11 Copying a ByteBuf</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=display:flex><span><span style=color:#000>Charset</span> <span style=color:#000>utf8</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>Charset</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>forName</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;UTF-8&#34;</span><span style=color:#ce5c00;font-weight:700>);</span>
+</span></span><span style=display:flex><span><span style=color:#000>ByteBuf</span> <span style=color:#000>buf</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>Unpooled</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>copiedBuffer</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;Netty in Action rocks!&#34;</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>utf8</span><span style=color:#ce5c00;font-weight:700>);</span>     <span style=color:#8f5902;font-style:italic>//1
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic></span>
+</span></span><span style=display:flex><span><span style=color:#000>ByteBuf</span> <span style=color:#000>copy</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>buf</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>copy</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>0</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>14</span><span style=color:#ce5c00;font-weight:700>);</span>               <span style=color:#8f5902;font-style:italic>//2
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic></span><span style=color:#000>System</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>out</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>println</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>copy</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>toString</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>utf8</span><span style=color:#ce5c00;font-weight:700>));</span>      <span style=color:#8f5902;font-style:italic>//3
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic></span>
+</span></span><span style=display:flex><span><span style=color:#000>buf</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>setByte</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>0</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#204a87;font-weight:700>byte</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#4e9a06>&#39;J&#39;</span><span style=color:#ce5c00;font-weight:700>);</span>                   <span style=color:#8f5902;font-style:italic>//4
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic></span><span style=color:#204a87;font-weight:700>assert</span> <span style=color:#000>buf</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>getByte</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>0</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>!=</span> <span style=color:#000>copy</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>getByte</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>0</span><span style=color:#ce5c00;font-weight:700>);</span>
+</span></span></code></pre></div><p>1.创建一个 ByteBuf 保存特定字节串。</p><p>2.创建从索引0开始和 14 结束 的 ByteBuf 的段的拷贝。</p><p>3.打印 Netty in Action</p><p>4.更新索引 0 的字节。</p><p>5.断言成功，因为数据不是共享的，并以一个地方所做的修改将不影响其他。</p><p>代码几乎是相同的，但所 衍生的 ByteBuf 效果是不同的。因此，使用一个 slice 可以尽可能避免复制内存。</p><h3 id=读写操作>读/写操作</h3><p>读/写操作主要由2类：</p><ul>
+<li>gget()/set() 操作从给定的索引开始，保持不变</li><li>read()/write() 操作从给定的索引开始，与字节访问的数量来适用，递增当前的写索引或读索引</li></ul><p>ByteBuf 的各种读写方法或其他一些检查方法可以看 ByteBuf 的 API，下面是常见的 get() 操作：</p><p>Table 5.1 get() operations</p><table>
 <thead>
 <tr>
-<th>方法名称</th>
-<th>描述</th>
-</tr>
-</thead>
-<tbody>
+<th>方法名称</th><th>描述</th></tr></thead><tbody>
 <tr>
-<td>getBoolean(int)</td>
-<td>返回当前索引的 Boolean 值</td>
-</tr>
-<tr>
-<td>getByte(int) getUnsignedByte(int)</td>
-<td>返回当前索引的(无符号)字节</td>
-</tr>
-<tr>
-<td>getMedium(int) getUnsignedMedium(int)</td>
-<td>返回当前索引的 (无符号) 24-bit 中间值</td>
-</tr>
-<tr>
-<td>getInt(int) getUnsignedInt(int)</td>
-<td>返回当前索引的(无符号) 整型</td>
-</tr>
-<tr>
-<td>getLong(int) getUnsignedLong(int)</td>
-<td>返回当前索引的 (无符号) Long 型</td>
-</tr>
-<tr>
-<td>getShort(int) getUnsignedShort(int)</td>
-<td>返回当前索引的 (无符号) Short 型</td>
-</tr>
-<tr>
-<td>getBytes(int, &mldr;)</td>
-<td>字节</td>
-</tr>
-</tbody>
-</table>
-<p>常见 set() 操作如下</p>
-<p>Table 5.2 set() operations</p>
-<table>
+<td>getBoolean(int)</td><td>返回当前索引的 Boolean 值</td></tr><tr>
+<td>getByte(int) getUnsignedByte(int)</td><td>返回当前索引的(无符号)字节</td></tr><tr>
+<td>getMedium(int) getUnsignedMedium(int)</td><td>返回当前索引的 (无符号) 24-bit 中间值</td></tr><tr>
+<td>getInt(int) getUnsignedInt(int)</td><td>返回当前索引的(无符号) 整型</td></tr><tr>
+<td>getLong(int) getUnsignedLong(int)</td><td>返回当前索引的 (无符号) Long 型</td></tr><tr>
+<td>getShort(int) getUnsignedShort(int)</td><td>返回当前索引的 (无符号) Short 型</td></tr><tr>
+<td>getBytes(int, &mldr;)</td><td>字节</td></tr></tbody></table><p>常见 set() 操作如下</p><p>Table 5.2 set() operations</p><table>
 <thead>
 <tr>
-<th>方法名称</th>
-<th>描述</th>
-</tr>
-</thead>
-<tbody>
+<th>方法名称</th><th>描述</th></tr></thead><tbody>
 <tr>
-<td>setBoolean(int, boolean)</td>
-<td>在指定的索引位置设置 Boolean 值</td>
-</tr>
-<tr>
-<td>setByte(int, int)</td>
-<td>在指定的索引位置设置 byte 值</td>
-</tr>
-<tr>
-<td>setMedium(int, int)</td>
-<td>在指定的索引位置设置 24-bit 中间 值</td>
-</tr>
-<tr>
-<td>setInt(int, int)</td>
-<td>在指定的索引位置设置 int 值</td>
-</tr>
-<tr>
-<td>setLong(int, long)</td>
-<td>在指定的索引位置设置 long 值</td>
-</tr>
-<tr>
-<td>setShort(int, int)</td>
-<td>在指定的索引位置设置 short 值</td>
-</tr>
-</tbody>
-</table>
-<p>下面是用法：</p>
-<p>Listing 5.12 get() and set() usage</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#000>Charset</span> <span style=color:#000>utf8</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>Charset</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>forName</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;UTF-8&#34;</span><span style=color:#ce5c00;font-weight:700>);</span>
-<span style=color:#000>ByteBuf</span> <span style=color:#000>buf</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>Unpooled</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>copiedBuffer</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;Netty in Action rocks!&#34;</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>utf8</span><span style=color:#ce5c00;font-weight:700>);</span>    <span style=color:#8f5902;font-style:italic>//1
-</span><span style=color:#8f5902;font-style:italic></span><span style=color:#000>System</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>out</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>println</span><span style=color:#ce5c00;font-weight:700>((</span><span style=color:#204a87;font-weight:700>char</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#000>buf</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>getByte</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>0</span><span style=color:#ce5c00;font-weight:700>));</span>                    <span style=color:#8f5902;font-style:italic>//2
-</span><span style=color:#8f5902;font-style:italic></span>
-<span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>readerIndex</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>buf</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>readerIndex</span><span style=color:#ce5c00;font-weight:700>();</span>                        <span style=color:#8f5902;font-style:italic>//3
-</span><span style=color:#8f5902;font-style:italic></span><span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>writerIndex</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>buf</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>writerIndex</span><span style=color:#ce5c00;font-weight:700>();</span>
-
-<span style=color:#000>buf</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>setByte</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>0</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#204a87;font-weight:700>byte</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#4e9a06>&#39;B&#39;</span><span style=color:#ce5c00;font-weight:700>);</span>                            <span style=color:#8f5902;font-style:italic>//4
-</span><span style=color:#8f5902;font-style:italic></span>
-<span style=color:#000>System</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>out</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>println</span><span style=color:#ce5c00;font-weight:700>((</span><span style=color:#204a87;font-weight:700>char</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#000>buf</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>getByte</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>0</span><span style=color:#ce5c00;font-weight:700>));</span>                    <span style=color:#8f5902;font-style:italic>//5
-</span><span style=color:#8f5902;font-style:italic></span><span style=color:#204a87;font-weight:700>assert</span> <span style=color:#000>readerIndex</span> <span style=color:#ce5c00;font-weight:700>==</span> <span style=color:#000>buf</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>readerIndex</span><span style=color:#ce5c00;font-weight:700>();</span>                    <span style=color:#8f5902;font-style:italic>//6
-</span><span style=color:#8f5902;font-style:italic></span><span style=color:#204a87;font-weight:700>assert</span> <span style=color:#000>writerIndex</span> <span style=color:#ce5c00;font-weight:700>==</span>  <span style=color:#000>buf</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>writerIndex</span><span style=color:#ce5c00;font-weight:700>();</span>
-</code></pre></div><p>1.创建一个新的 ByteBuf 给指定 String 保存字节</p>
-<p>2.打印的第一个字符，<code>N</code></p>
-<p>3.存储当前 readerIndex 和 writerIndex</p>
-<p>4.更新索引 0 的字符<code>B</code></p>
-<p>5.打印出的第一个字符，现在<code>B</code></p>
-<p>6.这些断言成功，因为这些操作永远不会改变索引</p>
-<p>现在，让我们来看看 read() 操作，对当前 readerIndex 或 writerIndex 进行操作。这些用于从 ByteBuf 读取就好像它是一个流。 （对应的　write() 操作用于“追加”到　ByteBuf　）。下面展示了常见的　 read() 方法。</p>
-<p>Table 5.3 read() operations</p>
-<table>
+<td>setBoolean(int, boolean)</td><td>在指定的索引位置设置 Boolean 值</td></tr><tr>
+<td>setByte(int, int)</td><td>在指定的索引位置设置 byte 值</td></tr><tr>
+<td>setMedium(int, int)</td><td>在指定的索引位置设置 24-bit 中间 值</td></tr><tr>
+<td>setInt(int, int)</td><td>在指定的索引位置设置 int 值</td></tr><tr>
+<td>setLong(int, long)</td><td>在指定的索引位置设置 long 值</td></tr><tr>
+<td>setShort(int, int)</td><td>在指定的索引位置设置 short 值</td></tr></tbody></table><p>下面是用法：</p><p>Listing 5.12 get() and set() usage</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=display:flex><span><span style=color:#000>Charset</span> <span style=color:#000>utf8</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>Charset</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>forName</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;UTF-8&#34;</span><span style=color:#ce5c00;font-weight:700>);</span>
+</span></span><span style=display:flex><span><span style=color:#000>ByteBuf</span> <span style=color:#000>buf</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>Unpooled</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>copiedBuffer</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;Netty in Action rocks!&#34;</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>utf8</span><span style=color:#ce5c00;font-weight:700>);</span>    <span style=color:#8f5902;font-style:italic>//1
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic></span><span style=color:#000>System</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>out</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>println</span><span style=color:#ce5c00;font-weight:700>((</span><span style=color:#204a87;font-weight:700>char</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#000>buf</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>getByte</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>0</span><span style=color:#ce5c00;font-weight:700>));</span>                    <span style=color:#8f5902;font-style:italic>//2
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic></span>
+</span></span><span style=display:flex><span><span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>readerIndex</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>buf</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>readerIndex</span><span style=color:#ce5c00;font-weight:700>();</span>                        <span style=color:#8f5902;font-style:italic>//3
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic></span><span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>writerIndex</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>buf</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>writerIndex</span><span style=color:#ce5c00;font-weight:700>();</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#000>buf</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>setByte</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>0</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#204a87;font-weight:700>byte</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#4e9a06>&#39;B&#39;</span><span style=color:#ce5c00;font-weight:700>);</span>                            <span style=color:#8f5902;font-style:italic>//4
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic></span>
+</span></span><span style=display:flex><span><span style=color:#000>System</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>out</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>println</span><span style=color:#ce5c00;font-weight:700>((</span><span style=color:#204a87;font-weight:700>char</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#000>buf</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>getByte</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>0</span><span style=color:#ce5c00;font-weight:700>));</span>                    <span style=color:#8f5902;font-style:italic>//5
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic></span><span style=color:#204a87;font-weight:700>assert</span> <span style=color:#000>readerIndex</span> <span style=color:#ce5c00;font-weight:700>==</span> <span style=color:#000>buf</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>readerIndex</span><span style=color:#ce5c00;font-weight:700>();</span>                    <span style=color:#8f5902;font-style:italic>//6
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic></span><span style=color:#204a87;font-weight:700>assert</span> <span style=color:#000>writerIndex</span> <span style=color:#ce5c00;font-weight:700>==</span>  <span style=color:#000>buf</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>writerIndex</span><span style=color:#ce5c00;font-weight:700>();</span>
+</span></span></code></pre></div><p>1.创建一个新的 ByteBuf 给指定 String 保存字节</p><p>2.打印的第一个字符，<code>N</code></p><p>3.存储当前 readerIndex 和 writerIndex</p><p>4.更新索引 0 的字符<code>B</code></p><p>5.打印出的第一个字符，现在<code>B</code></p><p>6.这些断言成功，因为这些操作永远不会改变索引</p><p>现在，让我们来看看 read() 操作，对当前 readerIndex 或 writerIndex 进行操作。这些用于从 ByteBuf 读取就好像它是一个流。 （对应的　write() 操作用于“追加”到　ByteBuf　）。下面展示了常见的　 read() 方法。</p><p>Table 5.3 read() operations</p><table>
 <thead>
 <tr>
-<th>方法名称</th>
-<th>描述</th>
-</tr>
-</thead>
-<tbody>
+<th>方法名称</th><th>描述</th></tr></thead><tbody>
 <tr>
-<td>readBoolean()</td>
-<td>Reads the Boolean value at the current readerIndex and increases the readerIndex by 1.</td>
-</tr>
-<tr>
-<td>readByte()　readUnsignedByte()</td>
-<td>Reads the (unsigned) byte value at the current readerIndex and increases　the readerIndex by 1.</td>
-</tr>
-<tr>
-<td>readMedium()　readUnsignedMedium()</td>
-<td>Reads the (unsigned) 24-bit medium value at the current readerIndex and　increases the readerIndex by 3.</td>
-</tr>
-<tr>
-<td>readInt()　readUnsignedInt()</td>
-<td>Reads the (unsigned) int value at the current readerIndex and increases　the readerIndex by 4.</td>
-</tr>
-<tr>
-<td>readLong()　readUnsignedLong()</td>
-<td>Reads the (unsigned) int value at the current readerIndex and increases　the readerIndex by 8.</td>
-</tr>
-<tr>
-<td>readShort()　readUnsignedShort()</td>
-<td>Reads the (unsigned) int value at the current readerIndex and increases　the readerIndex by 2.</td>
-</tr>
-<tr>
-<td>readBytes(int,int, &mldr;)</td>
-<td>Reads the value on the current readerIndex for the given length into the　given object. Also increases the readerIndex by the length.</td>
-</tr>
-</tbody>
-</table>
-<p>每个　read() 方法都对应一个　write()。</p>
-<p>Table 5.4 Write operations</p>
-<table>
+<td>readBoolean()</td><td>Reads the Boolean value at the current readerIndex and increases the readerIndex by 1.</td></tr><tr>
+<td>readByte()　readUnsignedByte()</td><td>Reads the (unsigned) byte value at the current readerIndex and increases　the readerIndex by 1.</td></tr><tr>
+<td>readMedium()　readUnsignedMedium()</td><td>Reads the (unsigned) 24-bit medium value at the current readerIndex and　increases the readerIndex by 3.</td></tr><tr>
+<td>readInt()　readUnsignedInt()</td><td>Reads the (unsigned) int value at the current readerIndex and increases　the readerIndex by 4.</td></tr><tr>
+<td>readLong()　readUnsignedLong()</td><td>Reads the (unsigned) int value at the current readerIndex and increases　the readerIndex by 8.</td></tr><tr>
+<td>readShort()　readUnsignedShort()</td><td>Reads the (unsigned) int value at the current readerIndex and increases　the readerIndex by 2.</td></tr><tr>
+<td>readBytes(int,int, &mldr;)</td><td>Reads the value on the current readerIndex for the given length into the　given object. Also increases the readerIndex by the length.</td></tr></tbody></table><p>每个　read() 方法都对应一个　write()。</p><p>Table 5.4 Write operations</p><table>
 <thead>
 <tr>
-<th>方法名称</th>
-<th>描述</th>
-</tr>
-</thead>
-<tbody>
+<th>方法名称</th><th>描述</th></tr></thead><tbody>
 <tr>
-<td>writeBoolean(boolean)</td>
-<td>Writes the Boolean value on the current writerIndex and increases the　writerIndex by 1.</td>
-</tr>
-<tr>
-<td>writeByte(int)</td>
-<td>Writes the byte value on the current writerIndex and increases the　writerIndex by 1.</td>
-</tr>
-<tr>
-<td>writeMedium(int)</td>
-<td>Writes the medium value on the current writerIndex and increases the　writerIndex by 3.</td>
-</tr>
-<tr>
-<td>writeInt(int)</td>
-<td>Writes the int value on the current writerIndex and increases the　writerIndex by 4.</td>
-</tr>
-<tr>
-<td>writeLong(long)</td>
-<td>Writes the long value on the current writerIndex and increases the　writerIndex by 8.</td>
-</tr>
-<tr>
-<td>writeShort(int)</td>
-<td>Writes the short value on the current writerIndex and increases thewriterIndex by 2.</td>
-</tr>
-<tr>
-<td>writeBytes(int，&mldr;）</td>
-<td>Transfers the bytes on the current writerIndex from given resources.</td>
-</tr>
-</tbody>
-</table>
-<p>Listing 5.13 read()/write() operations on the ByteBuf</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#000>Charset</span> <span style=color:#000>utf8</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>Charset</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>forName</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;UTF-8&#34;</span><span style=color:#ce5c00;font-weight:700>);</span>
-<span style=color:#000>ByteBuf</span> <span style=color:#000>buf</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>Unpooled</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>copiedBuffer</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;Netty in Action rocks!&#34;</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>utf8</span><span style=color:#ce5c00;font-weight:700>);</span>    <span style=color:#8f5902;font-style:italic>//1
-</span><span style=color:#8f5902;font-style:italic></span><span style=color:#000>System</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>out</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>println</span><span style=color:#ce5c00;font-weight:700>((</span><span style=color:#204a87;font-weight:700>char</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#000>buf</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>readByte</span><span style=color:#ce5c00;font-weight:700>());</span>                    <span style=color:#8f5902;font-style:italic>//2
-</span><span style=color:#8f5902;font-style:italic></span>
-<span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>readerIndex</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>buf</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>readerIndex</span><span style=color:#ce5c00;font-weight:700>();</span>                        <span style=color:#8f5902;font-style:italic>//3
-</span><span style=color:#8f5902;font-style:italic></span><span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>writerIndex</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>buf</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>writerIndex</span><span style=color:#ce5c00;font-weight:700>();</span>                        <span style=color:#8f5902;font-style:italic>//4
-</span><span style=color:#8f5902;font-style:italic></span>
-<span style=color:#000>buf</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>writeByte</span><span style=color:#ce5c00;font-weight:700>((</span><span style=color:#204a87;font-weight:700>byte</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#4e9a06>&#39;?&#39;</span><span style=color:#ce5c00;font-weight:700>);</span>                            <span style=color:#8f5902;font-style:italic>//5
-</span><span style=color:#8f5902;font-style:italic></span>
-<span style=color:#204a87;font-weight:700>assert</span> <span style=color:#000>readerIndex</span> <span style=color:#ce5c00;font-weight:700>==</span> <span style=color:#000>buf</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>readerIndex</span><span style=color:#ce5c00;font-weight:700>();</span>
-<span style=color:#204a87;font-weight:700>assert</span> <span style=color:#000>writerIndex</span> <span style=color:#ce5c00;font-weight:700>!=</span> <span style=color:#000>buf</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>writerIndex</span><span style=color:#ce5c00;font-weight:700>();</span>
-</code></pre></div><p>1.创建一个新的 ByteBuf 保存给定 String 的字节。</p>
-<p>2.打印的第一个字符，<code>N</code></p>
-<p>3.存储当前的 readerIndex</p>
-<p>4.保存当前的 writerIndex</p>
-<p>5.更新索引0的字符 <code>B</code></p>
-<p>6.此断言成功，因为 writeByte() 在 5 移动了 writerIndex</p>
-<h3 id=更多操作>更多操作</h3>
-<p>Table 5.5 Other useful operations</p>
-<table>
+<td>writeBoolean(boolean)</td><td>Writes the Boolean value on the current writerIndex and increases the　writerIndex by 1.</td></tr><tr>
+<td>writeByte(int)</td><td>Writes the byte value on the current writerIndex and increases the　writerIndex by 1.</td></tr><tr>
+<td>writeMedium(int)</td><td>Writes the medium value on the current writerIndex and increases the　writerIndex by 3.</td></tr><tr>
+<td>writeInt(int)</td><td>Writes the int value on the current writerIndex and increases the　writerIndex by 4.</td></tr><tr>
+<td>writeLong(long)</td><td>Writes the long value on the current writerIndex and increases the　writerIndex by 8.</td></tr><tr>
+<td>writeShort(int)</td><td>Writes the short value on the current writerIndex and increases thewriterIndex by 2.</td></tr><tr>
+<td>writeBytes(int，&mldr;）</td><td>Transfers the bytes on the current writerIndex from given resources.</td></tr></tbody></table><p>Listing 5.13 read()/write() operations on the ByteBuf</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=display:flex><span><span style=color:#000>Charset</span> <span style=color:#000>utf8</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>Charset</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>forName</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;UTF-8&#34;</span><span style=color:#ce5c00;font-weight:700>);</span>
+</span></span><span style=display:flex><span><span style=color:#000>ByteBuf</span> <span style=color:#000>buf</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>Unpooled</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>copiedBuffer</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;Netty in Action rocks!&#34;</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>utf8</span><span style=color:#ce5c00;font-weight:700>);</span>    <span style=color:#8f5902;font-style:italic>//1
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic></span><span style=color:#000>System</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>out</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>println</span><span style=color:#ce5c00;font-weight:700>((</span><span style=color:#204a87;font-weight:700>char</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#000>buf</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>readByte</span><span style=color:#ce5c00;font-weight:700>());</span>                    <span style=color:#8f5902;font-style:italic>//2
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic></span>
+</span></span><span style=display:flex><span><span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>readerIndex</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>buf</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>readerIndex</span><span style=color:#ce5c00;font-weight:700>();</span>                        <span style=color:#8f5902;font-style:italic>//3
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic></span><span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>writerIndex</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>buf</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>writerIndex</span><span style=color:#ce5c00;font-weight:700>();</span>                        <span style=color:#8f5902;font-style:italic>//4
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic></span>
+</span></span><span style=display:flex><span><span style=color:#000>buf</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>writeByte</span><span style=color:#ce5c00;font-weight:700>((</span><span style=color:#204a87;font-weight:700>byte</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#4e9a06>&#39;?&#39;</span><span style=color:#ce5c00;font-weight:700>);</span>                            <span style=color:#8f5902;font-style:italic>//5
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic></span>
+</span></span><span style=display:flex><span><span style=color:#204a87;font-weight:700>assert</span> <span style=color:#000>readerIndex</span> <span style=color:#ce5c00;font-weight:700>==</span> <span style=color:#000>buf</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>readerIndex</span><span style=color:#ce5c00;font-weight:700>();</span>
+</span></span><span style=display:flex><span><span style=color:#204a87;font-weight:700>assert</span> <span style=color:#000>writerIndex</span> <span style=color:#ce5c00;font-weight:700>!=</span> <span style=color:#000>buf</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>writerIndex</span><span style=color:#ce5c00;font-weight:700>();</span>
+</span></span></code></pre></div><p>1.创建一个新的 ByteBuf 保存给定 String 的字节。</p><p>2.打印的第一个字符，<code>N</code></p><p>3.存储当前的 readerIndex</p><p>4.保存当前的 writerIndex</p><p>5.更新索引0的字符 <code>B</code></p><p>6.此断言成功，因为 writeByte() 在 5 移动了 writerIndex</p><h3 id=更多操作>更多操作</h3><p>Table 5.5 Other useful operations</p><table>
 <thead>
 <tr>
-<th>方法名称</th>
-<th>描述</th>
-</tr>
-</thead>
-<tbody>
+<th>方法名称</th><th>描述</th></tr></thead><tbody>
 <tr>
-<td>isReadable()</td>
-<td>Returns true if at least one byte can be read.</td>
-</tr>
-<tr>
-<td>isWritable()</td>
-<td>Returns true if at least one byte can be written.</td>
-</tr>
-<tr>
-<td>readableBytes()</td>
-<td>Returns the number of bytes that can be read.</td>
-</tr>
-<tr>
-<td>writablesBytes()</td>
-<td>Returns the number of bytes that can be written.</td>
-</tr>
-<tr>
-<td>capacity()</td>
-<td>Returns the number of bytes that the ByteBuf can hold. After this it will try to expand again until maxCapacity() is reached.</td>
-</tr>
-<tr>
-<td>maxCapacity()</td>
-<td>Returns the maximum number of bytes the ByteBuf can hold.</td>
-</tr>
-<tr>
-<td>hasArray()</td>
-<td>Returns true if the ByteBuf is backed by a byte array.</td>
-</tr>
-<tr>
-<td>array()</td>
-<td>Returns the byte array if the ByteBuf is backed by a byte array, otherwise throws an</td>
-</tr>
-</tbody>
-</table>
-<p>UnsupportedOperationException.</p>
-<h2 id=bytebufholder>ByteBufHolder</h2>
-<p>我们经常遇到需要另外存储除有效的实际数据各种属性值。 HTTP 响应是一个很好的例子；与内容一起的字节的还有状态码, cookies,等。</p>
-<p>Netty 提供 ByteBufHolder 处理这种常见的情况。 ByteBufHolder 还提供对于 Netty 的高级功能，如缓冲池，其中保存实际数据的 ByteBuf 可以从池中借用，如果需要还可以自动释放。</p>
-<p>ByteBufHolder 有那么几个方法。到底层的这些支持接入数据和引用计数。表5.7所示的方法（忽略了那些从继承 ReferenceCounted 的方法）。</p>
-<p>Table 5.7 ByteBufHolder operations</p>
-<table>
+<td>isReadable()</td><td>Returns true if at least one byte can be read.</td></tr><tr>
+<td>isWritable()</td><td>Returns true if at least one byte can be written.</td></tr><tr>
+<td>readableBytes()</td><td>Returns the number of bytes that can be read.</td></tr><tr>
+<td>writablesBytes()</td><td>Returns the number of bytes that can be written.</td></tr><tr>
+<td>capacity()</td><td>Returns the number of bytes that the ByteBuf can hold. After this it will try to expand again until maxCapacity() is reached.</td></tr><tr>
+<td>maxCapacity()</td><td>Returns the maximum number of bytes the ByteBuf can hold.</td></tr><tr>
+<td>hasArray()</td><td>Returns true if the ByteBuf is backed by a byte array.</td></tr><tr>
+<td>array()</td><td>Returns the byte array if the ByteBuf is backed by a byte array, otherwise throws an</td></tr></tbody></table><p>UnsupportedOperationException.</p><h2 id=bytebufholder>ByteBufHolder</h2><p>我们经常遇到需要另外存储除有效的实际数据各种属性值。 HTTP 响应是一个很好的例子；与内容一起的字节的还有状态码, cookies,等。</p><p>Netty 提供 ByteBufHolder 处理这种常见的情况。 ByteBufHolder 还提供对于 Netty 的高级功能，如缓冲池，其中保存实际数据的 ByteBuf 可以从池中借用，如果需要还可以自动释放。</p><p>ByteBufHolder 有那么几个方法。到底层的这些支持接入数据和引用计数。表5.7所示的方法（忽略了那些从继承 ReferenceCounted 的方法）。</p><p>Table 5.7 ByteBufHolder operations</p><table>
 <thead>
 <tr>
-<th>名称</th>
-<th>描述</th>
-</tr>
-</thead>
-<tbody>
+<th>名称</th><th>描述</th></tr></thead><tbody>
 <tr>
-<td>data()</td>
-<td>返回 ByteBuf 保存的数据</td>
-</tr>
-<tr>
-<td>copy()</td>
-<td>制作一个 ByteBufHolder 的拷贝，但不共享其数据(所以数据也是拷贝).</td>
-</tr>
-</tbody>
-</table>
-<p>如果你想实现一个“消息对象”有效负载存储在 ByteBuf，使用ByteBufHolder 是一个好主意。</p>
-<h2 id=bytebuf-分配>ByteBuf 分配</h2>
-<p>本节介绍 ByteBuf 实例管理的几种方式：</p>
-<h3 id=bytebufallocator>ByteBufAllocator</h3>
-<p>为了减少分配和释放内存的开销，Netty 通过支持池类 ByteBufAllocator，可用于分配的任何 ByteBuf 我们已经描述过的类型的实例。是否使用池是由应用程序决定的，表5.8列出了 ByteBufAllocator 提供的操作。</p>
-<p>Table 5.8 ByteBufAllocator methods</p>
-<table>
+<td>data()</td><td>返回 ByteBuf 保存的数据</td></tr><tr>
+<td>copy()</td><td>制作一个 ByteBufHolder 的拷贝，但不共享其数据(所以数据也是拷贝).</td></tr></tbody></table><p>如果你想实现一个“消息对象”有效负载存储在 ByteBuf，使用ByteBufHolder 是一个好主意。</p><h2 id=bytebuf-分配>ByteBuf 分配</h2><p>本节介绍 ByteBuf 实例管理的几种方式：</p><h3 id=bytebufallocator>ByteBufAllocator</h3><p>为了减少分配和释放内存的开销，Netty 通过支持池类 ByteBufAllocator，可用于分配的任何 ByteBuf 我们已经描述过的类型的实例。是否使用池是由应用程序决定的，表5.8列出了 ByteBufAllocator 提供的操作。</p><p>Table 5.8 ByteBufAllocator methods</p><table>
 <thead>
 <tr>
-<th>名称</th>
-<th>描述</th>
-</tr>
-</thead>
-<tbody>
+<th>名称</th><th>描述</th></tr></thead><tbody>
 <tr>
-<td>buffer() buffer(int) buffer(int, int)</td>
-<td>Return a ByteBuf with heap-based or direct data storage.</td>
-</tr>
-<tr>
-<td>heapBuffer() heapBuffer(int) heapBuffer(int, int)</td>
-<td>Return a ByteBuf with heap-based storage.</td>
-</tr>
-<tr>
-<td>directBuffer() directBuffer(int) directBuffer(int, int)</td>
-<td>Return a ByteBuf with direct storage.</td>
-</tr>
-<tr>
-<td>compositeBuffer() compositeBuffer(int) heapCompositeBuffer() heapCompositeBuffer(int) directCompositeBuffer()directCompositeBuffer(int)</td>
-<td>Return a CompositeByteBuf that can be expanded by adding heapbased or direct buffers.</td>
-</tr>
-<tr>
-<td>ioBuffer()</td>
-<td>Return a ByteBuf that will be used for I/O operations on a socket.</td>
-</tr>
-</tbody>
-</table>
-<p>通过一些方法接受整型参数允许用户指定 ByteBuf 的初始和最大容量值。你可能还记得，ByteBuf 存储可以扩大到其最大容量。</p>
-<p>得到一个 ByteBufAllocator 的引用很简单。你可以得到从 Channel （在理论上，每 Channel 可具有不同的 ByteBufAllocator ），或通过绑定到的 ChannelHandler 的 ChannelHandlerContext 得到它，用它实现了你数据处理逻辑。</p>
-<p>下面的列表说明获得 ByteBufAllocator 的两种方式。</p>
-<p>Listing 5.15 Obtain ByteBufAllocator reference</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#000>Channel</span> <span style=color:#000>channel</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>...;</span>
-<span style=color:#000>ByteBufAllocator</span> <span style=color:#000>allocator</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>channel</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>alloc</span><span style=color:#ce5c00;font-weight:700>();</span> <span style=color:#8f5902;font-style:italic>//1
-</span><span style=color:#8f5902;font-style:italic></span><span style=color:#ce5c00;font-weight:700>....</span>
-<span style=color:#000>ChannelHandlerContext</span> <span style=color:#000>ctx</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>...;</span>
-<span style=color:#000>ByteBufAllocator</span> <span style=color:#000>allocator2</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>ctx</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>alloc</span><span style=color:#ce5c00;font-weight:700>();</span> <span style=color:#8f5902;font-style:italic>//2
-</span><span style=color:#8f5902;font-style:italic></span><span style=color:#ce5c00;font-weight:700>...</span>
-</code></pre></div><p>1.从 channel 获得 ByteBufAllocator</p>
-<p>2.从 ChannelHandlerContext 获得 ByteBufAllocator</p>
-<p>Netty 提供了两种 ByteBufAllocator 的实现，一种是 PooledByteBufAllocator,用ByteBuf 实例池改进性能以及内存使用降到最低，此实现使用一个“<a href=https://people.freebsd.org/~jasone/jemalloc/bsdcan2006/jemalloc.pdf>jemalloc</a>”内存分配。其他的实现不池化 ByteBuf 情况下，每次返回一个新的实例。</p>
-<p>Netty 默认使用 PooledByteBufAllocator，我们可以通过 ChannelConfig 或通过引导设置一个不同的实现来改变。更多细节在后面讲述 ，见 [Chapter 9, &ldquo;Bootstrapping Netty Applications&rdquo;](<a href=https://waylau.com/essential-netty-in-action/CORE>https://waylau.com/essential-netty-in-action/CORE</a> FUNCTIONS/Bootstrapping.html)</p>
-<h3 id=unpooled-非池化缓存>Unpooled （非池化）缓存</h3>
-<p>当未引用 ByteBufAllocator 时，上面的方法无法访问到 ByteBuf。对于这个用例 Netty 提供一个实用工具类称为 Unpooled,，它提供了静态辅助方法来创建非池化的 ByteBuf 实例。表5.9列出了最重要的方法</p>
-<p>Table 5.9 Unpooled helper class</p>
-<table>
+<td>buffer() buffer(int) buffer(int, int)</td><td>Return a ByteBuf with heap-based or direct data storage.</td></tr><tr>
+<td>heapBuffer() heapBuffer(int) heapBuffer(int, int)</td><td>Return a ByteBuf with heap-based storage.</td></tr><tr>
+<td>directBuffer() directBuffer(int) directBuffer(int, int)</td><td>Return a ByteBuf with direct storage.</td></tr><tr>
+<td>compositeBuffer() compositeBuffer(int) heapCompositeBuffer() heapCompositeBuffer(int) directCompositeBuffer()directCompositeBuffer(int)</td><td>Return a CompositeByteBuf that can be expanded by adding heapbased or direct buffers.</td></tr><tr>
+<td>ioBuffer()</td><td>Return a ByteBuf that will be used for I/O operations on a socket.</td></tr></tbody></table><p>通过一些方法接受整型参数允许用户指定 ByteBuf 的初始和最大容量值。你可能还记得，ByteBuf 存储可以扩大到其最大容量。</p><p>得到一个 ByteBufAllocator 的引用很简单。你可以得到从 Channel （在理论上，每 Channel 可具有不同的 ByteBufAllocator ），或通过绑定到的 ChannelHandler 的 ChannelHandlerContext 得到它，用它实现了你数据处理逻辑。</p><p>下面的列表说明获得 ByteBufAllocator 的两种方式。</p><p>Listing 5.15 Obtain ByteBufAllocator reference</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=display:flex><span><span style=color:#000>Channel</span> <span style=color:#000>channel</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>...;</span>
+</span></span><span style=display:flex><span><span style=color:#000>ByteBufAllocator</span> <span style=color:#000>allocator</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>channel</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>alloc</span><span style=color:#ce5c00;font-weight:700>();</span> <span style=color:#8f5902;font-style:italic>//1
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic></span><span style=color:#ce5c00;font-weight:700>....</span>
+</span></span><span style=display:flex><span><span style=color:#000>ChannelHandlerContext</span> <span style=color:#000>ctx</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>...;</span>
+</span></span><span style=display:flex><span><span style=color:#000>ByteBufAllocator</span> <span style=color:#000>allocator2</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>ctx</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>alloc</span><span style=color:#ce5c00;font-weight:700>();</span> <span style=color:#8f5902;font-style:italic>//2
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic></span><span style=color:#ce5c00;font-weight:700>...</span>
+</span></span></code></pre></div><p>1.从 channel 获得 ByteBufAllocator</p><p>2.从 ChannelHandlerContext 获得 ByteBufAllocator</p><p>Netty 提供了两种 ByteBufAllocator 的实现，一种是 PooledByteBufAllocator,用ByteBuf 实例池改进性能以及内存使用降到最低，此实现使用一个“<a href=https://people.freebsd.org/~jasone/jemalloc/bsdcan2006/jemalloc.pdf>jemalloc</a>”内存分配。其他的实现不池化 ByteBuf 情况下，每次返回一个新的实例。</p><p>Netty 默认使用 PooledByteBufAllocator，我们可以通过 ChannelConfig 或通过引导设置一个不同的实现来改变。更多细节在后面讲述 ，见 [Chapter 9, &ldquo;Bootstrapping Netty Applications&rdquo;](<a href=https://waylau.com/essential-netty-in-action/CORE>https://waylau.com/essential-netty-in-action/CORE</a> FUNCTIONS/Bootstrapping.html)</p><h3 id=unpooled-非池化缓存>Unpooled （非池化）缓存</h3><p>当未引用 ByteBufAllocator 时，上面的方法无法访问到 ByteBuf。对于这个用例 Netty 提供一个实用工具类称为 Unpooled,，它提供了静态辅助方法来创建非池化的 ByteBuf 实例。表5.9列出了最重要的方法</p><p>Table 5.9 Unpooled helper class</p><table>
 <thead>
 <tr>
-<th>名称</th>
-<th>描述</th>
-</tr>
-</thead>
-<tbody>
+<th>名称</th><th>描述</th></tr></thead><tbody>
 <tr>
-<td>buffer() buffer(int) buffer(int, int)</td>
-<td>Returns an unpooled ByteBuf with heap-based storage</td>
-</tr>
-<tr>
-<td>directBuffer() directBuffer(int) directBuffer(int, int)</td>
-<td>Returns an unpooled ByteBuf with direct storage</td>
-</tr>
-<tr>
-<td>wrappedBuffer()</td>
-<td>Returns a ByteBuf, which wraps the given data.</td>
-</tr>
-<tr>
-<td>copiedBuffer()</td>
-<td>Returns a ByteBuf, which copies the given data</td>
-</tr>
-</tbody>
-</table>
-<p>在 非联网项目，该 Unpooled 类也使得它更容易使用的 ByteBuf API，获得一个高性能的可扩展缓冲 API，而不需要 Netty 的其他部分的。</p>
-<h3 id=bytebufutil>ByteBufUtil</h3>
-<p>ByteBufUtil 静态辅助方法来操作 ByteBuf，因为这个 API 是通用的，与使用池无关，这些方法已经在外面的分配类实现。</p>
-<p>也许最有价值的是 hexDump() 方法，这个方法返回指定 ByteBuf 中可读字节的十六进制字符串，可以用于调试程序时打印 ByteBuf 的内容。一个典型的用途是记录一个 ByteBuf 的内容进行调试。十六进制字符串相比字节而言对用户更友好。 而且十六进制版本可以很容易地转换回实际字节表示。</p>
-<p>另一个有用方法是 使用 boolean equals(ByteBuf, ByteBuf),用来比较 ByteBuf 实例是否相等。在 实现自己 ByteBuf 的子类时经常用到。</p>
-<h2 id=引用计数器>引用计数器</h2>
-<p>Netty 4 引入了 引用计数器给 ByteBuf 和 ByteBufHolder（两者都实现了 ReferenceCounted 接口）</p>
-<p>引用计数本身并不复杂;它在特定的对象上跟踪引用的数目。实现了ReferenceCounted 的类的实例会通常开始于一个活动的引用计数器为 1。活动的引用计数器大于0的对象被保证不被释放。当数量引用减少到0，该实例将被释放。需要注意的是“释放”的语义是特定于具体的实现。最起码，一个对象，它已被释放应不再可用。</p>
-<p>这种技术就是诸如 PooledByteBufAllocator 这种减少内存分配开销的池化的精髓部分。</p>
-<p>Listing 5.16 Reference counting</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#000>Channel</span> <span style=color:#000>channel</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>...;</span>
-<span style=color:#000>ByteBufAllocator</span> <span style=color:#000>allocator</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>channel</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>alloc</span><span style=color:#ce5c00;font-weight:700>();</span> <span style=color:#8f5902;font-style:italic>//1
-</span><span style=color:#8f5902;font-style:italic></span><span style=color:#ce5c00;font-weight:700>....</span>
-<span style=color:#000>ByteBuf</span> <span style=color:#000>buffer</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>allocator</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>directBuffer</span><span style=color:#ce5c00;font-weight:700>();</span> <span style=color:#8f5902;font-style:italic>//2
-</span><span style=color:#8f5902;font-style:italic></span><span style=color:#204a87;font-weight:700>assert</span> <span style=color:#000>buffer</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>refCnt</span><span style=color:#ce5c00;font-weight:700>()</span> <span style=color:#ce5c00;font-weight:700>==</span> <span style=color:#000>1</span><span style=color:#ce5c00;font-weight:700>;</span> <span style=color:#8f5902;font-style:italic>//3
-</span><span style=color:#8f5902;font-style:italic></span><span style=color:#ce5c00;font-weight:700>...</span>
-</code></pre></div><p>1.从 channel 获取 ByteBufAllocator</p>
-<p>2.从 ByteBufAllocator 分配一个 ByteBuf</p>
-<p>3.检查引用计数器是否是 1</p>
-<p>Listing 5.17 Release reference counted object</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>ByteBuf buffer = ...;
-boolean released = buffer.release(); //1
-...
-</code></pre></div><p>1.release（）将会递减对象引用的数目。当这个引用计数达到0时，对象已被释放，并且该方法返回 true。</p>
-<p>如果尝试访问已经释放的对象，将会抛出 IllegalReferenceCountException 异常。</p>
-<p>需要注意的是一个特定的类可以定义自己独特的方式其释放计数的“规则”。 例如，release() 可以将引用计数器直接计为 0 而不管当前引用的对象数目。</p>
-<p><em>谁负责 release？</em></p>
-<p><em>在一般情况下，最后访问的对象负责释放它。在第6章我们会解释 ChannelHandler 和 ChannelPipeline 的相关概念。</em></p>
-<h2 id=总结>总结</h2>
-<p>这一章专门讨论了 Netty 基于 ByteBuf 的数据容器。我们开始说明了Netty 比 JDK 更多的优点。我们还突出适合具体情况的 API 的可用变型。</p>
-<p>在下一章中，重点是 ChannelHandler，它提供了数据处理逻辑的载体。 ChannelHandler 大量使用了 ByteBuf。</p>
-<style>.feedback--answer{display:inline-block}.feedback--answer-no{margin-left:1em}.feedback--response{display:none;margin-top:1em}.feedback--response__visible{display:block}</style>
-<div class=d-print-none>
-<h2 class=feedback--title>Feedback</h2>
-<p class=feedback--question>Was this page helpful?</p>
-<button class="btn btn-primary mb-4 feedback--answer feedback--answer-yes">Yes</button>
+<td>buffer() buffer(int) buffer(int, int)</td><td>Returns an unpooled ByteBuf with heap-based storage</td></tr><tr>
+<td>directBuffer() directBuffer(int) directBuffer(int, int)</td><td>Returns an unpooled ByteBuf with direct storage</td></tr><tr>
+<td>wrappedBuffer()</td><td>Returns a ByteBuf, which wraps the given data.</td></tr><tr>
+<td>copiedBuffer()</td><td>Returns a ByteBuf, which copies the given data</td></tr></tbody></table><p>在 非联网项目，该 Unpooled 类也使得它更容易使用的 ByteBuf API，获得一个高性能的可扩展缓冲 API，而不需要 Netty 的其他部分的。</p><h3 id=bytebufutil>ByteBufUtil</h3><p>ByteBufUtil 静态辅助方法来操作 ByteBuf，因为这个 API 是通用的，与使用池无关，这些方法已经在外面的分配类实现。</p><p>也许最有价值的是 hexDump() 方法，这个方法返回指定 ByteBuf 中可读字节的十六进制字符串，可以用于调试程序时打印 ByteBuf 的内容。一个典型的用途是记录一个 ByteBuf 的内容进行调试。十六进制字符串相比字节而言对用户更友好。 而且十六进制版本可以很容易地转换回实际字节表示。</p><p>另一个有用方法是 使用 boolean equals(ByteBuf, ByteBuf),用来比较 ByteBuf 实例是否相等。在 实现自己 ByteBuf 的子类时经常用到。</p><h2 id=引用计数器>引用计数器</h2><p>Netty 4 引入了 引用计数器给 ByteBuf 和 ByteBufHolder（两者都实现了 ReferenceCounted 接口）</p><p>引用计数本身并不复杂;它在特定的对象上跟踪引用的数目。实现了ReferenceCounted 的类的实例会通常开始于一个活动的引用计数器为 1。活动的引用计数器大于0的对象被保证不被释放。当数量引用减少到0，该实例将被释放。需要注意的是“释放”的语义是特定于具体的实现。最起码，一个对象，它已被释放应不再可用。</p><p>这种技术就是诸如 PooledByteBufAllocator 这种减少内存分配开销的池化的精髓部分。</p><p>Listing 5.16 Reference counting</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=display:flex><span><span style=color:#000>Channel</span> <span style=color:#000>channel</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>...;</span>
+</span></span><span style=display:flex><span><span style=color:#000>ByteBufAllocator</span> <span style=color:#000>allocator</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>channel</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>alloc</span><span style=color:#ce5c00;font-weight:700>();</span> <span style=color:#8f5902;font-style:italic>//1
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic></span><span style=color:#ce5c00;font-weight:700>....</span>
+</span></span><span style=display:flex><span><span style=color:#000>ByteBuf</span> <span style=color:#000>buffer</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>allocator</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>directBuffer</span><span style=color:#ce5c00;font-weight:700>();</span> <span style=color:#8f5902;font-style:italic>//2
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic></span><span style=color:#204a87;font-weight:700>assert</span> <span style=color:#000>buffer</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>refCnt</span><span style=color:#ce5c00;font-weight:700>()</span> <span style=color:#ce5c00;font-weight:700>==</span> <span style=color:#000>1</span><span style=color:#ce5c00;font-weight:700>;</span> <span style=color:#8f5902;font-style:italic>//3
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic></span><span style=color:#ce5c00;font-weight:700>...</span>
+</span></span></code></pre></div><p>1.从 channel 获取 ByteBufAllocator</p><p>2.从 ByteBufAllocator 分配一个 ByteBuf</p><p>3.检查引用计数器是否是 1</p><p>Listing 5.17 Release reference counted object</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback><span style=display:flex><span>ByteBuf buffer = ...;
+</span></span><span style=display:flex><span>boolean released = buffer.release(); //1
+</span></span><span style=display:flex><span>...
+</span></span></code></pre></div><p>1.release（）将会递减对象引用的数目。当这个引用计数达到0时，对象已被释放，并且该方法返回 true。</p><p>如果尝试访问已经释放的对象，将会抛出 IllegalReferenceCountException 异常。</p><p>需要注意的是一个特定的类可以定义自己独特的方式其释放计数的“规则”。 例如，release() 可以将引用计数器直接计为 0 而不管当前引用的对象数目。</p><p><em>谁负责 release？</em></p><p><em>在一般情况下，最后访问的对象负责释放它。在第6章我们会解释 ChannelHandler 和 ChannelPipeline 的相关概念。</em></p><h2 id=总结>总结</h2><p>这一章专门讨论了 Netty 基于 ByteBuf 的数据容器。我们开始说明了Netty 比 JDK 更多的优点。我们还突出适合具体情况的 API 的可用变型。</p><p>在下一章中，重点是 ChannelHandler，它提供了数据处理逻辑的载体。 ChannelHandler 大量使用了 ByteBuf。</p><style>.feedback--answer{display:inline-block}.feedback--answer-no{margin-left:1em}.feedback--response{display:none;margin-top:1em}.feedback--response__visible{display:block}</style><div class=d-print-none>
+<h2 class=feedback--title>Feedback</h2><p class=feedback--question>Was this page helpful?</p><button class="btn btn-primary mb-4 feedback--answer feedback--answer-yes">Yes</button>
 <button class="btn btn-primary mb-4 feedback--answer feedback--answer-no">No</button>
 <p class="feedback--response feedback--response-yes">
 Glad to hear it! Please <a href=https://github.com/infilos/infilos.com/issues/new>tell us how we can improve</a>.
-</p>
-<p class="feedback--response feedback--response-no">
+</p><p class="feedback--response feedback--response-no">
 Sorry to hear that. Please <a href=https://github.com/infilos/infilos.com/issues/new>tell us how we can improve</a>.
-</p>
-</div>
-<script>const yesButton=document.querySelector('.feedback--answer-yes'),noButton=document.querySelector('.feedback--answer-no'),yesResponse=document.querySelector('.feedback--response-yes'),noResponse=document.querySelector('.feedback--response-no'),disableButtons=()=>{yesButton.disabled=!0,noButton.disabled=!0},sendFeedback=b=>{if(typeof ga!='function')return;const a={command:'send',hitType:'event',category:'Helpful',action:'click',label:window.location.pathname,value:b};ga(a.command,a.hitType,a.category,a.action,a.label,a.value)};yesButton.addEventListener('click',()=>{yesResponse.classList.add('feedback--response__visible'),disableButtons(),sendFeedback(1)}),noButton.addEventListener('click',()=>{noResponse.classList.add('feedback--response__visible'),disableButtons(),sendFeedback(0)})</script>
+</p></div><script>const yesButton=document.querySelector(".feedback--answer-yes"),noButton=document.querySelector(".feedback--answer-no"),yesResponse=document.querySelector(".feedback--response-yes"),noResponse=document.querySelector(".feedback--response-no"),disableButtons=()=>{yesButton.disabled=!0,noButton.disabled=!0},sendFeedback=t=>{if(typeof ga!="function")return;const e={command:"send",hitType:"event",category:"Helpful",action:"click",label:window.location.pathname,value:t};ga(e.command,e.hitType,e.category,e.action,e.label,e.value)};yesButton.addEventListener("click",()=>{yesResponse.classList.add("feedback--response__visible"),disableButtons(),sendFeedback(1)}),noButton.addEventListener("click",()=>{noResponse.classList.add("feedback--response__visible"),disableButtons(),sendFeedback(0)})</script>
 <br>
-</div>
-</main>
-</div>
-</div>
-<footer class="bg-dark py-5 row d-print-none">
+</div></main></div></div><footer class="bg-dark py-5 row d-print-none">
 <div class="container-fluid mx-sm-5">
 <div class=row>
 <div class="col-6 col-sm-4 text-xs-center order-sm-2">
-</div>
-<div class="col-6 col-sm-4 text-right text-xs-center order-sm-3">
+</div><div class="col-6 col-sm-4 text-right text-xs-center order-sm-3">
 <ul class="list-inline mb-0">
 <li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Weibo aria-label=Weibo>
 <a class=text-white target=_blank rel="noopener noreferrer" href=https://weibo.com/u/3848950217>
 <i class="fab fa-weibo"></i>
 </a>
-</li>
-<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Twitter aria-label=Twitter>
+</li><li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Twitter aria-label=Twitter>
 <a class=text-white target=_blank rel="noopener noreferrer" href=https://twitter.com/zhange_zzg>
 <i class="fab fa-twitter"></i>
 </a>
-</li>
-<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title="Stack Overflow" aria-label="Stack Overflow">
+</li><li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title="Stack Overflow" aria-label="Stack Overflow">
 <a class=text-white target=_blank rel="noopener noreferrer" href=https://stackoverflow.com>
 <i class="fab fa-stack-overflow"></i>
 </a>
-</li>
-<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=GitHub aria-label=GitHub>
+</li><li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=GitHub aria-label=GitHub>
 <a class=text-white target=_blank rel="noopener noreferrer" href=https://github.com/infilos/infilos.com>
 <i class="fab fa-github"></i>
 </a>
-</li>
-</ul>
-</div>
-<div class="col-12 col-sm-4 text-center py-2 order-sm-2">
+</li></ul></div><div class="col-12 col-sm-4 text-center py-2 order-sm-2">
 <small class=text-white>&copy; 2022 infilos.com All Rights Reserved</small>
-</div>
-</div>
-</div>
-</footer>
-</div>
-<script src=/js/popper.min.js integrity=sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49 crossorigin=anonymous></script>
+</div></div></div></footer></div><script src=/js/popper.min.js integrity=sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49 crossorigin=anonymous></script>
 <script src=/js/bootstrap.min.js integrity=sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy crossorigin=anonymous></script>
-<script src=/js/main.min.5c74b870c6953931a705f390a49c7e4c0a842ec5c83b24354758dd674343ed0d.js integrity="sha256-XHS4cMaVOTGnBfOQpJx+TAqELsXIOyQ1R1jdZ0ND7Q0=" crossorigin=anonymous></script>
-</body>
-</html>
+<script src=/js/main.min.3f3f4f1e22307ccbb13271a98be2e4dbb8386b7e67c3d606db44d3d0649f485e.js integrity="sha256-Pz9PHiIwfMuxMnGpi+Lk27g4a35nw9YG20TT0GSfSF4=" crossorigin=anonymous></script>
+</body></html>

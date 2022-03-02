@@ -2,7 +2,7 @@
 <head>
 <meta charset=utf-8>
 <meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no">
-<meta name=generator content="Hugo 0.92.2">
+<meta name=generator content="Hugo 0.93.0">
 <meta name=ROBOTS content="INDEX, FOLLOW">
 <link rel="shortcut icon" href=/favicons/favicon.ico>
 <link rel=apple-touch-icon href=/favicons/apple-touch-icon-180x180.png sizes=180x180>
@@ -49,45 +49,43 @@
  断点续传 断点续传或者说是断点恢复复制，也就是说 slave 因为某种原因与master断开连接了一段时间，然后又与master发生重连。redis2.8以后对于这种场景进行了优化，开始加入了PSYNC同步策略。这种策略性能一定是大于全量复制的。
  从服务器向主服务器发送PSYNC命令，携带主服务器的runid和复制偏移量； 主服务器验证runid和自身runid是否一致，如不一致，则进行全量复制； 主服务器验证复制偏移量是否在积压缓冲区内，如不在，则进行全量复制； 如都验证通过，则主服务器将保持在积压区内的偏移量后的所有数据发送给从服务器，主从服务器再次回到一致状态。   PSYNC 核心参数 断点续传的几个核心参数，offset、backlog、runid。这三个参数在 PSYNC 中起到了至关重要的作用，下面我们来一一介绍一下。
  offet复制偏移量 , offset是用来记录master和lslave某个时段的数据版本状态的，slave每秒会向master上报offset，master保存下来，当触发 PSYNC 时再拿来和master的offset数据作对比。说白了，它就是记录数据在某一时刻的快照，用来对比 master 和 slave 数据差异用的。 backlog积压缓冲区  这个也是一个非常核心的参数，它默认大小为1mb，复制积压缓冲区是由Master维护的一个固定长度的FIFO队列，它的作用是缓存已经传播出去的命令。当Master进行命令传播时，不仅将命令发送给所有Slave，还会将命令写入到复制积压缓冲区里面。 全量复制的时候，master的数据更新（读写操作，主动过期删除等）会临时存放在backlog中待全量复制完成后增量发到slave，必须为此保留足够的空间。 断点续传时，backlog会存下slave断开连接后，master变更的数据。当然由于它大小有限制，而且先进先出特性，所以达到缓冲大小后会弹出老数据。这样，就可以把它作为一个衡量执行sync还是psync的一个标准（backlog = offset : 部分同步，backlog < offset 执行全量同步）。一般为了避免，大规模全量复制，我们都会给一个恰当的值，根据公式second*write_size_per_second来估算：其中second为从服务器断线后重新连接上主服务器所需的平均时间（以秒计算）；而write_size_per_second则是主服务器平均每秒产生的写命令数据量（协议格式的写命令的长度总和）；   master run id, master唯一标示，slave连接master时会传runid，master每次重启runid都发生变化，当slave发现master的runid变化时都会触发全量复制流程。  优缺点 优点：">
-<script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga('create','UA-123062585-1','auto'),ga('send','pageview'))</script>
+<script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga("create","UA-123062585-1","auto"),ga("send","pageview"))</script>
 <script async src=https://www.google-analytics.com/analytics.js></script>
 <link rel=preload href=/scss/main.min.847464b684a6e89d7276700a5c500c17ab494dd1755b2654a7b27d8b59e3347e.css as=style>
 <link href=/scss/main.min.847464b684a6e89d7276700a5c500c17ab494dd1755b2654a7b27d8b59e3347e.css rel=stylesheet integrity>
 <script src=/js/jquery-3.5.1.min.js integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin=anonymous></script>
-</head>
-<body class=td-page>
+</head><body class=td-page>
 <header>
-<nav class="js-navbar-scroll navbar navbar-expand navbar-dark flex-column flex-md-row td-navbar">
+<nav class="js-navbar-scroll navbar navbar-expand-lg navbar-dark td-navbar">
 <a class=navbar-brand href=/>
-<span class=navbar-logo><svg id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512" style="enable-background:new 0 0 512 512"><path style="fill:#ffc107" d="M432.384 143.616c-4.165-4.164-10.917-4.164-15.083.0l-60.352 60.352c-4.164 4.165-4.164 10.917.0 15.083 21.187 20.463 54.951 19.876 75.413-1.311 19.962-20.668 19.962-53.435.0-74.102L432.384 143.616z"/><path style="fill:#607d8b" d="M42.667 277.334c-5.891.003-10.669-4.771-10.672-10.662-.002-4.338 2.623-8.245 6.64-9.882l234.667-96c5.455-2.233 11.687.38 13.92 5.835s-.38 11.687-5.835 13.92l-234.667 96C45.433 277.069 44.056 277.337 42.667 277.334z"/><path style="fill:#546e7a" d="M391.552 56.448l-32-32C343.938 8.745 322.689-.059 300.544.0h-3.755c-46.082.024-83.432 37.374-83.456 83.456v3.755c-.053 22.138 8.75 43.377 24.448 58.987l32 32c4.165 4.164 10.917 4.164 15.083.0L391.531 71.531C395.701 67.372 395.71 60.62 391.552 56.448z"/><path style="fill:#607d8b" d="M160 469.334c-3.279.006-6.379-1.497-8.405-4.075L34.261 315.926c-3.635-4.636-2.823-11.341 1.813-14.976s11.341-2.823 14.976 1.813l117.333 149.333c3.629 4.641 2.809 11.344-1.832 14.973C164.681 468.533 162.375 469.329 160 469.334z"/><path style="fill:#455a64" d="M487.467 86.848l-3.669-3.648c-37.687-36.557-97.71-36.197-134.955.811l-51.413 51.413c-36.996 37.25-37.357 97.263-.811 134.955l3.584 3.669c1.7 2.457 4.671 3.706 7.616 3.2 2.831.005 5.548-1.115 7.552-3.115l172.181-172.181c4.189-4.143 4.226-10.896.083-15.085-.028-.028-.055-.056-.083-.083L487.467 86.848z"/><g><path style="fill:#ffc107" d="M501.333 192H480c-5.891.0-10.667-4.776-10.667-10.667s4.776-10.667 10.667-10.667h21.333c5.891.0 10.667 4.776 10.667 10.667S507.225 192 501.333 192z"/><path style="fill:#ffc107" d="M394.667 298.667c-5.891.0-10.667-4.776-10.667-10.667v-21.333c0-5.891 4.776-10.667 10.667-10.667 5.891.0 10.667 4.776 10.667 10.667V288C405.333 293.891 400.558 298.667 394.667 298.667z"/><path style="fill:#ffc107" d="M480 277.334c-2.831.005-5.548-1.115-7.552-3.115l-21.333-21.333c-4.093-4.237-3.975-10.99.262-15.083 4.134-3.993 10.687-3.993 14.821.0l21.333 21.333c4.159 4.172 4.148 10.926-.024 15.085C485.514 276.209 482.815 277.327 480 277.334z"/></g><g><path style="fill:#455a64" d="M266.667 448H96c-29.455.0-53.333 23.878-53.333 53.333.0 5.891 4.776 10.667 10.667 10.667h256c5.891.0 10.667-4.776 10.667-10.667C320 471.878 296.122 448 266.667 448z"/><circle style="fill:#455a64" cx="32" cy="288" r="32"/></g><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/></svg></span><span class=font-weight-bold>infilos.com</span>
+<span class=navbar-logo><svg id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512" style="enable-background:new 0 0 512 512"><path style="fill:#ffc107" d="M432.384 143.616c-4.165-4.164-10.917-4.164-15.083.0l-60.352 60.352c-4.164 4.165-4.164 10.917.0 15.083 21.187 20.463 54.951 19.876 75.413-1.311 19.962-20.668 19.962-53.435.0-74.102L432.384 143.616z"/><path style="fill:#607d8b" d="M42.667 277.334c-5.891.003-10.669-4.771-10.672-10.662-.002-4.338 2.623-8.245 6.64-9.882l234.667-96c5.455-2.233 11.687.38 13.92 5.835s-.38 11.687-5.835 13.92l-234.667 96C45.433 277.069 44.056 277.337 42.667 277.334z"/><path style="fill:#546e7a" d="M391.552 56.448l-32-32C343.938 8.745 322.689-.059 300.544.0h-3.755c-46.082.024-83.432 37.374-83.456 83.456v3.755c-.053 22.138 8.75 43.377 24.448 58.987l32 32c4.165 4.164 10.917 4.164 15.083.0L391.531 71.531C395.701 67.372 395.71 60.62 391.552 56.448z"/><path style="fill:#607d8b" d="M160 469.334c-3.279.006-6.379-1.497-8.405-4.075L34.261 315.926c-3.635-4.636-2.823-11.341 1.813-14.976s11.341-2.823 14.976 1.813l117.333 149.333c3.629 4.641 2.809 11.344-1.832 14.973C164.681 468.533 162.375 469.329 160 469.334z"/><path style="fill:#455a64" d="M487.467 86.848l-3.669-3.648c-37.687-36.557-97.71-36.197-134.955.811l-51.413 51.413c-36.996 37.25-37.357 97.263-.811 134.955l3.584 3.669c1.7 2.457 4.671 3.706 7.616 3.2 2.831.005 5.548-1.115 7.552-3.115l172.181-172.181c4.189-4.143 4.226-10.896.083-15.085-.028-.028-.055-.056-.083-.083L487.467 86.848z"/><g><path style="fill:#ffc107" d="M501.333 192H480c-5.891.0-10.667-4.776-10.667-10.667s4.776-10.667 10.667-10.667h21.333c5.891.0 10.667 4.776 10.667 10.667S507.225 192 501.333 192z"/><path style="fill:#ffc107" d="M394.667 298.667c-5.891.0-10.667-4.776-10.667-10.667v-21.333c0-5.891 4.776-10.667 10.667-10.667 5.891.0 10.667 4.776 10.667 10.667V288C405.333 293.891 400.558 298.667 394.667 298.667z"/><path style="fill:#ffc107" d="M480 277.334c-2.831.005-5.548-1.115-7.552-3.115l-21.333-21.333c-4.093-4.237-3.975-10.99.262-15.083 4.134-3.993 10.687-3.993 14.821.0l21.333 21.333c4.159 4.172 4.148 10.926-.024 15.085C485.514 276.209 482.815 277.327 480 277.334z"/></g><g><path style="fill:#455a64" d="M266.667 448H96c-29.455.0-53.333 23.878-53.333 53.333.0 5.891 4.776 10.667 10.667 10.667h256c5.891.0 10.667-4.776 10.667-10.667C320 471.878 296.122 448 266.667 448z"/><circle style="fill:#455a64" cx="32" cy="288" r="32"/></g><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/></svg></span>
+<span class=font-weight-bold>infilos.com</span>
 </a>
+<button class=navbar-toggler type=button data-toggle=collapse data-target=#navbarSupportedContent aria-controls=navbarSupportedContent aria-expanded=false aria-label="Toggle navigation">
+<span class=navbar-toggler-icon></span>
+</button>
 <div class="collapse navbar-collapse" id=navbarSupportedContent>
 <ul class="navbar-nav mr-auto">
 <li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86>
 <span>基础</span>
 </a>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80>
 <span>语言</span>
 </a>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93>
 <span>框架库</span>
 </a>
-</li>
-<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+</li><li class="nav-item dropdown" style=max-width:90px;min-width:10px>
 <a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
 分布式
 <span>+</span>
 </a>
 <div class=dropdown-menu aria-labelledby=navbarDropdown>
 <a class=dropdown-item href=/%e5%88%86%e5%b8%83%e5%bc%8f/base>基本构成</a>
-</div>
-</li>
-<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+</div></li><li class="nav-item dropdown" style=max-width:90px;min-width:10px>
 <a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
 大数据
 <span>+</span>
@@ -98,9 +96,7 @@
 <a class=dropdown-item href=/%e6%b6%88%e6%81%af%e7%b3%bb%e7%bb%9f>消息系统</a>
 <a class=dropdown-item href=/%e5%a4%84%e7%90%86%e7%b3%bb%e7%bb%9f>处理系统</a>
 <a class=dropdown-item href=/%e6%95%b0%e6%8d%ae%e6%b2%bb%e7%90%86>数据治理</a>
-</div>
-</li>
-<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+</div></li><li class="nav-item dropdown" style=max-width:90px;min-width:10px>
 <a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
 中后台
 <span>+</span>
@@ -110,38 +106,26 @@
 <a class=dropdown-item href=/%e7%94%a8%e6%88%b7%e7%b3%bb%e7%bb%9f>用户系统</a>
 <a class=dropdown-item href=/%e4%ba%a4%e4%ba%92%e7%95%8c%e9%9d%a2>交互界面</a>
 <a class=dropdown-item href=/%e4%b8%9a%e5%8a%a1%e7%b3%bb%e7%bb%9f>业务系统</a>
-</div>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</div></li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e6%a8%a1%e5%bc%8f%e6%9e%b6%e6%9e%84>
 <span>模式架构</span>
 </a>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e9%9d%a2%e8%af%95%e9%97%ae%e7%ad%94>
 <span>面试</span>
 </a>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e7%ae%a1%e7%90%86%e8%b7%af%e5%be%84>
 <span>管理</span>
 </a>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e5%bc%80%e6%ba%90%e9%a1%b9%e7%9b%ae>
 <span>开源</span>
 </a>
-</li>
-</ul>
-<div class="form-inline my-2 my-lg-0">
+</li></ul><div class="form-inline my-2 my-lg-0">
 <div class="nav-item nav-search-item my-2 my-md-0">
 <input type=search class="form-control td-search-input" placeholder="&#xf002; 站内搜索…" aria-label=站内搜索… autocomplete=off>
-</div>
-</div>
-</div>
-</nav>
-</header>
-<div class="container-fluid td-outer">
+</div></div></div></nav></header><div class="container-fluid td-outer">
 <div class=td-main>
 <div class="row flex-xl-nowrap">
 <aside class="col-12 col-md-3 col-xl-2 td-sidebar d-print-none">
@@ -151,10 +135,7 @@
 <input type=search class="form-control td-search-input" placeholder="&#xf002; 站内搜索…" aria-label=站内搜索… autocomplete=off>
 <button class="btn btn-link td-sidebar__toggle d-md-none p-0 ml-3 fas fa-bars" type=button data-toggle=collapse data-target=#td-section-nav aria-controls=td-docs-nav aria-expanded=false aria-label="Toggle section navigation">
 </button>
-</form>
-</div>
-<div id=content-desktop></div>
-<nav class="collapse td-sidebar-nav" id=td-section-nav>
+</form></div><div id=content-desktop></div><nav class="collapse td-sidebar-nav" id=td-section-nav>
 <ul class="td-sidebar-nav__section pr-md-3 ul-0">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e5ad98e582a8e7b3bbe7bb9f-li>
 <a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section tree-root" id=m-e5ad98e582a8e7b3bbe7bb9f><span>存储系统</span></a>
@@ -170,9 +151,7 @@
 <a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/rdbms/ch03-%E8%AE%BE%E8%AE%A1%E6%B5%81%E7%A8%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9frdbmsch03-e8aebee8aea1e6b581e7a88b><span>CH03-设计流程</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9frdbmsch04-e6a0b8e5bf83e79fa5e8af86-li>
 <a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/rdbms/ch04-%E6%A0%B8%E5%BF%83%E7%9F%A5%E8%AF%86/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9frdbmsch04-e6a0b8e5bf83e79fa5e8af86><span>CH04-核心知识</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fjdbc-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fjdbc-li>
 <a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/jdbc/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e5ad98e582a8e7b3bbe7bb9fjdbc><span>JDBC</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e5ad98e582a8e7b3bbe7bb9fsql-li>
 <a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/sql/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e5ad98e582a8e7b3bbe7bb9fsql><span>SQL</span></a>
@@ -191,9 +170,7 @@
 <a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/sql/ch06-%E5%AD%90%E6%9F%A5%E8%AF%A2/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fsqlch06-e5ad90e69fa5e8afa2><span>CH06-子查询</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fsqlch07-e8bf90e7bbb4e8afade58fa5-li>
 <a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/sql/ch07-%E8%BF%90%E7%BB%B4%E8%AF%AD%E5%8F%A5/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fsqlch07-e8bf90e7bbb4e8afade58fa5><span>CH07-运维语句</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-li>
 <a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e5ad98e582a8e7b3bbe7bb9fmysql><span>MySQL</span></a>
 <ul class="ul-2 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch01-e695b0e68daee7b1bbe59e8b-li>
@@ -212,9 +189,7 @@
 <a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql/ch07-%E6%89%A7%E8%A1%8C%E8%BF%87%E7%A8%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch07-e689a7e8a18ce8bf87e7a88b><span>CH07-执行过程</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch08-e58f82e88083e8a784e7baa6-li>
 <a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql/ch08-%E5%8F%82%E8%80%83%E8%A7%84%E7%BA%A6/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysqlch08-e58f82e88083e8a784e7baa6><span>CH08-参考规约</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practice-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practice-li>
 <a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practice><span>MySQL 实战</span></a>
 <ul class="ul-2 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech01-li>
@@ -305,9 +280,7 @@
 <a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch43/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech43><span>CH43-分区表</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech44-li>
 <a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-practice/ch44/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-practicech44><span>CH44-问题答疑</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-internal-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-internal-li>
 <a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/mysql-internal/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e5ad98e582a8e7b3bbe7bb9fmysql-internal><span>MySQL 内幕</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e5ad98e582a8e7b3bbe7bb9fredis-li>
 <a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/redis/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e5ad98e582a8e7b3bbe7bb9fredis><span>Redis</span></a>
@@ -332,397 +305,116 @@
 <a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/redis/ch09-%E5%AE%9E%E7%8E%B0%E6%90%9C%E7%B4%A2/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fredisch09-e5ae9ee78eb0e6909ce7b4a2><span>CH09-实现搜索</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e5ad98e582a8e7b3bbe7bb9fredisch10-e5b8b8e8a781e997aee9a298-li>
 <a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/redis/ch10-%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e5ad98e582a8e7b3bbe7bb9fredisch10-e5b8b8e8a781e997aee9a298><span>CH10-常见问题</span></a>
-</li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-</nav>
-</div>
-</aside>
-<aside class="d-none d-xl-block col-xl-2 td-sidebar-toc d-print-none">
+</li></ul></li></ul></li></ul></nav></div></aside><aside class="d-none d-xl-block col-xl-2 td-sidebar-toc d-print-none">
 <div class="td-page-meta ml-2 pb-1 pt-2 mb-0">
 <a href=https://github.com/infilos/infilos.com/edit/master/content/zh/%e5%ad%98%e5%82%a8%e7%b3%bb%e7%bb%9f/redis/CH07-%e9%ab%98%e5%8f%af%e7%94%a8%e6%80%a7.md target=_blank><i class="fa fa-edit fa-fw"></i> 编辑此页</a>
 <a href="https://github.com/infilos/infilos.com/new/master/content/zh/%e5%ad%98%e5%82%a8%e7%b3%bb%e7%bb%9f/redis/CH07-%e9%ab%98%e5%8f%af%e7%94%a8%e6%80%a7.md?filename=change-me.md&value=---%0Atitle%3A+%22Long+Page+Title%22%0AlinkTitle%3A+%22Short+Nav+Title%22%0Aweight%3A+100%0Adescription%3A+%3E-%0A+++++Page+description+for+heading+and+indexes.%0A---%0A%0A%23%23+Heading%0A%0AEdit+this+template+to+create+your+new+page.%0A%0A%2A+Give+it+a+good+name%2C+ending+in+%60.md%60+-+e.g.+%60getting-started.md%60%0A%2A+Edit+the+%22front+matter%22+section+at+the+top+of+the+page+%28weight+controls+how+its+ordered+amongst+other+pages+in+the+same+directory%3B+lowest+number+first%29.%0A%2A+Add+a+good+commit+message+at+the+bottom+of+the+page+%28%3C80+characters%3B+use+the+extended+description+field+for+more+detail%29.%0A%2A+Create+a+new+branch+so+you+can+preview+your+new+file+and+request+a+review+via+Pull+Request.%0A" target=_blank><i class="fa fa-edit fa-fw"></i> 添加子页面</a>
 <a href="https://github.com/infilos/infilos.com/issues/new?title=CH07-%e9%ab%98%e5%8f%af%e7%94%a8%e6%80%a7" target=_blank><i class="fab fa-github fa-fw"></i> 提交文档问题</a>
 <a id=print href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/redis/_print/><i class="fa fa-print fa-fw"></i> 整节打印</a>
-</div>
-<div class=td-toc><nav id=TableOfContents>
+</div><div class=td-toc><nav id=TableOfContents>
 <ul>
 <li><a href=#主从复制>主从复制</a>
 <ul>
-<li><a href=#复制过程>复制过程</a></li>
-<li><a href=#增量复制>增量复制</a></li>
-<li><a href=#断点续传>断点续传</a></li>
-<li><a href=#优缺点>优缺点</a></li>
-</ul>
-</li>
-<li><a href=#redis-sentinel>Redis Sentinel</a>
+<li><a href=#复制过程>复制过程</a></li><li><a href=#增量复制>增量复制</a></li><li><a href=#断点续传>断点续传</a></li><li><a href=#优缺点>优缺点</a></li></ul></li><li><a href=#redis-sentinel>Redis Sentinel</a>
 <ul>
-<li><a href=#leader-选举>Leader 选举</a></li>
-<li><a href=#failover-过程>failover 过程</a></li>
-<li><a href=#总结>总结</a></li>
-</ul>
-</li>
-<li><a href=#redis-cluster>Redis Cluster</a>
+<li><a href=#leader-选举>Leader 选举</a></li><li><a href=#failover-过程>failover 过程</a></li><li><a href=#总结>总结</a></li></ul></li><li><a href=#redis-cluster>Redis Cluster</a>
 <ul>
-<li><a href=#集群模型>集群模型</a></li>
-<li><a href=#节点间传递信息>节点间传递信息</a></li>
-<li><a href=#hash-槽slot>Hash 槽(slot)</a></li>
-<li><a href=#容错>容错</a></li>
-<li><a href=#优缺点-1>优缺点</a></li>
-</ul>
-</li>
-<li><a href=#codis>Codis</a>
+<li><a href=#集群模型>集群模型</a></li><li><a href=#节点间传递信息>节点间传递信息</a></li><li><a href=#hash-槽slot>Hash 槽(slot)</a></li><li><a href=#容错>容错</a></li><li><a href=#优缺点-1>优缺点</a></li></ul></li><li><a href=#codis>Codis</a>
 <ul>
-<li><a href=#分片原理>分片原理</a></li>
-<li><a href=#槽位同步>槽位同步</a></li>
-<li><a href=#节点扩容>节点扩容</a></li>
-</ul>
-</li>
-</ul>
-</nav></div>
-</aside>
-<main class="col-12 col-md-9 col-xl-8 pl-md-5" role=main>
+<li><a href=#分片原理>分片原理</a></li><li><a href=#槽位同步>槽位同步</a></li><li><a href=#节点扩容>节点扩容</a></li></ul></li></ul></nav></div></aside><main class="col-12 col-md-9 col-xl-8 pl-md-5" role=main>
 <nav aria-label=breadcrumb class="d-none d-md-block d-print-none">
 <ol class="breadcrumb spb-1">
 <li class=breadcrumb-item>
 <a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/>存储系统</a>
-</li>
-<li class=breadcrumb-item>
+</li><li class=breadcrumb-item>
 <a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/redis/>Redis</a>
-</li>
-<li class="breadcrumb-item active" aria-current=page>
+</li><li class="breadcrumb-item active" aria-current=page>
 <a href=/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/redis/ch07-%E9%AB%98%E5%8F%AF%E7%94%A8%E6%80%A7/>CH07-高可用性</a>
-</li>
-</ol>
-</nav>
-<div class=td-content>
-<h1>CH07-高可用性</h1>
-<header class=article-meta>
-</header>
-<h2 id=主从复制>主从复制</h2>
-<p>Redis 主从复制模式可以将主节点的数据同步给从节点，从而保障当主节点不可达的情况下，从节点可以作为后备顶上来，并且可以保障数据尽量不丢失。主从复制可以保障最终一致性</p>
-<p>从节点可以扩展主节点的读能力，一旦主节点不能支持大规模并发量的读操作，从节点可以在一定程度上分担主节点的压力。</p>
-<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219220108.png style=display:block;margin-left:auto;margin-right:auto;width:80% alt=20220219220108></div>
-<p>主从复制面临的问题：</p>
+</li></ol></nav><div class=td-content>
+<h1>CH07-高可用性</h1><header class=article-meta>
+</header><h2 id=主从复制>主从复制</h2><p>Redis 主从复制模式可以将主节点的数据同步给从节点，从而保障当主节点不可达的情况下，从节点可以作为后备顶上来，并且可以保障数据尽量不丢失。主从复制可以保障最终一致性</p><p>从节点可以扩展主节点的读能力，一旦主节点不能支持大规模并发量的读操作，从节点可以在一定程度上分担主节点的压力。</p><div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219220108.png style=display:block;margin-left:auto;margin-right:auto;width:80% alt=20220219220108></div><p>主从复制面临的问题：</p><ol>
+<li>当主节点发生故障的时候，需要手动的将一个从节点晋升为主节点，同时通知应用方修改主节点地址并重启应用，同时需要命令其它从节点复制新的主节点，整个过程需要人工干预。</li><li>主节点的写能力受到单机的限制。</li><li>主节点的存储能力受到单机的限制。</li></ol><h3 id=复制过程>复制过程</h3><p>一般当<code>slave</code>第一次启动连接<code>master</code>，或者“被认为是第一次连接”，是主从采用全量复制。全量复制的执行流程如下：</p><ol>
+<li><code>slave redis</code>启动. 会从<code>redis.conf</code>中读取<code>master ip</code>和<code>host</code>。</li><li>定时任务每秒检查是否有新的<code>mater</code>需要连接，如果发现就与<code>master</code>建立<code>socket</code>连接。</li><li><code>slave</code>发送<code>ping</code>指令到<code>mater</code>。</li><li>如果<code>mater</code>配置<code>require pass</code>，<code>slave</code>需要发送认证给<code>master</code>。</li><li><code>Salve</code>会发送<code>sync</code>命令到<code>Master</code>。</li><li><code>Master</code>启动一个后台进程，将<code>Redis</code>中的数据快照<code>rdb</code>保存到文件中。</li><li>启动后台进程的同时，<code>Master</code>会将保存数据快照期间接收到的写命令缓存起来。</li><li><code>Master</code>完成写文件操作后，将<code>rdb</code>发送给<code>Salve</code>。</li><li><code>Salve</code>将<code>rdb</code>保存到磁盘上，然后加载<code>rdb</code>到<code>redis</code>内存中。</li><li>当<code>Salve</code>完成数据快照的恢复后，<code>aster</code>将这期间收集的写命令发送给<code>Salve</code>端。</li><li>后续<code>Master</code>收集到的写命令都会通过之前建立的连接. 增量发送给<code>salve</code>端。</li></ol><div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219220824.png style=display:block;margin-left:auto;margin-right:auto;width:80% alt=20220219220824></div><h3 id=增量复制>增量复制</h3><p>当<code>slave</code>节点与<code>master</code>全量同步后，<code>master</code>节点上数据再次发生更新，就会触发增量复制。</p><p>当我们在 <code>master</code> 服务器增减数据的时候，就会触发 <code>replicationFeedSalves()</code>函数，接下来在 <code>Master</code> 服务器上调用的每一个命令都会使用<code>replicationFeedSlaves()</code> 函数来同步到<code>Slave</code>服务器。当然，在执行此函数之前<code>master</code>服务器会判断用户执行的命令是否有数据更新，如果有数据更新并且<code>slave</code>服务器不为空，才会执行此函数，函数主要的工作就是把用户执行的命令发送到所有的 <code>slave</code>服务器，让<code>slave</code>服务器执行。
+流程如下图：</p><div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219220856.png style=display:block;margin-left:auto;margin-right:auto;width:30% alt=20220219220856></div><h3 id=断点续传>断点续传</h3><p>断点续传或者说是断点恢复复制，也就是说 slave 因为某种原因与<code>master</code>断开连接了一段时间，然后又与<code>master</code>发生重连。<code>redis2.8</code>以后对于这种场景进行了优化，开始加入了<code>PSYNC</code>同步策略。这种策略性能一定是大于全量复制的。</p><ol>
+<li>从服务器向主服务器发送<code>PSYNC</code>命令，携带主服务器的<code>runid</code>和复制偏移量；</li><li>主服务器验证<code>runid</code>和自身<code>runid</code>是否一致，如不一致，则进行全量复制；</li><li>主服务器验证复制偏移量是否在积压缓冲区内，如不在，则进行全量复制；</li><li>如都验证通过，则主服务器将保持在积压区内的偏移量后的所有数据发送给从服务器，主从服务器再次回到一致状态。</li></ol><div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219220940.png style=display:block;margin-left:auto;margin-right:auto;width:50% alt=20220219220940></div><h4 id=psync-核心参数>PSYNC 核心参数</h4><p>断点续传的几个核心参数，<code>offset</code>、<code>backlog</code>、<code>runid</code>。这三个参数在 PSYNC 中起到了至关重要的作用，下面我们来一一介绍一下。</p><ul>
+<li><code>offet</code>复制偏移量 , <code>offset</code>是用来记录<code>master</code>和<code>lslave</code>某个时段的数据版本状态的，<code>slave</code>每秒会向<code>master</code>上报<code>offset</code>，<code>master</code>保存下来，当触发 PSYNC 时再拿来和<code>master</code>的<code>offset</code>数据作对比。说白了，它就是记录数据在某一时刻的快照，用来对比 master 和 slave 数据差异用的。</li><li><code>backlog</code>积压缓冲区
 <ol>
-<li>当主节点发生故障的时候，需要手动的将一个从节点晋升为主节点，同时通知应用方修改主节点地址并重启应用，同时需要命令其它从节点复制新的主节点，整个过程需要人工干预。</li>
-<li>主节点的写能力受到单机的限制。</li>
-<li>主节点的存储能力受到单机的限制。</li>
-</ol>
-<h3 id=复制过程>复制过程</h3>
-<p>一般当<code>slave</code>第一次启动连接<code>master</code>，或者“被认为是第一次连接”，是主从采用全量复制。全量复制的执行流程如下：</p>
-<ol>
-<li><code>slave redis</code>启动. 会从<code>redis.conf</code>中读取<code>master ip</code>和<code>host</code>。</li>
-<li>定时任务每秒检查是否有新的<code>mater</code>需要连接，如果发现就与<code>master</code>建立<code>socket</code>连接。</li>
-<li><code>slave</code>发送<code>ping</code>指令到<code>mater</code>。</li>
-<li>如果<code>mater</code>配置<code>require pass</code>，<code>slave</code>需要发送认证给<code>master</code>。</li>
-<li><code>Salve</code>会发送<code>sync</code>命令到<code>Master</code>。</li>
-<li><code>Master</code>启动一个后台进程，将<code>Redis</code>中的数据快照<code>rdb</code>保存到文件中。</li>
-<li>启动后台进程的同时，<code>Master</code>会将保存数据快照期间接收到的写命令缓存起来。</li>
-<li><code>Master</code>完成写文件操作后，将<code>rdb</code>发送给<code>Salve</code>。</li>
-<li><code>Salve</code>将<code>rdb</code>保存到磁盘上，然后加载<code>rdb</code>到<code>redis</code>内存中。</li>
-<li>当<code>Salve</code>完成数据快照的恢复后，<code>aster</code>将这期间收集的写命令发送给<code>Salve</code>端。</li>
-<li>后续<code>Master</code>收集到的写命令都会通过之前建立的连接. 增量发送给<code>salve</code>端。</li>
-</ol>
-<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219220824.png style=display:block;margin-left:auto;margin-right:auto;width:80% alt=20220219220824></div>
-<h3 id=增量复制>增量复制</h3>
-<p>当<code>slave</code>节点与<code>master</code>全量同步后，<code>master</code>节点上数据再次发生更新，就会触发增量复制。</p>
-<p>当我们在 <code>master</code> 服务器增减数据的时候，就会触发 <code>replicationFeedSalves()</code>函数，接下来在 <code>Master</code> 服务器上调用的每一个命令都会使用<code>replicationFeedSlaves()</code> 函数来同步到<code>Slave</code>服务器。当然，在执行此函数之前<code>master</code>服务器会判断用户执行的命令是否有数据更新，如果有数据更新并且<code>slave</code>服务器不为空，才会执行此函数，函数主要的工作就是把用户执行的命令发送到所有的 <code>slave</code>服务器，让<code>slave</code>服务器执行。
-流程如下图：</p>
-<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219220856.png style=display:block;margin-left:auto;margin-right:auto;width:30% alt=20220219220856></div>
-<h3 id=断点续传>断点续传</h3>
-<p>断点续传或者说是断点恢复复制，也就是说 slave 因为某种原因与<code>master</code>断开连接了一段时间，然后又与<code>master</code>发生重连。<code>redis2.8</code>以后对于这种场景进行了优化，开始加入了<code>PSYNC</code>同步策略。这种策略性能一定是大于全量复制的。</p>
-<ol>
-<li>从服务器向主服务器发送<code>PSYNC</code>命令，携带主服务器的<code>runid</code>和复制偏移量；</li>
-<li>主服务器验证<code>runid</code>和自身<code>runid</code>是否一致，如不一致，则进行全量复制；</li>
-<li>主服务器验证复制偏移量是否在积压缓冲区内，如不在，则进行全量复制；</li>
-<li>如都验证通过，则主服务器将保持在积压区内的偏移量后的所有数据发送给从服务器，主从服务器再次回到一致状态。</li>
-</ol>
-<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219220940.png style=display:block;margin-left:auto;margin-right:auto;width:50% alt=20220219220940></div>
-<h4 id=psync-核心参数>PSYNC 核心参数</h4>
-<p>断点续传的几个核心参数，<code>offset</code>、<code>backlog</code>、<code>runid</code>。这三个参数在 PSYNC 中起到了至关重要的作用，下面我们来一一介绍一下。</p>
+<li>这个也是一个非常核心的参数，它默认大小为<code>1mb</code>，复制积压缓冲区是由<code>Master</code>维护的一个固定长度的<code>FIFO</code>队列，它的作用是缓存已经传播出去的命令。当<code>Master</code>进行命令传播时，不仅将命令发送给所有<code>Slave</code>，还会将命令写入到复制积压缓冲区里面。</li><li>全量复制的时候，<code>master</code>的数据更新（读写操作，主动过期删除等）会临时存放在<code>backlog</code>中待全量复制完成后增量发到slave，必须为此保留足够的空间。</li><li>断点续传时，<code>backlog</code>会存下<code>slave</code>断开连接后，<code>master</code>变更的数据。当然由于它大小有限制，而且先进先出特性，所以达到缓冲大小后会弹出老数据。这样，就可以把它作为一个衡量执行<code>sync</code>还是<code>psync</code>的一个标准<code>（backlog = offset : 部分同步，backlog &lt; offset 执行全量同步）</code>。一般为了避免，大规模全量复制，我们都会给一个恰当的值，根据公式<code>second*write_size_per_second</code>来估算：其中<code>second</code>为从服务器断线后重新连接上主服务器所需的平均时间（以秒计算）；而<code>write_size_per_second</code>则是主服务器平均每秒产生的写命令数据量（协议格式的写命令的长度总和）；</li></ol></li><li>master run id, <code>master</code>唯一标示，<code>slave</code>连接<code>master</code>时会传<code>runid</code>，<code>master</code>每次重启<code>runid</code>都发生变化，当<code>slave</code>发现<code>master</code>的<code>runid</code>变化时都会触发全量复制流程。</li></ul><h3 id=优缺点>优缺点</h3><p><strong>优点：</strong></p><ol>
+<li>高可靠性：一方面，采用双机主备架构，能够在主库出现故障时自动进行主备切换，从库提升为主库提供服务，保证服务平稳运行；另一方面，开启数据持久化功能和配置合理的备份策略，能有效的解决数据误操作和数据异常丢失的问题；</li><li>读写分离策略：从节点可以扩展主库节点的读能力，有效应对大并发量的读操作。</li></ol><p><strong>缺点：</strong></p><ol>
+<li>故障恢复复杂，如果没有<code>RedisHA</code>系统（需要开发），当主库节点出现故障时，需要手动将一个从节点晋升为主节点，同时需要通知业务方变更配置，并且需要让其它从库节点去复制新主库节点，整个过程需要人为干预，比较繁琐；</li><li>主库的写能力受到单机的限制，可以考虑分片；</li><li>主库的存储能力受到单机的限制，可以考虑<code>Pika</code>；</li><li>原生复制的弊端在早期的版本中也会比较突出，如：<code>Redis</code>复制中断后，<code>Slave</code>会发起<code>psync</code>，此时如果同步不成功，则会进行全量同步，主库执行全量备份的同时可能会造成毫秒或秒级的卡顿；又由于<code>COW</code>机制，导致极端情况下的主库内存溢出，程序异常退出或宕机；主库节点生成备份文件导致服务器磁盘<code>IO</code>和<code>CPU</code>（压缩）资源消耗；发送数<code>GB</code>大小的备份文件导致服务器出口带宽暴增，阻塞请求，建议升级到最新版本。</li></ol><h2 id=redis-sentinel>Redis Sentinel</h2><div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219220207.png style=display:block;margin-left:auto;margin-right:auto;width:80% alt=20220219220207></div><p>当主节点出现故障时，Redis Sentinel 能自动完成故障发现和故障转移，并通知应用方，从而实现真正的高可用。RedisSentinel 是一个分布式架构，其中包含若干个 Sentinel 节点和 Redis 数据节点，每个 Sentinel 节点会对数据节点和其余 Sentinel 节点进行监控，当它发现节点不可达时，会对节点做下线标识。如果被标识的是<strong>主节点</strong>，它还会和其他的 Sentinel 节点进行协商，当大多数 Sentinel 节点都认为主节点不可达时，它们会选举一个 Sentinel 节点来完成自动故障转移的工作，同时会将这个变化实时通知给 Redis 应用方。整个过程是自动的，不需要人工干预，解决了Redis 的高可用问题。</p><p>Redis Sentinel 包含了若干个 Sentinel 节点，这样做也带来了两个好处：</p><ol>
+<li>对节点的故障判断是由多个 Sentinel 节点共同完成，这样可以有效的防止误判。</li><li>Sentinel 节点集合是由若干个 Sentinel 节点组成的，这样即使个别 Sentinel 节点不可用，整个Sentinel节点集合依然是健壮的。</li></ol><p>Redis Sentinel 具有以下几个功能：</p><ol>
+<li>监控：Sentinel 会定期检测 Redis 数据节点、其余 Sentinel 节点是否可到达</li><li>通知：Sentinel 会将故障转移的结果通知给应用方。</li><li>主节点故障转移：实现从节点晋升为主节点并维护后续正确的主从关系。</li><li>配置提供者：在 RedisSentinel 结构中，客户端在初始化的时候连接的是 Sentinel 节点集合，从中获取主节点信息。</li></ol><p>RedisSentinel 处理流程：</p><ol>
+<li>Sentinel 集群通过给定的配置文件发现 master，启动时会监控 master。通过向 master 发送 info 信息获得该服务器下面的所有从服务器。</li><li>Sentinel 集群通过命令连接向被监视的主从服务器发送 hello 信息（每秒一次），该信息包括 Sentinel 本身的 IP、端口、id 等内容，以此来向其他 Sentinel 宣告自己的存在。</li><li>Sentinel 集群通过订阅连接接收其他 Sentinel 发送的 hello 信息，以此来发现监视同一个主服务器的其他 Sentinel；集群之间会互相创建命令连接用于通信，因为已经有主从服务器作为发送和接收 hello 信息的中介，Sentinel 之间不会创建订阅连接。</li><li>Sentinel 集群使用 ping 命令来检测实例的状态，如果在指定的时间内（down-after-milliseconds）没有回复或则返回错误的回复，那么该实例被判为下线。</li><li>当 failover 主备切换被触发后，failover 并不会马上进行，Sentinel 中的大多数 Sentinel 授权后才可以进行 failover，即进行 failover 的 Sentinel 会去获得指定 quorum 个的 Sentinel 的授权，成功后进入 ODOWN 状态。如在 5 个 Sentinel 中配置了 2 个 quorum，等到 2 个 Sentinel 认为 master 死了就执行 failover。</li><li>Sentinel 向选为 master 的 slave 发送 SLAVEOF NO ONE 命令，选择 slave 的条件是 Sentinel 首先会根据 slaves 的优先级来进行排序，优先级越小排名越靠前。如果优先级相同，则查看复制的下标，哪个从 master 接收的复制数据多，哪个就靠前。如果优先级和下标都相同，就选择进程 ID 较小的。</li><li>Sentinel 被授权后，它将会获得宕掉的 master 的一份最新配置版本号 (config-epoch)，当 failover 执行结束以后，这个版本号将会被用于最新的配置，通过广播形式通知其它 Sentinel，其它的 Sentinel 则更新对应 master 的配置。</li></ol><p>1 到 3 是自动发现机制:</p><ul>
+<li>以 10 秒一次的频率，向被监视的 master 发送 info 命令，根据回复获取 master 当前信息。</li><li>以 1 秒一次的频率，向所有 redis 服务器、包含 Sentinel 在内发送 PING 命令，通过回复判断服务器是否在线。与主节点，从节点，其余 Sentinel 都建立起连接，实现了对每个节点的监控。</li><li>以 2 秒一次的频率，通过向所有被监视的 master，slave 服务器发送当前 Sentinel master 信息的消息。这个定时任务可以完成以下两个工作：
 <ul>
-<li><code>offet</code>复制偏移量 , <code>offset</code>是用来记录<code>master</code>和<code>lslave</code>某个时段的数据版本状态的，<code>slave</code>每秒会向<code>master</code>上报<code>offset</code>，<code>master</code>保存下来，当触发 PSYNC 时再拿来和<code>master</code>的<code>offset</code>数据作对比。说白了，它就是记录数据在某一时刻的快照，用来对比 master 和 slave 数据差异用的。</li>
-<li><code>backlog</code>积压缓冲区
-<ol>
-<li>这个也是一个非常核心的参数，它默认大小为<code>1mb</code>，复制积压缓冲区是由<code>Master</code>维护的一个固定长度的<code>FIFO</code>队列，它的作用是缓存已经传播出去的命令。当<code>Master</code>进行命令传播时，不仅将命令发送给所有<code>Slave</code>，还会将命令写入到复制积压缓冲区里面。</li>
-<li>全量复制的时候，<code>master</code>的数据更新（读写操作，主动过期删除等）会临时存放在<code>backlog</code>中待全量复制完成后增量发到slave，必须为此保留足够的空间。</li>
-<li>断点续传时，<code>backlog</code>会存下<code>slave</code>断开连接后，<code>master</code>变更的数据。当然由于它大小有限制，而且先进先出特性，所以达到缓冲大小后会弹出老数据。这样，就可以把它作为一个衡量执行<code>sync</code>还是<code>psync</code>的一个标准<code>（backlog = offset : 部分同步，backlog &lt; offset 执行全量同步）</code>。一般为了避免，大规模全量复制，我们都会给一个恰当的值，根据公式<code>second*write_size_per_second</code>来估算：其中<code>second</code>为从服务器断线后重新连接上主服务器所需的平均时间（以秒计算）；而<code>write_size_per_second</code>则是主服务器平均每秒产生的写命令数据量（协议格式的写命令的长度总和）；</li>
-</ol>
-</li>
-<li>master run id, <code>master</code>唯一标示，<code>slave</code>连接<code>master</code>时会传<code>runid</code>，<code>master</code>每次重启<code>runid</code>都发生变化，当<code>slave</code>发现<code>master</code>的<code>runid</code>变化时都会触发全量复制流程。</li>
-</ul>
-<h3 id=优缺点>优缺点</h3>
-<p><strong>优点：</strong></p>
-<ol>
-<li>高可靠性：一方面，采用双机主备架构，能够在主库出现故障时自动进行主备切换，从库提升为主库提供服务，保证服务平稳运行；另一方面，开启数据持久化功能和配置合理的备份策略，能有效的解决数据误操作和数据异常丢失的问题；</li>
-<li>读写分离策略：从节点可以扩展主库节点的读能力，有效应对大并发量的读操作。</li>
-</ol>
-<p><strong>缺点：</strong></p>
-<ol>
-<li>故障恢复复杂，如果没有<code>RedisHA</code>系统（需要开发），当主库节点出现故障时，需要手动将一个从节点晋升为主节点，同时需要通知业务方变更配置，并且需要让其它从库节点去复制新主库节点，整个过程需要人为干预，比较繁琐；</li>
-<li>主库的写能力受到单机的限制，可以考虑分片；</li>
-<li>主库的存储能力受到单机的限制，可以考虑<code>Pika</code>；</li>
-<li>原生复制的弊端在早期的版本中也会比较突出，如：<code>Redis</code>复制中断后，<code>Slave</code>会发起<code>psync</code>，此时如果同步不成功，则会进行全量同步，主库执行全量备份的同时可能会造成毫秒或秒级的卡顿；又由于<code>COW</code>机制，导致极端情况下的主库内存溢出，程序异常退出或宕机；主库节点生成备份文件导致服务器磁盘<code>IO</code>和<code>CPU</code>（压缩）资源消耗；发送数<code>GB</code>大小的备份文件导致服务器出口带宽暴增，阻塞请求，建议升级到最新版本。</li>
-</ol>
-<h2 id=redis-sentinel>Redis Sentinel</h2>
-<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219220207.png style=display:block;margin-left:auto;margin-right:auto;width:80% alt=20220219220207></div>
-<p>当主节点出现故障时，Redis Sentinel 能自动完成故障发现和故障转移，并通知应用方，从而实现真正的高可用。RedisSentinel 是一个分布式架构，其中包含若干个 Sentinel 节点和 Redis 数据节点，每个 Sentinel 节点会对数据节点和其余 Sentinel 节点进行监控，当它发现节点不可达时，会对节点做下线标识。如果被标识的是<strong>主节点</strong>，它还会和其他的 Sentinel 节点进行协商，当大多数 Sentinel 节点都认为主节点不可达时，它们会选举一个 Sentinel 节点来完成自动故障转移的工作，同时会将这个变化实时通知给 Redis 应用方。整个过程是自动的，不需要人工干预，解决了Redis 的高可用问题。</p>
-<p>Redis Sentinel 包含了若干个 Sentinel 节点，这样做也带来了两个好处：</p>
-<ol>
-<li>对节点的故障判断是由多个 Sentinel 节点共同完成，这样可以有效的防止误判。</li>
-<li>Sentinel 节点集合是由若干个 Sentinel 节点组成的，这样即使个别 Sentinel 节点不可用，整个Sentinel节点集合依然是健壮的。</li>
-</ol>
-<p>Redis Sentinel 具有以下几个功能：</p>
-<ol>
-<li>监控：Sentinel 会定期检测 Redis 数据节点、其余 Sentinel 节点是否可到达</li>
-<li>通知：Sentinel 会将故障转移的结果通知给应用方。</li>
-<li>主节点故障转移：实现从节点晋升为主节点并维护后续正确的主从关系。</li>
-<li>配置提供者：在 RedisSentinel 结构中，客户端在初始化的时候连接的是 Sentinel 节点集合，从中获取主节点信息。</li>
-</ol>
-<p>RedisSentinel 处理流程：</p>
-<ol>
-<li>Sentinel 集群通过给定的配置文件发现 master，启动时会监控 master。通过向 master 发送 info 信息获得该服务器下面的所有从服务器。</li>
-<li>Sentinel 集群通过命令连接向被监视的主从服务器发送 hello 信息（每秒一次），该信息包括 Sentinel 本身的 IP、端口、id 等内容，以此来向其他 Sentinel 宣告自己的存在。</li>
-<li>Sentinel 集群通过订阅连接接收其他 Sentinel 发送的 hello 信息，以此来发现监视同一个主服务器的其他 Sentinel；集群之间会互相创建命令连接用于通信，因为已经有主从服务器作为发送和接收 hello 信息的中介，Sentinel 之间不会创建订阅连接。</li>
-<li>Sentinel 集群使用 ping 命令来检测实例的状态，如果在指定的时间内（down-after-milliseconds）没有回复或则返回错误的回复，那么该实例被判为下线。</li>
-<li>当 failover 主备切换被触发后，failover 并不会马上进行，Sentinel 中的大多数 Sentinel 授权后才可以进行 failover，即进行 failover 的 Sentinel 会去获得指定 quorum 个的 Sentinel 的授权，成功后进入 ODOWN 状态。如在 5 个 Sentinel 中配置了 2 个 quorum，等到 2 个 Sentinel 认为 master 死了就执行 failover。</li>
-<li>Sentinel 向选为 master 的 slave 发送 SLAVEOF NO ONE 命令，选择 slave 的条件是 Sentinel 首先会根据 slaves 的优先级来进行排序，优先级越小排名越靠前。如果优先级相同，则查看复制的下标，哪个从 master 接收的复制数据多，哪个就靠前。如果优先级和下标都相同，就选择进程 ID 较小的。</li>
-<li>Sentinel 被授权后，它将会获得宕掉的 master 的一份最新配置版本号 (config-epoch)，当 failover 执行结束以后，这个版本号将会被用于最新的配置，通过广播形式通知其它 Sentinel，其它的 Sentinel 则更新对应 master 的配置。</li>
-</ol>
-<p>1 到 3 是自动发现机制:</p>
-<ul>
-<li>以 10 秒一次的频率，向被监视的 master 发送 info 命令，根据回复获取 master 当前信息。</li>
-<li>以 1 秒一次的频率，向所有 redis 服务器、包含 Sentinel 在内发送 PING 命令，通过回复判断服务器是否在线。与主节点，从节点，其余 Sentinel 都建立起连接，实现了对每个节点的监控。</li>
-<li>以 2 秒一次的频率，通过向所有被监视的 master，slave 服务器发送当前 Sentinel master 信息的消息。这个定时任务可以完成以下两个工作：
-<ul>
-<li>发现新的 Sentinel 节点：通过订阅主节点的 <em>Sentinel</em>:hello 了解其他 Sentinel 节点信息。如果是新加入的 Sentinel 节点，将该 Sentinel 节点信息保存起来，并与该 Sentinel 节点创建连接</li>
-<li>Sentinel 节点之间交换主节点状态，作为后面客观下线以及领导者选举的依据</li>
-</ul>
-</li>
-</ul>
-<p>4 是检测机制，5 和 6 是 failover 机制，7 是更新配置机制</p>
-<h3 id=leader-选举>Leader 选举</h3>
-<p>其实在 sentinels 故障转移中，仍然需要一个 Leader 来调度整个过程：master 的选举以及 slave 的重配置和同步。当集群中有多个 sentinel 实例时，如何选举其中一个 sentinel 为 leader 呢？</p>
-<p>在配置文件中 can-failover、quorum 参数，以及 is-master-down-by-addr 指令配合来完成整个过程。</p>
-<ol>
-<li>can-failover 用来表明当前 sentinel 是否可以参与 failover 过程，如果为 YES 则表明它将有能力参与 Leader 的选举，否则它将作为 Observer ，observer 参与 leader 选举投票但不能被选举；</li>
-<li>quorum 不仅用来控制 master ODOWN 状态确认，同时还用来选举 leader 时最小「赞同票」数；</li>
-<li>is-master-down-by-addr，在上文中以及提到，它可以用来检测 ip + port 的 master 是否已经处于 SDOWN 状态，不过此指令不仅能够获得 master 是否处于 SDOWN，同时它还额外的返回当前 sentinel 本地「投票选举」的 Leader 信息 (runid);</li>
-</ol>
-<p>每个 sentinel 实例都持有其他的 sentinels 信息，在 Leader 选举过程中（当为 leader 的 sentinel 实例失效时，有可能 master server 并没失效，注意分开理解），sentinel 实例将从所有的 sentinels 集合中去除 can-failover = no 和状态为 SDOWN 的 sentinels，在剩余的 sentinels 列表中按照 runid 按照「字典」顺序排序后，取出 runid 最小的 sentinel 实例，并将它「投票选举」为 Leader，并在其他 sentinel 发送的 is-master-down-by-addr 指令时将推选的 runid 追加到响应中。每个 sentinel 实例都会检测 is-master-down-by-addr 的响应结果，如果「投票选举」的 leader 为自己，且状态正常的 sentinels 实例中，赞同者的自己的 sentinel 个数不小于(>=) 50% + 1,且不小与 ，那么此 sentinel 就会认为选举成功且 leader 为自己。</p>
-<p>在 sentinel.conf 文件中，我们期望有足够多的 sentinel 实例配置 can-failovers，这样能够确保当 leader 失效时，能够选举某个 sentinel 为 leader，以便进行 failover。如果 leader 无法产生，比如较少的 sentinels 实例有效，那么 failover 过程将续。</p>
-<h3 id=failover-过程>failover 过程</h3>
-<p>在 Leader 触发 failover 之前，首先 wait 数秒（随机 0~5），以便让其他 sentinel 实例准备和调整，如果一切正常，那么 leader 就需要开始将一个 salve 提升为 master，此 slave 必须为状态良好（不能处于 SDOWN/ODOWN 状态）且权重值最低（redis.conf中）的，当 master 身份被确认后，开始 failover：</p>
-<ol>
-<li>+failover-triggered: Leader 开始进行 failover，此后紧跟着 +failover-state-wait-start ，wait 数秒。</li>
-<li>+failover-state-select-slave: Leader 开始查找合适的 slave</li>
-<li>+selected-slave: 已经找到合适的 slave</li>
-<li>+failover-state-sen-slaveof-noone: Leader 向 slave 发送 slaveof no one 指令，此时 slave 已经完成角色转换，此 slave 即为 master</li>
-<li>+failover-state-wait-promotition: 等待其他 sentinel 确认 slave</li>
-<li>+promoted-slave：确认成功</li>
-<li>+failover-state-reconf-slaves: 开始对 slaves 进行 reconfig 操作。</li>
-<li>+slave-reconf-sent: 向指定的 slave 发送 slaveof 指令，告知此 slave 跟随新的 master</li>
-<li>+slave-reconf-inprog: 此 slave 正在执行 slaveof + SYNC 过程，如过 slave 收到 +slave-reconf-sent 之后将会执行 slaveof 操作。</li>
-<li>+slave-reconf-done: 此 slave 同步完成，此后 leader 可以继续下一个 slave 的 reconfig 操作。循环步骤 10</li>
-<li>+failover-end: 故障转移结束</li>
-<li>+switch-master：故障转移成功后，各个 sentinel 实例开始监控新的 master。</li>
-</ol>
-<h3 id=总结>总结</h3>
-<p>Redis-Sentinel 是 Redis 官方推荐的高可用性解决方案，Redis-sentinel 本身也是一个独立运行的进程，它能监控多个 master-slave 集群，发现 master 宕机后能进行自动切换。Sentinel 可以监视任意多个主服务器（复用），以及主服务器属下的从服务器，并在被监视的主服务器下线时，自动执行故障转移操作。</p>
-<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219220545.png style=display:block;margin-left:auto;margin-right:auto;width:80% alt=20220219220545></div>
-<p>为了防止 sentinel 的单点故障，可以对 sentinel 进行集群化，创建多个 sentinel。</p>
-<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219220607.png style=display:block;margin-left:auto;margin-right:auto;width:40% alt=20220219220607></div>
-<h2 id=redis-cluster>Redis Cluster</h2>
-<p><code>Redis</code> 集群是一个分布式（<code>distributed</code>）、容错（<code>fault-tolerant</code>）的 <code>Redis</code> 实现， 集群可以使用的功能是普通单机 <code>Redis</code> 所能使用的功能的一个子集（<code>subset</code>）。</p>
-<p><code>Redis</code> 集群中不存在中心（<code>central</code>）节点或者代理（<code>proxy</code>）节点， 集群的其中一个主要设计目标是达到线性可扩展性（<code>linear scalability</code>）。</p>
-<p><code>Redis</code> 集群提供了一种运行 <code>Redis</code> 的方式，其中数据在多个 <code>Redis</code> 节点间自动分区。<code>Redis</code> 集群还在分区期间提供一定程度的可用性，即在实际情况下能够在某些节点发生故障或无法通信时继续运行。但是，如果发生较大故障（例如，大多数主站不可用时），集群会停止运行。</p>
-<h3 id=集群模型>集群模型</h3>
-<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219221214.png style=display:block;margin-left:auto;margin-right:auto;width:50% alt=20220219221214></div>
-<p>所有的节点通过服务通道直接相连，各个节点之间通过二进制协议优化传输的速度和带宽。</p>
-<p>客户端与节点之间通过 ascii 协议进行通信。</p>
-<p>客户端与节点直连，不需要中间 Proxy 层。客户端不需要连接集群所有节点，连接集群中任何一个可用节点即可。</p>
-<p>尽管这些节点彼此相连，功能相同，但是仍然分为两种节点：master 和 slave。</p>
-<h3 id=节点间传递信息>节点间传递信息</h3>
-<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219221317.png style=display:block;margin-left:auto;margin-right:auto;width:60% alt=20220219221317></div>
-<p>各个节点之间通过 PING-PONG 机制通信，下面是一段关于 PING-PONG 机制的会话”内容”。</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>节点M：PING，嘿，朋友你好吗？我是 XYZ 哈希槽的 master ，配置信息是 FF89X1JK。
-
-节点N：PONG，我很好朋友，我也是 XYZ 哈希槽的 master ，配置信息是 FF89X1JK。
-
-节点M：我这里有一些关于我最近收到的其他节点的信息 ，A 节点回复了我的 PING 消息，我认为 A 节点是正常的。B 没有回应我的消息，我猜它现在可能出问题了，但是我需要一些 ACK(Acknowledgement) 消息来确认。
-
-节点N：我也想给你分享一些关于其它节点的信息，C 和 D 节点在指定的时间内回应了我， 我认为它们都是正常的，但是 B 也没有回应我，我觉得它现在可能已经挂掉了。
-</code></pre></div><p>每个节点会向集群中的其他节点发送节点状态信息，如果某个节点挂掉停止了服务，那么会执行投票容错机制，关于这个机制，会在下面讲到。</p>
-<h3 id=hash-槽slot>Hash 槽(slot)</h3>
-<p>Redis 集群不使用一致的散列，而是一种不同的分片形式，其中每个键在概念上都是我们称之为散列槽的一部分，目的是使数据均匀的存储在诸多节点中。这点类似于 HashMap 中的桶(bucket)。</p>
-<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219221405.png style=display:block;margin-left:auto;margin-right:auto;width:50% alt=20220219221405></div>
-<p>Redis 集群中有 16384 个散列槽，为了计算给定密钥的散列槽，Redis 对 key 采用 CRC16 算法，以下是负责将键映射到槽的算法：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>slot = crc16(key) mod NUMER_SLOTS
-</code></pre></div><p>例如，你可能有 3 个节点，其中一个集群：</p>
-<ul>
-<li>节点 A 包含从 0 到 5500 的散列槽。</li>
-<li>节点 B 包含从 5501 到 11000 的散列槽。</li>
-<li>节点 C 包含 从 11001 到 16383 的散列槽。</li>
-</ul>
-<p>Hash 槽可以轻松地添加和删除集群中的节点。例如，如果我想添加一个新节点 D，我需要将节点 A，B，C 中的一些散列槽移动到 D。同样，如果我想从节点 A 中删除节点 A，可以只移动由 A 服务的散列槽到 B 和 C。当节点 A 为空时，可以将它从群集中彻底删除。</p>
-<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219221447.png style=display:block;margin-left:auto;margin-right:auto;width:60% alt=20220219221447></div>
-<ol>
-<li>对象保存到 Redis 之前先经过 CRC16 哈希到一个指定的 Node 上，例如 Object4 最终 Hash 到了 Node1 上。</li>
-<li>每个 Node 被平均分配了一个 Slot 段，对应着 0-16384，Slot 不能重复也不能缺失，否则会导致对象重复存储或无法存储。</li>
-<li>Node 之间也互相监听，一旦有 Node 退出或者加入，会按照 Slot 为单位做数据的迁移。例如 Node1 如果掉线了，0-5640 这些 Slot 将会平均分摊到 Node2 和 Node3 上,由于 Node2 和 Node3 本身维护的 Slot 还会在自己身上不会被重新分配，所以迁移过程中不会影响到 5641-16384Slot 段的使用。</li>
-</ol>
-<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219221600.png style=display:block;margin-left:auto;margin-right:auto;width:60% alt=20220219221600></div>
-<p>想扩展并发读就添加 Slaver，想扩展并发写就添加 Master，想扩容也就是添加 Master，任何一个 Slaver 或者几个 Master 挂了都不会是灾难性的故障。</p>
-<p>简单总结下哈希 Slot 的优缺点：</p>
-<p>缺点：每个 Node 承担着互相监听、高并发数据写入、高并发数据读出，工作任务繁重</p>
-<p>优点：将 Redis 的写操作分摊到了多个节点上，提高写的并发能力，扩容简单。</p>
-<h3 id=容错>容错</h3>
-<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219221622.png style=display:block;margin-left:auto;margin-right:auto;width:60% alt=20220219221622></div>
-<ul>
-<li>集群中的节点不断的 <code>PING</code> 其他的节点，当一个节点向另一个节点发送 <code>PING</code> 命令， 但是目标节点未能在给定的时限内回复， 那么发送命令的节点会将目标节点标记为 <code>PFAIL</code>(<code>possible failure</code>，可能已失效)。</li>
-<li>当节点接收到其他节点发来的信息时， 它会记下那些被其他节点标记为失效的节点。 这被称为失效报告（<code>failure report</code>）。</li>
-<li>如果节点已经将某个节点标记为 <code>PFAIL</code> ， 并且根据节点所收到的失效报告显式， 集群中的大部分其他主节点也认为那个节点进入了失效状态， 那么节点会将那个失效节点的状态标记为 <code>FAIL</code> 。</li>
-<li>一旦某个节点被标记为 <code>FAIL</code> ， 关于这个节点已失效的信息就会被广播到整个集群， 所有接收到这条信息的节点都会将失效节点标记为 <code>FAIL</code> 。</li>
-</ul>
-<p>简单来说， 一个节点要将另一个节点标记为失效， 必须先询问其他节点的意见， 并且得到大部分主节点的同意才行。</p>
-<p>如果被标记为 <code>FAIL</code> 的是从节点， 那么当这个节点重新上线时， <code>FAIL</code> 标记就会被移除。 一个从节点是否处于 <code>FAIL</code> 状态， 决定了这个从节点在有需要时能否被提升为主节点。</p>
-<p>如果一个主节点被打上 <code>FAIL</code> 标记之后， 经过了节点超时时限的四倍时间， 再加上十秒钟之后， 针对这个主节点的槽的故障转移操作仍未完成， 并且这个主节点已经重新上线的话， 那么移除对这个节点的 <code>FAIL</code> 标记。在不符合上面的条件后，一旦某个主节点进入 <code>FAIL</code> 状态， 如果这个主节点有一个或多个从节点存在， 那么其中一个从节点会被升级为新的主节点， 而其他从节点则会开始对这个新的主节点进行复制。</p>
-<h3 id=优缺点-1>优缺点</h3>
-<p><strong>优点：</strong></p>
-<ol>
-<li>无中心架构；</li>
-<li>数据按照<code>slot</code>存储分布在多个节点，节点间数据共享，可动态调整数据分布；</li>
-<li>可扩展性：可线性扩展到 1000 多个节点，节点可动态添加或删除；</li>
-<li>高可用性：部分节点不可用时，集群仍可用。通过增加<code>Slave</code>做<code>standby</code>数据副本，能够实现故障自动<code>failover</code>，节点之间通过<code>gossip</code>协议交换状态信息，用投票机制完成<code>Slave</code>到<code>Master</code>的角色提升；</li>
-<li>降低运维成本，提高系统的扩展性和可用性。</li>
-</ol>
-<p><strong>缺点：</strong></p>
-<ol>
-<li><code>Client</code>实现复杂，驱动要求实现<code>Smart Client</code>，缓存<code>slots mapping</code>信息并及时更新，提高了开发难度，客户端的不成熟影响业务的稳定性。目前仅<code>JedisCluster</code>相对成熟，异常处理部分还不完善，比如常见的<code>“max redirect exception”</code>。</li>
-<li>节点会因为某些原因发生阻塞（阻塞时间大于<code>clutser-node-timeout</code>），被判断下线，这种<code>failover</code>是没有必要的。</li>
-<li>数据通过异步复制，不保证数据的强一致性。</li>
-<li>多个业务使用同一套集群时，无法根据统计区分冷热数据，资源隔离性较差，容易出现相互影响的情况。</li>
-<li><code>Slave</code>在集群中充当“冷备”，不能缓解读压力，当然可以通过<code>SDK</code>的合理设计来提高<code>Slave</code>资源的利用率。</li>
-<li><code>Key</code>批量操作限制，如使用<code>mset</code>、<code>mget</code>目前只支持具有相同<code>slot</code>值的<code>Key</code>执行批量操作。对于映射为不同<code>slot</code>值的<code>Key</code>由于<code>Keys</code>不支持跨<code>slot</code>查询，所以执行<code>mset</code>、<code>mget</code>、<code>sunion</code>等操作支持不友好。</li>
-<li><code>Key</code>事务操作支持有限，只支持多<code>key</code>在同一节点上的事务操作，当多个<code>Key</code>分布于不同的节点上时无法使用事务功能。</li>
-<li><code>Key</code>作为数据分区的最小粒度，不能将一个很大的键值对象如<code>hash</code>、<code>list</code>等映射到不同的节点。</li>
-<li>不支持多数据库空间，单机下的<code>redis</code>可以支持到 16 个数据库，集群模式下只能使用 1 个数据库空间，即 db 0。</li>
-<li>复制结构只支持一层，从节点只能复制主节点，不支持嵌套树状复制结构。</li>
-<li>避免产生<code>hot-key</code>，导致主库节点成为系统的短板。</li>
-<li>避免产生<code>big-key</code>，导致网卡撑爆、慢查询等。</li>
-<li>重试时间应该大于<code>cluster-node-time</code>时间。</li>
-<li><code>Redis Cluster</code>不建议使用<code>pipeline</code>和<code>multi-keys</code>操作，减少<code>max redirect</code>产生的场景。</li>
-</ol>
-<h2 id=codis>Codis</h2>
-<p><code>Codis</code> 是一个代理中间件，如下图，<code>Codis</code> 在系统的位置是这样的。</p>
-<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219221752.png style=display:block;margin-left:auto;margin-right:auto;width:60% alt=20220219221752></div>
-<p><code>Codis</code>分为四个部分，分别是<code>Codis Proxy</code> (<code>codis-proxy</code>)、<code>Codis Dashboard</code> (<code>codis-config</code>)、<code>Codis Redis</code>(<code>codis-server</code>)和<code>ZooKeeper/Etcd</code>.
+<li>发现新的 Sentinel 节点：通过订阅主节点的 <em>Sentinel</em>:hello 了解其他 Sentinel 节点信息。如果是新加入的 Sentinel 节点，将该 Sentinel 节点信息保存起来，并与该 Sentinel 节点创建连接</li><li>Sentinel 节点之间交换主节点状态，作为后面客观下线以及领导者选举的依据</li></ul></li></ul><p>4 是检测机制，5 和 6 是 failover 机制，7 是更新配置机制</p><h3 id=leader-选举>Leader 选举</h3><p>其实在 sentinels 故障转移中，仍然需要一个 Leader 来调度整个过程：master 的选举以及 slave 的重配置和同步。当集群中有多个 sentinel 实例时，如何选举其中一个 sentinel 为 leader 呢？</p><p>在配置文件中 can-failover、quorum 参数，以及 is-master-down-by-addr 指令配合来完成整个过程。</p><ol>
+<li>can-failover 用来表明当前 sentinel 是否可以参与 failover 过程，如果为 YES 则表明它将有能力参与 Leader 的选举，否则它将作为 Observer ，observer 参与 leader 选举投票但不能被选举；</li><li>quorum 不仅用来控制 master ODOWN 状态确认，同时还用来选举 leader 时最小「赞同票」数；</li><li>is-master-down-by-addr，在上文中以及提到，它可以用来检测 ip + port 的 master 是否已经处于 SDOWN 状态，不过此指令不仅能够获得 master 是否处于 SDOWN，同时它还额外的返回当前 sentinel 本地「投票选举」的 Leader 信息 (runid);</li></ol><p>每个 sentinel 实例都持有其他的 sentinels 信息，在 Leader 选举过程中（当为 leader 的 sentinel 实例失效时，有可能 master server 并没失效，注意分开理解），sentinel 实例将从所有的 sentinels 集合中去除 can-failover = no 和状态为 SDOWN 的 sentinels，在剩余的 sentinels 列表中按照 runid 按照「字典」顺序排序后，取出 runid 最小的 sentinel 实例，并将它「投票选举」为 Leader，并在其他 sentinel 发送的 is-master-down-by-addr 指令时将推选的 runid 追加到响应中。每个 sentinel 实例都会检测 is-master-down-by-addr 的响应结果，如果「投票选举」的 leader 为自己，且状态正常的 sentinels 实例中，赞同者的自己的 sentinel 个数不小于(>=) 50% + 1,且不小与 ，那么此 sentinel 就会认为选举成功且 leader 为自己。</p><p>在 sentinel.conf 文件中，我们期望有足够多的 sentinel 实例配置 can-failovers，这样能够确保当 leader 失效时，能够选举某个 sentinel 为 leader，以便进行 failover。如果 leader 无法产生，比如较少的 sentinels 实例有效，那么 failover 过程将续。</p><h3 id=failover-过程>failover 过程</h3><p>在 Leader 触发 failover 之前，首先 wait 数秒（随机 0~5），以便让其他 sentinel 实例准备和调整，如果一切正常，那么 leader 就需要开始将一个 salve 提升为 master，此 slave 必须为状态良好（不能处于 SDOWN/ODOWN 状态）且权重值最低（redis.conf中）的，当 master 身份被确认后，开始 failover：</p><ol>
+<li>+failover-triggered: Leader 开始进行 failover，此后紧跟着 +failover-state-wait-start ，wait 数秒。</li><li>+failover-state-select-slave: Leader 开始查找合适的 slave</li><li>+selected-slave: 已经找到合适的 slave</li><li>+failover-state-sen-slaveof-noone: Leader 向 slave 发送 slaveof no one 指令，此时 slave 已经完成角色转换，此 slave 即为 master</li><li>+failover-state-wait-promotition: 等待其他 sentinel 确认 slave</li><li>+promoted-slave：确认成功</li><li>+failover-state-reconf-slaves: 开始对 slaves 进行 reconfig 操作。</li><li>+slave-reconf-sent: 向指定的 slave 发送 slaveof 指令，告知此 slave 跟随新的 master</li><li>+slave-reconf-inprog: 此 slave 正在执行 slaveof + SYNC 过程，如过 slave 收到 +slave-reconf-sent 之后将会执行 slaveof 操作。</li><li>+slave-reconf-done: 此 slave 同步完成，此后 leader 可以继续下一个 slave 的 reconfig 操作。循环步骤 10</li><li>+failover-end: 故障转移结束</li><li>+switch-master：故障转移成功后，各个 sentinel 实例开始监控新的 master。</li></ol><h3 id=总结>总结</h3><p>Redis-Sentinel 是 Redis 官方推荐的高可用性解决方案，Redis-sentinel 本身也是一个独立运行的进程，它能监控多个 master-slave 集群，发现 master 宕机后能进行自动切换。Sentinel 可以监视任意多个主服务器（复用），以及主服务器属下的从服务器，并在被监视的主服务器下线时，自动执行故障转移操作。</p><div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219220545.png style=display:block;margin-left:auto;margin-right:auto;width:80% alt=20220219220545></div><p>为了防止 sentinel 的单点故障，可以对 sentinel 进行集群化，创建多个 sentinel。</p><div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219220607.png style=display:block;margin-left:auto;margin-right:auto;width:40% alt=20220219220607></div><h2 id=redis-cluster>Redis Cluster</h2><p><code>Redis</code> 集群是一个分布式（<code>distributed</code>）、容错（<code>fault-tolerant</code>）的 <code>Redis</code> 实现， 集群可以使用的功能是普通单机 <code>Redis</code> 所能使用的功能的一个子集（<code>subset</code>）。</p><p><code>Redis</code> 集群中不存在中心（<code>central</code>）节点或者代理（<code>proxy</code>）节点， 集群的其中一个主要设计目标是达到线性可扩展性（<code>linear scalability</code>）。</p><p><code>Redis</code> 集群提供了一种运行 <code>Redis</code> 的方式，其中数据在多个 <code>Redis</code> 节点间自动分区。<code>Redis</code> 集群还在分区期间提供一定程度的可用性，即在实际情况下能够在某些节点发生故障或无法通信时继续运行。但是，如果发生较大故障（例如，大多数主站不可用时），集群会停止运行。</p><h3 id=集群模型>集群模型</h3><div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219221214.png style=display:block;margin-left:auto;margin-right:auto;width:50% alt=20220219221214></div><p>所有的节点通过服务通道直接相连，各个节点之间通过二进制协议优化传输的速度和带宽。</p><p>客户端与节点之间通过 ascii 协议进行通信。</p><p>客户端与节点直连，不需要中间 Proxy 层。客户端不需要连接集群所有节点，连接集群中任何一个可用节点即可。</p><p>尽管这些节点彼此相连，功能相同，但是仍然分为两种节点：master 和 slave。</p><h3 id=节点间传递信息>节点间传递信息</h3><div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219221317.png style=display:block;margin-left:auto;margin-right:auto;width:60% alt=20220219221317></div><p>各个节点之间通过 PING-PONG 机制通信，下面是一段关于 PING-PONG 机制的会话”内容”。</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback><span style=display:flex><span>节点M：PING，嘿，朋友你好吗？我是 XYZ 哈希槽的 master ，配置信息是 FF89X1JK。
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>节点N：PONG，我很好朋友，我也是 XYZ 哈希槽的 master ，配置信息是 FF89X1JK。
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>节点M：我这里有一些关于我最近收到的其他节点的信息 ，A 节点回复了我的 PING 消息，我认为 A 节点是正常的。B 没有回应我的消息，我猜它现在可能出问题了，但是我需要一些 ACK(Acknowledgement) 消息来确认。
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>节点N：我也想给你分享一些关于其它节点的信息，C 和 D 节点在指定的时间内回应了我， 我认为它们都是正常的，但是 B 也没有回应我，我觉得它现在可能已经挂掉了。
+</span></span></code></pre></div><p>每个节点会向集群中的其他节点发送节点状态信息，如果某个节点挂掉停止了服务，那么会执行投票容错机制，关于这个机制，会在下面讲到。</p><h3 id=hash-槽slot>Hash 槽(slot)</h3><p>Redis 集群不使用一致的散列，而是一种不同的分片形式，其中每个键在概念上都是我们称之为散列槽的一部分，目的是使数据均匀的存储在诸多节点中。这点类似于 HashMap 中的桶(bucket)。</p><div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219221405.png style=display:block;margin-left:auto;margin-right:auto;width:50% alt=20220219221405></div><p>Redis 集群中有 16384 个散列槽，为了计算给定密钥的散列槽，Redis 对 key 采用 CRC16 算法，以下是负责将键映射到槽的算法：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback><span style=display:flex><span>slot = crc16(key) mod NUMER_SLOTS
+</span></span></code></pre></div><p>例如，你可能有 3 个节点，其中一个集群：</p><ul>
+<li>节点 A 包含从 0 到 5500 的散列槽。</li><li>节点 B 包含从 5501 到 11000 的散列槽。</li><li>节点 C 包含 从 11001 到 16383 的散列槽。</li></ul><p>Hash 槽可以轻松地添加和删除集群中的节点。例如，如果我想添加一个新节点 D，我需要将节点 A，B，C 中的一些散列槽移动到 D。同样，如果我想从节点 A 中删除节点 A，可以只移动由 A 服务的散列槽到 B 和 C。当节点 A 为空时，可以将它从群集中彻底删除。</p><div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219221447.png style=display:block;margin-left:auto;margin-right:auto;width:60% alt=20220219221447></div><ol>
+<li>对象保存到 Redis 之前先经过 CRC16 哈希到一个指定的 Node 上，例如 Object4 最终 Hash 到了 Node1 上。</li><li>每个 Node 被平均分配了一个 Slot 段，对应着 0-16384，Slot 不能重复也不能缺失，否则会导致对象重复存储或无法存储。</li><li>Node 之间也互相监听，一旦有 Node 退出或者加入，会按照 Slot 为单位做数据的迁移。例如 Node1 如果掉线了，0-5640 这些 Slot 将会平均分摊到 Node2 和 Node3 上,由于 Node2 和 Node3 本身维护的 Slot 还会在自己身上不会被重新分配，所以迁移过程中不会影响到 5641-16384Slot 段的使用。</li></ol><div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219221600.png style=display:block;margin-left:auto;margin-right:auto;width:60% alt=20220219221600></div><p>想扩展并发读就添加 Slaver，想扩展并发写就添加 Master，想扩容也就是添加 Master，任何一个 Slaver 或者几个 Master 挂了都不会是灾难性的故障。</p><p>简单总结下哈希 Slot 的优缺点：</p><p>缺点：每个 Node 承担着互相监听、高并发数据写入、高并发数据读出，工作任务繁重</p><p>优点：将 Redis 的写操作分摊到了多个节点上，提高写的并发能力，扩容简单。</p><h3 id=容错>容错</h3><div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219221622.png style=display:block;margin-left:auto;margin-right:auto;width:60% alt=20220219221622></div><ul>
+<li>集群中的节点不断的 <code>PING</code> 其他的节点，当一个节点向另一个节点发送 <code>PING</code> 命令， 但是目标节点未能在给定的时限内回复， 那么发送命令的节点会将目标节点标记为 <code>PFAIL</code>(<code>possible failure</code>，可能已失效)。</li><li>当节点接收到其他节点发来的信息时， 它会记下那些被其他节点标记为失效的节点。 这被称为失效报告（<code>failure report</code>）。</li><li>如果节点已经将某个节点标记为 <code>PFAIL</code> ， 并且根据节点所收到的失效报告显式， 集群中的大部分其他主节点也认为那个节点进入了失效状态， 那么节点会将那个失效节点的状态标记为 <code>FAIL</code> 。</li><li>一旦某个节点被标记为 <code>FAIL</code> ， 关于这个节点已失效的信息就会被广播到整个集群， 所有接收到这条信息的节点都会将失效节点标记为 <code>FAIL</code> 。</li></ul><p>简单来说， 一个节点要将另一个节点标记为失效， 必须先询问其他节点的意见， 并且得到大部分主节点的同意才行。</p><p>如果被标记为 <code>FAIL</code> 的是从节点， 那么当这个节点重新上线时， <code>FAIL</code> 标记就会被移除。 一个从节点是否处于 <code>FAIL</code> 状态， 决定了这个从节点在有需要时能否被提升为主节点。</p><p>如果一个主节点被打上 <code>FAIL</code> 标记之后， 经过了节点超时时限的四倍时间， 再加上十秒钟之后， 针对这个主节点的槽的故障转移操作仍未完成， 并且这个主节点已经重新上线的话， 那么移除对这个节点的 <code>FAIL</code> 标记。在不符合上面的条件后，一旦某个主节点进入 <code>FAIL</code> 状态， 如果这个主节点有一个或多个从节点存在， 那么其中一个从节点会被升级为新的主节点， 而其他从节点则会开始对这个新的主节点进行复制。</p><h3 id=优缺点-1>优缺点</h3><p><strong>优点：</strong></p><ol>
+<li>无中心架构；</li><li>数据按照<code>slot</code>存储分布在多个节点，节点间数据共享，可动态调整数据分布；</li><li>可扩展性：可线性扩展到 1000 多个节点，节点可动态添加或删除；</li><li>高可用性：部分节点不可用时，集群仍可用。通过增加<code>Slave</code>做<code>standby</code>数据副本，能够实现故障自动<code>failover</code>，节点之间通过<code>gossip</code>协议交换状态信息，用投票机制完成<code>Slave</code>到<code>Master</code>的角色提升；</li><li>降低运维成本，提高系统的扩展性和可用性。</li></ol><p><strong>缺点：</strong></p><ol>
+<li><code>Client</code>实现复杂，驱动要求实现<code>Smart Client</code>，缓存<code>slots mapping</code>信息并及时更新，提高了开发难度，客户端的不成熟影响业务的稳定性。目前仅<code>JedisCluster</code>相对成熟，异常处理部分还不完善，比如常见的<code>“max redirect exception”</code>。</li><li>节点会因为某些原因发生阻塞（阻塞时间大于<code>clutser-node-timeout</code>），被判断下线，这种<code>failover</code>是没有必要的。</li><li>数据通过异步复制，不保证数据的强一致性。</li><li>多个业务使用同一套集群时，无法根据统计区分冷热数据，资源隔离性较差，容易出现相互影响的情况。</li><li><code>Slave</code>在集群中充当“冷备”，不能缓解读压力，当然可以通过<code>SDK</code>的合理设计来提高<code>Slave</code>资源的利用率。</li><li><code>Key</code>批量操作限制，如使用<code>mset</code>、<code>mget</code>目前只支持具有相同<code>slot</code>值的<code>Key</code>执行批量操作。对于映射为不同<code>slot</code>值的<code>Key</code>由于<code>Keys</code>不支持跨<code>slot</code>查询，所以执行<code>mset</code>、<code>mget</code>、<code>sunion</code>等操作支持不友好。</li><li><code>Key</code>事务操作支持有限，只支持多<code>key</code>在同一节点上的事务操作，当多个<code>Key</code>分布于不同的节点上时无法使用事务功能。</li><li><code>Key</code>作为数据分区的最小粒度，不能将一个很大的键值对象如<code>hash</code>、<code>list</code>等映射到不同的节点。</li><li>不支持多数据库空间，单机下的<code>redis</code>可以支持到 16 个数据库，集群模式下只能使用 1 个数据库空间，即 db 0。</li><li>复制结构只支持一层，从节点只能复制主节点，不支持嵌套树状复制结构。</li><li>避免产生<code>hot-key</code>，导致主库节点成为系统的短板。</li><li>避免产生<code>big-key</code>，导致网卡撑爆、慢查询等。</li><li>重试时间应该大于<code>cluster-node-time</code>时间。</li><li><code>Redis Cluster</code>不建议使用<code>pipeline</code>和<code>multi-keys</code>操作，减少<code>max redirect</code>产生的场景。</li></ol><h2 id=codis>Codis</h2><p><code>Codis</code> 是一个代理中间件，如下图，<code>Codis</code> 在系统的位置是这样的。</p><div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219221752.png style=display:block;margin-left:auto;margin-right:auto;width:60% alt=20220219221752></div><p><code>Codis</code>分为四个部分，分别是<code>Codis Proxy</code> (<code>codis-proxy</code>)、<code>Codis Dashboard</code> (<code>codis-config</code>)、<code>Codis Redis</code>(<code>codis-server</code>)和<code>ZooKeeper/Etcd</code>.
 <code>Codis</code>就是起着一个中间代理的作用，能够把所有的<code>Redis</code>实例当成一个来使用，在客户端操作着<code>SDK</code>的时候和操作<code>Redis</code>的时候是一样的，没有差别。
-因为<code>Codis</code>是一个无状态的，所以可以增加多个<code>Codis</code>来提升<code>QPS</code>,同时也可以起着容灾的作用。</p>
-<h3 id=分片原理>分片原理</h3>
-<p>在<code>Codis</code>中，<code>Codis</code>会把所有的<code>key</code>分成 1024 个槽，这 1024 个槽对应着的就是<code>Redis</code>的集群，这个在<code>Codis</code>中是会在内存中维护着这 1024 个槽与<code>Redis</code>实例的映射关系。这个槽是可以配置，可以设置成 2048 或者是 4096 个。看你的<code>Redis</code>的节点数量有多少，偏多的话，可以设置槽多一些。
-<code>Codis</code>中<code>key</code>的分配算法，先是把<code>key</code>进行<code>CRC32</code> 后，得到一个 32 位的数字，然后再<code>hash%1024</code>后得到一个余数，这个值就是这个<code>key</code>对应着的槽，这槽后面对应着的就是<code>redis</code>的实例。(可以思考一下，为什么 Codis 很多命令行不支持，例如 KEYS 操作)</p>
-<blockquote>
-<p><code>CRC32</code>:<code>CRC</code>本身是“冗余校验码”的意思，<code>CRC32</code>则表示会产生一个<code>32bit</code>（8 位十六进制数）的校验值。由于<code>CRC32</code>产生校验值时源数据块的每一个<code>bit</code>（位）都参与了计算，所以数据块中即使只有一位发生了变化，也会得到不同的<code>CRC32</code>值。</p>
-</blockquote>
-<p>Codis中Key的算法代码如下：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>hash = crc32(command.key)
-slot_index = hash % 1024
-redis = slots[slot_index].redis
-redis.do(command)
-</code></pre></div><h3 id=槽位同步>槽位同步</h3>
-<blockquote>
-<p>思考一个问题：如果这个 Codis 节点只在自己的内存里面维护着槽位与实例的关系,那么它的槽位信息怎么在多个实例间同步呢？</p>
-</blockquote>
-<p>Codis 把这个工作交给了 ZooKeeper 来管理，当 Codis 的 Codis Dashbord 改变槽位的信息的时候，其他的 Codis 节点会监听到 ZooKeeper 的槽位变化，会及时同步过来。如图：</p>
-<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219221951.png style=display:block;margin-left:auto;margin-right:auto;width:60% alt=20220219221951></div>
-<h3 id=节点扩容>节点扩容</h3>
-<blockquote>
-<p>思考一个问题：在 Codis 中增加了 Redis 节点后,槽位的信息怎么变化，原来的 key 怎么迁移和分配？如果在扩容的时候，这个时候有新的 key 进来，Codis 的处理策略是怎么样的？</p>
-</blockquote>
-<p>因为<code>Codis</code>是一个代理中间件，所以这个当需要扩容<code>Redis</code>实例的时候，可以直接增加<code>redis</code>节点。在槽位分配的时候，可以手动指定<code>Codis Dashbord</code>来为新增的节点来分配特定的槽位。</p>
-<p>在<code>Codis</code>中实现了自定义的扫描指令<code>SLOTSSCAN</code>，可以扫描指定的<code>slot</code>下的所有的<code>key</code>，将这些<code>key</code>迁移到新的<code>Redis</code>的节点中(话外语：这个是<code>Codis</code>定制化的其中一个好处)。</p>
-<p>首先，在迁移的时候，会在原来的<code>Redis</code>节点和新的<code>Redis</code>里都保存着迁移的槽位信息，在迁移的过程中，如果有<code>key</code>打进将要迁移或者正在迁移的旧槽位的时候，这个时候<code>Codis</code>的处理机制是，先是将这个<code>key</code>强制迁移到新的<code>Redis</code>节点中，然后再告诉<code>Codis</code>,下次如果有新的<code>key</code>的打在这个槽位中的话，那么转发到新的节点。代码策略如下：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=color:#000>slot_index</span> <span style=color:#ce5c00;font-weight:700>=</span> crc32<span style=color:#ce5c00;font-weight:700>(</span>command.key<span style=color:#ce5c00;font-weight:700>)</span> % <span style=color:#0000cf;font-weight:700>1024</span>
-<span style=color:#204a87;font-weight:700>if</span> slot_index in migrating_slots:
-    do_migrate_key<span style=color:#ce5c00;font-weight:700>(</span>command.key<span style=color:#ce5c00;font-weight:700>)</span>  <span style=color:#8f5902;font-style:italic># 强制执行迁移</span>
-    <span style=color:#000>redis</span> <span style=color:#ce5c00;font-weight:700>=</span> slots<span style=color:#ce5c00;font-weight:700>[</span>slot_index<span style=color:#ce5c00;font-weight:700>]</span>.new_redis
-<span style=color:#204a87;font-weight:700>else</span>:
-    <span style=color:#000>redis</span> <span style=color:#ce5c00;font-weight:700>=</span> slots<span style=color:#ce5c00;font-weight:700>[</span>slot_index<span style=color:#ce5c00;font-weight:700>]</span>.redis
-redis.do<span style=color:#ce5c00;font-weight:700>(</span><span style=color:#204a87>command</span><span style=color:#ce5c00;font-weight:700>)</span>
-</code></pre></div><h4 id=自动均衡策略>自动均衡策略</h4>
-<p>面对着上面讲的迁移策略，如果有成千上万个节点新增进来，都需要我们手动去迁移吗？那岂不是得累死啊。当然，<code>Codis</code>也是考虑到了这一点，所以提供了自动均衡策略。自动均衡策略是这样的，<code>Codis</code> 会在机器空闲的时候，观察<code>Redis</code>中的实例对应着的<code>slot</code>数，如果不平衡的话就会自动进行迁移。</p>
-<h4 id=codis-的牺牲>Codis 的牺牲</h4>
-<p>因为<code>Codis</code>在<code>Redis</code>的基础上的改造，所以在<code>Codis</code>上是不支持事务的，同时也会有一些命令行不支持，在官方的文档上有(<code>Codis</code>不支持的命令)
-官方的建议是单个集合的总容量不要超过 1M,否则在迁移的时候会有卡顿感。在<code>Codis</code>中，增加了<code>proxy</code>来当中转层，所以在网络开销上，是会比单个的<code>Redis</code>节点的性能有所下降的，所以这部分会有些的性能消耗。可以增加<code>proxy</code>的数量来避免掉这块的性能损耗。</p>
-<h4 id=mget-的过程>MGET 的过程</h4>
-<blockquote>
-<p>思考一个问题：如果熟悉 Redis 中的 MGET、MSET 和 MSETNX 命令的话，就会知道这三个命令都是原子性的命令。但是，为什么 Codis 支持 MGET 和 MSET,却不支持 MSETNX 命令呢？</p>
-</blockquote>
-<div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219222034.png style=display:block;margin-left:auto;margin-right:auto;width:60% alt=20220219222034></div>
-<p>原因如下:</p>
-<p>在<code>Codis</code>中的<code>MGET</code>命令的原理是这样的，先是在<code>Redis</code>中的各个实例里获取到符合的<code>key</code>，然后再汇总到<code>Codis</code>中，如果是<code>MSETNX</code>的话，因为<code>key</code>可能存在在多个<code>Redis</code>的实例中，如果某个实例的设值成功，而另一个实例的设值不成功，从本质上讲这是不成功的，但是分布在多个实例中的<code>Redis</code>是没有回滚机制的，所以会产生脏数据，所以 MSETNX 就是不能支持了。</p>
-<style>.feedback--answer{display:inline-block}.feedback--answer-no{margin-left:1em}.feedback--response{display:none;margin-top:1em}.feedback--response__visible{display:block}</style>
-<div class=d-print-none>
-<h2 class=feedback--title>Feedback</h2>
-<p class=feedback--question>Was this page helpful?</p>
-<button class="btn btn-primary mb-4 feedback--answer feedback--answer-yes">Yes</button>
+因为<code>Codis</code>是一个无状态的，所以可以增加多个<code>Codis</code>来提升<code>QPS</code>,同时也可以起着容灾的作用。</p><h3 id=分片原理>分片原理</h3><p>在<code>Codis</code>中，<code>Codis</code>会把所有的<code>key</code>分成 1024 个槽，这 1024 个槽对应着的就是<code>Redis</code>的集群，这个在<code>Codis</code>中是会在内存中维护着这 1024 个槽与<code>Redis</code>实例的映射关系。这个槽是可以配置，可以设置成 2048 或者是 4096 个。看你的<code>Redis</code>的节点数量有多少，偏多的话，可以设置槽多一些。
+<code>Codis</code>中<code>key</code>的分配算法，先是把<code>key</code>进行<code>CRC32</code> 后，得到一个 32 位的数字，然后再<code>hash%1024</code>后得到一个余数，这个值就是这个<code>key</code>对应着的槽，这槽后面对应着的就是<code>redis</code>的实例。(可以思考一下，为什么 Codis 很多命令行不支持，例如 KEYS 操作)</p><blockquote>
+<p><code>CRC32</code>:<code>CRC</code>本身是“冗余校验码”的意思，<code>CRC32</code>则表示会产生一个<code>32bit</code>（8 位十六进制数）的校验值。由于<code>CRC32</code>产生校验值时源数据块的每一个<code>bit</code>（位）都参与了计算，所以数据块中即使只有一位发生了变化，也会得到不同的<code>CRC32</code>值。</p></blockquote><p>Codis中Key的算法代码如下：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback><span style=display:flex><span>hash = crc32(command.key)
+</span></span><span style=display:flex><span>slot_index = hash % 1024
+</span></span><span style=display:flex><span>redis = slots[slot_index].redis
+</span></span><span style=display:flex><span>redis.do(command)
+</span></span></code></pre></div><h3 id=槽位同步>槽位同步</h3><blockquote>
+<p>思考一个问题：如果这个 Codis 节点只在自己的内存里面维护着槽位与实例的关系,那么它的槽位信息怎么在多个实例间同步呢？</p></blockquote><p>Codis 把这个工作交给了 ZooKeeper 来管理，当 Codis 的 Codis Dashbord 改变槽位的信息的时候，其他的 Codis 节点会监听到 ZooKeeper 的槽位变化，会及时同步过来。如图：</p><div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219221951.png style=display:block;margin-left:auto;margin-right:auto;width:60% alt=20220219221951></div><h3 id=节点扩容>节点扩容</h3><blockquote>
+<p>思考一个问题：在 Codis 中增加了 Redis 节点后,槽位的信息怎么变化，原来的 key 怎么迁移和分配？如果在扩容的时候，这个时候有新的 key 进来，Codis 的处理策略是怎么样的？</p></blockquote><p>因为<code>Codis</code>是一个代理中间件，所以这个当需要扩容<code>Redis</code>实例的时候，可以直接增加<code>redis</code>节点。在槽位分配的时候，可以手动指定<code>Codis Dashbord</code>来为新增的节点来分配特定的槽位。</p><p>在<code>Codis</code>中实现了自定义的扫描指令<code>SLOTSSCAN</code>，可以扫描指定的<code>slot</code>下的所有的<code>key</code>，将这些<code>key</code>迁移到新的<code>Redis</code>的节点中(话外语：这个是<code>Codis</code>定制化的其中一个好处)。</p><p>首先，在迁移的时候，会在原来的<code>Redis</code>节点和新的<code>Redis</code>里都保存着迁移的槽位信息，在迁移的过程中，如果有<code>key</code>打进将要迁移或者正在迁移的旧槽位的时候，这个时候<code>Codis</code>的处理机制是，先是将这个<code>key</code>强制迁移到新的<code>Redis</code>节点中，然后再告诉<code>Codis</code>,下次如果有新的<code>key</code>的打在这个槽位中的话，那么转发到新的节点。代码策略如下：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span><span style=color:#000>slot_index</span> <span style=color:#ce5c00;font-weight:700>=</span> crc32<span style=color:#ce5c00;font-weight:700>(</span>command.key<span style=color:#ce5c00;font-weight:700>)</span> % <span style=color:#0000cf;font-weight:700>1024</span>
+</span></span><span style=display:flex><span><span style=color:#204a87;font-weight:700>if</span> slot_index in migrating_slots:
+</span></span><span style=display:flex><span>    do_migrate_key<span style=color:#ce5c00;font-weight:700>(</span>command.key<span style=color:#ce5c00;font-weight:700>)</span>  <span style=color:#8f5902;font-style:italic># 强制执行迁移</span>
+</span></span><span style=display:flex><span>    <span style=color:#000>redis</span> <span style=color:#ce5c00;font-weight:700>=</span> slots<span style=color:#ce5c00;font-weight:700>[</span>slot_index<span style=color:#ce5c00;font-weight:700>]</span>.new_redis
+</span></span><span style=display:flex><span><span style=color:#204a87;font-weight:700>else</span>:
+</span></span><span style=display:flex><span>    <span style=color:#000>redis</span> <span style=color:#ce5c00;font-weight:700>=</span> slots<span style=color:#ce5c00;font-weight:700>[</span>slot_index<span style=color:#ce5c00;font-weight:700>]</span>.redis
+</span></span><span style=display:flex><span>redis.do<span style=color:#ce5c00;font-weight:700>(</span><span style=color:#204a87>command</span><span style=color:#ce5c00;font-weight:700>)</span>
+</span></span></code></pre></div><h4 id=自动均衡策略>自动均衡策略</h4><p>面对着上面讲的迁移策略，如果有成千上万个节点新增进来，都需要我们手动去迁移吗？那岂不是得累死啊。当然，<code>Codis</code>也是考虑到了这一点，所以提供了自动均衡策略。自动均衡策略是这样的，<code>Codis</code> 会在机器空闲的时候，观察<code>Redis</code>中的实例对应着的<code>slot</code>数，如果不平衡的话就会自动进行迁移。</p><h4 id=codis-的牺牲>Codis 的牺牲</h4><p>因为<code>Codis</code>在<code>Redis</code>的基础上的改造，所以在<code>Codis</code>上是不支持事务的，同时也会有一些命令行不支持，在官方的文档上有(<code>Codis</code>不支持的命令)
+官方的建议是单个集合的总容量不要超过 1M,否则在迁移的时候会有卡顿感。在<code>Codis</code>中，增加了<code>proxy</code>来当中转层，所以在网络开销上，是会比单个的<code>Redis</code>节点的性能有所下降的，所以这部分会有些的性能消耗。可以增加<code>proxy</code>的数量来避免掉这块的性能损耗。</p><h4 id=mget-的过程>MGET 的过程</h4><blockquote>
+<p>思考一个问题：如果熟悉 Redis 中的 MGET、MSET 和 MSETNX 命令的话，就会知道这三个命令都是原子性的命令。但是，为什么 Codis 支持 MGET 和 MSET,却不支持 MSETNX 命令呢？</p></blockquote><div><img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20220219222034.png style=display:block;margin-left:auto;margin-right:auto;width:60% alt=20220219222034></div><p>原因如下:</p><p>在<code>Codis</code>中的<code>MGET</code>命令的原理是这样的，先是在<code>Redis</code>中的各个实例里获取到符合的<code>key</code>，然后再汇总到<code>Codis</code>中，如果是<code>MSETNX</code>的话，因为<code>key</code>可能存在在多个<code>Redis</code>的实例中，如果某个实例的设值成功，而另一个实例的设值不成功，从本质上讲这是不成功的，但是分布在多个实例中的<code>Redis</code>是没有回滚机制的，所以会产生脏数据，所以 MSETNX 就是不能支持了。</p><style>.feedback--answer{display:inline-block}.feedback--answer-no{margin-left:1em}.feedback--response{display:none;margin-top:1em}.feedback--response__visible{display:block}</style><div class=d-print-none>
+<h2 class=feedback--title>Feedback</h2><p class=feedback--question>Was this page helpful?</p><button class="btn btn-primary mb-4 feedback--answer feedback--answer-yes">Yes</button>
 <button class="btn btn-primary mb-4 feedback--answer feedback--answer-no">No</button>
 <p class="feedback--response feedback--response-yes">
 Glad to hear it! Please <a href=https://github.com/infilos/infilos.com/issues/new>tell us how we can improve</a>.
-</p>
-<p class="feedback--response feedback--response-no">
+</p><p class="feedback--response feedback--response-no">
 Sorry to hear that. Please <a href=https://github.com/infilos/infilos.com/issues/new>tell us how we can improve</a>.
-</p>
-</div>
-<script>const yesButton=document.querySelector('.feedback--answer-yes'),noButton=document.querySelector('.feedback--answer-no'),yesResponse=document.querySelector('.feedback--response-yes'),noResponse=document.querySelector('.feedback--response-no'),disableButtons=()=>{yesButton.disabled=!0,noButton.disabled=!0},sendFeedback=b=>{if(typeof ga!='function')return;const a={command:'send',hitType:'event',category:'Helpful',action:'click',label:window.location.pathname,value:b};ga(a.command,a.hitType,a.category,a.action,a.label,a.value)};yesButton.addEventListener('click',()=>{yesResponse.classList.add('feedback--response__visible'),disableButtons(),sendFeedback(1)}),noButton.addEventListener('click',()=>{noResponse.classList.add('feedback--response__visible'),disableButtons(),sendFeedback(0)})</script>
+</p></div><script>const yesButton=document.querySelector(".feedback--answer-yes"),noButton=document.querySelector(".feedback--answer-no"),yesResponse=document.querySelector(".feedback--response-yes"),noResponse=document.querySelector(".feedback--response-no"),disableButtons=()=>{yesButton.disabled=!0,noButton.disabled=!0},sendFeedback=t=>{if(typeof ga!="function")return;const e={command:"send",hitType:"event",category:"Helpful",action:"click",label:window.location.pathname,value:t};ga(e.command,e.hitType,e.category,e.action,e.label,e.value)};yesButton.addEventListener("click",()=>{yesResponse.classList.add("feedback--response__visible"),disableButtons(),sendFeedback(1)}),noButton.addEventListener("click",()=>{noResponse.classList.add("feedback--response__visible"),disableButtons(),sendFeedback(0)})</script>
 <br>
-</div>
-</main>
-</div>
-</div>
-<footer class="bg-dark py-5 row d-print-none">
+</div></main></div></div><footer class="bg-dark py-5 row d-print-none">
 <div class="container-fluid mx-sm-5">
 <div class=row>
 <div class="col-6 col-sm-4 text-xs-center order-sm-2">
-</div>
-<div class="col-6 col-sm-4 text-right text-xs-center order-sm-3">
+</div><div class="col-6 col-sm-4 text-right text-xs-center order-sm-3">
 <ul class="list-inline mb-0">
 <li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Weibo aria-label=Weibo>
 <a class=text-white target=_blank rel="noopener noreferrer" href=https://weibo.com/u/3848950217>
 <i class="fab fa-weibo"></i>
 </a>
-</li>
-<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Twitter aria-label=Twitter>
+</li><li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Twitter aria-label=Twitter>
 <a class=text-white target=_blank rel="noopener noreferrer" href=https://twitter.com/zhange_zzg>
 <i class="fab fa-twitter"></i>
 </a>
-</li>
-<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title="Stack Overflow" aria-label="Stack Overflow">
+</li><li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title="Stack Overflow" aria-label="Stack Overflow">
 <a class=text-white target=_blank rel="noopener noreferrer" href=https://stackoverflow.com>
 <i class="fab fa-stack-overflow"></i>
 </a>
-</li>
-<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=GitHub aria-label=GitHub>
+</li><li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=GitHub aria-label=GitHub>
 <a class=text-white target=_blank rel="noopener noreferrer" href=https://github.com/infilos/infilos.com>
 <i class="fab fa-github"></i>
 </a>
-</li>
-</ul>
-</div>
-<div class="col-12 col-sm-4 text-center py-2 order-sm-2">
+</li></ul></div><div class="col-12 col-sm-4 text-center py-2 order-sm-2">
 <small class=text-white>&copy; 2022 infilos.com All Rights Reserved</small>
-</div>
-</div>
-</div>
-</footer>
-</div>
-<script src=/js/popper.min.js integrity=sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49 crossorigin=anonymous></script>
+</div></div></div></footer></div><script src=/js/popper.min.js integrity=sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49 crossorigin=anonymous></script>
 <script src=/js/bootstrap.min.js integrity=sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy crossorigin=anonymous></script>
-<script src=/js/main.min.5c74b870c6953931a705f390a49c7e4c0a842ec5c83b24354758dd674343ed0d.js integrity="sha256-XHS4cMaVOTGnBfOQpJx+TAqELsXIOyQ1R1jdZ0ND7Q0=" crossorigin=anonymous></script>
-</body>
-</html>
+<script src=/js/main.min.3f3f4f1e22307ccbb13271a98be2e4dbb8386b7e67c3d606db44d3d0649f485e.js integrity="sha256-Pz9PHiIwfMuxMnGpi+Lk27g4a35nw9YG20TT0GSfSF4=" crossorigin=anonymous></script>
+</body></html>

@@ -2,7 +2,7 @@
 <head>
 <meta charset=utf-8>
 <meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no">
-<meta name=generator content="Hugo 0.92.2">
+<meta name=generator content="Hugo 0.93.0">
 <meta name=ROBOTS content="INDEX, FOLLOW">
 <link rel="shortcut icon" href=/favicons/favicon.ico>
 <link rel=apple-touch-icon href=/favicons/apple-touch-icon-180x180.png sizes=180x180>
@@ -58,45 +58,43 @@ Java 内存模型中规定了所有的变量都存储在主内存中，每条线
 @@@
 内存交互操作 由上面的交互关系可知，关于主内存与工作内存之间的具体交互协议，即一个变量如何从主内存拷贝到工作内存、如何从工作内存同步到主内存之间的实现细节，Java 内存模型定义了以下 8 种操作来完成：
  lock：作用于主内存的变量，把一个变量标识为由一条线程独占的状态。 unlock：作用于主内存的变量，把一个处于锁定状态的变量释放出来，释放后的变量才可以被其他线程锁定。 read：作用于主内存的变量，把一个变量值从主内存传输到线程的工作内存中，以便随后的 load 动作使用。 load：作用于工作内存变量，把 read 操作从主内存得到的变量值放入工作内存的变量副本中。 use：作用于工作内存变量，把工作内存变量的值传递给执行引擎，每当虚拟机遇到一个需要使用变量的值的字节码指令时将会执行该操作。 assign：作用于工作内存变量，它把一个从执行引擎接收到的值赋值给工作内存变量，每当虚拟机遇到一个给变量赋值的字节码指令时执行该操作。 store：作用于工作内存变量，把工作内存变量值传送给主内存，以便随后的 write 操作。 write：作用于主内存的变量，它把 store 操作从工作内存中得到的变量值传送到主内存的变量中。  如果要把一个变量从主内存复制到工作内存，就需要按序执行 read 和 load 操作；如果把变量从工作内存中同步到主内存中，就需要按序执行 store 和 write 操作。JMM 只要求上述两个操作“必须按序执行，而没有保证必须是连续执行”。也就是说在 read 和 load 之间、store 和 write 之间可以插入其他指令，如对主内存中的变量 a、b 进行访问时，可能顺序是 read a、read b、load b、load a。JMM 还规定了在执行上述 8 种基本操作时，必须满足如下规则：">
-<script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga('create','UA-123062585-1','auto'),ga('send','pageview'))</script>
+<script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga("create","UA-123062585-1","auto"),ga("send","pageview"))</script>
 <script async src=https://www.google-analytics.com/analytics.js></script>
 <link rel=preload href=/scss/main.min.847464b684a6e89d7276700a5c500c17ab494dd1755b2654a7b27d8b59e3347e.css as=style>
 <link href=/scss/main.min.847464b684a6e89d7276700a5c500c17ab494dd1755b2654a7b27d8b59e3347e.css rel=stylesheet integrity>
 <script src=/js/jquery-3.5.1.min.js integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin=anonymous></script>
-</head>
-<body class=td-page>
+</head><body class=td-page>
 <header>
-<nav class="js-navbar-scroll navbar navbar-expand navbar-dark flex-column flex-md-row td-navbar">
+<nav class="js-navbar-scroll navbar navbar-expand-lg navbar-dark td-navbar">
 <a class=navbar-brand href=/>
-<span class=navbar-logo><svg id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512" style="enable-background:new 0 0 512 512"><path style="fill:#ffc107" d="M432.384 143.616c-4.165-4.164-10.917-4.164-15.083.0l-60.352 60.352c-4.164 4.165-4.164 10.917.0 15.083 21.187 20.463 54.951 19.876 75.413-1.311 19.962-20.668 19.962-53.435.0-74.102L432.384 143.616z"/><path style="fill:#607d8b" d="M42.667 277.334c-5.891.003-10.669-4.771-10.672-10.662-.002-4.338 2.623-8.245 6.64-9.882l234.667-96c5.455-2.233 11.687.38 13.92 5.835s-.38 11.687-5.835 13.92l-234.667 96C45.433 277.069 44.056 277.337 42.667 277.334z"/><path style="fill:#546e7a" d="M391.552 56.448l-32-32C343.938 8.745 322.689-.059 300.544.0h-3.755c-46.082.024-83.432 37.374-83.456 83.456v3.755c-.053 22.138 8.75 43.377 24.448 58.987l32 32c4.165 4.164 10.917 4.164 15.083.0L391.531 71.531C395.701 67.372 395.71 60.62 391.552 56.448z"/><path style="fill:#607d8b" d="M160 469.334c-3.279.006-6.379-1.497-8.405-4.075L34.261 315.926c-3.635-4.636-2.823-11.341 1.813-14.976s11.341-2.823 14.976 1.813l117.333 149.333c3.629 4.641 2.809 11.344-1.832 14.973C164.681 468.533 162.375 469.329 160 469.334z"/><path style="fill:#455a64" d="M487.467 86.848l-3.669-3.648c-37.687-36.557-97.71-36.197-134.955.811l-51.413 51.413c-36.996 37.25-37.357 97.263-.811 134.955l3.584 3.669c1.7 2.457 4.671 3.706 7.616 3.2 2.831.005 5.548-1.115 7.552-3.115l172.181-172.181c4.189-4.143 4.226-10.896.083-15.085-.028-.028-.055-.056-.083-.083L487.467 86.848z"/><g><path style="fill:#ffc107" d="M501.333 192H480c-5.891.0-10.667-4.776-10.667-10.667s4.776-10.667 10.667-10.667h21.333c5.891.0 10.667 4.776 10.667 10.667S507.225 192 501.333 192z"/><path style="fill:#ffc107" d="M394.667 298.667c-5.891.0-10.667-4.776-10.667-10.667v-21.333c0-5.891 4.776-10.667 10.667-10.667 5.891.0 10.667 4.776 10.667 10.667V288C405.333 293.891 400.558 298.667 394.667 298.667z"/><path style="fill:#ffc107" d="M480 277.334c-2.831.005-5.548-1.115-7.552-3.115l-21.333-21.333c-4.093-4.237-3.975-10.99.262-15.083 4.134-3.993 10.687-3.993 14.821.0l21.333 21.333c4.159 4.172 4.148 10.926-.024 15.085C485.514 276.209 482.815 277.327 480 277.334z"/></g><g><path style="fill:#455a64" d="M266.667 448H96c-29.455.0-53.333 23.878-53.333 53.333.0 5.891 4.776 10.667 10.667 10.667h256c5.891.0 10.667-4.776 10.667-10.667C320 471.878 296.122 448 266.667 448z"/><circle style="fill:#455a64" cx="32" cy="288" r="32"/></g><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/></svg></span><span class=font-weight-bold>infilos.com</span>
+<span class=navbar-logo><svg id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512" style="enable-background:new 0 0 512 512"><path style="fill:#ffc107" d="M432.384 143.616c-4.165-4.164-10.917-4.164-15.083.0l-60.352 60.352c-4.164 4.165-4.164 10.917.0 15.083 21.187 20.463 54.951 19.876 75.413-1.311 19.962-20.668 19.962-53.435.0-74.102L432.384 143.616z"/><path style="fill:#607d8b" d="M42.667 277.334c-5.891.003-10.669-4.771-10.672-10.662-.002-4.338 2.623-8.245 6.64-9.882l234.667-96c5.455-2.233 11.687.38 13.92 5.835s-.38 11.687-5.835 13.92l-234.667 96C45.433 277.069 44.056 277.337 42.667 277.334z"/><path style="fill:#546e7a" d="M391.552 56.448l-32-32C343.938 8.745 322.689-.059 300.544.0h-3.755c-46.082.024-83.432 37.374-83.456 83.456v3.755c-.053 22.138 8.75 43.377 24.448 58.987l32 32c4.165 4.164 10.917 4.164 15.083.0L391.531 71.531C395.701 67.372 395.71 60.62 391.552 56.448z"/><path style="fill:#607d8b" d="M160 469.334c-3.279.006-6.379-1.497-8.405-4.075L34.261 315.926c-3.635-4.636-2.823-11.341 1.813-14.976s11.341-2.823 14.976 1.813l117.333 149.333c3.629 4.641 2.809 11.344-1.832 14.973C164.681 468.533 162.375 469.329 160 469.334z"/><path style="fill:#455a64" d="M487.467 86.848l-3.669-3.648c-37.687-36.557-97.71-36.197-134.955.811l-51.413 51.413c-36.996 37.25-37.357 97.263-.811 134.955l3.584 3.669c1.7 2.457 4.671 3.706 7.616 3.2 2.831.005 5.548-1.115 7.552-3.115l172.181-172.181c4.189-4.143 4.226-10.896.083-15.085-.028-.028-.055-.056-.083-.083L487.467 86.848z"/><g><path style="fill:#ffc107" d="M501.333 192H480c-5.891.0-10.667-4.776-10.667-10.667s4.776-10.667 10.667-10.667h21.333c5.891.0 10.667 4.776 10.667 10.667S507.225 192 501.333 192z"/><path style="fill:#ffc107" d="M394.667 298.667c-5.891.0-10.667-4.776-10.667-10.667v-21.333c0-5.891 4.776-10.667 10.667-10.667 5.891.0 10.667 4.776 10.667 10.667V288C405.333 293.891 400.558 298.667 394.667 298.667z"/><path style="fill:#ffc107" d="M480 277.334c-2.831.005-5.548-1.115-7.552-3.115l-21.333-21.333c-4.093-4.237-3.975-10.99.262-15.083 4.134-3.993 10.687-3.993 14.821.0l21.333 21.333c4.159 4.172 4.148 10.926-.024 15.085C485.514 276.209 482.815 277.327 480 277.334z"/></g><g><path style="fill:#455a64" d="M266.667 448H96c-29.455.0-53.333 23.878-53.333 53.333.0 5.891 4.776 10.667 10.667 10.667h256c5.891.0 10.667-4.776 10.667-10.667C320 471.878 296.122 448 266.667 448z"/><circle style="fill:#455a64" cx="32" cy="288" r="32"/></g><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/></svg></span>
+<span class=font-weight-bold>infilos.com</span>
 </a>
+<button class=navbar-toggler type=button data-toggle=collapse data-target=#navbarSupportedContent aria-controls=navbarSupportedContent aria-expanded=false aria-label="Toggle navigation">
+<span class=navbar-toggler-icon></span>
+</button>
 <div class="collapse navbar-collapse" id=navbarSupportedContent>
 <ul class="navbar-nav mr-auto">
 <li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86>
 <span>基础</span>
 </a>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80>
 <span>语言</span>
 </a>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93>
 <span>框架库</span>
 </a>
-</li>
-<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+</li><li class="nav-item dropdown" style=max-width:90px;min-width:10px>
 <a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
 分布式
 <span>+</span>
 </a>
 <div class=dropdown-menu aria-labelledby=navbarDropdown>
 <a class=dropdown-item href=/%e5%88%86%e5%b8%83%e5%bc%8f/base>基本构成</a>
-</div>
-</li>
-<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+</div></li><li class="nav-item dropdown" style=max-width:90px;min-width:10px>
 <a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
 大数据
 <span>+</span>
@@ -107,9 +105,7 @@ Java 内存模型中规定了所有的变量都存储在主内存中，每条线
 <a class=dropdown-item href=/%e6%b6%88%e6%81%af%e7%b3%bb%e7%bb%9f>消息系统</a>
 <a class=dropdown-item href=/%e5%a4%84%e7%90%86%e7%b3%bb%e7%bb%9f>处理系统</a>
 <a class=dropdown-item href=/%e6%95%b0%e6%8d%ae%e6%b2%bb%e7%90%86>数据治理</a>
-</div>
-</li>
-<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+</div></li><li class="nav-item dropdown" style=max-width:90px;min-width:10px>
 <a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
 中后台
 <span>+</span>
@@ -119,38 +115,26 @@ Java 内存模型中规定了所有的变量都存储在主内存中，每条线
 <a class=dropdown-item href=/%e7%94%a8%e6%88%b7%e7%b3%bb%e7%bb%9f>用户系统</a>
 <a class=dropdown-item href=/%e4%ba%a4%e4%ba%92%e7%95%8c%e9%9d%a2>交互界面</a>
 <a class=dropdown-item href=/%e4%b8%9a%e5%8a%a1%e7%b3%bb%e7%bb%9f>业务系统</a>
-</div>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</div></li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e6%a8%a1%e5%bc%8f%e6%9e%b6%e6%9e%84>
 <span>模式架构</span>
 </a>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e9%9d%a2%e8%af%95%e9%97%ae%e7%ad%94>
 <span>面试</span>
 </a>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e7%ae%a1%e7%90%86%e8%b7%af%e5%be%84>
 <span>管理</span>
 </a>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e5%bc%80%e6%ba%90%e9%a1%b9%e7%9b%ae>
 <span>开源</span>
 </a>
-</li>
-</ul>
-<div class="form-inline my-2 my-lg-0">
+</li></ul><div class="form-inline my-2 my-lg-0">
 <div class="nav-item nav-search-item my-2 my-md-0">
 <input type=search class="form-control td-search-input" placeholder="&#xf002; 站内搜索…" aria-label=站内搜索… autocomplete=off>
-</div>
-</div>
-</div>
-</nav>
-</header>
-<div class="container-fluid td-outer">
+</div></div></div></nav></header><div class="container-fluid td-outer">
 <div class=td-main>
 <div class="row flex-xl-nowrap">
 <aside class="col-12 col-md-3 col-xl-2 td-sidebar d-print-none">
@@ -160,10 +144,7 @@ Java 内存模型中规定了所有的变量都存储在主内存中，每条线
 <input type=search class="form-control td-search-input" placeholder="&#xf002; 站内搜索…" aria-label=站内搜索… autocomplete=off>
 <button class="btn btn-link td-sidebar__toggle d-md-none p-0 ml-3 fas fa-bars" type=button data-toggle=collapse data-target=#td-section-nav aria-controls=td-docs-nav aria-expanded=false aria-label="Toggle section navigation">
 </button>
-</form>
-</div>
-<div id=content-desktop></div>
-<nav class="collapse td-sidebar-nav" id=td-section-nav>
+</form></div><div id=content-desktop></div><nav class="collapse td-sidebar-nav" id=td-section-nav>
 <ul class="td-sidebar-nav__section pr-md-3 ul-0">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e7bc96e7a88be8afade8a880-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section tree-root" id=m-e7bc96e7a88be8afade8a880><span>编程语言</span></a>
@@ -190,9 +171,7 @@ Java 内存模型中规定了所有的变量都存储在主内存中，每条线
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-base/ch07-%E5%8F%8D%E5%B0%84%E6%9C%BA%E5%88%B6/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-basech07-e58f8de5b084e69cbae588b6><span>CH07-反射机制</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-basech08-spie69cbae588b6-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-base/ch08-spi%E6%9C%BA%E5%88%B6/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-basech08-spie69cbae588b6><span>CH08-SPI 机制</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-collection-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-collection-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-collection/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880javajava-collection><span>Java 集合</span></a>
 <ul class="ul-3 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-collectionch01-e99b86e59088e7bb93e69e84-li>
@@ -215,9 +194,7 @@ Java 内存模型中规定了所有的变量都存储在主内存中，每条线
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-collection/ch09-weakhashmap/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-collectionch09-weakhashmap><span>CH09-WeakHashMap</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-collectionch10-stream-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-collection/ch10-stream/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-collectionch10-stream><span>CH10-Stream</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrent-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrent-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880javajava-concurrent><span>Java 并发</span></a>
 <ul class="ul-3 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch01-e5b9b6e58f91e4bd93e7b3bb-li>
@@ -284,9 +261,7 @@ Java 内存模型中规定了所有的变量都存储在主内存中，每条线
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch31-allqueues/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch31-allqueues><span>CH31-AllQueues</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch32-allpools-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch32-allpools/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch32-allpools><span>CH32-AllPools</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-io-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-io-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-io/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880javajava-io><span>Java I/0</span></a>
 <ul class="ul-3 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-ioch01-ioe58886e7b1bb-li>
@@ -315,9 +290,7 @@ Java 内存模型中规定了所有的变量都存储在主内存中，每条线
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-io/ch12-%E9%9B%B6%E6%8B%B7%E8%B4%9D/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-ioch12-e99bb6e68bb7e8b49d><span>CH12-零拷贝</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-ioch13-e58685e5ad98e698a0e5b084-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-io/ch13-%E5%86%85%E5%AD%98%E6%98%A0%E5%B0%84/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-ioch13-e58685e5ad98e698a0e5b084><span>CH13-内存映射</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-effective-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-effective-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-effective/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880javajava-effective><span>Java Effective</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-debug-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-debug/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880javajava-debug><span>Java Debug</span></a>
@@ -330,17 +303,15 @@ Java 内存模型中规定了所有的变量都存储在主内存中，每条线
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-debug/linux-cmd/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-debuglinux-cmd><span>Linux 命令</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-debugjdk-tools-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-debug/jdk-tools/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-debugjdk-tools><span>调试工具集</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-debugjava-agent-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-debug/java-agent/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-debugjava-agent><span>Java Agent</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-debugdynamic-debug-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-debug/dynamic-debug/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-debugdynamic-debug><span>动态调试技术</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-debugarthas-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-debug/arthas/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-debugarthas><span>Arthas</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-debuglocal-debug-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-debug/local-debug/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-debuglocal-debug><span>本地调试</span></a>
-</li>
-</ul>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e7bc96e7a88be8afade8a880jvm-core-li>
+</li></ul></li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e7bc96e7a88be8afade8a880jvm-core-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-core><span>JVM 核心</span></a>
 <ul class="ul-2 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-li>
@@ -376,9 +347,7 @@ Java 内存模型中规定了所有的变量都存储在主内存中，每条线
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm/ch14-jvm%E8%B0%83%E8%AF%95%E5%B7%A5%E5%85%B7/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch14-jvme8b083e8af95e5b7a5e585b7><span>CH14-JVM调试工具</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch15-jvme58aa8e68081e8b083e8af95-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm/ch15-jvm%E5%8A%A8%E6%80%81%E8%B0%83%E8%AF%95/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch15-jvme58aa8e68081e8b083e8af95><span>CH15-JVM动态调试</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-133-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-133-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/jmm-133/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-133><span>JSR 133</span></a>
 <ul class="ul-3 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-133ch01-e68c87e4bba4e9878de68e92-li>
@@ -389,9 +358,7 @@ Java 内存模型中规定了所有的变量都存储在主内存中，每条线
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/jmm-133/ch03-%E5%A4%9A%E5%A4%84%E7%90%86%E5%99%A8/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-133ch03-e5a49ae5a484e79086e599a8><span>CH03-多处理器</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-133ch04-e5bc80e58f91e68c87e58d97-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/jmm-133/ch04-%E5%BC%80%E5%8F%91%E6%8C%87%E5%8D%97/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-133ch04-e5bc80e58f91e68c87e58d97><span>CH04-开发指南</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-spec-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-spec-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/jmm-spec/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-spec><span>JMM 规范</span></a>
 <ul class="ul-3 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-specch01-jmme8a784e88c83-li>
@@ -404,9 +371,7 @@ Java 内存模型中规定了所有的变量都存储在主内存中，每条线
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/jmm-spec/ch04-jsr133-faq/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-specch04-jsr133-faq><span>CH04-JSR133-FAQ</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-specch05-jsr133-cook-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/jmm-spec/ch05-jsr133-cook/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-specch05-jsr133-cook><span>CH05-JSR133-Cook</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v2/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2><span>JVM 深入理解 V2</span></a>
 <ul class="ul-3 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch01-e8b5b0e8bf9bjava-li>
@@ -439,13 +404,9 @@ Java 内存模型中规定了所有的变量都存储在主内存中，每条线
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v2/endix-b-%E6%8C%87%E4%BB%A4%E8%A1%A8/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2endix-b-e68c87e4bba4e8a1a8><span>Endix-B-字节码指令</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2endix-c-e58f82e695b0e8a1a8-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v2/endix-c-%E5%8F%82%E6%95%B0%E8%A1%A8/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2endix-c-e58f82e695b0e8a1a8><span>Endix-C-虚拟机参数</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v3-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v3-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v3/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v3><span>JVM 深入理解 V3</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e7bc96e7a88be8afade8a880jvm-concurrent-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e7bc96e7a88be8afade8a880jvm-concurrent-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-concurrent><span>JVM 并发</span></a>
 <ul class="ul-2 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practice-li>
@@ -483,9 +444,7 @@ Java 内存模型中规定了所有的变量都存储在主内存中，每条线
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/java-con-practice/ch15-%E5%8E%9F%E5%AD%90%E4%B8%8E%E9%9D%9E%E9%98%BB%E5%A1%9E%E5%90%8C%E6%AD%A5/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech15-e58e9fe5ad90e4b88ee99d9ee998bbe5a19ee5908ce6ada5><span>CH15-原子与非阻塞同步</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech16-e58685e5ad98e6a8a1e59e8b-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/java-con-practice/ch16-%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech16-e58685e5ad98e6a8a1e59e8b><span>CH16-内存模型</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-pattern-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-pattern-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/java-con-pattern/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-pattern><span>Java 并发模式</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallel-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/dive-parallel/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallel><span>深入理解并行</span></a>
@@ -522,9 +481,7 @@ Java 内存模型中规定了所有的变量都存储在主内存中，每条线
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/dive-parallel/ch15/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch15><span>CH15-高级同步-内存序</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelendix-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/dive-parallel/endix/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelendix><span>ENDIX-C-内存屏障</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-model-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-model-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/seven-con-model/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-model><span>七并发模型</span></a>
 <ul class="ul-3 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-modelch01-li>
@@ -545,10 +502,41 @@ Java 内存模型中规定了所有的变量都存储在主内存中，每条线
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/seven-con-model/ch08/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-modelch08><span>CH08-Lambda 架构</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-modelch09-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/seven-con-model/ch09/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-modelch09><span>CH09-未来方向</span></a>
-</li>
-</ul>
-</li>
-</ul>
+</li></ul></li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e7bc96e7a88be8afade8a880jvm-dismantle-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-dismantle/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-dismantle><span>JVM 拆解</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech01-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-dismantle/ch01/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech01><span>CH01-开始运行</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech02-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-dismantle/ch02/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech02><span>CH02-基本类型</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech03-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-dismantle/ch03/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech03><span>CH03-类加载</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech04-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-dismantle/ch04/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech04><span>CH04-方法调用-上</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech05-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-dismantle/ch05/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech05><span>CH05-方法调用-下</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech06-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-dismantle/ch06/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech06><span>CH06-异常处理</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech07-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-dismantle/ch07/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech07><span>CH07-实现反射</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech08-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-dismantle/ch08/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech08><span>CH08-invokedynamic-上</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech09-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-dismantle/ch09/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech09><span>CH09-invokedynamic-下</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech10-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-dismantle/ch10/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech10><span>CH10-对象内存布局</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech11-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-dismantle/ch11/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech11><span>CH11-垃圾回收-上</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech12-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-dismantle/ch12/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech12><span>CH12-垃圾回收-下</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech13-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-dismantle/ch13/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech13><span>CH13-内存模型</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech14-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-dismantle/ch14/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech14><span>CH14-Synchronized</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech99-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-dismantle/ch99/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech99><span>CH99-常用工具</span></a>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e7bc96e7a88be8afade8a880jvm-performance-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-performance/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-performance><span>JVM 性能</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e7bc96e7a88be8afade8a880scala-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880scala><span>Scala 编程</span></a>
 <ul class="ul-2 foldable">
@@ -647,9 +635,7 @@ Java 内存模型中规定了所有的变量都存储在主内存中，每条线
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/async-programming/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coreasync-programming><span>异步编程</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-corescala-style-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/scala-style/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-corescala-style><span>战略Scala风格</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-func-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-func-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-func/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880scalascala-func><span>Scala 函数式</span></a>
 <ul class="ul-3 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-funcch00-e7b2bee8a681-li>
@@ -662,11 +648,7 @@ Java 内存模型中规定了所有的变量都存储在主内存中，每条线
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-func/ch03-%E6%95%B0%E6%8D%AE/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-funcch03-e695b0e68dae><span>CH03-数据</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-funcch04-e5bc82e5b8b8-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-func/ch04-%E5%BC%82%E5%B8%B8/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-funcch04-e5bc82e5b8b8><span>CH04-异常</span></a>
-</li>
-</ul>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e7bc96e7a88be8afade8a880rust-li>
+</li></ul></li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e7bc96e7a88be8afade8a880rust-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/rust/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880rust><span>Rust 编程</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e7bc96e7a88be8afade8a880golang-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/golang/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880golang><span>Golang 编程</span></a>
@@ -687,239 +669,82 @@ Java 内存模型中规定了所有的变量都存储在主内存中，每条线
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/frontend/vue/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880frontendvue><span>Vue 3</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880frontendreact-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/frontend/react/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880frontendreact><span>React</span></a>
-</li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-</nav>
-</div>
-</aside>
-<aside class="d-none d-xl-block col-xl-2 td-sidebar-toc d-print-none">
+</li></ul></li></ul></li></ul></nav></div></aside><aside class="d-none d-xl-block col-xl-2 td-sidebar-toc d-print-none">
 <div class="td-page-meta ml-2 pb-1 pt-2 mb-0">
 <a href=https://github.com/infilos/infilos.com/edit/master/content/zh/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/jvm-core/jmm-spec/CH02-JMM%e8%a7%a3%e9%87%8a.md target=_blank><i class="fa fa-edit fa-fw"></i> 编辑此页</a>
 <a href="https://github.com/infilos/infilos.com/new/master/content/zh/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/jvm-core/jmm-spec/CH02-JMM%e8%a7%a3%e9%87%8a.md?filename=change-me.md&value=---%0Atitle%3A+%22Long+Page+Title%22%0AlinkTitle%3A+%22Short+Nav+Title%22%0Aweight%3A+100%0Adescription%3A+%3E-%0A+++++Page+description+for+heading+and+indexes.%0A---%0A%0A%23%23+Heading%0A%0AEdit+this+template+to+create+your+new+page.%0A%0A%2A+Give+it+a+good+name%2C+ending+in+%60.md%60+-+e.g.+%60getting-started.md%60%0A%2A+Edit+the+%22front+matter%22+section+at+the+top+of+the+page+%28weight+controls+how+its+ordered+amongst+other+pages+in+the+same+directory%3B+lowest+number+first%29.%0A%2A+Add+a+good+commit+message+at+the+bottom+of+the+page+%28%3C80+characters%3B+use+the+extended+description+field+for+more+detail%29.%0A%2A+Create+a+new+branch+so+you+can+preview+your+new+file+and+request+a+review+via+Pull+Request.%0A" target=_blank><i class="fa fa-edit fa-fw"></i> 添加子页面</a>
 <a href="https://github.com/infilos/infilos.com/issues/new?title=CH02-JMM%20Explain" target=_blank><i class="fab fa-github fa-fw"></i> 提交文档问题</a>
 <a id=print href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/jmm-spec/_print/><i class="fa fa-print fa-fw"></i> 整节打印</a>
-</div>
-<div class=td-toc><nav id=TableOfContents>
+</div><div class=td-toc><nav id=TableOfContents>
 <ul>
-<li><a href=#多任务和高并发的内存交互>多任务和高并发的内存交互</a></li>
-<li><a href=#java-内存模型>Java 内存模型</a>
+<li><a href=#多任务和高并发的内存交互>多任务和高并发的内存交互</a></li><li><a href=#java-内存模型>Java 内存模型</a>
 <ul>
-<li><a href=#主内存与工作内存>主内存与工作内存</a></li>
-<li><a href=#内存交互操作>内存交互操作</a></li>
-<li><a href=#volatile-变量>volatile 变量</a></li>
-<li><a href=#longdouble-非原子协定>long/double 非原子协定</a></li>
-</ul>
-</li>
-<li><a href=#原子性可见性有序性>原子性、可见性、有序性</a>
+<li><a href=#主内存与工作内存>主内存与工作内存</a></li><li><a href=#内存交互操作>内存交互操作</a></li><li><a href=#volatile-变量>volatile 变量</a></li><li><a href=#longdouble-非原子协定>long/double 非原子协定</a></li></ul></li><li><a href=#原子性可见性有序性>原子性、可见性、有序性</a>
 <ul>
-<li><a href=#原子性>原子性</a></li>
-<li><a href=#可见性>可见性</a></li>
-<li><a href=#有序性>有序性</a></li>
-</ul>
-</li>
-<li><a href=#重排序>重排序</a>
+<li><a href=#原子性>原子性</a></li><li><a href=#可见性>可见性</a></li><li><a href=#有序性>有序性</a></li></ul></li><li><a href=#重排序>重排序</a>
 <ul>
-<li><a href=#jmm-重排序屏障>JMM 重排序屏障</a></li>
-<li><a href=#重排序对多线程的影响>重排序对多线程的影响</a></li>
-</ul>
-</li>
-<li><a href=#先行发生原则happens-before>先行发生原则(happens-before)</a></li>
-</ul>
-</nav></div>
-</aside>
-<main class="col-12 col-md-9 col-xl-8 pl-md-5" role=main>
+<li><a href=#jmm-重排序屏障>JMM 重排序屏障</a></li><li><a href=#重排序对多线程的影响>重排序对多线程的影响</a></li></ul></li><li><a href=#先行发生原则happens-before>先行发生原则(happens-before)</a></li></ul></nav></div></aside><main class="col-12 col-md-9 col-xl-8 pl-md-5" role=main>
 <nav aria-label=breadcrumb class="d-none d-md-block d-print-none">
 <ol class="breadcrumb spb-1">
 <li class=breadcrumb-item>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/>编程语言</a>
-</li>
-<li class=breadcrumb-item>
+</li><li class=breadcrumb-item>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/>JVM 核心</a>
-</li>
-<li class=breadcrumb-item>
+</li><li class=breadcrumb-item>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/jmm-spec/>JMM 规范</a>
-</li>
-<li class="breadcrumb-item active" aria-current=page>
+</li><li class="breadcrumb-item active" aria-current=page>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/jmm-spec/ch02-jmm%E8%A7%A3%E9%87%8A/>CH02-JMM Explain</a>
-</li>
-</ol>
-</nav>
-<div class=td-content>
-<h1>CH02-JMM Explain</h1>
-<header class=article-meta>
-</header>
-<h2 id=多任务和高并发的内存交互>多任务和高并发的内存交互</h2>
-<p>多任务和高并发是衡量一台计算机的处理能力的重要指标之一。一般衡量一个服务器性能的高低好坏，使用每条事务处理数(Transcations Per Second, TPS)，该指标比较能够说明问题，它代表着一秒内服务器平均能够响应的请求数，而 TPS 值与程序的并发能力有着非常密切的关系。“物理机”的并发问题与“虚拟机”中的情况有很多相似之处，物理机对并发的处理方案对于虚拟机的实现也有相当大的参考意义。</p>
-<p>由于计算机的存储设备与处理器的运算能力之间有着几个数量级的差距，所以现代计算机系统都不得不加入一层读写速度尽可能接近处理器运算速度的“高速缓存(cache)”来作为内存与处理器之间的缓冲：将运算需要使用到的数据复制到缓存中，让运算能够快速运行；当运算结束后再将数据从缓存同步会内存之中，这样一来处理器就无需等待缓慢的内存读写了。</p>
-<p>基于高速缓存的存储交互很好的解决了处理器与内存的速度矛盾，但是引入了一个新的问题：“缓存一致性(Cache Coherence)”。在多处理器系统中，每个处理器都有自己的高速缓存，而它们又共享同一主存，如下图所示：多个处理器运算任务都涉及同一块主存，需要一种协议可以保障数据的一致性(及多个处理器看到相同的数据)，这类协议有 MSI/MESI/MOSI/Dragon Protocl 等。</p>
-<div align=center>
+</li></ol></nav><div class=td-content>
+<h1>CH02-JMM Explain</h1><header class=article-meta>
+</header><h2 id=多任务和高并发的内存交互>多任务和高并发的内存交互</h2><p>多任务和高并发是衡量一台计算机的处理能力的重要指标之一。一般衡量一个服务器性能的高低好坏，使用每条事务处理数(Transcations Per Second, TPS)，该指标比较能够说明问题，它代表着一秒内服务器平均能够响应的请求数，而 TPS 值与程序的并发能力有着非常密切的关系。“物理机”的并发问题与“虚拟机”中的情况有很多相似之处，物理机对并发的处理方案对于虚拟机的实现也有相当大的参考意义。</p><p>由于计算机的存储设备与处理器的运算能力之间有着几个数量级的差距，所以现代计算机系统都不得不加入一层读写速度尽可能接近处理器运算速度的“高速缓存(cache)”来作为内存与处理器之间的缓冲：将运算需要使用到的数据复制到缓存中，让运算能够快速运行；当运算结束后再将数据从缓存同步会内存之中，这样一来处理器就无需等待缓慢的内存读写了。</p><p>基于高速缓存的存储交互很好的解决了处理器与内存的速度矛盾，但是引入了一个新的问题：“缓存一致性(Cache Coherence)”。在多处理器系统中，每个处理器都有自己的高速缓存，而它们又共享同一主存，如下图所示：多个处理器运算任务都涉及同一块主存，需要一种协议可以保障数据的一致性(及多个处理器看到相同的数据)，这类协议有 MSI/MESI/MOSI/Dragon Protocl 等。</p><div align=center>
 <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20181006161327.png style=display:block;width:70% alt=NAME align=center>
-</div>
-<p>除此之外，为了使得处理器内部的运算单元能尽可能被充分利用，处理器可能会对输入代码进行“乱序执行(Out-Of-Order Execution)”优化，处理器会在计算之后将对乱序执行的代码进行结果重组，以保证结果的准确性。与处理器的乱序执行优化类似，Java 虚拟机的即时编译器(JIT)中也有类似的“指令重排序(Instruction Recorder)”优化。</p>
-<h2 id=java-内存模型>Java 内存模型</h2>
-<p>内存模型可以理解为在特定的操作协议下，对特定的内存或告诉缓存进行读写访问的过程抽象，不同架构下的物理机拥有不同的内存模型，Java 虚拟机也有自己的内存模型，即“Java 内存模型(JMM)”。在 C/C++ 语言中则是直接使用物理硬件和操作系统的内存模型，导致不同平台下并发访问出错，需要进行多平台的兼容。而 JMM 的出现，能够屏蔽掉各种硬件和操作系统的内存访问差异，实现平台一致性，使得 Java 程序能够“一次编写，到处运行”。</p>
-<h3 id=主内存与工作内存>主内存与工作内存</h3>
-<p>Java 内存模型的目的主要是“定义程序中各个变量的访问规则”，即在虚拟机中将变量存储到内存和从内存中取出变量这样的底层细节。此处的变量与进行 Java 编程时所说的变量不同，包括了实例字段、静态字段、数组元素，但是不包括局部变量与方法参数，因为后者是线程私有的，永远不会被共享。</p>
-<p>Java 内存模型中规定了所有的变量都存储在主内存中，每条线程还有自己的工作内存(可以与前面所说的处理器的高速缓存类比)，线程的工作内存中使用到的变量到主内存副本拷贝，线程对变量的所有操作(读取、赋值)都必须在工作内存中进行，而不能直接读写主内存中的变量。不同线程之间无法直接访问对方工作内存中的变量，线程间变量值的传递均需要通过主内存来完成，线程、主内存和工作内存之间的交互关系如下图：</p>
-<div align=center>
+</div><p>除此之外，为了使得处理器内部的运算单元能尽可能被充分利用，处理器可能会对输入代码进行“乱序执行(Out-Of-Order Execution)”优化，处理器会在计算之后将对乱序执行的代码进行结果重组，以保证结果的准确性。与处理器的乱序执行优化类似，Java 虚拟机的即时编译器(JIT)中也有类似的“指令重排序(Instruction Recorder)”优化。</p><h2 id=java-内存模型>Java 内存模型</h2><p>内存模型可以理解为在特定的操作协议下，对特定的内存或告诉缓存进行读写访问的过程抽象，不同架构下的物理机拥有不同的内存模型，Java 虚拟机也有自己的内存模型，即“Java 内存模型(JMM)”。在 C/C++ 语言中则是直接使用物理硬件和操作系统的内存模型，导致不同平台下并发访问出错，需要进行多平台的兼容。而 JMM 的出现，能够屏蔽掉各种硬件和操作系统的内存访问差异，实现平台一致性，使得 Java 程序能够“一次编写，到处运行”。</p><h3 id=主内存与工作内存>主内存与工作内存</h3><p>Java 内存模型的目的主要是“定义程序中各个变量的访问规则”，即在虚拟机中将变量存储到内存和从内存中取出变量这样的底层细节。此处的变量与进行 Java 编程时所说的变量不同，包括了实例字段、静态字段、数组元素，但是不包括局部变量与方法参数，因为后者是线程私有的，永远不会被共享。</p><p>Java 内存模型中规定了所有的变量都存储在主内存中，每条线程还有自己的工作内存(可以与前面所说的处理器的高速缓存类比)，线程的工作内存中使用到的变量到主内存副本拷贝，线程对变量的所有操作(读取、赋值)都必须在工作内存中进行，而不能直接读写主内存中的变量。不同线程之间无法直接访问对方工作内存中的变量，线程间变量值的传递均需要通过主内存来完成，线程、主内存和工作内存之间的交互关系如下图：</p><div align=center>
 <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20181006162431.png style=display:block;width:70% alt=NAME align=center>
-</div>
-<p>@@@ note</p>
-<p>这里的主内存、工作内存与 Java 内存区域的 Java 堆、栈、方法区不是同一层次的内存划分，两者之间没有关系。</p>
-<p>@@@</p>
-<h3 id=内存交互操作>内存交互操作</h3>
-<p>由上面的交互关系可知，关于主内存与工作内存之间的具体交互协议，即一个变量如何从主内存拷贝到工作内存、如何从工作内存同步到主内存之间的实现细节，Java 内存模型定义了以下 8 种操作来完成：</p>
-<ul>
-<li>lock：作用于主内存的变量，把一个变量标识为由一条线程独占的状态。</li>
-<li>unlock：作用于主内存的变量，把一个处于锁定状态的变量释放出来，释放后的变量才可以被其他线程锁定。</li>
-<li>read：作用于主内存的变量，把一个变量值从主内存传输到线程的工作内存中，以便随后的 load 动作使用。</li>
-<li>load：作用于工作内存变量，把 read 操作从主内存得到的变量值放入工作内存的变量副本中。</li>
-<li>use：作用于工作内存变量，把工作内存变量的值传递给执行引擎，每当虚拟机遇到一个需要使用变量的值的字节码指令时将会执行该操作。</li>
-<li>assign：作用于工作内存变量，它把一个从执行引擎接收到的值赋值给工作内存变量，每当虚拟机遇到一个给变量赋值的字节码指令时执行该操作。</li>
-<li>store：作用于工作内存变量，把工作内存变量值传送给主内存，以便随后的 write 操作。</li>
-<li>write：作用于主内存的变量，它把 store 操作从工作内存中得到的变量值传送到主内存的变量中。</li>
-</ul>
-<p>如果要把一个变量从主内存复制到工作内存，就需要按序执行 read 和 load 操作；如果把变量从工作内存中同步到主内存中，就需要按序执行 store 和 write 操作。JMM 只要求上述两个操作“必须按序执行，而没有保证必须是连续执行”。也就是说在 read 和 load 之间、store 和 write 之间可以插入其他指令，如对主内存中的变量 a、b 进行访问时，可能顺序是 read a、read b、load b、load a。JMM 还规定了在执行上述 8 种基本操作时，必须满足如下规则：</p>
-<ul>
-<li>不允许 read 和 load、store 和 write 操作之一单独出现。</li>
-<li>不允许一个线程丢弃它最近的 assign 操作，即变量在工作内存中改变了之后必须同步回主内存中。</li>
-<li>不允许一个线程无原因的(没有发生过任何 assign 操作)把数据从工作内存同步回主内存中。</li>
-<li>一个新的变量只能在主内存中诞生，不允许在工作内存中直接使用一个未被初始化(load、assign)的变量。即在对一个变量实施 use 和 store 操作之前，必须已经对该变量执行过了 assign 和 load 操作。</li>
-<li>一个变量在同一时刻只允许一条线程对其进行 lock 操作，lock 和 unlock 必须成对出现。</li>
-<li>如果对一个变量执行 lock 操作，将会清空工作内存中此变量的值，在执行引擎使用这个变量前需要重新执行 load 或 assign 操作来初始化该变量的值。</li>
-<li>如果一个变量事先没有被 lock 操作锁定，则不允许对其执行 unlock 从操作；也不允许去 unlock 一个被其他线程锁定的变量。</li>
-<li>对一个变量执行 unlock 操作之前，必须先把该变量同步到主内存中(执行 store 和 write操作)。</li>
-</ul>
-<p>这 8 中内存访问操作很繁琐，后文会使用一个等效判断原则，即先行发生(happens before)原则来确定一个内存访问在并发环境下是否安全。</p>
-<h3 id=volatile-变量>volatile 变量</h3>
-<p>关键字 volatile 是 JVM 中最轻量级的同步机制。volatile 变量具有两种特性：</p>
-<ul>
-<li>保证变量的可见性。对一个 volatile 变量的读，总是能看到(任意线程)该 volatile 变量最后的写入，这个新值对于其他线程来说是立即可见的。</li>
-<li>屏蔽指令重排序。指令重排序是编译器和处理器为了执行效率而对程序执行的优化手段，后文有详细分析。</li>
-</ul>
-<p>volatile 语义并不能保证变量的原子性。对任意单个 volatile 变量的读/写具有原子性，但类似自增、自减这种复合操作不具有原子性，因为自增运算包括取值、加 1、重新赋值这 3 步操作，并不具备原子性。</p>
-<p>由于 volatile 只能保证变量的可见性和屏蔽指令重排，只有满足以下两条规则时，才能使用 volatile 来保证并发安全，否则就需要加锁(使用 synchronized、lock、JUC 中的 Atomic 原子类)来保证并发中的原子性：</p>
-<ul>
-<li>运算结果不存在数据依赖(重排序的数据依赖性)，或者仅有单一的线程修改变量的值(重排序的 as-if-serial 语义)。</li>
-<li>变量不需要与其他的状态变量共同参与不变约束。</li>
-</ul>
-<p>因为需要在本地代码中插入许多内存屏障指令来屏蔽特定条件下的重排序，volatile 变量的写操作与读操作相比慢一些，但是其性能开销比锁低很多。</p>
-<h3 id=longdouble-非原子协定>long/double 非原子协定</h3>
-<p>JMM 要求 lock、unlock、read、load、assign、use、store、write 这 8 个操作都必须具有原子性，但对于 64 位的数据类型 long 和 double，具有非原子协定：允许虚拟机经没有被修饰为 volatile 的 64 位数据的读写操作划分为两次 32 位的操作进行。(于此类似的是，在栈帧结构的局部变量表中，long 和 double 类型的局部变量可以使用 2 个能存储 32 位变量的变量槽来存储，详见“深入理解 Java 虚拟机” 第 8 章)</p>
-<p>如果多个线程共享一个没有声明为 volatile 的 long 或 double 变量，并且同时执行存取操作，某些线程可能会读到一个即非原值、又非其他线程修改了的代表了“半个变量”的数值。不过这种情况十分罕见。因为非原子协定换句话说，同样允许 long 和 double 的读写操作实现为原子操作，并且目前绝大多数虚拟机都是这样做的。</p>
-<h2 id=原子性可见性有序性>原子性、可见性、有序性</h2>
-<h3 id=原子性>原子性</h3>
-<p>JMM 保证的原子性变量操作包括 read、load、assign、use、store、write，而 long 和 double 非原子协定导致的非原子性操作基本可以忽略。如果需要对更大范围的代码实行原子性操作，则需要使用 JMM 提供的 lock、unlock、synchronized。</p>
-<h3 id=可见性>可见性</h3>
-<p>前面分析 volatile 语义时已经提到，可见性是指当一个线程修改了变量的值，其他线程能够立即得知这个修改。JMM 在变量被修改后将新值重新同步回主内存，依赖主内存作为媒介，在变量被线程读取前从内存刷新变量新值，保证变量的可见性。普通变量和 volatile 变量都是如此，只不过 volatile 的特殊规则保证了这种可见性是立即得到的，而普通变量并不具备这样严格的可见性。除了 volatile 外，synchronized 和 final 也能保证可见性。</p>
-<h3 id=有序性>有序性</h3>
-<p>JMM 的有序性表现为：如果在本线程内观察，所有操作都是有序的；如果在一个线程中观察另一个线程，所有操作都是无序的。前半句指“线程内表现为串行语义(as-if=serial)”，后半句指“指令重排序”和变量的“工作内存与主内存的同步延迟”现象。</p>
-<h2 id=重排序>重排序</h2>
-<p>在执行程序时为了提高性能，编译器和处理器经常会对指令进行重排序。从硬件架构上来说，指令重排序是指 CPU 采用了允许将多条指令不再按照程序规定的顺序，分开发送给相应电路单元处理器，而不是将指令任意重排。重排序分为 3 种类型：</p>
-<ul>
-<li>编译器优化重排序。编译器在不改变单线程程序语义的前提下，可以重新安排程序的执行顺序。</li>
-<li>指令级并行重排序。先来处理器采用了指令级并行技术来将多条指令重叠执行。如果不存在数据依赖性，处理器可以改变语句对应机器指令的执行顺序。</li>
-<li>内存系统重排序。由于处理器使用缓存和读写缓冲区，这使得加载和存储操作看上去可能是在乱序执行。</li>
-</ul>
-<div align=center>
+</div><p>@@@ note</p><p>这里的主内存、工作内存与 Java 内存区域的 Java 堆、栈、方法区不是同一层次的内存划分，两者之间没有关系。</p><p>@@@</p><h3 id=内存交互操作>内存交互操作</h3><p>由上面的交互关系可知，关于主内存与工作内存之间的具体交互协议，即一个变量如何从主内存拷贝到工作内存、如何从工作内存同步到主内存之间的实现细节，Java 内存模型定义了以下 8 种操作来完成：</p><ul>
+<li>lock：作用于主内存的变量，把一个变量标识为由一条线程独占的状态。</li><li>unlock：作用于主内存的变量，把一个处于锁定状态的变量释放出来，释放后的变量才可以被其他线程锁定。</li><li>read：作用于主内存的变量，把一个变量值从主内存传输到线程的工作内存中，以便随后的 load 动作使用。</li><li>load：作用于工作内存变量，把 read 操作从主内存得到的变量值放入工作内存的变量副本中。</li><li>use：作用于工作内存变量，把工作内存变量的值传递给执行引擎，每当虚拟机遇到一个需要使用变量的值的字节码指令时将会执行该操作。</li><li>assign：作用于工作内存变量，它把一个从执行引擎接收到的值赋值给工作内存变量，每当虚拟机遇到一个给变量赋值的字节码指令时执行该操作。</li><li>store：作用于工作内存变量，把工作内存变量值传送给主内存，以便随后的 write 操作。</li><li>write：作用于主内存的变量，它把 store 操作从工作内存中得到的变量值传送到主内存的变量中。</li></ul><p>如果要把一个变量从主内存复制到工作内存，就需要按序执行 read 和 load 操作；如果把变量从工作内存中同步到主内存中，就需要按序执行 store 和 write 操作。JMM 只要求上述两个操作“必须按序执行，而没有保证必须是连续执行”。也就是说在 read 和 load 之间、store 和 write 之间可以插入其他指令，如对主内存中的变量 a、b 进行访问时，可能顺序是 read a、read b、load b、load a。JMM 还规定了在执行上述 8 种基本操作时，必须满足如下规则：</p><ul>
+<li>不允许 read 和 load、store 和 write 操作之一单独出现。</li><li>不允许一个线程丢弃它最近的 assign 操作，即变量在工作内存中改变了之后必须同步回主内存中。</li><li>不允许一个线程无原因的(没有发生过任何 assign 操作)把数据从工作内存同步回主内存中。</li><li>一个新的变量只能在主内存中诞生，不允许在工作内存中直接使用一个未被初始化(load、assign)的变量。即在对一个变量实施 use 和 store 操作之前，必须已经对该变量执行过了 assign 和 load 操作。</li><li>一个变量在同一时刻只允许一条线程对其进行 lock 操作，lock 和 unlock 必须成对出现。</li><li>如果对一个变量执行 lock 操作，将会清空工作内存中此变量的值，在执行引擎使用这个变量前需要重新执行 load 或 assign 操作来初始化该变量的值。</li><li>如果一个变量事先没有被 lock 操作锁定，则不允许对其执行 unlock 从操作；也不允许去 unlock 一个被其他线程锁定的变量。</li><li>对一个变量执行 unlock 操作之前，必须先把该变量同步到主内存中(执行 store 和 write操作)。</li></ul><p>这 8 中内存访问操作很繁琐，后文会使用一个等效判断原则，即先行发生(happens before)原则来确定一个内存访问在并发环境下是否安全。</p><h3 id=volatile-变量>volatile 变量</h3><p>关键字 volatile 是 JVM 中最轻量级的同步机制。volatile 变量具有两种特性：</p><ul>
+<li>保证变量的可见性。对一个 volatile 变量的读，总是能看到(任意线程)该 volatile 变量最后的写入，这个新值对于其他线程来说是立即可见的。</li><li>屏蔽指令重排序。指令重排序是编译器和处理器为了执行效率而对程序执行的优化手段，后文有详细分析。</li></ul><p>volatile 语义并不能保证变量的原子性。对任意单个 volatile 变量的读/写具有原子性，但类似自增、自减这种复合操作不具有原子性，因为自增运算包括取值、加 1、重新赋值这 3 步操作，并不具备原子性。</p><p>由于 volatile 只能保证变量的可见性和屏蔽指令重排，只有满足以下两条规则时，才能使用 volatile 来保证并发安全，否则就需要加锁(使用 synchronized、lock、JUC 中的 Atomic 原子类)来保证并发中的原子性：</p><ul>
+<li>运算结果不存在数据依赖(重排序的数据依赖性)，或者仅有单一的线程修改变量的值(重排序的 as-if-serial 语义)。</li><li>变量不需要与其他的状态变量共同参与不变约束。</li></ul><p>因为需要在本地代码中插入许多内存屏障指令来屏蔽特定条件下的重排序，volatile 变量的写操作与读操作相比慢一些，但是其性能开销比锁低很多。</p><h3 id=longdouble-非原子协定>long/double 非原子协定</h3><p>JMM 要求 lock、unlock、read、load、assign、use、store、write 这 8 个操作都必须具有原子性，但对于 64 位的数据类型 long 和 double，具有非原子协定：允许虚拟机经没有被修饰为 volatile 的 64 位数据的读写操作划分为两次 32 位的操作进行。(于此类似的是，在栈帧结构的局部变量表中，long 和 double 类型的局部变量可以使用 2 个能存储 32 位变量的变量槽来存储，详见“深入理解 Java 虚拟机” 第 8 章)</p><p>如果多个线程共享一个没有声明为 volatile 的 long 或 double 变量，并且同时执行存取操作，某些线程可能会读到一个即非原值、又非其他线程修改了的代表了“半个变量”的数值。不过这种情况十分罕见。因为非原子协定换句话说，同样允许 long 和 double 的读写操作实现为原子操作，并且目前绝大多数虚拟机都是这样做的。</p><h2 id=原子性可见性有序性>原子性、可见性、有序性</h2><h3 id=原子性>原子性</h3><p>JMM 保证的原子性变量操作包括 read、load、assign、use、store、write，而 long 和 double 非原子协定导致的非原子性操作基本可以忽略。如果需要对更大范围的代码实行原子性操作，则需要使用 JMM 提供的 lock、unlock、synchronized。</p><h3 id=可见性>可见性</h3><p>前面分析 volatile 语义时已经提到，可见性是指当一个线程修改了变量的值，其他线程能够立即得知这个修改。JMM 在变量被修改后将新值重新同步回主内存，依赖主内存作为媒介，在变量被线程读取前从内存刷新变量新值，保证变量的可见性。普通变量和 volatile 变量都是如此，只不过 volatile 的特殊规则保证了这种可见性是立即得到的，而普通变量并不具备这样严格的可见性。除了 volatile 外，synchronized 和 final 也能保证可见性。</p><h3 id=有序性>有序性</h3><p>JMM 的有序性表现为：如果在本线程内观察，所有操作都是有序的；如果在一个线程中观察另一个线程，所有操作都是无序的。前半句指“线程内表现为串行语义(as-if=serial)”，后半句指“指令重排序”和变量的“工作内存与主内存的同步延迟”现象。</p><h2 id=重排序>重排序</h2><p>在执行程序时为了提高性能，编译器和处理器经常会对指令进行重排序。从硬件架构上来说，指令重排序是指 CPU 采用了允许将多条指令不再按照程序规定的顺序，分开发送给相应电路单元处理器，而不是将指令任意重排。重排序分为 3 种类型：</p><ul>
+<li>编译器优化重排序。编译器在不改变单线程程序语义的前提下，可以重新安排程序的执行顺序。</li><li>指令级并行重排序。先来处理器采用了指令级并行技术来将多条指令重叠执行。如果不存在数据依赖性，处理器可以改变语句对应机器指令的执行顺序。</li><li>内存系统重排序。由于处理器使用缓存和读写缓冲区，这使得加载和存储操作看上去可能是在乱序执行。</li></ul><div align=center>
 <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20181006173445.png style=display:block;width:70% alt=NAME align=center>
-</div>
-<h3 id=jmm-重排序屏障>JMM 重排序屏障</h3>
-<p>从 Java 源代码到最终实际执行的指令序列，会经过 3 种重排序。但是为了保证内存的可见性，Java 编译器会在生成的指令序列的适当位置插入内存屏障指令来禁止特定类型的处理器重排序。对于编译器的重排序，JMM 会根据重排序规则禁止特定类型的编译器重排序；对于处理器重排序，JMM 会插入特定类型的内存屏障，通过内存的屏障指令来禁止特定类型的处理器重排序。这里讨论 JMM 对处理器的重排序，为了更深刻理解 JMM 对处理器重排序的处理，先来认识一下常见处理器的重排序规则：</p>
-<div align=center>
+</div><h3 id=jmm-重排序屏障>JMM 重排序屏障</h3><p>从 Java 源代码到最终实际执行的指令序列，会经过 3 种重排序。但是为了保证内存的可见性，Java 编译器会在生成的指令序列的适当位置插入内存屏障指令来禁止特定类型的处理器重排序。对于编译器的重排序，JMM 会根据重排序规则禁止特定类型的编译器重排序；对于处理器重排序，JMM 会插入特定类型的内存屏障，通过内存的屏障指令来禁止特定类型的处理器重排序。这里讨论 JMM 对处理器的重排序，为了更深刻理解 JMM 对处理器重排序的处理，先来认识一下常见处理器的重排序规则：</p><div align=center>
 <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20181006173813.png style=display:block;width:70% alt=NAME align=center>
-</div>
-<p>其中的 N 表示处理器不允许两个操作进行重排序，Y 表示允许。可以看出：常见处理器你对 StoreLoad 都是允许重排的，并且常见处理器都不允许对存在数据依赖的操作进行重排序。另外，对应数据转换这一列都为 N，所以处理器均不允许这种重排序。</p>
-<p>那么这个结论有什么用呢？比如第一点：处理器允许 StoreLoad 操作的重排序，那么在并发编程中读线程可能读到一个未被初始化或 null 值，出现不可预知的错误，基于这一点，JMM 会在适当的位置插入内存屏障指令来禁止特定类型的处理器重排序。</p>
-<p>内存屏障指令共有 4 类：LoadLoad、StoreStore、LoadStore、StoreLoad。详细释义参考 JMM 规范。</p>
-<h4 id=数据依赖性>数据依赖性</h4>
-<p>根据上面的表格，处理器不会对存在数据依赖性的操作进行重排序。这里数据依赖性的准确定义是：如果两个操作访问同一个变量，其中一个操作是写，此时两个操作就构成了数据依赖性。常见的具有这种特点的操作有自增、自减。如果改变了具有数据依赖性的两个操作的执行顺序，那么最后的执行结果就会被改变。这也就是不能进行重排序的原因。</p>
-<ul>
-<li>写后读：<code>a = 1; b = a;</code></li>
-<li>写后写：<code>a = 1; a = 2;</code></li>
-<li>读后写：<code>a = b; b = 1;</code></li>
-</ul>
-<p>重排序遵守数据依赖性，编译器和处理器不会改变存在数据依赖关系的两个操作的执行属性怒。但是这里所说的数据依赖性仅针对单个处理器中执行的指令序列和单个线程中执行的操作，不同处理器之间和不同线程之间的数据依赖性不被编译器和处理器考虑。</p>
-<h4 id=as-if-serial-语义>as-if-serial 语义</h4>
-<p>as-if-serial 语义指的是：“无论怎么重排序，(单线程)程序的执行结果不能被改变”。编译器、runtime 和处理器都必须遵守 as-if-serial 语义。</p>
-<p>as-if-serial 语义把单线程程序保护了起来，遵守 as-if-serial 语义的编译器，runtime 和处理器共同为编写单线程程序的开发者穿件了一个幻觉：单线程程序是按程序编写的顺序来执行的。as-if-serial 语义使单线程开发者无需单行重排会干扰他们，也无需担心内存可见性问题。</p>
-<h3 id=重排序对多线程的影响>重排序对多线程的影响</h3>
-<p>如果代码中存在控制依赖，会影响指令序列执行的并行度。因此，编译器和处理器会采用猜测(speculation)执行来克服控制的相关性。所以重排序破坏了程序的顺序规则(该规则是说指令顺序与实际代码的执行顺序是一致的，但是处理器和编译器会进行重排序，只要最后的结果不变，重排序就是合理的)。</p>
-<h2 id=先行发生原则happens-before>先行发生原则(happens-before)</h2>
-<p>前面所说的内存交互原则都必须满足一定的规则，而 happens-before 就是定义这些规则时的一个等效判断的原则。happens-before 是 JMM 定义的、两个操作之间的偏序关系：如操作 A 线程发生于操作 B，则 A 产生的影响能够被 B 观察到，“影响”包括了修改了内存中共享变量的值、发送了消息、调用了方法等。如果两个操作满足 happens-before 原则，那么就不需要进行同步操作，JVM 能够保证操作具有顺序性，此时不能随意进行重排序。否则，无法保证顺序性，就能进行指令的重排序。</p>
-<p>happens-before 原则主要包括：</p>
-<ul>
-<li>程序次序原则</li>
-<li>管理锁定原则</li>
-<li>volatile 变量规则</li>
-<li>线程启动规则</li>
-<li>线程终止规则</li>
-<li>线程中断规则</li>
-<li>对象终结规则</li>
-<li>传递性</li>
-</ul>
-<p>详细释义参见 JMM 规范。</p>
-<style>.feedback--answer{display:inline-block}.feedback--answer-no{margin-left:1em}.feedback--response{display:none;margin-top:1em}.feedback--response__visible{display:block}</style>
-<div class=d-print-none>
-<h2 class=feedback--title>Feedback</h2>
-<p class=feedback--question>Was this page helpful?</p>
-<button class="btn btn-primary mb-4 feedback--answer feedback--answer-yes">Yes</button>
+</div><p>其中的 N 表示处理器不允许两个操作进行重排序，Y 表示允许。可以看出：常见处理器你对 StoreLoad 都是允许重排的，并且常见处理器都不允许对存在数据依赖的操作进行重排序。另外，对应数据转换这一列都为 N，所以处理器均不允许这种重排序。</p><p>那么这个结论有什么用呢？比如第一点：处理器允许 StoreLoad 操作的重排序，那么在并发编程中读线程可能读到一个未被初始化或 null 值，出现不可预知的错误，基于这一点，JMM 会在适当的位置插入内存屏障指令来禁止特定类型的处理器重排序。</p><p>内存屏障指令共有 4 类：LoadLoad、StoreStore、LoadStore、StoreLoad。详细释义参考 JMM 规范。</p><h4 id=数据依赖性>数据依赖性</h4><p>根据上面的表格，处理器不会对存在数据依赖性的操作进行重排序。这里数据依赖性的准确定义是：如果两个操作访问同一个变量，其中一个操作是写，此时两个操作就构成了数据依赖性。常见的具有这种特点的操作有自增、自减。如果改变了具有数据依赖性的两个操作的执行顺序，那么最后的执行结果就会被改变。这也就是不能进行重排序的原因。</p><ul>
+<li>写后读：<code>a = 1; b = a;</code></li><li>写后写：<code>a = 1; a = 2;</code></li><li>读后写：<code>a = b; b = 1;</code></li></ul><p>重排序遵守数据依赖性，编译器和处理器不会改变存在数据依赖关系的两个操作的执行属性怒。但是这里所说的数据依赖性仅针对单个处理器中执行的指令序列和单个线程中执行的操作，不同处理器之间和不同线程之间的数据依赖性不被编译器和处理器考虑。</p><h4 id=as-if-serial-语义>as-if-serial 语义</h4><p>as-if-serial 语义指的是：“无论怎么重排序，(单线程)程序的执行结果不能被改变”。编译器、runtime 和处理器都必须遵守 as-if-serial 语义。</p><p>as-if-serial 语义把单线程程序保护了起来，遵守 as-if-serial 语义的编译器，runtime 和处理器共同为编写单线程程序的开发者穿件了一个幻觉：单线程程序是按程序编写的顺序来执行的。as-if-serial 语义使单线程开发者无需单行重排会干扰他们，也无需担心内存可见性问题。</p><h3 id=重排序对多线程的影响>重排序对多线程的影响</h3><p>如果代码中存在控制依赖，会影响指令序列执行的并行度。因此，编译器和处理器会采用猜测(speculation)执行来克服控制的相关性。所以重排序破坏了程序的顺序规则(该规则是说指令顺序与实际代码的执行顺序是一致的，但是处理器和编译器会进行重排序，只要最后的结果不变，重排序就是合理的)。</p><h2 id=先行发生原则happens-before>先行发生原则(happens-before)</h2><p>前面所说的内存交互原则都必须满足一定的规则，而 happens-before 就是定义这些规则时的一个等效判断的原则。happens-before 是 JMM 定义的、两个操作之间的偏序关系：如操作 A 线程发生于操作 B，则 A 产生的影响能够被 B 观察到，“影响”包括了修改了内存中共享变量的值、发送了消息、调用了方法等。如果两个操作满足 happens-before 原则，那么就不需要进行同步操作，JVM 能够保证操作具有顺序性，此时不能随意进行重排序。否则，无法保证顺序性，就能进行指令的重排序。</p><p>happens-before 原则主要包括：</p><ul>
+<li>程序次序原则</li><li>管理锁定原则</li><li>volatile 变量规则</li><li>线程启动规则</li><li>线程终止规则</li><li>线程中断规则</li><li>对象终结规则</li><li>传递性</li></ul><p>详细释义参见 JMM 规范。</p><style>.feedback--answer{display:inline-block}.feedback--answer-no{margin-left:1em}.feedback--response{display:none;margin-top:1em}.feedback--response__visible{display:block}</style><div class=d-print-none>
+<h2 class=feedback--title>Feedback</h2><p class=feedback--question>Was this page helpful?</p><button class="btn btn-primary mb-4 feedback--answer feedback--answer-yes">Yes</button>
 <button class="btn btn-primary mb-4 feedback--answer feedback--answer-no">No</button>
 <p class="feedback--response feedback--response-yes">
 Glad to hear it! Please <a href=https://github.com/infilos/infilos.com/issues/new>tell us how we can improve</a>.
-</p>
-<p class="feedback--response feedback--response-no">
+</p><p class="feedback--response feedback--response-no">
 Sorry to hear that. Please <a href=https://github.com/infilos/infilos.com/issues/new>tell us how we can improve</a>.
-</p>
-</div>
-<script>const yesButton=document.querySelector('.feedback--answer-yes'),noButton=document.querySelector('.feedback--answer-no'),yesResponse=document.querySelector('.feedback--response-yes'),noResponse=document.querySelector('.feedback--response-no'),disableButtons=()=>{yesButton.disabled=!0,noButton.disabled=!0},sendFeedback=b=>{if(typeof ga!='function')return;const a={command:'send',hitType:'event',category:'Helpful',action:'click',label:window.location.pathname,value:b};ga(a.command,a.hitType,a.category,a.action,a.label,a.value)};yesButton.addEventListener('click',()=>{yesResponse.classList.add('feedback--response__visible'),disableButtons(),sendFeedback(1)}),noButton.addEventListener('click',()=>{noResponse.classList.add('feedback--response__visible'),disableButtons(),sendFeedback(0)})</script>
+</p></div><script>const yesButton=document.querySelector(".feedback--answer-yes"),noButton=document.querySelector(".feedback--answer-no"),yesResponse=document.querySelector(".feedback--response-yes"),noResponse=document.querySelector(".feedback--response-no"),disableButtons=()=>{yesButton.disabled=!0,noButton.disabled=!0},sendFeedback=t=>{if(typeof ga!="function")return;const e={command:"send",hitType:"event",category:"Helpful",action:"click",label:window.location.pathname,value:t};ga(e.command,e.hitType,e.category,e.action,e.label,e.value)};yesButton.addEventListener("click",()=>{yesResponse.classList.add("feedback--response__visible"),disableButtons(),sendFeedback(1)}),noButton.addEventListener("click",()=>{noResponse.classList.add("feedback--response__visible"),disableButtons(),sendFeedback(0)})</script>
 <br>
-</div>
-</main>
-</div>
-</div>
-<footer class="bg-dark py-5 row d-print-none">
+</div></main></div></div><footer class="bg-dark py-5 row d-print-none">
 <div class="container-fluid mx-sm-5">
 <div class=row>
 <div class="col-6 col-sm-4 text-xs-center order-sm-2">
-</div>
-<div class="col-6 col-sm-4 text-right text-xs-center order-sm-3">
+</div><div class="col-6 col-sm-4 text-right text-xs-center order-sm-3">
 <ul class="list-inline mb-0">
 <li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Weibo aria-label=Weibo>
 <a class=text-white target=_blank rel="noopener noreferrer" href=https://weibo.com/u/3848950217>
 <i class="fab fa-weibo"></i>
 </a>
-</li>
-<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Twitter aria-label=Twitter>
+</li><li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Twitter aria-label=Twitter>
 <a class=text-white target=_blank rel="noopener noreferrer" href=https://twitter.com/zhange_zzg>
 <i class="fab fa-twitter"></i>
 </a>
-</li>
-<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title="Stack Overflow" aria-label="Stack Overflow">
+</li><li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title="Stack Overflow" aria-label="Stack Overflow">
 <a class=text-white target=_blank rel="noopener noreferrer" href=https://stackoverflow.com>
 <i class="fab fa-stack-overflow"></i>
 </a>
-</li>
-<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=GitHub aria-label=GitHub>
+</li><li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=GitHub aria-label=GitHub>
 <a class=text-white target=_blank rel="noopener noreferrer" href=https://github.com/infilos/infilos.com>
 <i class="fab fa-github"></i>
 </a>
-</li>
-</ul>
-</div>
-<div class="col-12 col-sm-4 text-center py-2 order-sm-2">
+</li></ul></div><div class="col-12 col-sm-4 text-center py-2 order-sm-2">
 <small class=text-white>&copy; 2022 infilos.com All Rights Reserved</small>
-</div>
-</div>
-</div>
-</footer>
-</div>
-<script src=/js/popper.min.js integrity=sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49 crossorigin=anonymous></script>
+</div></div></div></footer></div><script src=/js/popper.min.js integrity=sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49 crossorigin=anonymous></script>
 <script src=/js/bootstrap.min.js integrity=sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy crossorigin=anonymous></script>
-<script src=/js/main.min.5c74b870c6953931a705f390a49c7e4c0a842ec5c83b24354758dd674343ed0d.js integrity="sha256-XHS4cMaVOTGnBfOQpJx+TAqELsXIOyQ1R1jdZ0ND7Q0=" crossorigin=anonymous></script>
-</body>
-</html>
+<script src=/js/main.min.3f3f4f1e22307ccbb13271a98be2e4dbb8386b7e67c3d606db44d3d0649f485e.js integrity="sha256-Pz9PHiIwfMuxMnGpi+Lk27g4a35nw9YG20TT0GSfSF4=" crossorigin=anonymous></script>
+</body></html>

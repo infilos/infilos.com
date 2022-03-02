@@ -2,7 +2,7 @@
 <head>
 <meta charset=utf-8>
 <meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no">
-<meta name=generator content="Hugo 0.92.2">
+<meta name=generator content="Hugo 0.93.0">
 <meta name=ROBOTS content="INDEX, FOLLOW">
 <link rel="shortcut icon" href=/favicons/favicon.ico>
 <link rel=apple-touch-icon href=/favicons/apple-touch-icon-180x180.png sizes=180x180>
@@ -22,11 +22,11 @@
 Scala 编程语言充满活力，其发展很快。其中一个将会在 2.12 版本中探讨的趋势是特质参数。更多信息请查看 http://www.scala-lang.org/news/roadmap-next/。
  在下面的几个小节中，我们将会以不同的视角来了解特质并为你提供一些如何使用它们的想法。
 特质作为接口 特质可以看做是其他语言中的接口，比如 Java。但是支持开发者实现其中的一部分或全部方法。每当特质中拥有一些代码，该特质则被称为 mixin(混入、混合)。让我们看一下下面这个例子：
-trait Alarm { def trigger(): String } 这里Alarm是一个接口。仅拥有一个trigger方法，不拥有任何实现，如果它被混入一个非抽象的类则必须提供一个该方法的实现。
+trait Alarm {  def trigger(): String } 这里Alarm是一个接口。仅拥有一个trigger方法，不拥有任何实现，如果它被混入一个非抽象的类则必须提供一个该方法的实现。
 让我们看一下另一个特质的例子：
-trait Notifier { val notificationMessage: String def printNotification(): Unit = { println(notificationMessage) } def clear(): Unit } 这个Notifier特质拥有一个已实现的方法，而notificationMessage的值和clear则需要由混入它的类来提供实现。此外，特质可以要求一个类必须拥有一个指定的变量，这类似于其他语言中的抽象类。
+trait Notifier {  val notificationMessage: String   def printNotification(): Unit = {  println(notificationMessage)  }   def clear(): Unit } 这个Notifier特质拥有一个已实现的方法，而notificationMessage的值和clear则需要由混入它的类来提供实现。此外，特质可以要求一个类必须拥有一个指定的变量，这类似于其他语言中的抽象类。
 混入带有变量的特质 像上面提到的，特质可以要求类拥有一个指定的变量。一个有趣的用法是我们可以传递一个变量到类的构造器中。这样则可以满足该特质的需求：
-class NotifierImpl(val notificationMessage:String) extends Notifier { override def clear(): Unit = println(&#34;&#34;cleared) } 这里唯一的必要是在类的定义中该变量必须使用相同的名字并且前面要使用val关键字来修饰。如果上面的代码中我们不适用val关键字作为前缀，编译器则仍然会要求我们实现该特质。这种情况下，我们不得不为类的参数使用一个不同的名字，并在类体中拥有一个override val notificationMessage赋值。">
+class NotifierImpl(val notificationMessage:String) extends Notifier {  override def clear(): Unit = println(&#34;&#34;cleared) } 这里唯一的必要是在类的定义中该变量必须使用相同的名字并且前面要使用val关键字来修饰。如果上面的代码中我们不适用val关键字作为前缀，编译器则仍然会要求我们实现该特质。这种情况下，我们不得不为类的参数使用一个不同的名字，并在类体中拥有一个override val notificationMessage赋值。">
 <meta property="og:type" content="article">
 <meta property="og:url" content="/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch02-%E7%89%B9%E8%B4%A8%E4%B8%8E%E6%B7%B7%E5%85%A5%E7%BB%84%E5%90%88/"><meta property="article:section" content="模式架构">
 <meta property="og:site_name" content="infilos.com">
@@ -38,11 +38,11 @@ class NotifierImpl(val notificationMessage:String) extends Notifier { override d
 Scala 编程语言充满活力，其发展很快。其中一个将会在 2.12 版本中探讨的趋势是特质参数。更多信息请查看 http://www.scala-lang.org/news/roadmap-next/。
  在下面的几个小节中，我们将会以不同的视角来了解特质并为你提供一些如何使用它们的想法。
 特质作为接口 特质可以看做是其他语言中的接口，比如 Java。但是支持开发者实现其中的一部分或全部方法。每当特质中拥有一些代码，该特质则被称为 mixin(混入、混合)。让我们看一下下面这个例子：
-trait Alarm { def trigger(): String } 这里Alarm是一个接口。仅拥有一个trigger方法，不拥有任何实现，如果它被混入一个非抽象的类则必须提供一个该方法的实现。
+trait Alarm {  def trigger(): String } 这里Alarm是一个接口。仅拥有一个trigger方法，不拥有任何实现，如果它被混入一个非抽象的类则必须提供一个该方法的实现。
 让我们看一下另一个特质的例子：
-trait Notifier { val notificationMessage: String def printNotification(): Unit = { println(notificationMessage) } def clear(): Unit } 这个Notifier特质拥有一个已实现的方法，而notificationMessage的值和clear则需要由混入它的类来提供实现。此外，特质可以要求一个类必须拥有一个指定的变量，这类似于其他语言中的抽象类。
+trait Notifier {  val notificationMessage: String   def printNotification(): Unit = {  println(notificationMessage)  }   def clear(): Unit } 这个Notifier特质拥有一个已实现的方法，而notificationMessage的值和clear则需要由混入它的类来提供实现。此外，特质可以要求一个类必须拥有一个指定的变量，这类似于其他语言中的抽象类。
 混入带有变量的特质 像上面提到的，特质可以要求类拥有一个指定的变量。一个有趣的用法是我们可以传递一个变量到类的构造器中。这样则可以满足该特质的需求：
-class NotifierImpl(val notificationMessage:String) extends Notifier { override def clear(): Unit = println(&#34;&#34;cleared) } 这里唯一的必要是在类的定义中该变量必须使用相同的名字并且前面要使用val关键字来修饰。如果上面的代码中我们不适用val关键字作为前缀，编译器则仍然会要求我们实现该特质。这种情况下，我们不得不为类的参数使用一个不同的名字，并在类体中拥有一个override val notificationMessage赋值。">
+class NotifierImpl(val notificationMessage:String) extends Notifier {  override def clear(): Unit = println(&#34;&#34;cleared) } 这里唯一的必要是在类的定义中该变量必须使用相同的名字并且前面要使用val关键字来修饰。如果上面的代码中我们不适用val关键字作为前缀，编译器则仍然会要求我们实现该特质。这种情况下，我们不得不为类的参数使用一个不同的名字，并在类体中拥有一个override val notificationMessage赋值。">
 <meta itemprop=wordCount content="1195">
 <meta itemprop=keywords content><meta name=twitter:card content="summary">
 <meta name=twitter:title content="CH02-特质与混入组合">
@@ -53,50 +53,48 @@ class NotifierImpl(val notificationMessage:String) extends Notifier { override d
 Scala 编程语言充满活力，其发展很快。其中一个将会在 2.12 版本中探讨的趋势是特质参数。更多信息请查看 http://www.scala-lang.org/news/roadmap-next/。
  在下面的几个小节中，我们将会以不同的视角来了解特质并为你提供一些如何使用它们的想法。
 特质作为接口 特质可以看做是其他语言中的接口，比如 Java。但是支持开发者实现其中的一部分或全部方法。每当特质中拥有一些代码，该特质则被称为 mixin(混入、混合)。让我们看一下下面这个例子：
-trait Alarm { def trigger(): String } 这里Alarm是一个接口。仅拥有一个trigger方法，不拥有任何实现，如果它被混入一个非抽象的类则必须提供一个该方法的实现。
+trait Alarm {  def trigger(): String } 这里Alarm是一个接口。仅拥有一个trigger方法，不拥有任何实现，如果它被混入一个非抽象的类则必须提供一个该方法的实现。
 让我们看一下另一个特质的例子：
-trait Notifier { val notificationMessage: String def printNotification(): Unit = { println(notificationMessage) } def clear(): Unit } 这个Notifier特质拥有一个已实现的方法，而notificationMessage的值和clear则需要由混入它的类来提供实现。此外，特质可以要求一个类必须拥有一个指定的变量，这类似于其他语言中的抽象类。
+trait Notifier {  val notificationMessage: String   def printNotification(): Unit = {  println(notificationMessage)  }   def clear(): Unit } 这个Notifier特质拥有一个已实现的方法，而notificationMessage的值和clear则需要由混入它的类来提供实现。此外，特质可以要求一个类必须拥有一个指定的变量，这类似于其他语言中的抽象类。
 混入带有变量的特质 像上面提到的，特质可以要求类拥有一个指定的变量。一个有趣的用法是我们可以传递一个变量到类的构造器中。这样则可以满足该特质的需求：
-class NotifierImpl(val notificationMessage:String) extends Notifier { override def clear(): Unit = println(&#34;&#34;cleared) } 这里唯一的必要是在类的定义中该变量必须使用相同的名字并且前面要使用val关键字来修饰。如果上面的代码中我们不适用val关键字作为前缀，编译器则仍然会要求我们实现该特质。这种情况下，我们不得不为类的参数使用一个不同的名字，并在类体中拥有一个override val notificationMessage赋值。">
-<script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga('create','UA-123062585-1','auto'),ga('send','pageview'))</script>
+class NotifierImpl(val notificationMessage:String) extends Notifier {  override def clear(): Unit = println(&#34;&#34;cleared) } 这里唯一的必要是在类的定义中该变量必须使用相同的名字并且前面要使用val关键字来修饰。如果上面的代码中我们不适用val关键字作为前缀，编译器则仍然会要求我们实现该特质。这种情况下，我们不得不为类的参数使用一个不同的名字，并在类体中拥有一个override val notificationMessage赋值。">
+<script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga("create","UA-123062585-1","auto"),ga("send","pageview"))</script>
 <script async src=https://www.google-analytics.com/analytics.js></script>
 <link rel=preload href=/scss/main.min.847464b684a6e89d7276700a5c500c17ab494dd1755b2654a7b27d8b59e3347e.css as=style>
 <link href=/scss/main.min.847464b684a6e89d7276700a5c500c17ab494dd1755b2654a7b27d8b59e3347e.css rel=stylesheet integrity>
 <script src=/js/jquery-3.5.1.min.js integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin=anonymous></script>
-</head>
-<body class=td-page>
+</head><body class=td-page>
 <header>
-<nav class="js-navbar-scroll navbar navbar-expand navbar-dark flex-column flex-md-row td-navbar">
+<nav class="js-navbar-scroll navbar navbar-expand-lg navbar-dark td-navbar">
 <a class=navbar-brand href=/>
-<span class=navbar-logo><svg id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512" style="enable-background:new 0 0 512 512"><path style="fill:#ffc107" d="M432.384 143.616c-4.165-4.164-10.917-4.164-15.083.0l-60.352 60.352c-4.164 4.165-4.164 10.917.0 15.083 21.187 20.463 54.951 19.876 75.413-1.311 19.962-20.668 19.962-53.435.0-74.102L432.384 143.616z"/><path style="fill:#607d8b" d="M42.667 277.334c-5.891.003-10.669-4.771-10.672-10.662-.002-4.338 2.623-8.245 6.64-9.882l234.667-96c5.455-2.233 11.687.38 13.92 5.835s-.38 11.687-5.835 13.92l-234.667 96C45.433 277.069 44.056 277.337 42.667 277.334z"/><path style="fill:#546e7a" d="M391.552 56.448l-32-32C343.938 8.745 322.689-.059 300.544.0h-3.755c-46.082.024-83.432 37.374-83.456 83.456v3.755c-.053 22.138 8.75 43.377 24.448 58.987l32 32c4.165 4.164 10.917 4.164 15.083.0L391.531 71.531C395.701 67.372 395.71 60.62 391.552 56.448z"/><path style="fill:#607d8b" d="M160 469.334c-3.279.006-6.379-1.497-8.405-4.075L34.261 315.926c-3.635-4.636-2.823-11.341 1.813-14.976s11.341-2.823 14.976 1.813l117.333 149.333c3.629 4.641 2.809 11.344-1.832 14.973C164.681 468.533 162.375 469.329 160 469.334z"/><path style="fill:#455a64" d="M487.467 86.848l-3.669-3.648c-37.687-36.557-97.71-36.197-134.955.811l-51.413 51.413c-36.996 37.25-37.357 97.263-.811 134.955l3.584 3.669c1.7 2.457 4.671 3.706 7.616 3.2 2.831.005 5.548-1.115 7.552-3.115l172.181-172.181c4.189-4.143 4.226-10.896.083-15.085-.028-.028-.055-.056-.083-.083L487.467 86.848z"/><g><path style="fill:#ffc107" d="M501.333 192H480c-5.891.0-10.667-4.776-10.667-10.667s4.776-10.667 10.667-10.667h21.333c5.891.0 10.667 4.776 10.667 10.667S507.225 192 501.333 192z"/><path style="fill:#ffc107" d="M394.667 298.667c-5.891.0-10.667-4.776-10.667-10.667v-21.333c0-5.891 4.776-10.667 10.667-10.667 5.891.0 10.667 4.776 10.667 10.667V288C405.333 293.891 400.558 298.667 394.667 298.667z"/><path style="fill:#ffc107" d="M480 277.334c-2.831.005-5.548-1.115-7.552-3.115l-21.333-21.333c-4.093-4.237-3.975-10.99.262-15.083 4.134-3.993 10.687-3.993 14.821.0l21.333 21.333c4.159 4.172 4.148 10.926-.024 15.085C485.514 276.209 482.815 277.327 480 277.334z"/></g><g><path style="fill:#455a64" d="M266.667 448H96c-29.455.0-53.333 23.878-53.333 53.333.0 5.891 4.776 10.667 10.667 10.667h256c5.891.0 10.667-4.776 10.667-10.667C320 471.878 296.122 448 266.667 448z"/><circle style="fill:#455a64" cx="32" cy="288" r="32"/></g><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/></svg></span><span class=font-weight-bold>infilos.com</span>
+<span class=navbar-logo><svg id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512" style="enable-background:new 0 0 512 512"><path style="fill:#ffc107" d="M432.384 143.616c-4.165-4.164-10.917-4.164-15.083.0l-60.352 60.352c-4.164 4.165-4.164 10.917.0 15.083 21.187 20.463 54.951 19.876 75.413-1.311 19.962-20.668 19.962-53.435.0-74.102L432.384 143.616z"/><path style="fill:#607d8b" d="M42.667 277.334c-5.891.003-10.669-4.771-10.672-10.662-.002-4.338 2.623-8.245 6.64-9.882l234.667-96c5.455-2.233 11.687.38 13.92 5.835s-.38 11.687-5.835 13.92l-234.667 96C45.433 277.069 44.056 277.337 42.667 277.334z"/><path style="fill:#546e7a" d="M391.552 56.448l-32-32C343.938 8.745 322.689-.059 300.544.0h-3.755c-46.082.024-83.432 37.374-83.456 83.456v3.755c-.053 22.138 8.75 43.377 24.448 58.987l32 32c4.165 4.164 10.917 4.164 15.083.0L391.531 71.531C395.701 67.372 395.71 60.62 391.552 56.448z"/><path style="fill:#607d8b" d="M160 469.334c-3.279.006-6.379-1.497-8.405-4.075L34.261 315.926c-3.635-4.636-2.823-11.341 1.813-14.976s11.341-2.823 14.976 1.813l117.333 149.333c3.629 4.641 2.809 11.344-1.832 14.973C164.681 468.533 162.375 469.329 160 469.334z"/><path style="fill:#455a64" d="M487.467 86.848l-3.669-3.648c-37.687-36.557-97.71-36.197-134.955.811l-51.413 51.413c-36.996 37.25-37.357 97.263-.811 134.955l3.584 3.669c1.7 2.457 4.671 3.706 7.616 3.2 2.831.005 5.548-1.115 7.552-3.115l172.181-172.181c4.189-4.143 4.226-10.896.083-15.085-.028-.028-.055-.056-.083-.083L487.467 86.848z"/><g><path style="fill:#ffc107" d="M501.333 192H480c-5.891.0-10.667-4.776-10.667-10.667s4.776-10.667 10.667-10.667h21.333c5.891.0 10.667 4.776 10.667 10.667S507.225 192 501.333 192z"/><path style="fill:#ffc107" d="M394.667 298.667c-5.891.0-10.667-4.776-10.667-10.667v-21.333c0-5.891 4.776-10.667 10.667-10.667 5.891.0 10.667 4.776 10.667 10.667V288C405.333 293.891 400.558 298.667 394.667 298.667z"/><path style="fill:#ffc107" d="M480 277.334c-2.831.005-5.548-1.115-7.552-3.115l-21.333-21.333c-4.093-4.237-3.975-10.99.262-15.083 4.134-3.993 10.687-3.993 14.821.0l21.333 21.333c4.159 4.172 4.148 10.926-.024 15.085C485.514 276.209 482.815 277.327 480 277.334z"/></g><g><path style="fill:#455a64" d="M266.667 448H96c-29.455.0-53.333 23.878-53.333 53.333.0 5.891 4.776 10.667 10.667 10.667h256c5.891.0 10.667-4.776 10.667-10.667C320 471.878 296.122 448 266.667 448z"/><circle style="fill:#455a64" cx="32" cy="288" r="32"/></g><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/></svg></span>
+<span class=font-weight-bold>infilos.com</span>
 </a>
+<button class=navbar-toggler type=button data-toggle=collapse data-target=#navbarSupportedContent aria-controls=navbarSupportedContent aria-expanded=false aria-label="Toggle navigation">
+<span class=navbar-toggler-icon></span>
+</button>
 <div class="collapse navbar-collapse" id=navbarSupportedContent>
 <ul class="navbar-nav mr-auto">
 <li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86>
 <span>基础</span>
 </a>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80>
 <span>语言</span>
 </a>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93>
 <span>框架库</span>
 </a>
-</li>
-<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+</li><li class="nav-item dropdown" style=max-width:90px;min-width:10px>
 <a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
 分布式
 <span>+</span>
 </a>
 <div class=dropdown-menu aria-labelledby=navbarDropdown>
 <a class=dropdown-item href=/%e5%88%86%e5%b8%83%e5%bc%8f/base>基本构成</a>
-</div>
-</li>
-<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+</div></li><li class="nav-item dropdown" style=max-width:90px;min-width:10px>
 <a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
 大数据
 <span>+</span>
@@ -107,9 +105,7 @@ class NotifierImpl(val notificationMessage:String) extends Notifier { override d
 <a class=dropdown-item href=/%e6%b6%88%e6%81%af%e7%b3%bb%e7%bb%9f>消息系统</a>
 <a class=dropdown-item href=/%e5%a4%84%e7%90%86%e7%b3%bb%e7%bb%9f>处理系统</a>
 <a class=dropdown-item href=/%e6%95%b0%e6%8d%ae%e6%b2%bb%e7%90%86>数据治理</a>
-</div>
-</li>
-<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+</div></li><li class="nav-item dropdown" style=max-width:90px;min-width:10px>
 <a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
 中后台
 <span>+</span>
@@ -119,38 +115,26 @@ class NotifierImpl(val notificationMessage:String) extends Notifier { override d
 <a class=dropdown-item href=/%e7%94%a8%e6%88%b7%e7%b3%bb%e7%bb%9f>用户系统</a>
 <a class=dropdown-item href=/%e4%ba%a4%e4%ba%92%e7%95%8c%e9%9d%a2>交互界面</a>
 <a class=dropdown-item href=/%e4%b8%9a%e5%8a%a1%e7%b3%bb%e7%bb%9f>业务系统</a>
-</div>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</div></li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e6%a8%a1%e5%bc%8f%e6%9e%b6%e6%9e%84>
 <span>模式架构</span>
 </a>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e9%9d%a2%e8%af%95%e9%97%ae%e7%ad%94>
 <span>面试</span>
 </a>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e7%ae%a1%e7%90%86%e8%b7%af%e5%be%84>
 <span>管理</span>
 </a>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e5%bc%80%e6%ba%90%e9%a1%b9%e7%9b%ae>
 <span>开源</span>
 </a>
-</li>
-</ul>
-<div class="form-inline my-2 my-lg-0">
+</li></ul><div class="form-inline my-2 my-lg-0">
 <div class="nav-item nav-search-item my-2 my-md-0">
 <input type=search class="form-control td-search-input" placeholder="&#xf002; 站内搜索…" aria-label=站内搜索… autocomplete=off>
-</div>
-</div>
-</div>
-</nav>
-</header>
-<div class="container-fluid td-outer">
+</div></div></div></nav></header><div class="container-fluid td-outer">
 <div class=td-main>
 <div class="row flex-xl-nowrap">
 <aside class="col-12 col-md-3 col-xl-2 td-sidebar d-print-none">
@@ -160,10 +144,7 @@ class NotifierImpl(val notificationMessage:String) extends Notifier { override d
 <input type=search class="form-control td-search-input" placeholder="&#xf002; 站内搜索…" aria-label=站内搜索… autocomplete=off>
 <button class="btn btn-link td-sidebar__toggle d-md-none p-0 ml-3 fas fa-bars" type=button data-toggle=collapse data-target=#td-section-nav aria-controls=td-docs-nav aria-expanded=false aria-label="Toggle section navigation">
 </button>
-</form>
-</div>
-<div id=content-desktop></div>
-<nav class="collapse td-sidebar-nav" id=td-section-nav>
+</form></div><div id=content-desktop></div><nav class="collapse td-sidebar-nav" id=td-section-nav>
 <ul class="td-sidebar-nav__section pr-md-3 ul-0">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e6a8a1e5bc8fe69eb6e69e84-li>
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section tree-root" id=m-e6a8a1e5bc8fe69eb6e69e84><span>架构模式</span></a>
@@ -208,9 +189,7 @@ class NotifierImpl(val notificationMessage:String) extends Notifier { override d
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch15/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch15><span>CH15-行为型-状态</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch16-li>
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch16/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch16><span>CH16-行为型-策略</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-pattern-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-pattern-li>
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-pattern><span>Scala 模式</span></a>
 <ul class="ul-3 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch01-e6a8a1e5bc8fe58886e7b1bb-li>
@@ -265,11 +244,7 @@ class NotifierImpl(val notificationMessage:String) extends Notifier { override d
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch11-%E5%87%BD%E6%95%B0%E5%BC%8F%E6%A8%A1%E5%BC%8F%E5%BA%94%E7%94%A8/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch11-e587bde695b0e5bc8fe6a8a1e5bc8fe5ba94e794a8><span>CH11-函数式模式应用</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch12-e5ae9ee99985e5ba94e794a8-li>
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch12-%E5%AE%9E%E9%99%85%E5%BA%94%E7%94%A8/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch12-e5ae9ee99985e5ba94e794a8><span>CH12-实际应用</span></a>
-</li>
-</ul>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a8a1e5bc8fe69eb6e69e84micro-service-li>
+</li></ul></li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a8a1e5bc8fe69eb6e69e84micro-service-li>
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/micro-service/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a8a1e5bc8fe69eb6e69e84micro-service><span>微服务架构</span></a>
 <ul class="ul-2 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84micro-servicepattern-overview-li>
@@ -278,9 +253,7 @@ class NotifierImpl(val notificationMessage:String) extends Notifier { override d
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/micro-service/ms-disasters/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84micro-servicems-disasters><span>微服务灾难</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84micro-servicefault-tolerance-li>
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/micro-service/fault-tolerance/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84micro-servicefault-tolerance><span>故障容错模式</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a8a1e5bc8fe69eb6e69e84high-conc-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a8a1e5bc8fe69eb6e69e84high-conc-li>
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a8a1e5bc8fe69eb6e69e84high-conc><span>高并发系统</span></a>
 <ul class="ul-2 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch01-li>
@@ -359,574 +332,369 @@ class NotifierImpl(val notificationMessage:String) extends Notifier { override d
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch39/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch39><span>CH39-实战-信息流-1</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch40-li>
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch40/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch40><span>CH40-实战-信息流-2</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84ddia-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84ddia-li>
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/ddia/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a8a1e5bc8fe69eb6e69e84ddia><span>数据密集系统</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a8a1e5bc8fe69eb6e69e84rpc-li>
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/rpc/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a8a1e5bc8fe69eb6e69e84rpc><span>远程过程调用</span></a>
 <ul class="ul-2 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84rpcrpc-overview-li>
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/rpc/rpc-overview/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84rpcrpc-overview><span>RPC 概览</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a8a1e5bc8fe69eb6e69e84ddd-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a8a1e5bc8fe69eb6e69e84ddd-li>
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/ddd/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a8a1e5bc8fe69eb6e69e84ddd><span>领域驱动设计</span></a>
 <ul class="ul-2 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84dddddd-concept-essentials-li>
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/ddd/ddd-concept-essentials/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84dddddd-concept-essentials><span>DDD 概念精要</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84dddddd-instruct-micro-service-li>
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/ddd/ddd-instruct-micro-service/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84dddddd-instruct-micro-service><span>DDD 指导微服务</span></a>
-</li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-</nav>
-</div>
-</aside>
-<aside class="d-none d-xl-block col-xl-2 td-sidebar-toc d-print-none">
+</li></ul></li></ul></li></ul></nav></div></aside><aside class="d-none d-xl-block col-xl-2 td-sidebar-toc d-print-none">
 <div class="td-page-meta ml-2 pb-1 pt-2 mb-0">
 <a href=https://github.com/infilos/infilos.com/edit/master/content/zh/%e6%a8%a1%e5%bc%8f%e6%9e%b6%e6%9e%84/design-pattern/scala-pattern/CH02-%e7%89%b9%e8%b4%a8%e4%b8%8e%e6%b7%b7%e5%85%a5%e7%bb%84%e5%90%88.md target=_blank><i class="fa fa-edit fa-fw"></i> 编辑此页</a>
 <a href="https://github.com/infilos/infilos.com/new/master/content/zh/%e6%a8%a1%e5%bc%8f%e6%9e%b6%e6%9e%84/design-pattern/scala-pattern/CH02-%e7%89%b9%e8%b4%a8%e4%b8%8e%e6%b7%b7%e5%85%a5%e7%bb%84%e5%90%88.md?filename=change-me.md&value=---%0Atitle%3A+%22Long+Page+Title%22%0AlinkTitle%3A+%22Short+Nav+Title%22%0Aweight%3A+100%0Adescription%3A+%3E-%0A+++++Page+description+for+heading+and+indexes.%0A---%0A%0A%23%23+Heading%0A%0AEdit+this+template+to+create+your+new+page.%0A%0A%2A+Give+it+a+good+name%2C+ending+in+%60.md%60+-+e.g.+%60getting-started.md%60%0A%2A+Edit+the+%22front+matter%22+section+at+the+top+of+the+page+%28weight+controls+how+its+ordered+amongst+other+pages+in+the+same+directory%3B+lowest+number+first%29.%0A%2A+Add+a+good+commit+message+at+the+bottom+of+the+page+%28%3C80+characters%3B+use+the+extended+description+field+for+more+detail%29.%0A%2A+Create+a+new+branch+so+you+can+preview+your+new+file+and+request+a+review+via+Pull+Request.%0A" target=_blank><i class="fa fa-edit fa-fw"></i> 添加子页面</a>
 <a href="https://github.com/infilos/infilos.com/issues/new?title=CH02-%e7%89%b9%e8%b4%a8%e4%b8%8e%e6%b7%b7%e5%85%a5%e7%bb%84%e5%90%88" target=_blank><i class="fab fa-github fa-fw"></i> 提交文档问题</a>
 <a id=print href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/_print/><i class="fa fa-print fa-fw"></i> 整节打印</a>
-</div>
-<div class=td-toc><nav id=TableOfContents>
+</div><div class=td-toc><nav id=TableOfContents>
 <ul>
 <li><a href=#特质>特质</a>
 <ul>
-<li><a href=#特质作为接口>特质作为接口</a></li>
-<li><a href=#特质作为类>特质作为类</a></li>
-<li><a href=#扩展类>扩展类</a></li>
-<li><a href=#扩展特质>扩展特质</a></li>
-</ul>
-</li>
-<li><a href=#混入组合>混入组合</a>
+<li><a href=#特质作为接口>特质作为接口</a></li><li><a href=#特质作为类>特质作为类</a></li><li><a href=#扩展类>扩展类</a></li><li><a href=#扩展特质>扩展特质</a></li></ul></li><li><a href=#混入组合>混入组合</a>
 <ul>
-<li><a href=#混入特质>混入特质</a></li>
-<li><a href=#组合>组合</a></li>
-<li><a href=#特质冲突>特质冲突</a></li>
-</ul>
-</li>
-<li><a href=#多重继承>多重继承</a>
+<li><a href=#混入特质>混入特质</a></li><li><a href=#组合>组合</a></li><li><a href=#特质冲突>特质冲突</a></li></ul></li><li><a href=#多重继承>多重继承</a>
 <ul>
-<li><a href=#菱形问题>菱形问题</a></li>
-<li><a href=#限制>限制</a></li>
-</ul>
-</li>
-<li><a href=#测试特质>测试特质</a>
+<li><a href=#菱形问题>菱形问题</a></li><li><a href=#限制>限制</a></li></ul></li><li><a href=#测试特质>测试特质</a>
 <ul>
-<li><a href=#使用一个类>使用一个类</a></li>
-<li><a href=#混入特质-1>混入特质</a></li>
-<li><a href=#运行测试>运行测试</a></li>
-</ul>
-</li>
-<li><a href=#特质与类>特质与类</a></li>
-</ul>
-</nav></div>
-</aside>
-<main class="col-12 col-md-9 col-xl-8 pl-md-5" role=main>
+<li><a href=#使用一个类>使用一个类</a></li><li><a href=#混入特质-1>混入特质</a></li><li><a href=#运行测试>运行测试</a></li></ul></li><li><a href=#特质与类>特质与类</a></li></ul></nav></div></aside><main class="col-12 col-md-9 col-xl-8 pl-md-5" role=main>
 <nav aria-label=breadcrumb class="d-none d-md-block d-print-none">
 <ol class="breadcrumb spb-1">
 <li class=breadcrumb-item>
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/>架构模式</a>
-</li>
-<li class=breadcrumb-item>
+</li><li class=breadcrumb-item>
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/>设计模式</a>
-</li>
-<li class=breadcrumb-item>
+</li><li class=breadcrumb-item>
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/>Scala 模式</a>
-</li>
-<li class="breadcrumb-item active" aria-current=page>
+</li><li class="breadcrumb-item active" aria-current=page>
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch02-%E7%89%B9%E8%B4%A8%E4%B8%8E%E6%B7%B7%E5%85%A5%E7%BB%84%E5%90%88/>CH02-特质与混入组合</a>
-</li>
-</ol>
-</nav>
-<div class=td-content>
-<h1>CH02-特质与混入组合</h1>
-<header class=article-meta>
-</header>
-<p>在专研一些实际的设计模式之前，我们需要确保读者对 Scala 中的一些概念都很了解。这些概念中的很多一部分都会在后续用于实现实际的设计模式，同时能够意识到这些概念的能力、限制以及陷阱也是编写正确、高效代码的关键因素。尽管有些概念并不被认为是“官方上”的设计模式，但仍然可以使用它们来编写好的软件。甚至有些场景中，基于 Scala 的丰富特性，一些概念甚至可以使用语言特性来代替一种设计模式。最后，向我们前面提到的，设计模式的存在是因为一种语言的特性缺失，因为特性的不够丰富而不能完成一些需要的任务。</p>
-<p>在第一个主题中我们将会了解特质与混入(mixin)组合。他们为开发者提供了一种可能来共享已实现的功能或在应用中为类定义接口。很多由特质与混入组合为开发者带来的可能性对于本书后续要实现的一些设计模式都是很有帮助的。本章将主要关注一下几个主题：</p>
-<ul>
-<li>特质</li>
-<li>混入组合</li>
-<li>多重继承</li>
-<li>线性化</li>
-<li>测试特质</li>
-<li>特质与类</li>
-</ul>
-<h2 id=特质>特质</h2>
-<p>大家或许对 Scala 中的特质持有不同的看法。他们不仅可以被视作类似其他语言中的接口，同时可以被当做一个拥有无参构造器的类。</p>
-<blockquote>
-<p><strong>特质参数</strong></p>
-<p>Scala 编程语言充满活力，其发展很快。其中一个将会在 2.12 版本中探讨的趋势是特质参数。更多信息请查看 <a href=http://www.scala-lang.org/news/roadmap-next/>http://www.scala-lang.org/news/roadmap-next/</a>。</p>
-</blockquote>
-<p>在下面的几个小节中，我们将会以不同的视角来了解特质并为你提供一些如何使用它们的想法。</p>
-<h3 id=特质作为接口>特质作为接口</h3>
-<p>特质可以看做是其他语言中的接口，比如 Java。但是支持开发者实现其中的一部分或全部方法。每当特质中拥有一些代码，该特质则被称为 <strong>mixin(混入、混合)</strong>。让我们看一下下面这个例子：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#204a87;font-weight:700>trait</span> <span style=color:#000>Alarm</span> <span style=color:#ce5c00;font-weight:700>{</span>
-  <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>trigger</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>String</span>
-<span style=color:#ce5c00;font-weight:700>}</span>
-</code></pre></div><p>这里<code>Alarm</code>是一个接口。仅拥有一个<code>trigger</code>方法，不拥有任何实现，如果它被混入一个非抽象的类则必须提供一个该方法的实现。</p>
-<p>让我们看一下另一个特质的例子：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#204a87;font-weight:700>trait</span> <span style=color:#000>Notifier</span> <span style=color:#ce5c00;font-weight:700>{</span>
-  <span style=color:#204a87;font-weight:700>val</span> <span style=color:#000>notificationMessage</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>String</span>
-  
-  <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>printNotification</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Unit</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>{</span>
-    <span style=color:#000>println</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>notificationMessage</span><span style=color:#ce5c00;font-weight:700>)</span>
-  <span style=color:#ce5c00;font-weight:700>}</span>
-  
-  <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>clear</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Unit</span>
-<span style=color:#ce5c00;font-weight:700>}</span>
-</code></pre></div><p>这个<code>Notifier</code>特质拥有一个已实现的方法，而<code>notificationMessage</code>的值和<code>clear</code>则需要由混入它的类来提供实现。此外，特质可以要求一个类必须拥有一个指定的变量，这类似于其他语言中的抽象类。</p>
-<h4 id=混入带有变量的特质>混入带有变量的特质</h4>
-<p>像上面提到的，特质可以要求类拥有一个指定的变量。一个有趣的用法是我们可以传递一个变量到类的构造器中。这样则可以满足该特质的需求：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>NotifierImpl</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#204a87;font-weight:700>val</span> <span style=color:#000>notificationMessage</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>String</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#204a87;font-weight:700>extends</span> <span style=color:#000>Notifier</span> <span style=color:#ce5c00;font-weight:700>{</span>
-  <span style=color:#204a87;font-weight:700>override</span> <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>clear</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Unit</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>println</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;&#34;</span><span style=color:#000>cleared</span><span style=color:#ce5c00;font-weight:700>)</span>
-<span style=color:#ce5c00;font-weight:700>}</span>
-</code></pre></div><p>这里唯一的必要是在类的定义中该变量必须使用相同的名字并且前面要使用<code>val</code>关键字来修饰。如果上面的代码中我们不适用<code>val</code>关键字作为前缀，编译器则仍然会要求我们实现该特质。这种情况下，我们不得不为类的参数使用一个不同的名字，并在类体中拥有一个<code>override val notificationMessage</code>赋值。</p>
-<p>这种行为的原因很简单：如果我们显式的使用<code>val</code>(或 var，根据特质要求)，编译器会创建一个字段，并拥有与参数相同作用域的 getter。如果我们仅拥有参数，仅当该参数被用作构造器的作用域之外时(比如用在该类的方法中)才会创建一个字段和内部的 getter。更完备的是，样例类(case class)会自动在参数之前追加<code>val</code>关键字。因此，如果我们使用这个<code>val</code>关键字，我们将会自动获得一个与该参数同名的字段、相同的作用域，同时将会自动覆写特质中对我们的要求。</p>
-<h3 id=特质作为类>特质作为类</h3>
-<p>特质同样可以以类的视角来看待。这种情况下，他们需要实现其所有的方法，同时仅拥有一个不接收任何参数的构造器。考虑下面的代码：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#204a87;font-weight:700>trait</span> <span style=color:#000>Beeper</span> <span style=color:#ce5c00;font-weight:700>{</span>
-  <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>beep</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>times</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Int</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Unit</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>{</span>
-    <span style=color:#000>assert</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>times</span> <span style=color:#ce5c00;font-weight:700>&gt;=</span> <span style=color:#0000cf;font-weight:700>0</span><span style=color:#ce5c00;font-weight:700>)</span>
-    <span style=color:#0000cf;font-weight:700>1</span> <span style=color:#000>to</span> <span style=color:#000>times</span> <span style=color:#000>foreach</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>i</span> <span style=color:#204a87;font-weight:700>=&gt;</span> <span style=color:#000>println</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>s&#34;Beep number: </span><span style=color:#4e9a06>$i</span><span style=color:#4e9a06>&#34;</span><span style=color:#ce5c00;font-weight:700>))</span>
-  <span style=color:#ce5c00;font-weight:700>}</span>
-<span style=color:#ce5c00;font-weight:700>}</span>
-</code></pre></div><p>现在我们实际上可以直接实例化<code>Beeper</code>并调用其方法。比如下面的例子：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#204a87;font-weight:700>object</span> <span style=color:#000>BeeperRunner</span> <span style=color:#204a87;font-weight:700>extends</span> <span style=color:#000>App</span><span style=color:#ce5c00;font-weight:700>{</span>
-  <span style=color:#204a87;font-weight:700>val</span> <span style=color:#000>TIMES</span> <span style=color:#204a87;font-weight:700>=</span> <span style=color:#0000cf;font-weight:700>10</span>
-  
-  <span style=color:#204a87;font-weight:700>val</span> <span style=color:#000>beeper</span> <span style=color:#204a87;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>Beeper</span><span style=color:#ce5c00;font-weight:700>{}</span>		<span style=color:#8f5902;font-style:italic>// &lt;= 实例化一个特质
-</span><span style=color:#8f5902;font-style:italic></span>  <span style=color:#000>beeper</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>beep</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>TIMES</span><span style=color:#ce5c00;font-weight:700>)</span>
-<span style=color:#ce5c00;font-weight:700>}</span>
-</code></pre></div><p>像预期一样，运行代码后我们将看到如下输出：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>Beep number: <span style=color:#0000cf;font-weight:700>1</span> 
-Beep number: <span style=color:#0000cf;font-weight:700>2</span> 
-Beep number: <span style=color:#0000cf;font-weight:700>3</span> 
-....
-</code></pre></div><h3 id=扩展类>扩展类</h3>
-<p>特质同样可以用来扩展类。让我们看一下下面的例子：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#204a87;font-weight:700>abstract</span> <span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>Connector</span> <span style=color:#ce5c00;font-weight:700>{</span>
-  <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>connect</span><span style=color:#ce5c00;font-weight:700>()</span>
-  <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>close</span><span style=color:#ce5c00;font-weight:700>()</span>
-<span style=color:#ce5c00;font-weight:700>}</span>
-
-<span style=color:#204a87;font-weight:700>trait</span> <span style=color:#000>ConnectorWithHelper</span> <span style=color:#204a87;font-weight:700>extends</span> <span style=color:#000>Connector</span> <span style=color:#ce5c00;font-weight:700>{</span>
-  <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>findDriver</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Unit</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>{</span>
-    <span style=color:#000>println</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;Find driver called.&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
-  <span style=color:#ce5c00;font-weight:700>}</span>
-<span style=color:#ce5c00;font-weight:700>}</span>
-
-<span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>PgSqlConnector</span> <span style=color:#204a87;font-weight:700>extends</span> <span style=color:#000>ConnectorWithHelper</span> <span style=color:#ce5c00;font-weight:700>{</span>
-  <span style=color:#204a87;font-weight:700>override</span> <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>connect</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Unit</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>{</span>
-    <span style=color:#000>println</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;Connected...&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
-  <span style=color:#ce5c00;font-weight:700>}</span>
-  
-  <span style=color:#204a87;font-weight:700>override</span> <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>close</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Unit</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>{</span>
-    <span style=color:#000>println</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;Closed...&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
-  <span style=color:#ce5c00;font-weight:700>}</span>
-<span style=color:#ce5c00;font-weight:700>}</span>
-</code></pre></div><p>和预期的一样，<code>PgSqlConnector</code>会被抽象类约束来实现其抽象方法。你可能会推测，我们可以用一些别的特质来扩展这些类然后再将他们(同时)进行混入。在 Scala 中，我们会对一些情况稍加限制，在后续章节中我们研究组合的时候会来看一下这么做会对我们产生哪些影响。</p>
-<h3 id=扩展特质>扩展特质</h3>
-<p>特质可以被互相扩展。看一下如下例子：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#204a87;font-weight:700>trait</span> <span style=color:#000>Ping</span> <span style=color:#ce5c00;font-weight:700>{</span>
-  <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>ping</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>Unit</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>{</span>
-    <span style=color:#000>println</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;ping&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
-  <span style=color:#ce5c00;font-weight:700>}</span>
-<span style=color:#ce5c00;font-weight:700>}</span>
-
-<span style=color:#000>tring</span> <span style=color:#000>Pong</span> <span style=color:#ce5c00;font-weight:700>{</span>
-  <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>pong</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>Unit</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>{</span>
-    <span style=color:#000>println</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;pong&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
-  <span style=color:#ce5c00;font-weight:700>}</span>
-<span style=color:#ce5c00;font-weight:700>}</span>
-
-<span style=color:#204a87;font-weight:700>trait</span> <span style=color:#000>PingPong</span> <span style=color:#204a87;font-weight:700>extends</span> <span style=color:#000>Ping</span> <span style=color:#204a87;font-weight:700>with</span> <span style=color:#000>Pong</span> <span style=color:#ce5c00;font-weight:700>{</span>
-  <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>pingPong</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>Unit</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>{</span>
-    <span style=color:#000>ping</span><span style=color:#ce5c00;font-weight:700>()</span>
-    <span style=color:#000>pong</span><span style=color:#ce5c00;font-weight:700>()</span>
-  <span style=color:#ce5c00;font-weight:700>}</span>
-<span style=color:#ce5c00;font-weight:700>}</span>
-
-<span style=color:#204a87;font-weight:700>object</span> <span style=color:#000>Runner</span> <span style=color:#204a87;font-weight:700>extends</span> <span style=color:#000>App</span> <span style=color:#204a87;font-weight:700>with</span> <span style=color:#000>PingPong</span> <span style=color:#ce5c00;font-weight:700>{</span>
-  <span style=color:#000>pingPong</span><span style=color:#ce5c00;font-weight:700>()</span>
-<span style=color:#ce5c00;font-weight:700>}</span>
-</code></pre></div><blockquote>
-<p>上面这个例子是比较简单的，实际上也可以让<code>Runner</code>分别来扩展两个特质。扩展特质可以很好的用来实现<strong>特质堆叠</strong>这种设计模式，本书的后续部分中我们将会探讨这个话题。</p>
-</blockquote>
-<h2 id=混入组合>混入组合</h2>
-<p>Scala 支持开发者在一个类中扩展多个特质。这相对于那些不允许同时扩展多个类的语言增加了多重继承的可能性并且能剩下很多编写代码的精力。在这个子主题中，我们将会展示如果将多个特质混入到一个指定的类，或者在编写代码的时候如何创建一个带有某些指定功能的匿名类。</p>
-<h3 id=混入特质>混入特质</h3>
-<p>首先，我们先修改一下上个例子的代码。这个改动很小，它将会展示特质是如何被混入的：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#204a87;font-weight:700>object</span> <span style=color:#000>MixinRunner</span> <span style=color:#204a87;font-weight:700>extends</span> <span style=color:#000>App</span> <span style=color:#204a87;font-weight:700>with</span> <span style=color:#000>Ping</span> <span style=color:#204a87;font-weight:700>with</span> <span style=color:#000>Pong</span> <span style=color:#ce5c00;font-weight:700>{</span>
-  <span style=color:#000>ping</span><span style=color:#ce5c00;font-weight:700>()</span>
-  <span style=color:#000>pong</span><span style=color:#ce5c00;font-weight:700>()</span>
-<span style=color:#ce5c00;font-weight:700>}</span>
-</code></pre></div><p>从上面的代码中可以发现，我们可以将多个特质添加到同一个类中。上面代码中扩展的<code>App</code>特质主要是为了使用其自带的<code>main</code>方法。这会和创建无参类有点类似。</p>
-<blockquote>
-<p><strong>如何混入特质？</strong></p>
-<p>将特质混入到类可以使用如下语法：<code>extends with T1 with T2 with T3 with ... Tn</code>。</p>
-<p>如果一个类已经扩展了别的类，我们仅需要通过<code>with</code>关键字来添加特质。</p>
-<p>如果特质方法在特质体内并没有被实现，同时我们混入该特质的类也没有声明为抽象类，则该类必须实现特质中的方法。否则，将会出现编译错误。</p>
-</blockquote>
-<h3 id=组合>组合</h3>
-<p>创建时的组合给我们提供了一个无需显式定义就能创建匿名类的机会。同样，如果我们想要组合多个不同的特质，创建所有的可能则要花费很多的工作。</p>
-<h4 id=组合简单特质>组合简单特质</h4>
-<p>让我们看一个组合简单特质的例子，这里不会扩展其他类或特质：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>watch</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>brand</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>String</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>initialTime</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Long</span><span style=color:#ce5c00;font-weight:700>){</span>
-  <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>getTime</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Long</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>System</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>currentTimeMillis</span><span style=color:#ce5c00;font-weight:700>()</span> <span style=color:#ce5c00;font-weight:700>-</span> <span style=color:#000>initialTime</span>
-<span style=color:#ce5c00;font-weight:700>}</span>
-
-<span style=color:#204a87;font-weight:700>object</span> <span style=color:#000>WatchUser</span> <span style=color:#204a87;font-weight:700>extends</span> <span style=color:#000>App</span><span style=color:#ce5c00;font-weight:700>{</span>
-  <span style=color:#204a87;font-weight:700>val</span> <span style=color:#000>expensiveWatch</span> <span style=color:#204a87;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>Watch</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;expensive brand&#34;</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#0000cf;font-weight:700>1000L</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#204a87;font-weight:700>with</span> <span style=color:#000>Alarm</span> <span style=color:#204a87;font-weight:700>with</span> <span style=color:#000>Notifier</span> <span style=color:#ce5c00;font-weight:700>{</span>
-   <span style=color:#204a87;font-weight:700>override</span> <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>trigger</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>String</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#4e9a06>&#34;The alarm was triggered.&#34;</span>
-   <span style=color:#204a87;font-weight:700>override</span> <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>clear</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Unit</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>println</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;Alarm cleared.&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
-   <span style=color:#204a87;font-weight:700>override</span> <span style=color:#204a87;font-weight:700>val</span> <span style=color:#000>notificationMessage</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>String</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#4e9a06>&#34;Alarm is running!&#34;</span>
-  <span style=color:#ce5c00;font-weight:700>}</span>
-  <span style=color:#204a87;font-weight:700>val</span> <span style=color:#000>cheapWatch</span> <span style=color:#204a87;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>Watch</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;cheap brand&#34;</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#0000cf;font-weight:700>1000L</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#204a87;font-weight:700>with</span> <span style=color:#000>Alarm</span> <span style=color:#ce5c00;font-weight:700>{</span>
-    <span style=color:#204a87;font-weight:700>override</span> <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>trigger</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>String</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#4e9a06>&#34;The alarm was triggered.&#34;</span>
-  <span style=color:#ce5c00;font-weight:700>}</span>
-  <span style=color:#8f5902;font-style:italic>// show some watch usage.
-</span><span style=color:#8f5902;font-style:italic></span>  <span style=color:#000>println</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>expensiveWatch</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>trigger</span><span style=color:#ce5c00;font-weight:700>())</span>
-  <span style=color:#000>expensiveWatch</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>printNotification</span><span style=color:#ce5c00;font-weight:700>()</span>
-  <span style=color:#000>println</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>s&#34;The time is </span><span style=color:#4e9a06>${</span><span style=color:#000>expensiveWatch</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>getTime</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#4e9a06>}</span><span style=color:#4e9a06>.&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
-  <span style=color:#000>expensiveWatch</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>clear</span><span style=color:#ce5c00;font-weight:700>()</span>
-  
-  <span style=color:#000>println</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>cheapWatch</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>trigger</span><span style=color:#ce5c00;font-weight:700>())</span>
-  <span style=color:#000>println</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;Cheap watches cannot manually stop the alarm...&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
-<span style=color:#ce5c00;font-weight:700>}</span>
-</code></pre></div><p>在这个例子中我们使用了之前定义的<code>Alarm</code>和<code>Notifier</code>特质。我们创建了两个手表实例——一个是贵的，它拥有更多有用的功能；另一个是便宜的，它的功能则会少很多。本质上，他们都是匿名类，在初始化的时候被定义。另外要注意的是，和预期一样，我们需要实现那些我们扩展的特质中的抽象方法。希望这个例子能为你在拥有很多特质及多种可能的组合时带来一些想法。</p>
-<p>只是为了完整，下面是上个程序的输出：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>The alarm was triggered.
-Alarm is running!
-The <span style=color:#204a87>time</span> is 1234567890562.
-Alarm cleared.
-The alarm was triggered.
-Cheap watches cannot manually stop the alarm...
-</code></pre></div><p>和预期一样，第三行的时间会在每次运行的时候都有所不同。</p>
-<h4 id=组合复杂特质>组合复杂特质</h4>
-<p>在有些可能的情况下，我们需要组合更加复杂的特质，这些特质可能扩展了一些别的类或特质。如果在继承链的上层没有一个特质或别的特质已经显式扩展了一个指定的类，事情则会变得很简单，他们也不会改变太多。这种情况下，我们可以简单的访问超特质的方法。然而，让我们看一下如果继承链中的特质已经扩展了一个指定的类会发生什么。在这个例子中，我们将会使用之前定义的<code>ConnectorWithHelper</code>特质。该特质扩展了名为<code>Connector</code>的抽象类。加入我们想拥有另一个非常昂贵的手表，比如它可以连接到数据库：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#204a87;font-weight:700>object</span> <span style=color:#000>ReallyExpensiveWatchUser</span> <span style=color:#204a87;font-weight:700>extends</span> <span style=color:#000>App</span><span style=color:#ce5c00;font-weight:700>{</span>
-  <span style=color:#204a87;font-weight:700>val</span> <span style=color:#000>reallyExpensiveWatch</span> <span style=color:#204a87;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>Watch</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;really expensive brand&#34;</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#0000cf;font-weight:700>1000L</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#204a87;font-weight:700>with</span> <span style=color:#000>ConnectorWithHelper</span> <span style=color:#ce5c00;font-weight:700>{</span>
-    <span style=color:#204a87;font-weight:700>override</span> <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>connect</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Unit</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>println</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;Connected with another connector.&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
-    <span style=color:#204a87;font-weight:700>override</span> <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>close</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Unit</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>println</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;Closed with another connector.&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
-  <span style=color:#ce5c00;font-weight:700>}</span>
-  
-  <span style=color:#000>println</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;Using the really expensive watch.&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
-  <span style=color:#000>reallyExpensiveWatch</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>findDriver</span><span style=color:#ce5c00;font-weight:700>()</span>
-  <span style=color:#000>reallyExpensiveWatch</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>connect</span><span style=color:#ce5c00;font-weight:700>()</span>
-  <span style=color:#000>reallyExpensiveWatch</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>close</span><span style=color:#ce5c00;font-weight:700>()</span>
-<span style=color:#ce5c00;font-weight:700>}</span>
-</code></pre></div><p>看起来都很好，但是当我们编译的时候，会得到如下错误信息：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>Error:<span style=color:#ce5c00;font-weight:700>(</span>36, 80<span style=color:#ce5c00;font-weight:700>)</span> illegal inheritance<span style=color:#000;font-weight:700>;</span> superclass Watch
-	is not a subclass of the superclass Connector of the mixin trait ConnectorWithHelper
-	val <span style=color:#000>reallyExpensiveWatch</span> <span style=color:#ce5c00;font-weight:700>=</span> new Watch<span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;really expensive brand&#34;</span>,
-	1000L<span style=color:#ce5c00;font-weight:700>)</span> with ConnectorWithHelper <span style=color:#ce5c00;font-weight:700>{</span>
-^
-</code></pre></div><p>该错误消息告诉我们，由于<code>ConnectorWithHelper</code>特质已经扩展了<code>Connector</code>类，所有使用该特质进行组合的类必须是<code>Connector</code>的子类。现在让我们假如需要混入另一个同样已经扩展了一个类的特质，但被扩展的这个类与之前不同。根据之前的逻辑，会需要<code>Watch</code>同样需要是该类的子类。但这是不可能出现的，因为我们同时只能扩展一个类，这也就是 Scala 如何来限制多重继承以避免危险错误的发生。</p>
-<p>如果我们想要修复这个例子的编译错误，我们不得不去修改原有的<code>Watch</code>类的实现以确保其是<code>Connector</code>的子类。然而这可能并非我们所原本期望的，或许这种情况下需要一些重构。</p>
-<h4 id=组合自类型self-type>组合自类型(self-type)</h4>
-<p>在上一节中，我们看到了如何在<code>Watch</code>类中扩展<code>Connector</code>以便能够编译我们的代码。有些场景中我们或许真的需要强制一个类来混入一个特质，或者同时有其他的特质或多个特质需要混入。让我们加入需要一个闹钟同时带有提醒功能：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#204a87;font-weight:700>trait</span> <span style=color:#000>AlarmNotifier</span> <span style=color:#ce5c00;font-weight:700>{</span>
-  <span style=color:#204a87;font-weight:700>this:</span> <span style=color:#204a87;font-weight:700>Notifier</span> <span style=color:#ce5c00;font-weight:700>=&gt;</span>
-  
-  <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>trigger</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>String</span>
-<span style=color:#ce5c00;font-weight:700>}</span>
-</code></pre></div><p>这里我们展示了什么是自类型。第二行代码将<code>Notifier</code>的所有方法引入到了新特质的当前作用域，它同时要求所有混入了该特质的类必须同时混入<code>Notifier</code>。否则将会出现编译错误。如果使用<code>self</code>来代替<code>this</code>，我们则可以使用手动的方式来在<code>AlarmNotifier</code>中引用<code>Notifier</code>的方法，比如<code>self.printNotification()</code>。</p>
-<p>下面的代码展示了如何来使用这个新的特质：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#204a87;font-weight:700>object</span> <span style=color:#000>SelfTypeWatchUser</span> <span style=color:#204a87;font-weight:700>extends</span> <span style=color:#000>App</span> <span style=color:#ce5c00;font-weight:700>{</span>
-  <span style=color:#000>AlarmNotifier</span> <span style=color:#ce5c00;font-weight:700>{</span>
-    <span style=color:#204a87;font-weight:700>val</span> <span style=color:#000>watch</span> <span style=color:#204a87;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>Watch</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;alarm with notification&#34;</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#0000cf;font-weight:700>1000</span><span style=color:#000>l</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#204a87;font-weight:700>with</span> <span style=color:#000>AlarmNotifier</span> <span style=color:#204a87;font-weight:700>with</span> <span style=color:#000>Notifier</span> <span style=color:#ce5c00;font-weight:700>{</span>
-      <span style=color:#204a87;font-weight:700>override</span> <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>trigger</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>String</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#4e9a06>&#34;Alarm triggered.&#34;</span>
-      <span style=color:#204a87;font-weight:700>override</span> <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>clear</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Unit</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>println</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;Alarm cleared.&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
-      <span style=color:#204a87;font-weight:700>override</span> <span style=color:#204a87;font-weight:700>val</span> <span style=color:#000>notificationMessage</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>String</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#4e9a06>&#34;The notification.&#34;</span>
-    <span style=color:#ce5c00;font-weight:700>}</span>
-  <span style=color:#ce5c00;font-weight:700>}</span>
-  <span style=color:#000>println</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>watch</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>trigger</span><span style=color:#ce5c00;font-weight:700>())</span>
-  <span style=color:#000>watch</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>printNotification</span><span style=color:#ce5c00;font-weight:700>()</span>
-  <span style=color:#000>println</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>s&#34;The time is </span><span style=color:#4e9a06>${</span><span style=color:#000>watch</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>getTime</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#4e9a06>}</span><span style=color:#4e9a06>.&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
-  <span style=color:#000>watch</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>clear</span><span style=color:#ce5c00;font-weight:700>()</span>
-<span style=color:#ce5c00;font-weight:700>}</span>
-</code></pre></div><p>如果在上面的代码中去掉同时扩展<code>Notifier</code>的部分则会出现编译错误。</p>
-<p>在这个小节中，我们展示了子类型的简单用法。一个特质可以要求在被混入的同时混入其他一个或多个特质，多个的时候仅需要使用<code>with</code>关键字分割即可。子类型是实现“蛋糕模式”的关键，该模式用于依赖注入。本书后续部分我们会看到更多有趣的用法。</p>
-<h3 id=特质冲突>特质冲突</h3>
-<p>你的脑海中可能已经出现了一个问题——如果我们混入的特质中拥有相同签名的方法会怎样？下面的几个小节我们将会探讨该问题。</p>
-<h4 id=相同签名和返回类型>相同签名和返回类型</h4>
-<p>考虑一个例子，我们想要混入的两个特质拥有相同的方法：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#204a87;font-weight:700>trait</span> <span style=color:#000>FormalGreeting</span> <span style=color:#ce5c00;font-weight:700>{</span>
-  <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>hello</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>String</span>
-<span style=color:#ce5c00;font-weight:700>}</span>
-
-<span style=color:#204a87;font-weight:700>trait</span> <span style=color:#000>InformalGreeting</span> <span style=color:#ce5c00;font-weight:700>{</span>
-  <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>hello</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>String</span>
-<span style=color:#ce5c00;font-weight:700>}</span>
-
-<span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>Greeter</span> <span style=color:#204a87;font-weight:700>extends</span> <span style=color:#000>FormalGreeting</span> <span style=color:#204a87;font-weight:700>with</span> <span style=color:#000>InformalGreeting</span> <span style=color:#ce5c00;font-weight:700>{</span>
-  <span style=color:#204a87;font-weight:700>override</span> <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>hello</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>String</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#4e9a06>&#34;Good morning, ser/madam!&#34;</span>
-<span style=color:#ce5c00;font-weight:700>}</span>
-
-<span style=color:#204a87;font-weight:700>object</span> <span style=color:#000>GreeterUser</span> <span style=color:#204a87;font-weight:700>extends</span> <span style=color:#000>App</span> <span style=color:#ce5c00;font-weight:700>{</span>
-  <span style=color:#204a87;font-weight:700>val</span> <span style=color:#000>greeter</span> <span style=color:#204a87;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>Greeter</span><span style=color:#ce5c00;font-weight:700>()</span>
-  <span style=color:#000>println</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>greetrt</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>hello</span><span style=color:#ce5c00;font-weight:700>())</span>
-<span style=color:#ce5c00;font-weight:700>}</span>
-</code></pre></div><p>在这个例子中，接待员总是会很有礼貌并且同时混入正式的和非正式的问候。在实现时仅需要实现该方法一次。</p>
-<h4 id=相同签名和不同返回类型>相同签名和不同返回类型</h4>
-<p>如果我们的问候特质拥有更多方法，签名相同但返回类型不同呢？我们将下面的声明添加到<code>FormalGreeting</code>中：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>getTime</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>String</span>
-</code></pre></div><p>同时向<code>InformalGreeting</code>中添加：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>getTime</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>Int</span>
-</code></pre></div><p>这种情况下我们需要在<code>Greeter</code>中实现同时实现这两个方法。然而，编译器不允许我们定义<code>getTime</code>两次，这表示 Scala 中会避免发生这样的事。</p>
-<h4 id=相同签名和返回类型的混入>相同签名和返回类型的混入</h4>
-<p>在继续之前，快速回忆一下混入只是一个带有一些代码实现的特质。这意味着在下面的例子中，我们不需要在使用它们的类中实现这些方法：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#204a87;font-weight:700>trait</span> <span style=color:#000>A</span> <span style=color:#ce5c00;font-weight:700>{</span>
-  <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>hello</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>String</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#4e9a06>&#34;Hello, I am trait A!&#34;</span>
-<span style=color:#ce5c00;font-weight:700>}</span>
-
-<span style=color:#204a87;font-weight:700>trait</span> <span style=color:#000>B</span> <span style=color:#ce5c00;font-weight:700>{</span>
-  <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>hello</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>String</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#4e9a06>&#34;Hello, I am trait B!&#34;</span>
-<span style=color:#ce5c00;font-weight:700>}</span>
-
-<span style=color:#204a87;font-weight:700>object</span> <span style=color:#000>Clashing</span> <span style=color:#204a87;font-weight:700>extends</span> <span style=color:#000>App</span> <span style=color:#204a87;font-weight:700>with</span> <span style=color:#000>A</span> <span style=color:#204a87;font-weight:700>with</span> <span style=color:#000>B</span> <span style=color:#ce5c00;font-weight:700>{</span>
-  <span style=color:#000>println</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>hello</span><span style=color:#ce5c00;font-weight:700>())</span>
-<span style=color:#ce5c00;font-weight:700>}</span>
-</code></pre></div><p>可能和预期一样，我们会得到一个编译错误信息：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>Error:<span style=color:#ce5c00;font-weight:700>(</span>11, 8<span style=color:#ce5c00;font-weight:700>)</span> object Clashing inherits conflicting members:
-	method hello in trait A of <span style=color:#204a87>type</span> <span style=color:#ce5c00;font-weight:700>()</span>String and
-	method hello in trait B of <span style=color:#204a87>type</span> <span style=color:#ce5c00;font-weight:700>()</span>String
-<span style=color:#ce5c00;font-weight:700>(</span>Note: this can be resolved by declaring an override in object Clashing.<span style=color:#ce5c00;font-weight:700>)</span> 
-object Clashing extends A with B <span style=color:#ce5c00;font-weight:700>{</span> 
-       ^
-</code></pre></div><p>该信息很有用，它甚至为我们提供了一个如何修复问题的提示。方法冲突在多重继承中是一个问题，但是和你看到的一样，我们致力于选择一个可用的方法。在<code>Clashing</code>对象中我们或许可以这样修改：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#204a87;font-weight:700>override</span> <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>hello</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>String</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>super</span><span style=color:#ce5c00;font-weight:700>[</span><span style=color:#204a87;font-weight:700>A</span><span style=color:#ce5c00;font-weight:700>].</span><span style=color:#000>hello</span><span style=color:#ce5c00;font-weight:700>()</span>
-</code></pre></div><p>然而，如果处于某些原因我们相同时使用两个方法呢？这种情况下，我们可以创建另外一个名字不同的方法来调用另一个指定特质中的方法。我们同样可以直接通过<code>super</code>符号直接引用这些方法而不是将他们包装在另一个方法中。然而我个人更倾向于包装在另一个方法内，否则代码将会变得很乱。</p>
-<blockquote>
-<p><strong>super 符号</strong></p>
-<p>如果在上面的例子中，我们直接使用<code>override def hello(): String = super.hello()</code>而不是<code>super[A]. hello()</code>，真正被选择的又是那个特质中的方法呢？这种情况下将会选择 B 中的方法。这取决于 Scala 中的线性化特性，我们将在后面的章节中详细讨论。</p>
-</blockquote>
-<h4 id=相同签名和不同返回类型的混入>相同签名和不同返回类型的混入</h4>
-<p>和预期一样，如果方法的传入参数在类型或数量上有所不同则上面的问题就不再存在，因为这成了一个新的签名。但如果特质中有如下两个方法问题则仍然存在：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>value</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>a</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Int</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Int</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>a</span> <span style=color:#8f5902;font-style:italic>// in trait A 
-</span><span style=color:#8f5902;font-style:italic></span><span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>value</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>a</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Int</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>String</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>a</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>toString</span> <span style=color:#8f5902;font-style:italic>// in trait B
-</span></code></pre></div><p>我用用过的方式在这里不再有效，你可能会对此感到吃惊。如果我们决定仅覆写特质 A 中的方法，将会得到如下编译错误：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#000>Error</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#a40000>19</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#a40000>16</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#000>overriding</span> <span style=color:#000>method</span> <span style=color:#000>value</span> <span style=color:#000>in</span> <span style=color:#204a87;font-weight:700>trait</span> <span style=color:#000>B</span> <span style=color:#000>of</span> <span style=color:#204a87;font-weight:700>type</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#204a87;font-weight:700>a:</span> <span style=color:#204a87;font-weight:700>Int</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>String</span><span style=color:#ce5c00;font-weight:700>;</span> 
-  <span style=color:#000>method</span> <span style=color:#000>value</span> <span style=color:#000>has</span> <span style=color:#000>incompatible</span> <span style=color:#204a87;font-weight:700>type</span> 
-  <span style=color:#204a87;font-weight:700>override</span> <span style=color:#204a87;font-weight:700>def</span> <span style=color:#204a87;font-weight:700>value</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#204a87;font-weight:700>a:</span> <span style=color:#204a87;font-weight:700>Int</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Int</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>super</span><span style=color:#ce5c00;font-weight:700>[</span><span style=color:#204a87;font-weight:700>A</span><span style=color:#ce5c00;font-weight:700>].</span><span style=color:#000>value</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>a</span><span style=color:#ce5c00;font-weight:700>)</span>
-  			   <span style=color:#ce5c00;font-weight:700>^</span>
-</code></pre></div><p>如果重写 B 中的方法，错误也会随之改变。而如果两个都覆写，则会得到如下错误：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#000>Error</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#a40000>20</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#a40000>16</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#000>method</span> <span style=color:#000>value</span> <span style=color:#000>is</span> <span style=color:#000>defined</span> <span style=color:#000>twice</span> 
-  <span style=color:#000>conflicting</span> <span style=color:#000>symbols</span> <span style=color:#000>both</span> <span style=color:#000>originated</span> <span style=color:#000>in</span> <span style=color:#000>file</span> <span style=color:#a40000>&#39;</span><span style=color:#ce5c00;font-weight:700>/</span><span style=color:#000>path</span><span style=color:#ce5c00;font-weight:700>/</span><span style=color:#000>to</span><span style=color:#ce5c00;font-weight:700>/</span><span style=color:#000>traits</span><span style=color:#ce5c00;font-weight:700>/</span><span style=color:#000>src</span><span style=color:#ce5c00;font-weight:700>/</span><span style=color:#000>main</span><span style=color:#ce5c00;font-weight:700>/</span> <span style=color:#000>scala</span><span style=color:#ce5c00;font-weight:700>/</span><span style=color:#000>com</span><span style=color:#ce5c00;font-weight:700>/</span><span style=color:#000>ivan</span><span style=color:#ce5c00;font-weight:700>/</span><span style=color:#000>nikolov</span><span style=color:#ce5c00;font-weight:700>/</span><span style=color:#000>composition</span><span style=color:#ce5c00;font-weight:700>/</span><span style=color:#000>Clashing</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>scala</span><span style=color:#a40000>&#39;</span>
-  <span style=color:#204a87;font-weight:700>override</span> <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>value</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>a</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Int</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>String</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>super</span><span style=color:#ce5c00;font-weight:700>[</span><span style=color:#204a87;font-weight:700>B</span><span style=color:#ce5c00;font-weight:700>].</span><span style=color:#000>value</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>a</span><span style=color:#ce5c00;font-weight:700>)</span>
-</code></pre></div><p>这展示了 Scala 会避免我们在多重继承中进行这样危险的操作。为了完整，如果你遇到类似的问题，仍然存在变通的方式，比如像下面的例子一样，牺牲掉混入的功能：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#204a87;font-weight:700>trait</span> <span style=color:#000>D</span> <span style=color:#ce5c00;font-weight:700>{</span>
-  <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>value</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>a</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>Int</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>String</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>a</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>toString</span>
-<span style=color:#ce5c00;font-weight:700>}</span>
-
-<span style=color:#204a87;font-weight:700>object</span> <span style=color:#000>Example</span> <span style=color:#204a87;font-weight:700>extends</span> <span style=color:#000>App</span><span style=color:#ce5c00;font-weight:700>{</span>
-  <span style=color:#204a87;font-weight:700>val</span> <span style=color:#000>c</span> <span style=color:#204a87;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>C</span><span style=color:#ce5c00;font-weight:700>{}</span>
-  <span style=color:#204a87;font-weight:700>val</span> <span style=color:#000>d</span> <span style=color:#204a87;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>D</span><span style=color:#ce5c00;font-weight:700>{}</span>
-  
-  <span style=color:#000>println</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>s&#34;c.value: </span><span style=color:#4e9a06>${</span><span style=color:#000>c</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>value</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#0000cf;font-weight:700>10</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#4e9a06>}</span><span style=color:#4e9a06>&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
-  <span style=color:#000>println</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>s&#34;d.value: </span><span style=color:#4e9a06>${</span><span style=color:#000>d</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>value</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#0000cf;font-weight:700>10</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#4e9a06>}</span><span style=color:#4e9a06>&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
-<span style=color:#ce5c00;font-weight:700>}</span>
-</code></pre></div><p>这段代码中把特质当做合作者使用，但这也丢掉了混入这些特质的类的实例同样也拥有这些特质的类型这一事实(即扩展了特质的类，其实例同时拥有特质的类型)，这一性质在某些操作中会很有用。</p>
-<h2 id=多重继承>多重继承</h2>
-<p>因为可以同时混入多个特质，而且这些特质都可以拥有各自不同的方法实现，因此我们已经在前面的章节中多次提到了多重继承。多重继承不仅是一个强大的技术，同时也很危险，甚至有些语言中决定不进行支持，比如 Java。向我们看到的一样，Scacla 对此进行了支持，不过带有一些限制。本节中我们会接收多重继承的问题及 Scala 是如何处理这些问题的。</p>
-<h3 id=菱形问题>菱形问题</h3>
-<p>多重继承忍受着菱形问题的痛苦。</p>
-<p>让我们看一下下面的图示：</p>
-<div align=center>
+</li></ol></nav><div class=td-content>
+<h1>CH02-特质与混入组合</h1><header class=article-meta>
+</header><p>在专研一些实际的设计模式之前，我们需要确保读者对 Scala 中的一些概念都很了解。这些概念中的很多一部分都会在后续用于实现实际的设计模式，同时能够意识到这些概念的能力、限制以及陷阱也是编写正确、高效代码的关键因素。尽管有些概念并不被认为是“官方上”的设计模式，但仍然可以使用它们来编写好的软件。甚至有些场景中，基于 Scala 的丰富特性，一些概念甚至可以使用语言特性来代替一种设计模式。最后，向我们前面提到的，设计模式的存在是因为一种语言的特性缺失，因为特性的不够丰富而不能完成一些需要的任务。</p><p>在第一个主题中我们将会了解特质与混入(mixin)组合。他们为开发者提供了一种可能来共享已实现的功能或在应用中为类定义接口。很多由特质与混入组合为开发者带来的可能性对于本书后续要实现的一些设计模式都是很有帮助的。本章将主要关注一下几个主题：</p><ul>
+<li>特质</li><li>混入组合</li><li>多重继承</li><li>线性化</li><li>测试特质</li><li>特质与类</li></ul><h2 id=特质>特质</h2><p>大家或许对 Scala 中的特质持有不同的看法。他们不仅可以被视作类似其他语言中的接口，同时可以被当做一个拥有无参构造器的类。</p><blockquote>
+<p><strong>特质参数</strong></p><p>Scala 编程语言充满活力，其发展很快。其中一个将会在 2.12 版本中探讨的趋势是特质参数。更多信息请查看 <a href=http://www.scala-lang.org/news/roadmap-next/>http://www.scala-lang.org/news/roadmap-next/</a>。</p></blockquote><p>在下面的几个小节中，我们将会以不同的视角来了解特质并为你提供一些如何使用它们的想法。</p><h3 id=特质作为接口>特质作为接口</h3><p>特质可以看做是其他语言中的接口，比如 Java。但是支持开发者实现其中的一部分或全部方法。每当特质中拥有一些代码，该特质则被称为 <strong>mixin(混入、混合)</strong>。让我们看一下下面这个例子：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=display:flex><span><span style=color:#204a87;font-weight:700>trait</span> <span style=color:#000>Alarm</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>  <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>trigger</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>String</span>
+</span></span><span style=display:flex><span><span style=color:#ce5c00;font-weight:700>}</span>
+</span></span></code></pre></div><p>这里<code>Alarm</code>是一个接口。仅拥有一个<code>trigger</code>方法，不拥有任何实现，如果它被混入一个非抽象的类则必须提供一个该方法的实现。</p><p>让我们看一下另一个特质的例子：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=display:flex><span><span style=color:#204a87;font-weight:700>trait</span> <span style=color:#000>Notifier</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>  <span style=color:#204a87;font-weight:700>val</span> <span style=color:#000>notificationMessage</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>String</span>
+</span></span><span style=display:flex><span>  
+</span></span><span style=display:flex><span>  <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>printNotification</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Unit</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>    <span style=color:#000>println</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>notificationMessage</span><span style=color:#ce5c00;font-weight:700>)</span>
+</span></span><span style=display:flex><span>  <span style=color:#ce5c00;font-weight:700>}</span>
+</span></span><span style=display:flex><span>  
+</span></span><span style=display:flex><span>  <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>clear</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Unit</span>
+</span></span><span style=display:flex><span><span style=color:#ce5c00;font-weight:700>}</span>
+</span></span></code></pre></div><p>这个<code>Notifier</code>特质拥有一个已实现的方法，而<code>notificationMessage</code>的值和<code>clear</code>则需要由混入它的类来提供实现。此外，特质可以要求一个类必须拥有一个指定的变量，这类似于其他语言中的抽象类。</p><h4 id=混入带有变量的特质>混入带有变量的特质</h4><p>像上面提到的，特质可以要求类拥有一个指定的变量。一个有趣的用法是我们可以传递一个变量到类的构造器中。这样则可以满足该特质的需求：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=display:flex><span><span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>NotifierImpl</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#204a87;font-weight:700>val</span> <span style=color:#000>notificationMessage</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>String</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#204a87;font-weight:700>extends</span> <span style=color:#000>Notifier</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>  <span style=color:#204a87;font-weight:700>override</span> <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>clear</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Unit</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>println</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;&#34;</span><span style=color:#000>cleared</span><span style=color:#ce5c00;font-weight:700>)</span>
+</span></span><span style=display:flex><span><span style=color:#ce5c00;font-weight:700>}</span>
+</span></span></code></pre></div><p>这里唯一的必要是在类的定义中该变量必须使用相同的名字并且前面要使用<code>val</code>关键字来修饰。如果上面的代码中我们不适用<code>val</code>关键字作为前缀，编译器则仍然会要求我们实现该特质。这种情况下，我们不得不为类的参数使用一个不同的名字，并在类体中拥有一个<code>override val notificationMessage</code>赋值。</p><p>这种行为的原因很简单：如果我们显式的使用<code>val</code>(或 var，根据特质要求)，编译器会创建一个字段，并拥有与参数相同作用域的 getter。如果我们仅拥有参数，仅当该参数被用作构造器的作用域之外时(比如用在该类的方法中)才会创建一个字段和内部的 getter。更完备的是，样例类(case class)会自动在参数之前追加<code>val</code>关键字。因此，如果我们使用这个<code>val</code>关键字，我们将会自动获得一个与该参数同名的字段、相同的作用域，同时将会自动覆写特质中对我们的要求。</p><h3 id=特质作为类>特质作为类</h3><p>特质同样可以以类的视角来看待。这种情况下，他们需要实现其所有的方法，同时仅拥有一个不接收任何参数的构造器。考虑下面的代码：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=display:flex><span><span style=color:#204a87;font-weight:700>trait</span> <span style=color:#000>Beeper</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>  <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>beep</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>times</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Int</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Unit</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>    <span style=color:#000>assert</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>times</span> <span style=color:#ce5c00;font-weight:700>&gt;=</span> <span style=color:#0000cf;font-weight:700>0</span><span style=color:#ce5c00;font-weight:700>)</span>
+</span></span><span style=display:flex><span>    <span style=color:#0000cf;font-weight:700>1</span> <span style=color:#000>to</span> <span style=color:#000>times</span> <span style=color:#000>foreach</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>i</span> <span style=color:#204a87;font-weight:700>=&gt;</span> <span style=color:#000>println</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>s&#34;Beep number: </span><span style=color:#4e9a06>$i</span><span style=color:#4e9a06>&#34;</span><span style=color:#ce5c00;font-weight:700>))</span>
+</span></span><span style=display:flex><span>  <span style=color:#ce5c00;font-weight:700>}</span>
+</span></span><span style=display:flex><span><span style=color:#ce5c00;font-weight:700>}</span>
+</span></span></code></pre></div><p>现在我们实际上可以直接实例化<code>Beeper</code>并调用其方法。比如下面的例子：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=display:flex><span><span style=color:#204a87;font-weight:700>object</span> <span style=color:#000>BeeperRunner</span> <span style=color:#204a87;font-weight:700>extends</span> <span style=color:#000>App</span><span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>  <span style=color:#204a87;font-weight:700>val</span> <span style=color:#000>TIMES</span> <span style=color:#204a87;font-weight:700>=</span> <span style=color:#0000cf;font-weight:700>10</span>
+</span></span><span style=display:flex><span>  
+</span></span><span style=display:flex><span>  <span style=color:#204a87;font-weight:700>val</span> <span style=color:#000>beeper</span> <span style=color:#204a87;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>Beeper</span><span style=color:#ce5c00;font-weight:700>{}</span>		<span style=color:#8f5902;font-style:italic>// &lt;= 实例化一个特质
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic></span>  <span style=color:#000>beeper</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>beep</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>TIMES</span><span style=color:#ce5c00;font-weight:700>)</span>
+</span></span><span style=display:flex><span><span style=color:#ce5c00;font-weight:700>}</span>
+</span></span></code></pre></div><p>像预期一样，运行代码后我们将看到如下输出：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>Beep number: <span style=color:#0000cf;font-weight:700>1</span> 
+</span></span><span style=display:flex><span>Beep number: <span style=color:#0000cf;font-weight:700>2</span> 
+</span></span><span style=display:flex><span>Beep number: <span style=color:#0000cf;font-weight:700>3</span> 
+</span></span><span style=display:flex><span>....
+</span></span></code></pre></div><h3 id=扩展类>扩展类</h3><p>特质同样可以用来扩展类。让我们看一下下面的例子：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=display:flex><span><span style=color:#204a87;font-weight:700>abstract</span> <span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>Connector</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>  <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>connect</span><span style=color:#ce5c00;font-weight:700>()</span>
+</span></span><span style=display:flex><span>  <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>close</span><span style=color:#ce5c00;font-weight:700>()</span>
+</span></span><span style=display:flex><span><span style=color:#ce5c00;font-weight:700>}</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#204a87;font-weight:700>trait</span> <span style=color:#000>ConnectorWithHelper</span> <span style=color:#204a87;font-weight:700>extends</span> <span style=color:#000>Connector</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>  <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>findDriver</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Unit</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>    <span style=color:#000>println</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;Find driver called.&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
+</span></span><span style=display:flex><span>  <span style=color:#ce5c00;font-weight:700>}</span>
+</span></span><span style=display:flex><span><span style=color:#ce5c00;font-weight:700>}</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>PgSqlConnector</span> <span style=color:#204a87;font-weight:700>extends</span> <span style=color:#000>ConnectorWithHelper</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>  <span style=color:#204a87;font-weight:700>override</span> <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>connect</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Unit</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>    <span style=color:#000>println</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;Connected...&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
+</span></span><span style=display:flex><span>  <span style=color:#ce5c00;font-weight:700>}</span>
+</span></span><span style=display:flex><span>  
+</span></span><span style=display:flex><span>  <span style=color:#204a87;font-weight:700>override</span> <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>close</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Unit</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>    <span style=color:#000>println</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;Closed...&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
+</span></span><span style=display:flex><span>  <span style=color:#ce5c00;font-weight:700>}</span>
+</span></span><span style=display:flex><span><span style=color:#ce5c00;font-weight:700>}</span>
+</span></span></code></pre></div><p>和预期的一样，<code>PgSqlConnector</code>会被抽象类约束来实现其抽象方法。你可能会推测，我们可以用一些别的特质来扩展这些类然后再将他们(同时)进行混入。在 Scala 中，我们会对一些情况稍加限制，在后续章节中我们研究组合的时候会来看一下这么做会对我们产生哪些影响。</p><h3 id=扩展特质>扩展特质</h3><p>特质可以被互相扩展。看一下如下例子：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=display:flex><span><span style=color:#204a87;font-weight:700>trait</span> <span style=color:#000>Ping</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>  <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>ping</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>Unit</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>    <span style=color:#000>println</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;ping&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
+</span></span><span style=display:flex><span>  <span style=color:#ce5c00;font-weight:700>}</span>
+</span></span><span style=display:flex><span><span style=color:#ce5c00;font-weight:700>}</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#000>tring</span> <span style=color:#000>Pong</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>  <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>pong</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>Unit</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>    <span style=color:#000>println</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;pong&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
+</span></span><span style=display:flex><span>  <span style=color:#ce5c00;font-weight:700>}</span>
+</span></span><span style=display:flex><span><span style=color:#ce5c00;font-weight:700>}</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#204a87;font-weight:700>trait</span> <span style=color:#000>PingPong</span> <span style=color:#204a87;font-weight:700>extends</span> <span style=color:#000>Ping</span> <span style=color:#204a87;font-weight:700>with</span> <span style=color:#000>Pong</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>  <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>pingPong</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>Unit</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>    <span style=color:#000>ping</span><span style=color:#ce5c00;font-weight:700>()</span>
+</span></span><span style=display:flex><span>    <span style=color:#000>pong</span><span style=color:#ce5c00;font-weight:700>()</span>
+</span></span><span style=display:flex><span>  <span style=color:#ce5c00;font-weight:700>}</span>
+</span></span><span style=display:flex><span><span style=color:#ce5c00;font-weight:700>}</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#204a87;font-weight:700>object</span> <span style=color:#000>Runner</span> <span style=color:#204a87;font-weight:700>extends</span> <span style=color:#000>App</span> <span style=color:#204a87;font-weight:700>with</span> <span style=color:#000>PingPong</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>  <span style=color:#000>pingPong</span><span style=color:#ce5c00;font-weight:700>()</span>
+</span></span><span style=display:flex><span><span style=color:#ce5c00;font-weight:700>}</span>
+</span></span></code></pre></div><blockquote>
+<p>上面这个例子是比较简单的，实际上也可以让<code>Runner</code>分别来扩展两个特质。扩展特质可以很好的用来实现<strong>特质堆叠</strong>这种设计模式，本书的后续部分中我们将会探讨这个话题。</p></blockquote><h2 id=混入组合>混入组合</h2><p>Scala 支持开发者在一个类中扩展多个特质。这相对于那些不允许同时扩展多个类的语言增加了多重继承的可能性并且能剩下很多编写代码的精力。在这个子主题中，我们将会展示如果将多个特质混入到一个指定的类，或者在编写代码的时候如何创建一个带有某些指定功能的匿名类。</p><h3 id=混入特质>混入特质</h3><p>首先，我们先修改一下上个例子的代码。这个改动很小，它将会展示特质是如何被混入的：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=display:flex><span><span style=color:#204a87;font-weight:700>object</span> <span style=color:#000>MixinRunner</span> <span style=color:#204a87;font-weight:700>extends</span> <span style=color:#000>App</span> <span style=color:#204a87;font-weight:700>with</span> <span style=color:#000>Ping</span> <span style=color:#204a87;font-weight:700>with</span> <span style=color:#000>Pong</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>  <span style=color:#000>ping</span><span style=color:#ce5c00;font-weight:700>()</span>
+</span></span><span style=display:flex><span>  <span style=color:#000>pong</span><span style=color:#ce5c00;font-weight:700>()</span>
+</span></span><span style=display:flex><span><span style=color:#ce5c00;font-weight:700>}</span>
+</span></span></code></pre></div><p>从上面的代码中可以发现，我们可以将多个特质添加到同一个类中。上面代码中扩展的<code>App</code>特质主要是为了使用其自带的<code>main</code>方法。这会和创建无参类有点类似。</p><blockquote>
+<p><strong>如何混入特质？</strong></p><p>将特质混入到类可以使用如下语法：<code>extends with T1 with T2 with T3 with ... Tn</code>。</p><p>如果一个类已经扩展了别的类，我们仅需要通过<code>with</code>关键字来添加特质。</p><p>如果特质方法在特质体内并没有被实现，同时我们混入该特质的类也没有声明为抽象类，则该类必须实现特质中的方法。否则，将会出现编译错误。</p></blockquote><h3 id=组合>组合</h3><p>创建时的组合给我们提供了一个无需显式定义就能创建匿名类的机会。同样，如果我们想要组合多个不同的特质，创建所有的可能则要花费很多的工作。</p><h4 id=组合简单特质>组合简单特质</h4><p>让我们看一个组合简单特质的例子，这里不会扩展其他类或特质：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=display:flex><span><span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>watch</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>brand</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>String</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>initialTime</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Long</span><span style=color:#ce5c00;font-weight:700>){</span>
+</span></span><span style=display:flex><span>  <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>getTime</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Long</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>System</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>currentTimeMillis</span><span style=color:#ce5c00;font-weight:700>()</span> <span style=color:#ce5c00;font-weight:700>-</span> <span style=color:#000>initialTime</span>
+</span></span><span style=display:flex><span><span style=color:#ce5c00;font-weight:700>}</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#204a87;font-weight:700>object</span> <span style=color:#000>WatchUser</span> <span style=color:#204a87;font-weight:700>extends</span> <span style=color:#000>App</span><span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>  <span style=color:#204a87;font-weight:700>val</span> <span style=color:#000>expensiveWatch</span> <span style=color:#204a87;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>Watch</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;expensive brand&#34;</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#0000cf;font-weight:700>1000L</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#204a87;font-weight:700>with</span> <span style=color:#000>Alarm</span> <span style=color:#204a87;font-weight:700>with</span> <span style=color:#000>Notifier</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>   <span style=color:#204a87;font-weight:700>override</span> <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>trigger</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>String</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#4e9a06>&#34;The alarm was triggered.&#34;</span>
+</span></span><span style=display:flex><span>   <span style=color:#204a87;font-weight:700>override</span> <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>clear</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Unit</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>println</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;Alarm cleared.&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
+</span></span><span style=display:flex><span>   <span style=color:#204a87;font-weight:700>override</span> <span style=color:#204a87;font-weight:700>val</span> <span style=color:#000>notificationMessage</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>String</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#4e9a06>&#34;Alarm is running!&#34;</span>
+</span></span><span style=display:flex><span>  <span style=color:#ce5c00;font-weight:700>}</span>
+</span></span><span style=display:flex><span>  <span style=color:#204a87;font-weight:700>val</span> <span style=color:#000>cheapWatch</span> <span style=color:#204a87;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>Watch</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;cheap brand&#34;</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#0000cf;font-weight:700>1000L</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#204a87;font-weight:700>with</span> <span style=color:#000>Alarm</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>    <span style=color:#204a87;font-weight:700>override</span> <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>trigger</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>String</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#4e9a06>&#34;The alarm was triggered.&#34;</span>
+</span></span><span style=display:flex><span>  <span style=color:#ce5c00;font-weight:700>}</span>
+</span></span><span style=display:flex><span>  <span style=color:#8f5902;font-style:italic>// show some watch usage.
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic></span>  <span style=color:#000>println</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>expensiveWatch</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>trigger</span><span style=color:#ce5c00;font-weight:700>())</span>
+</span></span><span style=display:flex><span>  <span style=color:#000>expensiveWatch</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>printNotification</span><span style=color:#ce5c00;font-weight:700>()</span>
+</span></span><span style=display:flex><span>  <span style=color:#000>println</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>s&#34;The time is </span><span style=color:#4e9a06>${</span><span style=color:#000>expensiveWatch</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>getTime</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#4e9a06>}</span><span style=color:#4e9a06>.&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
+</span></span><span style=display:flex><span>  <span style=color:#000>expensiveWatch</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>clear</span><span style=color:#ce5c00;font-weight:700>()</span>
+</span></span><span style=display:flex><span>  
+</span></span><span style=display:flex><span>  <span style=color:#000>println</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>cheapWatch</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>trigger</span><span style=color:#ce5c00;font-weight:700>())</span>
+</span></span><span style=display:flex><span>  <span style=color:#000>println</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;Cheap watches cannot manually stop the alarm...&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
+</span></span><span style=display:flex><span><span style=color:#ce5c00;font-weight:700>}</span>
+</span></span></code></pre></div><p>在这个例子中我们使用了之前定义的<code>Alarm</code>和<code>Notifier</code>特质。我们创建了两个手表实例——一个是贵的，它拥有更多有用的功能；另一个是便宜的，它的功能则会少很多。本质上，他们都是匿名类，在初始化的时候被定义。另外要注意的是，和预期一样，我们需要实现那些我们扩展的特质中的抽象方法。希望这个例子能为你在拥有很多特质及多种可能的组合时带来一些想法。</p><p>只是为了完整，下面是上个程序的输出：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>The alarm was triggered.
+</span></span><span style=display:flex><span>Alarm is running!
+</span></span><span style=display:flex><span>The <span style=color:#204a87>time</span> is 1234567890562.
+</span></span><span style=display:flex><span>Alarm cleared.
+</span></span><span style=display:flex><span>The alarm was triggered.
+</span></span><span style=display:flex><span>Cheap watches cannot manually stop the alarm...
+</span></span></code></pre></div><p>和预期一样，第三行的时间会在每次运行的时候都有所不同。</p><h4 id=组合复杂特质>组合复杂特质</h4><p>在有些可能的情况下，我们需要组合更加复杂的特质，这些特质可能扩展了一些别的类或特质。如果在继承链的上层没有一个特质或别的特质已经显式扩展了一个指定的类，事情则会变得很简单，他们也不会改变太多。这种情况下，我们可以简单的访问超特质的方法。然而，让我们看一下如果继承链中的特质已经扩展了一个指定的类会发生什么。在这个例子中，我们将会使用之前定义的<code>ConnectorWithHelper</code>特质。该特质扩展了名为<code>Connector</code>的抽象类。加入我们想拥有另一个非常昂贵的手表，比如它可以连接到数据库：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=display:flex><span><span style=color:#204a87;font-weight:700>object</span> <span style=color:#000>ReallyExpensiveWatchUser</span> <span style=color:#204a87;font-weight:700>extends</span> <span style=color:#000>App</span><span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>  <span style=color:#204a87;font-weight:700>val</span> <span style=color:#000>reallyExpensiveWatch</span> <span style=color:#204a87;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>Watch</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;really expensive brand&#34;</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#0000cf;font-weight:700>1000L</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#204a87;font-weight:700>with</span> <span style=color:#000>ConnectorWithHelper</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>    <span style=color:#204a87;font-weight:700>override</span> <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>connect</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Unit</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>println</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;Connected with another connector.&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
+</span></span><span style=display:flex><span>    <span style=color:#204a87;font-weight:700>override</span> <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>close</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Unit</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>println</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;Closed with another connector.&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
+</span></span><span style=display:flex><span>  <span style=color:#ce5c00;font-weight:700>}</span>
+</span></span><span style=display:flex><span>  
+</span></span><span style=display:flex><span>  <span style=color:#000>println</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;Using the really expensive watch.&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
+</span></span><span style=display:flex><span>  <span style=color:#000>reallyExpensiveWatch</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>findDriver</span><span style=color:#ce5c00;font-weight:700>()</span>
+</span></span><span style=display:flex><span>  <span style=color:#000>reallyExpensiveWatch</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>connect</span><span style=color:#ce5c00;font-weight:700>()</span>
+</span></span><span style=display:flex><span>  <span style=color:#000>reallyExpensiveWatch</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>close</span><span style=color:#ce5c00;font-weight:700>()</span>
+</span></span><span style=display:flex><span><span style=color:#ce5c00;font-weight:700>}</span>
+</span></span></code></pre></div><p>看起来都很好，但是当我们编译的时候，会得到如下错误信息：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>Error:<span style=color:#ce5c00;font-weight:700>(</span>36, 80<span style=color:#ce5c00;font-weight:700>)</span> illegal inheritance<span style=color:#000;font-weight:700>;</span> superclass Watch
+</span></span><span style=display:flex><span>	is not a subclass of the superclass Connector of the mixin trait ConnectorWithHelper
+</span></span><span style=display:flex><span>	val <span style=color:#000>reallyExpensiveWatch</span> <span style=color:#ce5c00;font-weight:700>=</span> new Watch<span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;really expensive brand&#34;</span>,
+</span></span><span style=display:flex><span>	1000L<span style=color:#ce5c00;font-weight:700>)</span> with ConnectorWithHelper <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>^
+</span></span></code></pre></div><p>该错误消息告诉我们，由于<code>ConnectorWithHelper</code>特质已经扩展了<code>Connector</code>类，所有使用该特质进行组合的类必须是<code>Connector</code>的子类。现在让我们假如需要混入另一个同样已经扩展了一个类的特质，但被扩展的这个类与之前不同。根据之前的逻辑，会需要<code>Watch</code>同样需要是该类的子类。但这是不可能出现的，因为我们同时只能扩展一个类，这也就是 Scala 如何来限制多重继承以避免危险错误的发生。</p><p>如果我们想要修复这个例子的编译错误，我们不得不去修改原有的<code>Watch</code>类的实现以确保其是<code>Connector</code>的子类。然而这可能并非我们所原本期望的，或许这种情况下需要一些重构。</p><h4 id=组合自类型self-type>组合自类型(self-type)</h4><p>在上一节中，我们看到了如何在<code>Watch</code>类中扩展<code>Connector</code>以便能够编译我们的代码。有些场景中我们或许真的需要强制一个类来混入一个特质，或者同时有其他的特质或多个特质需要混入。让我们加入需要一个闹钟同时带有提醒功能：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=display:flex><span><span style=color:#204a87;font-weight:700>trait</span> <span style=color:#000>AlarmNotifier</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>  <span style=color:#204a87;font-weight:700>this:</span> <span style=color:#204a87;font-weight:700>Notifier</span> <span style=color:#ce5c00;font-weight:700>=&gt;</span>
+</span></span><span style=display:flex><span>  
+</span></span><span style=display:flex><span>  <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>trigger</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>String</span>
+</span></span><span style=display:flex><span><span style=color:#ce5c00;font-weight:700>}</span>
+</span></span></code></pre></div><p>这里我们展示了什么是自类型。第二行代码将<code>Notifier</code>的所有方法引入到了新特质的当前作用域，它同时要求所有混入了该特质的类必须同时混入<code>Notifier</code>。否则将会出现编译错误。如果使用<code>self</code>来代替<code>this</code>，我们则可以使用手动的方式来在<code>AlarmNotifier</code>中引用<code>Notifier</code>的方法，比如<code>self.printNotification()</code>。</p><p>下面的代码展示了如何来使用这个新的特质：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=display:flex><span><span style=color:#204a87;font-weight:700>object</span> <span style=color:#000>SelfTypeWatchUser</span> <span style=color:#204a87;font-weight:700>extends</span> <span style=color:#000>App</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>  <span style=color:#000>AlarmNotifier</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>    <span style=color:#204a87;font-weight:700>val</span> <span style=color:#000>watch</span> <span style=color:#204a87;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>Watch</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;alarm with notification&#34;</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#0000cf;font-weight:700>1000</span><span style=color:#000>l</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#204a87;font-weight:700>with</span> <span style=color:#000>AlarmNotifier</span> <span style=color:#204a87;font-weight:700>with</span> <span style=color:#000>Notifier</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>      <span style=color:#204a87;font-weight:700>override</span> <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>trigger</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>String</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#4e9a06>&#34;Alarm triggered.&#34;</span>
+</span></span><span style=display:flex><span>      <span style=color:#204a87;font-weight:700>override</span> <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>clear</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Unit</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>println</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;Alarm cleared.&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
+</span></span><span style=display:flex><span>      <span style=color:#204a87;font-weight:700>override</span> <span style=color:#204a87;font-weight:700>val</span> <span style=color:#000>notificationMessage</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>String</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#4e9a06>&#34;The notification.&#34;</span>
+</span></span><span style=display:flex><span>    <span style=color:#ce5c00;font-weight:700>}</span>
+</span></span><span style=display:flex><span>  <span style=color:#ce5c00;font-weight:700>}</span>
+</span></span><span style=display:flex><span>  <span style=color:#000>println</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>watch</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>trigger</span><span style=color:#ce5c00;font-weight:700>())</span>
+</span></span><span style=display:flex><span>  <span style=color:#000>watch</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>printNotification</span><span style=color:#ce5c00;font-weight:700>()</span>
+</span></span><span style=display:flex><span>  <span style=color:#000>println</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>s&#34;The time is </span><span style=color:#4e9a06>${</span><span style=color:#000>watch</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>getTime</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#4e9a06>}</span><span style=color:#4e9a06>.&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
+</span></span><span style=display:flex><span>  <span style=color:#000>watch</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>clear</span><span style=color:#ce5c00;font-weight:700>()</span>
+</span></span><span style=display:flex><span><span style=color:#ce5c00;font-weight:700>}</span>
+</span></span></code></pre></div><p>如果在上面的代码中去掉同时扩展<code>Notifier</code>的部分则会出现编译错误。</p><p>在这个小节中，我们展示了子类型的简单用法。一个特质可以要求在被混入的同时混入其他一个或多个特质，多个的时候仅需要使用<code>with</code>关键字分割即可。子类型是实现“蛋糕模式”的关键，该模式用于依赖注入。本书后续部分我们会看到更多有趣的用法。</p><h3 id=特质冲突>特质冲突</h3><p>你的脑海中可能已经出现了一个问题——如果我们混入的特质中拥有相同签名的方法会怎样？下面的几个小节我们将会探讨该问题。</p><h4 id=相同签名和返回类型>相同签名和返回类型</h4><p>考虑一个例子，我们想要混入的两个特质拥有相同的方法：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=display:flex><span><span style=color:#204a87;font-weight:700>trait</span> <span style=color:#000>FormalGreeting</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>  <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>hello</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>String</span>
+</span></span><span style=display:flex><span><span style=color:#ce5c00;font-weight:700>}</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#204a87;font-weight:700>trait</span> <span style=color:#000>InformalGreeting</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>  <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>hello</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>String</span>
+</span></span><span style=display:flex><span><span style=color:#ce5c00;font-weight:700>}</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>Greeter</span> <span style=color:#204a87;font-weight:700>extends</span> <span style=color:#000>FormalGreeting</span> <span style=color:#204a87;font-weight:700>with</span> <span style=color:#000>InformalGreeting</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>  <span style=color:#204a87;font-weight:700>override</span> <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>hello</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>String</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#4e9a06>&#34;Good morning, ser/madam!&#34;</span>
+</span></span><span style=display:flex><span><span style=color:#ce5c00;font-weight:700>}</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#204a87;font-weight:700>object</span> <span style=color:#000>GreeterUser</span> <span style=color:#204a87;font-weight:700>extends</span> <span style=color:#000>App</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>  <span style=color:#204a87;font-weight:700>val</span> <span style=color:#000>greeter</span> <span style=color:#204a87;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>Greeter</span><span style=color:#ce5c00;font-weight:700>()</span>
+</span></span><span style=display:flex><span>  <span style=color:#000>println</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>greetrt</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>hello</span><span style=color:#ce5c00;font-weight:700>())</span>
+</span></span><span style=display:flex><span><span style=color:#ce5c00;font-weight:700>}</span>
+</span></span></code></pre></div><p>在这个例子中，接待员总是会很有礼貌并且同时混入正式的和非正式的问候。在实现时仅需要实现该方法一次。</p><h4 id=相同签名和不同返回类型>相同签名和不同返回类型</h4><p>如果我们的问候特质拥有更多方法，签名相同但返回类型不同呢？我们将下面的声明添加到<code>FormalGreeting</code>中：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=display:flex><span><span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>getTime</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>String</span>
+</span></span></code></pre></div><p>同时向<code>InformalGreeting</code>中添加：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=display:flex><span><span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>getTime</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>Int</span>
+</span></span></code></pre></div><p>这种情况下我们需要在<code>Greeter</code>中实现同时实现这两个方法。然而，编译器不允许我们定义<code>getTime</code>两次，这表示 Scala 中会避免发生这样的事。</p><h4 id=相同签名和返回类型的混入>相同签名和返回类型的混入</h4><p>在继续之前，快速回忆一下混入只是一个带有一些代码实现的特质。这意味着在下面的例子中，我们不需要在使用它们的类中实现这些方法：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=display:flex><span><span style=color:#204a87;font-weight:700>trait</span> <span style=color:#000>A</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>  <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>hello</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>String</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#4e9a06>&#34;Hello, I am trait A!&#34;</span>
+</span></span><span style=display:flex><span><span style=color:#ce5c00;font-weight:700>}</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#204a87;font-weight:700>trait</span> <span style=color:#000>B</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>  <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>hello</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>String</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#4e9a06>&#34;Hello, I am trait B!&#34;</span>
+</span></span><span style=display:flex><span><span style=color:#ce5c00;font-weight:700>}</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#204a87;font-weight:700>object</span> <span style=color:#000>Clashing</span> <span style=color:#204a87;font-weight:700>extends</span> <span style=color:#000>App</span> <span style=color:#204a87;font-weight:700>with</span> <span style=color:#000>A</span> <span style=color:#204a87;font-weight:700>with</span> <span style=color:#000>B</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>  <span style=color:#000>println</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>hello</span><span style=color:#ce5c00;font-weight:700>())</span>
+</span></span><span style=display:flex><span><span style=color:#ce5c00;font-weight:700>}</span>
+</span></span></code></pre></div><p>可能和预期一样，我们会得到一个编译错误信息：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>Error:<span style=color:#ce5c00;font-weight:700>(</span>11, 8<span style=color:#ce5c00;font-weight:700>)</span> object Clashing inherits conflicting members:
+</span></span><span style=display:flex><span>	method hello in trait A of <span style=color:#204a87>type</span> <span style=color:#ce5c00;font-weight:700>()</span>String and
+</span></span><span style=display:flex><span>	method hello in trait B of <span style=color:#204a87>type</span> <span style=color:#ce5c00;font-weight:700>()</span>String
+</span></span><span style=display:flex><span><span style=color:#ce5c00;font-weight:700>(</span>Note: this can be resolved by declaring an override in object Clashing.<span style=color:#ce5c00;font-weight:700>)</span> 
+</span></span><span style=display:flex><span>object Clashing extends A with B <span style=color:#ce5c00;font-weight:700>{</span> 
+</span></span><span style=display:flex><span>       ^
+</span></span></code></pre></div><p>该信息很有用，它甚至为我们提供了一个如何修复问题的提示。方法冲突在多重继承中是一个问题，但是和你看到的一样，我们致力于选择一个可用的方法。在<code>Clashing</code>对象中我们或许可以这样修改：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=display:flex><span><span style=color:#204a87;font-weight:700>override</span> <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>hello</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>String</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>super</span><span style=color:#ce5c00;font-weight:700>[</span><span style=color:#204a87;font-weight:700>A</span><span style=color:#ce5c00;font-weight:700>].</span><span style=color:#000>hello</span><span style=color:#ce5c00;font-weight:700>()</span>
+</span></span></code></pre></div><p>然而，如果处于某些原因我们相同时使用两个方法呢？这种情况下，我们可以创建另外一个名字不同的方法来调用另一个指定特质中的方法。我们同样可以直接通过<code>super</code>符号直接引用这些方法而不是将他们包装在另一个方法中。然而我个人更倾向于包装在另一个方法内，否则代码将会变得很乱。</p><blockquote>
+<p><strong>super 符号</strong></p><p>如果在上面的例子中，我们直接使用<code>override def hello(): String = super.hello()</code>而不是<code>super[A]. hello()</code>，真正被选择的又是那个特质中的方法呢？这种情况下将会选择 B 中的方法。这取决于 Scala 中的线性化特性，我们将在后面的章节中详细讨论。</p></blockquote><h4 id=相同签名和不同返回类型的混入>相同签名和不同返回类型的混入</h4><p>和预期一样，如果方法的传入参数在类型或数量上有所不同则上面的问题就不再存在，因为这成了一个新的签名。但如果特质中有如下两个方法问题则仍然存在：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=display:flex><span><span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>value</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>a</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Int</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Int</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>a</span> <span style=color:#8f5902;font-style:italic>// in trait A 
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic></span><span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>value</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>a</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Int</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>String</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>a</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>toString</span> <span style=color:#8f5902;font-style:italic>// in trait B
+</span></span></span></code></pre></div><p>我用用过的方式在这里不再有效，你可能会对此感到吃惊。如果我们决定仅覆写特质 A 中的方法，将会得到如下编译错误：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=display:flex><span><span style=color:#000>Error</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#a40000>19</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#a40000>16</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#000>overriding</span> <span style=color:#000>method</span> <span style=color:#000>value</span> <span style=color:#000>in</span> <span style=color:#204a87;font-weight:700>trait</span> <span style=color:#000>B</span> <span style=color:#000>of</span> <span style=color:#204a87;font-weight:700>type</span> <span style=color:#ce5c00;font-weight:700>(</span><span style=color:#204a87;font-weight:700>a:</span> <span style=color:#204a87;font-weight:700>Int</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>String</span><span style=color:#ce5c00;font-weight:700>;</span> 
+</span></span><span style=display:flex><span>  <span style=color:#000>method</span> <span style=color:#000>value</span> <span style=color:#000>has</span> <span style=color:#000>incompatible</span> <span style=color:#204a87;font-weight:700>type</span> 
+</span></span><span style=display:flex><span>  <span style=color:#204a87;font-weight:700>override</span> <span style=color:#204a87;font-weight:700>def</span> <span style=color:#204a87;font-weight:700>value</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#204a87;font-weight:700>a:</span> <span style=color:#204a87;font-weight:700>Int</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Int</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>super</span><span style=color:#ce5c00;font-weight:700>[</span><span style=color:#204a87;font-weight:700>A</span><span style=color:#ce5c00;font-weight:700>].</span><span style=color:#000>value</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>a</span><span style=color:#ce5c00;font-weight:700>)</span>
+</span></span><span style=display:flex><span>  			   <span style=color:#ce5c00;font-weight:700>^</span>
+</span></span></code></pre></div><p>如果重写 B 中的方法，错误也会随之改变。而如果两个都覆写，则会得到如下错误：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=display:flex><span><span style=color:#000>Error</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#a40000>20</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#a40000>16</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#000>method</span> <span style=color:#000>value</span> <span style=color:#000>is</span> <span style=color:#000>defined</span> <span style=color:#000>twice</span> 
+</span></span><span style=display:flex><span>  <span style=color:#000>conflicting</span> <span style=color:#000>symbols</span> <span style=color:#000>both</span> <span style=color:#000>originated</span> <span style=color:#000>in</span> <span style=color:#000>file</span> <span style=color:#a40000>&#39;</span><span style=color:#ce5c00;font-weight:700>/</span><span style=color:#000>path</span><span style=color:#ce5c00;font-weight:700>/</span><span style=color:#000>to</span><span style=color:#ce5c00;font-weight:700>/</span><span style=color:#000>traits</span><span style=color:#ce5c00;font-weight:700>/</span><span style=color:#000>src</span><span style=color:#ce5c00;font-weight:700>/</span><span style=color:#000>main</span><span style=color:#ce5c00;font-weight:700>/</span> <span style=color:#000>scala</span><span style=color:#ce5c00;font-weight:700>/</span><span style=color:#000>com</span><span style=color:#ce5c00;font-weight:700>/</span><span style=color:#000>ivan</span><span style=color:#ce5c00;font-weight:700>/</span><span style=color:#000>nikolov</span><span style=color:#ce5c00;font-weight:700>/</span><span style=color:#000>composition</span><span style=color:#ce5c00;font-weight:700>/</span><span style=color:#000>Clashing</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>scala</span><span style=color:#a40000>&#39;</span>
+</span></span><span style=display:flex><span>  <span style=color:#204a87;font-weight:700>override</span> <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>value</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>a</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Int</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>String</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>super</span><span style=color:#ce5c00;font-weight:700>[</span><span style=color:#204a87;font-weight:700>B</span><span style=color:#ce5c00;font-weight:700>].</span><span style=color:#000>value</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>a</span><span style=color:#ce5c00;font-weight:700>)</span>
+</span></span></code></pre></div><p>这展示了 Scala 会避免我们在多重继承中进行这样危险的操作。为了完整，如果你遇到类似的问题，仍然存在变通的方式，比如像下面的例子一样，牺牲掉混入的功能：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=display:flex><span><span style=color:#204a87;font-weight:700>trait</span> <span style=color:#000>D</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>  <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>value</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>a</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>Int</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>String</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>a</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>toString</span>
+</span></span><span style=display:flex><span><span style=color:#ce5c00;font-weight:700>}</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#204a87;font-weight:700>object</span> <span style=color:#000>Example</span> <span style=color:#204a87;font-weight:700>extends</span> <span style=color:#000>App</span><span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>  <span style=color:#204a87;font-weight:700>val</span> <span style=color:#000>c</span> <span style=color:#204a87;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>C</span><span style=color:#ce5c00;font-weight:700>{}</span>
+</span></span><span style=display:flex><span>  <span style=color:#204a87;font-weight:700>val</span> <span style=color:#000>d</span> <span style=color:#204a87;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>D</span><span style=color:#ce5c00;font-weight:700>{}</span>
+</span></span><span style=display:flex><span>  
+</span></span><span style=display:flex><span>  <span style=color:#000>println</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>s&#34;c.value: </span><span style=color:#4e9a06>${</span><span style=color:#000>c</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>value</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#0000cf;font-weight:700>10</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#4e9a06>}</span><span style=color:#4e9a06>&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
+</span></span><span style=display:flex><span>  <span style=color:#000>println</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>s&#34;d.value: </span><span style=color:#4e9a06>${</span><span style=color:#000>d</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>value</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#0000cf;font-weight:700>10</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#4e9a06>}</span><span style=color:#4e9a06>&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
+</span></span><span style=display:flex><span><span style=color:#ce5c00;font-weight:700>}</span>
+</span></span></code></pre></div><p>这段代码中把特质当做合作者使用，但这也丢掉了混入这些特质的类的实例同样也拥有这些特质的类型这一事实(即扩展了特质的类，其实例同时拥有特质的类型)，这一性质在某些操作中会很有用。</p><h2 id=多重继承>多重继承</h2><p>因为可以同时混入多个特质，而且这些特质都可以拥有各自不同的方法实现，因此我们已经在前面的章节中多次提到了多重继承。多重继承不仅是一个强大的技术，同时也很危险，甚至有些语言中决定不进行支持，比如 Java。向我们看到的一样，Scacla 对此进行了支持，不过带有一些限制。本节中我们会接收多重继承的问题及 Scala 是如何处理这些问题的。</p><h3 id=菱形问题>菱形问题</h3><p>多重继承忍受着菱形问题的痛苦。</p><p>让我们看一下下面的图示：</p><div align=center>
 <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20190214164203.png style=display:block;width:70% alt=NAME align=center>
-</div>
-<p>如图，B 和 C 同时扩展了 A，然后 D 同时扩展了 B 和 C。这看起来可能不是很清晰。比如我们有个方法一开始定义在 A，但是 B 和 C 同时覆写了它。当在 D 中调用该方法时会发生什么呢？实际上调用的是哪个方法呢？</p>
-<p>因为上面的问题有点模糊或将引起错误。让我们使用 Scala 的特质来重新描述一下该问题：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#204a87;font-weight:700>trait</span> <span style=color:#000>A</span> <span style=color:#ce5c00;font-weight:700>{</span>
-  <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>hello</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>String</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#4e9a06>&#34;Hello from A&#34;</span>
-<span style=color:#ce5c00;font-weight:700>}</span>
-
-<span style=color:#204a87;font-weight:700>trait</span> <span style=color:#000>B</span> <span style=color:#204a87;font-weight:700>extends</span> <span style=color:#000>A</span> <span style=color:#ce5c00;font-weight:700>{</span>
-  <span style=color:#204a87;font-weight:700>override</span> <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>hello</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>String</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#4e9a06>&#34;Hello from B&#34;</span>
-<span style=color:#ce5c00;font-weight:700>}</span>
-
-<span style=color:#204a87;font-weight:700>trait</span> <span style=color:#000>C</span> <span style=color:#204a87;font-weight:700>extends</span> <span style=color:#000>A</span> <span style=color:#ce5c00;font-weight:700>{</span>
-  <span style=color:#204a87;font-weight:700>override</span> <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>hello</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>String</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#4e9a06>&#34;Hello from C&#34;</span>
-<span style=color:#ce5c00;font-weight:700>}</span>
-
-<span style=color:#204a87;font-weight:700>trait</span> <span style=color:#000>D</span> <span style=color:#204a87;font-weight:700>extends</span> <span style=color:#000>B</span> <span style=color:#204a87;font-weight:700>with</span> <span style=color:#000>C</span> <span style=color:#ce5c00;font-weight:700>{</span>
-  
-<span style=color:#ce5c00;font-weight:700>}</span>
-
-<span style=color:#204a87;font-weight:700>object</span> <span style=color:#000>Diamond</span> <span style=color:#204a87;font-weight:700>extends</span> <span style=color:#000>App</span> <span style=color:#204a87;font-weight:700>with</span> <span style=color:#000>D</span> <span style=color:#ce5c00;font-weight:700>{</span>
-  <span style=color:#000>println</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>hello</span><span style=color:#ce5c00;font-weight:700>())</span>
-<span style=color:#ce5c00;font-weight:700>}</span>
-</code></pre></div><p>运行后会得到如下结果：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>Hello from C
-</code></pre></div><p>如果我们把特质 D 修改为：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#204a87;font-weight:700>trait</span> <span style=color:#000>D</span> <span style=color:#204a87;font-weight:700>extends</span> <span style=color:#000>C</span> <span style=color:#204a87;font-weight:700>with</span> <span style=color:#000>B</span> <span style=color:#ce5c00;font-weight:700>{</span>
-
-<span style=color:#ce5c00;font-weight:700>}</span>
-</code></pre></div><p>则会得到结果为：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash>Hello from B
-</code></pre></div><p>你会发现，尽管例子仍然会有点模糊甚至易于出错，我们可以告诉你实际上被调用的是哪个方法。这是通过**线性化(linearization)**实现的，在下一节中会深入介绍。</p>
-<h3 id=限制>限制</h3>
-<p>在我们关注线性化之前，让我们指出 Scala 所支持的多重继承拥有的限制。我们之前已经见过他们很多次，这里会概括描述。</p>
-<blockquote>
-<p><strong>Scala 多重继承限制</strong></p>
-<p>Scala 中的多重继承由特质实现并遵循线性化规则。</p>
-<p>在多重继承中，如果一个特质已经显式扩展了一个类，则混入该特质的类必须是之前特质混入的类的子类。这意味着当混入一个已扩展了别的类的特质时，他们必须拥有相同的父类。</p>
-<p>如果特质中<strong>定义</strong>或<strong>声明</strong>了相同签名但返回类型不同的方法，则无法混入这些特质。</p>
-</blockquote>
-<p>需要特别小心的是特质中<strong>定义</strong>了相同签名和返回类型的方法。若果方式仅是<strong>声明</strong>而被要求实现，这不会带来问题而且只需要提供一个实现即可。</p>
-<h2 id=测试特质>测试特质</h2>
-<p>测试实际上是软件开发中很重要的一部分。它确保了代码中变更的部分不再产生错误，无论是方法的改变还是其他部分。</p>
-<p>我们可以使用多种不同的测试框架，这完全取决于个人喜好。本书中我们将使用 ScalaTest，这也是我在项目中使用的框架；它很容易理解，可读且易于使用。</p>
-<p>有些情况下，如果一个特质被混入到了类中，我们则可以直接测试这个类。然而，我们或许仅需要测试一个指定的特质。测试一个没有任何方法实现的特质也没有什么意义，因此这么我会探讨那些拥有代码实现的特质。同时，我们这里展示的单元测实际上是很简单的，他们也仅作为示例。我们会在本书的后续章节讨论更加复杂和有意义的测试。</p>
-<h3 id=使用一个类>使用一个类</h3>
-<p>让我们看一下前面见到的<code>DoubledMultiplierIdentity</code>将会被如何测试。一种方式是将这个特质混入一个测试类来测试它的方法：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>DoubledMultiplierIdentityTest</span> <span style=color:#204a87;font-weight:700>extends</span> <span style=color:#000>Flatspec</span> <span style=color:#204a87;font-weight:700>with</span> <span style=color:#000>ShouldMatchers</span> <span style=color:#204a87;font-weight:700>with</span> <span style=color:#000>DoubledMultiplierIdentity</span>
-</code></pre></div><p>然而这会编译失败并显示一个错误信息：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#000>Error</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#a40000>5</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#a40000>79</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#000>illegal</span> <span style=color:#000>inheritance</span><span style=color:#ce5c00;font-weight:700>;</span> <span style=color:#000>superclass</span> <span style=color:#000>FlatSpec</span> 
-  <span style=color:#000>is</span> <span style=color:#000>not</span> <span style=color:#000>a</span> <span style=color:#000>subclass</span> <span style=color:#000>of</span> <span style=color:#000>the</span> <span style=color:#000>superclass</span> <span style=color:#000>MultiplierIdentity</span> 
-  <span style=color:#000>of</span> <span style=color:#000>the</span> <span style=color:#000>mixin</span> <span style=color:#204a87;font-weight:700>trait</span> <span style=color:#000>DoubledMultiplierIdentity</span> 
-<span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>DoubledMultiplierIdentityTest</span> <span style=color:#204a87;font-weight:700>extends</span> <span style=color:#000>FlatSpec</span> <span style=color:#204a87;font-weight:700>with</span> <span style=color:#000>ShouldMatchers</span> 
-<span style=color:#204a87;font-weight:700>with</span> <span style=color:#000>DoubledMultiplierIdentity</span> <span style=color:#ce5c00;font-weight:700>{</span> 
-<span style=color:#ce5c00;font-weight:700>^</span>
-</code></pre></div><p>我们在前面已经谈论过这个问题，事实上特质只能被混入到一个与该特质拥有相同基类的类。这意味着为了测试这个特质，我们需要在我们的测试类中创建一个虚拟的类然后再使用它：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#204a87;font-weight:700>package</span> <span style=color:#000>com.ivan.nikolov.linearization</span>
-
-<span style=color:#204a87;font-weight:700>import</span> <span style=color:#000>org.scalatest.</span><span style=color:#ce5c00;font-weight:700>{</span> <span style=color:#000>ShouldMatchers</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>FlatSpec</span><span style=color:#ce5c00;font-weight:700>}</span>
-
-<span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>DoubledMultiplierIdentityTest</span> <span style=color:#204a87;font-weight:700>extends</span> <span style=color:#000>FlatSpec</span> <span style=color:#204a87;font-weight:700>with</span> <span style=color:#000>ShouldMatchers</span> <span style=color:#ce5c00;font-weight:700>{</span>
-  
-  <span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>DoubledMultipliersIdentityClass</span> <span style=color:#204a87;font-weight:700>extends</span> <span style=color:#000>DoubledMultiplierIdentity</span>
-  
-  <span style=color:#204a87;font-weight:700>val</span> <span style=color:#000>instance</span> <span style=color:#204a87;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>DoubledMultiplierIdentityClass</span>
-  
-  <span style=color:#4e9a06>&#34;identity&#34;</span> <span style=color:#000>should</span> <span style=color:#4e9a06>&#34;return 2 * 1&#34;</span> <span style=color:#000>in</span> <span style=color:#ce5c00;font-weight:700>{</span>
-    <span style=color:#000>instance</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>identity</span> <span style=color:#000>should</span> <span style=color:#000>equals</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#0000cf;font-weight:700>2</span><span style=color:#ce5c00;font-weight:700>)</span>
-  <span style=color:#ce5c00;font-weight:700>}</span>
-<span style=color:#ce5c00;font-weight:700>}</span>
-</code></pre></div><h3 id=混入特质-1>混入特质</h3>
-<p>我们可以将特质混入来对他进行测试。有几个地方我们可以这么做：混入到一个测试类或者一个单独的测试用例。</p>
-<h4 id=混入到测试类>混入到测试类</h4>
-<p>只有当该特质确定没有扩展任何其他类时，才可以将该特质混入到一个测试类，因此特质、测试类的超类必须是相同的。除了这样，其他任何方式都和我们前面做的一样。</p>
-<p>让我们测试一个本节出现过的特质 A，他拥有一个<code>hello</code>方法。同时我们添加了一个<code>pass</code>方法，现在该特质看起来会像下面这样：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#204a87;font-weight:700>trait</span> <span style=color:#000>A</span> <span style=color:#ce5c00;font-weight:700>{</span>
-  <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>hello</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>String</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#4e9a06>&#34;Hello, I am trait A!&#34;</span>
-  <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>pass</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>a</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Int</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>String</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#4e9a06>s&#34;Trait A said: &#39;You passed </span><span style=color:#4e9a06>$a</span><span style=color:#4e9a06>.&#39;&#34;</span>
-<span style=color:#ce5c00;font-weight:700>}</span>
-</code></pre></div><p>然后是测试类：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#204a87;font-weight:700>package</span> <span style=color:#000>com.ivan.nikolov.composition</span>
-
-<span style=color:#204a87;font-weight:700>import</span> <span style=color:#000>org.scalatest.</span><span style=color:#ce5c00;font-weight:700>{</span><span style=color:#000>ShouldMatchers</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>FlatSpec</span><span style=color:#ce5c00;font-weight:700>}</span>
-
-<span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>TraitTest</span> <span style=color:#204a87;font-weight:700>extends</span> <span style=color:#000>FlatSpec</span> <span style=color:#204a87;font-weight:700>with</span> <span style=color:#000>ShouldMatchers</span> <span style=color:#204a87;font-weight:700>with</span> <span style=color:#000>A</span> <span style=color:#ce5c00;font-weight:700>{</span>
-  <span style=color:#4e9a06>&#34;hello&#34;</span> <span style=color:#000>should</span> <span style=color:#4e9a06>&#34;greet properly.&#34;</span> <span style=color:#000>in</span> <span style=color:#ce5c00;font-weight:700>{</span>
-     <span style=color:#000>hello</span><span style=color:#ce5c00;font-weight:700>()</span> <span style=color:#000>should</span> <span style=color:#000>equal</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;Hello, I am trait A！&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
-   <span style=color:#ce5c00;font-weight:700>}</span>
-   
-  <span style=color:#4e9a06>&#34;pass&#34;</span> <span style=color:#000>should</span> <span style=color:#4e9a06>&#34;return the right string with the number.&#34;</span> <span style=color:#000>in</span> <span style=color:#ce5c00;font-weight:700>{</span>
-	  <span style=color:#000>pass</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#0000cf;font-weight:700>10</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#000>should</span> <span style=color:#000>equal</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;Trait A said: &#39;You passed 10.&#39;&#34;</span><span style=color:#ce5c00;font-weight:700>)</span> 
-   <span style=color:#ce5c00;font-weight:700>}</span>
-  
-  <span style=color:#000>it</span> <span style=color:#000>should</span> <span style=color:#4e9a06>&#34;be correct also for negative values.&#34;</span> <span style=color:#000>in</span> <span style=color:#ce5c00;font-weight:700>{</span>
-    <span style=color:#000>pass</span><span style=color:#ce5c00;font-weight:700>(-</span><span style=color:#0000cf;font-weight:700>10</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#000>should</span> <span style=color:#000>equal</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;Trait A said: &#39;You passed -10.&#39;&#34;</span><span style=color:#ce5c00;font-weight:700>)</span> 
-  <span style=color:#ce5c00;font-weight:700>}</span>
-<span style=color:#ce5c00;font-weight:700>}</span>
-</code></pre></div><h4 id=混入到测试用例>混入到测试用例</h4>
-<p>我们同样可以将特质分别混入到个别测试案例中。这样可以支持我们单独为这些测试用例设置自定义。下面是对上面那个单元测试的另一种表示：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#204a87;font-weight:700>package</span> <span style=color:#000>com.ivan.nikolov.composition</span>
-
-<span style=color:#204a87;font-weight:700>import</span> <span style=color:#000>org.scalatest.</span><span style=color:#ce5c00;font-weight:700>{</span> <span style=color:#000>ShouldMatchers</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>FlatSpec</span> <span style=color:#ce5c00;font-weight:700>}</span>
-
-<span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>TraitCaseScopeTest</span> <span style=color:#204a87;font-weight:700>extends</span> <span style=color:#000>FlatSpec</span> <span style=color:#204a87;font-weight:700>with</span> <span style=color:#000>ShouldMatchers</span> <span style=color:#ce5c00;font-weight:700>{</span>
-  <span style=color:#4e9a06>&#34;hello&#34;</span> <span style=color:#000>should</span> <span style=color:#4e9a06>&#34;greet properly.&#34;</span> <span style=color:#000>in</span> <span style=color:#204a87;font-weight:700>new</span>  <span style=color:#000>A</span> <span style=color:#ce5c00;font-weight:700>{</span>
-    <span style=color:#000>hello</span><span style=color:#ce5c00;font-weight:700>()</span> <span style=color:#000>should</span> <span style=color:#000>equal</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;hello, I am trait A!&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
-  <span style=color:#ce5c00;font-weight:700>}</span>
-  <span style=color:#4e9a06>&#34;pass&#34;</span> <span style=color:#000>should</span> <span style=color:#4e9a06>&#34;return the right string with the number.&#34;</span> <span style=color:#000>in</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>A</span> <span style=color:#ce5c00;font-weight:700>{</span>
-    <span style=color:#000>pass</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#0000cf;font-weight:700>10</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#000>should</span> <span style=color:#000>equal</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;Trait A said: &#39;You passed 10.&#39;&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
-  <span style=color:#ce5c00;font-weight:700>}</span> 
-  <span style=color:#000>it</span> <span style=color:#000>should</span> <span style=color:#4e9a06>&#34;be correct also for negative values.&#34;</span> <span style=color:#000>in</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>A</span> <span style=color:#ce5c00;font-weight:700>{</span>
-    <span style=color:#000>pass</span><span style=color:#ce5c00;font-weight:700>(-</span><span style=color:#0000cf;font-weight:700>10</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#000>should</span> <span style=color:#000>equal</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;Trait A said: &#39;You passed -10.&#39;&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
-  <span style=color:#ce5c00;font-weight:700>}</span>
-<span style=color:#ce5c00;font-weight:700>}</span>
-</code></pre></div><p>在上面的代码中你可以看到，这些测试用例与前面的例子一样。但是是在单独的用例中混入 A。这支持我们对不同的用例设置自定义，比如一个特质需要一个方法的实现或者一个变量的初始化。这种方式也可以让我们仅专注于要测试的特质，而不需要创建它的一些实际的实例。</p>
-<h3 id=运行测试>运行测试</h3>
-<p>在测试编写完成后，运行并观察一切是否符合预期是很有用的。仅需要在项目的根目录执行以下命令将会运行所有测试：<code>mvn clean test</code>。</p>
-<p>如果你需要，可以将 Maven 项目转换为 SBT 项目，然后通过<code>sbt test</code>来触发所有测试。</p>
-<h2 id=特质与类>特质与类</h2>
-<p>特质或许与类很相似，但同时又有很大的不同。对于开发者来说或许很难在不同的场景中进行选择，不过我们会尝试提供一个通用的指导方针以帮助开发者：</p>
-<p>使用类：</p>
-<ul>
-<li>当一个行为根本不会被复用或在多个地方出现</li>
-<li>如果你计划在其他语言中使用 Scala 代码，比如创建一个将会在 Java 中使用的库</li>
-</ul>
-<p>使用特质：</p>
-<ul>
-<li>当一个行为将会被复用到多个不相关的类中</li>
-<li>当你需要定义一个接口并在 Scala 之外使用，比如 Java 中。因为那些没有任何代码实现的特质被编译后与接口类似</li>
-</ul>
-<style>.feedback--answer{display:inline-block}.feedback--answer-no{margin-left:1em}.feedback--response{display:none;margin-top:1em}.feedback--response__visible{display:block}</style>
-<div class=d-print-none>
-<h2 class=feedback--title>Feedback</h2>
-<p class=feedback--question>Was this page helpful?</p>
-<button class="btn btn-primary mb-4 feedback--answer feedback--answer-yes">Yes</button>
+</div><p>如图，B 和 C 同时扩展了 A，然后 D 同时扩展了 B 和 C。这看起来可能不是很清晰。比如我们有个方法一开始定义在 A，但是 B 和 C 同时覆写了它。当在 D 中调用该方法时会发生什么呢？实际上调用的是哪个方法呢？</p><p>因为上面的问题有点模糊或将引起错误。让我们使用 Scala 的特质来重新描述一下该问题：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=display:flex><span><span style=color:#204a87;font-weight:700>trait</span> <span style=color:#000>A</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>  <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>hello</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>String</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#4e9a06>&#34;Hello from A&#34;</span>
+</span></span><span style=display:flex><span><span style=color:#ce5c00;font-weight:700>}</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#204a87;font-weight:700>trait</span> <span style=color:#000>B</span> <span style=color:#204a87;font-weight:700>extends</span> <span style=color:#000>A</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>  <span style=color:#204a87;font-weight:700>override</span> <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>hello</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>String</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#4e9a06>&#34;Hello from B&#34;</span>
+</span></span><span style=display:flex><span><span style=color:#ce5c00;font-weight:700>}</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#204a87;font-weight:700>trait</span> <span style=color:#000>C</span> <span style=color:#204a87;font-weight:700>extends</span> <span style=color:#000>A</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>  <span style=color:#204a87;font-weight:700>override</span> <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>hello</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>String</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#4e9a06>&#34;Hello from C&#34;</span>
+</span></span><span style=display:flex><span><span style=color:#ce5c00;font-weight:700>}</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#204a87;font-weight:700>trait</span> <span style=color:#000>D</span> <span style=color:#204a87;font-weight:700>extends</span> <span style=color:#000>B</span> <span style=color:#204a87;font-weight:700>with</span> <span style=color:#000>C</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>  
+</span></span><span style=display:flex><span><span style=color:#ce5c00;font-weight:700>}</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#204a87;font-weight:700>object</span> <span style=color:#000>Diamond</span> <span style=color:#204a87;font-weight:700>extends</span> <span style=color:#000>App</span> <span style=color:#204a87;font-weight:700>with</span> <span style=color:#000>D</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>  <span style=color:#000>println</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>hello</span><span style=color:#ce5c00;font-weight:700>())</span>
+</span></span><span style=display:flex><span><span style=color:#ce5c00;font-weight:700>}</span>
+</span></span></code></pre></div><p>运行后会得到如下结果：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>Hello from C
+</span></span></code></pre></div><p>如果我们把特质 D 修改为：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=display:flex><span><span style=color:#204a87;font-weight:700>trait</span> <span style=color:#000>D</span> <span style=color:#204a87;font-weight:700>extends</span> <span style=color:#000>C</span> <span style=color:#204a87;font-weight:700>with</span> <span style=color:#000>B</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#ce5c00;font-weight:700>}</span>
+</span></span></code></pre></div><p>则会得到结果为：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span>Hello from B
+</span></span></code></pre></div><p>你会发现，尽管例子仍然会有点模糊甚至易于出错，我们可以告诉你实际上被调用的是哪个方法。这是通过**线性化(linearization)**实现的，在下一节中会深入介绍。</p><h3 id=限制>限制</h3><p>在我们关注线性化之前，让我们指出 Scala 所支持的多重继承拥有的限制。我们之前已经见过他们很多次，这里会概括描述。</p><blockquote>
+<p><strong>Scala 多重继承限制</strong></p><p>Scala 中的多重继承由特质实现并遵循线性化规则。</p><p>在多重继承中，如果一个特质已经显式扩展了一个类，则混入该特质的类必须是之前特质混入的类的子类。这意味着当混入一个已扩展了别的类的特质时，他们必须拥有相同的父类。</p><p>如果特质中<strong>定义</strong>或<strong>声明</strong>了相同签名但返回类型不同的方法，则无法混入这些特质。</p></blockquote><p>需要特别小心的是特质中<strong>定义</strong>了相同签名和返回类型的方法。若果方式仅是<strong>声明</strong>而被要求实现，这不会带来问题而且只需要提供一个实现即可。</p><h2 id=测试特质>测试特质</h2><p>测试实际上是软件开发中很重要的一部分。它确保了代码中变更的部分不再产生错误，无论是方法的改变还是其他部分。</p><p>我们可以使用多种不同的测试框架，这完全取决于个人喜好。本书中我们将使用 ScalaTest，这也是我在项目中使用的框架；它很容易理解，可读且易于使用。</p><p>有些情况下，如果一个特质被混入到了类中，我们则可以直接测试这个类。然而，我们或许仅需要测试一个指定的特质。测试一个没有任何方法实现的特质也没有什么意义，因此这么我会探讨那些拥有代码实现的特质。同时，我们这里展示的单元测实际上是很简单的，他们也仅作为示例。我们会在本书的后续章节讨论更加复杂和有意义的测试。</p><h3 id=使用一个类>使用一个类</h3><p>让我们看一下前面见到的<code>DoubledMultiplierIdentity</code>将会被如何测试。一种方式是将这个特质混入一个测试类来测试它的方法：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=display:flex><span><span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>DoubledMultiplierIdentityTest</span> <span style=color:#204a87;font-weight:700>extends</span> <span style=color:#000>Flatspec</span> <span style=color:#204a87;font-weight:700>with</span> <span style=color:#000>ShouldMatchers</span> <span style=color:#204a87;font-weight:700>with</span> <span style=color:#000>DoubledMultiplierIdentity</span>
+</span></span></code></pre></div><p>然而这会编译失败并显示一个错误信息：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=display:flex><span><span style=color:#000>Error</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#a40000>5</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#a40000>79</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#000>illegal</span> <span style=color:#000>inheritance</span><span style=color:#ce5c00;font-weight:700>;</span> <span style=color:#000>superclass</span> <span style=color:#000>FlatSpec</span> 
+</span></span><span style=display:flex><span>  <span style=color:#000>is</span> <span style=color:#000>not</span> <span style=color:#000>a</span> <span style=color:#000>subclass</span> <span style=color:#000>of</span> <span style=color:#000>the</span> <span style=color:#000>superclass</span> <span style=color:#000>MultiplierIdentity</span> 
+</span></span><span style=display:flex><span>  <span style=color:#000>of</span> <span style=color:#000>the</span> <span style=color:#000>mixin</span> <span style=color:#204a87;font-weight:700>trait</span> <span style=color:#000>DoubledMultiplierIdentity</span> 
+</span></span><span style=display:flex><span><span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>DoubledMultiplierIdentityTest</span> <span style=color:#204a87;font-weight:700>extends</span> <span style=color:#000>FlatSpec</span> <span style=color:#204a87;font-weight:700>with</span> <span style=color:#000>ShouldMatchers</span> 
+</span></span><span style=display:flex><span><span style=color:#204a87;font-weight:700>with</span> <span style=color:#000>DoubledMultiplierIdentity</span> <span style=color:#ce5c00;font-weight:700>{</span> 
+</span></span><span style=display:flex><span><span style=color:#ce5c00;font-weight:700>^</span>
+</span></span></code></pre></div><p>我们在前面已经谈论过这个问题，事实上特质只能被混入到一个与该特质拥有相同基类的类。这意味着为了测试这个特质，我们需要在我们的测试类中创建一个虚拟的类然后再使用它：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=display:flex><span><span style=color:#204a87;font-weight:700>package</span> <span style=color:#000>com.ivan.nikolov.linearization</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#204a87;font-weight:700>import</span> <span style=color:#000>org.scalatest.</span><span style=color:#ce5c00;font-weight:700>{</span> <span style=color:#000>ShouldMatchers</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>FlatSpec</span><span style=color:#ce5c00;font-weight:700>}</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>DoubledMultiplierIdentityTest</span> <span style=color:#204a87;font-weight:700>extends</span> <span style=color:#000>FlatSpec</span> <span style=color:#204a87;font-weight:700>with</span> <span style=color:#000>ShouldMatchers</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>  
+</span></span><span style=display:flex><span>  <span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>DoubledMultipliersIdentityClass</span> <span style=color:#204a87;font-weight:700>extends</span> <span style=color:#000>DoubledMultiplierIdentity</span>
+</span></span><span style=display:flex><span>  
+</span></span><span style=display:flex><span>  <span style=color:#204a87;font-weight:700>val</span> <span style=color:#000>instance</span> <span style=color:#204a87;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>DoubledMultiplierIdentityClass</span>
+</span></span><span style=display:flex><span>  
+</span></span><span style=display:flex><span>  <span style=color:#4e9a06>&#34;identity&#34;</span> <span style=color:#000>should</span> <span style=color:#4e9a06>&#34;return 2 * 1&#34;</span> <span style=color:#000>in</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>    <span style=color:#000>instance</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>identity</span> <span style=color:#000>should</span> <span style=color:#000>equals</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#0000cf;font-weight:700>2</span><span style=color:#ce5c00;font-weight:700>)</span>
+</span></span><span style=display:flex><span>  <span style=color:#ce5c00;font-weight:700>}</span>
+</span></span><span style=display:flex><span><span style=color:#ce5c00;font-weight:700>}</span>
+</span></span></code></pre></div><h3 id=混入特质-1>混入特质</h3><p>我们可以将特质混入来对他进行测试。有几个地方我们可以这么做：混入到一个测试类或者一个单独的测试用例。</p><h4 id=混入到测试类>混入到测试类</h4><p>只有当该特质确定没有扩展任何其他类时，才可以将该特质混入到一个测试类，因此特质、测试类的超类必须是相同的。除了这样，其他任何方式都和我们前面做的一样。</p><p>让我们测试一个本节出现过的特质 A，他拥有一个<code>hello</code>方法。同时我们添加了一个<code>pass</code>方法，现在该特质看起来会像下面这样：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=display:flex><span><span style=color:#204a87;font-weight:700>trait</span> <span style=color:#000>A</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>  <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>hello</span><span style=color:#ce5c00;font-weight:700>()</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>String</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#4e9a06>&#34;Hello, I am trait A!&#34;</span>
+</span></span><span style=display:flex><span>  <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>pass</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>a</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Int</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>String</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#4e9a06>s&#34;Trait A said: &#39;You passed </span><span style=color:#4e9a06>$a</span><span style=color:#4e9a06>.&#39;&#34;</span>
+</span></span><span style=display:flex><span><span style=color:#ce5c00;font-weight:700>}</span>
+</span></span></code></pre></div><p>然后是测试类：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=display:flex><span><span style=color:#204a87;font-weight:700>package</span> <span style=color:#000>com.ivan.nikolov.composition</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#204a87;font-weight:700>import</span> <span style=color:#000>org.scalatest.</span><span style=color:#ce5c00;font-weight:700>{</span><span style=color:#000>ShouldMatchers</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>FlatSpec</span><span style=color:#ce5c00;font-weight:700>}</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>TraitTest</span> <span style=color:#204a87;font-weight:700>extends</span> <span style=color:#000>FlatSpec</span> <span style=color:#204a87;font-weight:700>with</span> <span style=color:#000>ShouldMatchers</span> <span style=color:#204a87;font-weight:700>with</span> <span style=color:#000>A</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>  <span style=color:#4e9a06>&#34;hello&#34;</span> <span style=color:#000>should</span> <span style=color:#4e9a06>&#34;greet properly.&#34;</span> <span style=color:#000>in</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>     <span style=color:#000>hello</span><span style=color:#ce5c00;font-weight:700>()</span> <span style=color:#000>should</span> <span style=color:#000>equal</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;Hello, I am trait A！&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
+</span></span><span style=display:flex><span>   <span style=color:#ce5c00;font-weight:700>}</span>
+</span></span><span style=display:flex><span>   
+</span></span><span style=display:flex><span>  <span style=color:#4e9a06>&#34;pass&#34;</span> <span style=color:#000>should</span> <span style=color:#4e9a06>&#34;return the right string with the number.&#34;</span> <span style=color:#000>in</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>	  <span style=color:#000>pass</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#0000cf;font-weight:700>10</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#000>should</span> <span style=color:#000>equal</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;Trait A said: &#39;You passed 10.&#39;&#34;</span><span style=color:#ce5c00;font-weight:700>)</span> 
+</span></span><span style=display:flex><span>   <span style=color:#ce5c00;font-weight:700>}</span>
+</span></span><span style=display:flex><span>  
+</span></span><span style=display:flex><span>  <span style=color:#000>it</span> <span style=color:#000>should</span> <span style=color:#4e9a06>&#34;be correct also for negative values.&#34;</span> <span style=color:#000>in</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>    <span style=color:#000>pass</span><span style=color:#ce5c00;font-weight:700>(-</span><span style=color:#0000cf;font-weight:700>10</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#000>should</span> <span style=color:#000>equal</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;Trait A said: &#39;You passed -10.&#39;&#34;</span><span style=color:#ce5c00;font-weight:700>)</span> 
+</span></span><span style=display:flex><span>  <span style=color:#ce5c00;font-weight:700>}</span>
+</span></span><span style=display:flex><span><span style=color:#ce5c00;font-weight:700>}</span>
+</span></span></code></pre></div><h4 id=混入到测试用例>混入到测试用例</h4><p>我们同样可以将特质分别混入到个别测试案例中。这样可以支持我们单独为这些测试用例设置自定义。下面是对上面那个单元测试的另一种表示：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=display:flex><span><span style=color:#204a87;font-weight:700>package</span> <span style=color:#000>com.ivan.nikolov.composition</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#204a87;font-weight:700>import</span> <span style=color:#000>org.scalatest.</span><span style=color:#ce5c00;font-weight:700>{</span> <span style=color:#000>ShouldMatchers</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>FlatSpec</span> <span style=color:#ce5c00;font-weight:700>}</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>TraitCaseScopeTest</span> <span style=color:#204a87;font-weight:700>extends</span> <span style=color:#000>FlatSpec</span> <span style=color:#204a87;font-weight:700>with</span> <span style=color:#000>ShouldMatchers</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>  <span style=color:#4e9a06>&#34;hello&#34;</span> <span style=color:#000>should</span> <span style=color:#4e9a06>&#34;greet properly.&#34;</span> <span style=color:#000>in</span> <span style=color:#204a87;font-weight:700>new</span>  <span style=color:#000>A</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>    <span style=color:#000>hello</span><span style=color:#ce5c00;font-weight:700>()</span> <span style=color:#000>should</span> <span style=color:#000>equal</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;hello, I am trait A!&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
+</span></span><span style=display:flex><span>  <span style=color:#ce5c00;font-weight:700>}</span>
+</span></span><span style=display:flex><span>  <span style=color:#4e9a06>&#34;pass&#34;</span> <span style=color:#000>should</span> <span style=color:#4e9a06>&#34;return the right string with the number.&#34;</span> <span style=color:#000>in</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>A</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>    <span style=color:#000>pass</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#0000cf;font-weight:700>10</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#000>should</span> <span style=color:#000>equal</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;Trait A said: &#39;You passed 10.&#39;&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
+</span></span><span style=display:flex><span>  <span style=color:#ce5c00;font-weight:700>}</span> 
+</span></span><span style=display:flex><span>  <span style=color:#000>it</span> <span style=color:#000>should</span> <span style=color:#4e9a06>&#34;be correct also for negative values.&#34;</span> <span style=color:#000>in</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>A</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>    <span style=color:#000>pass</span><span style=color:#ce5c00;font-weight:700>(-</span><span style=color:#0000cf;font-weight:700>10</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#000>should</span> <span style=color:#000>equal</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;Trait A said: &#39;You passed -10.&#39;&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
+</span></span><span style=display:flex><span>  <span style=color:#ce5c00;font-weight:700>}</span>
+</span></span><span style=display:flex><span><span style=color:#ce5c00;font-weight:700>}</span>
+</span></span></code></pre></div><p>在上面的代码中你可以看到，这些测试用例与前面的例子一样。但是是在单独的用例中混入 A。这支持我们对不同的用例设置自定义，比如一个特质需要一个方法的实现或者一个变量的初始化。这种方式也可以让我们仅专注于要测试的特质，而不需要创建它的一些实际的实例。</p><h3 id=运行测试>运行测试</h3><p>在测试编写完成后，运行并观察一切是否符合预期是很有用的。仅需要在项目的根目录执行以下命令将会运行所有测试：<code>mvn clean test</code>。</p><p>如果你需要，可以将 Maven 项目转换为 SBT 项目，然后通过<code>sbt test</code>来触发所有测试。</p><h2 id=特质与类>特质与类</h2><p>特质或许与类很相似，但同时又有很大的不同。对于开发者来说或许很难在不同的场景中进行选择，不过我们会尝试提供一个通用的指导方针以帮助开发者：</p><p>使用类：</p><ul>
+<li>当一个行为根本不会被复用或在多个地方出现</li><li>如果你计划在其他语言中使用 Scala 代码，比如创建一个将会在 Java 中使用的库</li></ul><p>使用特质：</p><ul>
+<li>当一个行为将会被复用到多个不相关的类中</li><li>当你需要定义一个接口并在 Scala 之外使用，比如 Java 中。因为那些没有任何代码实现的特质被编译后与接口类似</li></ul><style>.feedback--answer{display:inline-block}.feedback--answer-no{margin-left:1em}.feedback--response{display:none;margin-top:1em}.feedback--response__visible{display:block}</style><div class=d-print-none>
+<h2 class=feedback--title>Feedback</h2><p class=feedback--question>Was this page helpful?</p><button class="btn btn-primary mb-4 feedback--answer feedback--answer-yes">Yes</button>
 <button class="btn btn-primary mb-4 feedback--answer feedback--answer-no">No</button>
 <p class="feedback--response feedback--response-yes">
 Glad to hear it! Please <a href=https://github.com/infilos/infilos.com/issues/new>tell us how we can improve</a>.
-</p>
-<p class="feedback--response feedback--response-no">
+</p><p class="feedback--response feedback--response-no">
 Sorry to hear that. Please <a href=https://github.com/infilos/infilos.com/issues/new>tell us how we can improve</a>.
-</p>
-</div>
-<script>const yesButton=document.querySelector('.feedback--answer-yes'),noButton=document.querySelector('.feedback--answer-no'),yesResponse=document.querySelector('.feedback--response-yes'),noResponse=document.querySelector('.feedback--response-no'),disableButtons=()=>{yesButton.disabled=!0,noButton.disabled=!0},sendFeedback=b=>{if(typeof ga!='function')return;const a={command:'send',hitType:'event',category:'Helpful',action:'click',label:window.location.pathname,value:b};ga(a.command,a.hitType,a.category,a.action,a.label,a.value)};yesButton.addEventListener('click',()=>{yesResponse.classList.add('feedback--response__visible'),disableButtons(),sendFeedback(1)}),noButton.addEventListener('click',()=>{noResponse.classList.add('feedback--response__visible'),disableButtons(),sendFeedback(0)})</script>
+</p></div><script>const yesButton=document.querySelector(".feedback--answer-yes"),noButton=document.querySelector(".feedback--answer-no"),yesResponse=document.querySelector(".feedback--response-yes"),noResponse=document.querySelector(".feedback--response-no"),disableButtons=()=>{yesButton.disabled=!0,noButton.disabled=!0},sendFeedback=t=>{if(typeof ga!="function")return;const e={command:"send",hitType:"event",category:"Helpful",action:"click",label:window.location.pathname,value:t};ga(e.command,e.hitType,e.category,e.action,e.label,e.value)};yesButton.addEventListener("click",()=>{yesResponse.classList.add("feedback--response__visible"),disableButtons(),sendFeedback(1)}),noButton.addEventListener("click",()=>{noResponse.classList.add("feedback--response__visible"),disableButtons(),sendFeedback(0)})</script>
 <br>
-</div>
-</main>
-</div>
-</div>
-<footer class="bg-dark py-5 row d-print-none">
+</div></main></div></div><footer class="bg-dark py-5 row d-print-none">
 <div class="container-fluid mx-sm-5">
 <div class=row>
 <div class="col-6 col-sm-4 text-xs-center order-sm-2">
-</div>
-<div class="col-6 col-sm-4 text-right text-xs-center order-sm-3">
+</div><div class="col-6 col-sm-4 text-right text-xs-center order-sm-3">
 <ul class="list-inline mb-0">
 <li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Weibo aria-label=Weibo>
 <a class=text-white target=_blank rel="noopener noreferrer" href=https://weibo.com/u/3848950217>
 <i class="fab fa-weibo"></i>
 </a>
-</li>
-<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Twitter aria-label=Twitter>
+</li><li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Twitter aria-label=Twitter>
 <a class=text-white target=_blank rel="noopener noreferrer" href=https://twitter.com/zhange_zzg>
 <i class="fab fa-twitter"></i>
 </a>
-</li>
-<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title="Stack Overflow" aria-label="Stack Overflow">
+</li><li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title="Stack Overflow" aria-label="Stack Overflow">
 <a class=text-white target=_blank rel="noopener noreferrer" href=https://stackoverflow.com>
 <i class="fab fa-stack-overflow"></i>
 </a>
-</li>
-<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=GitHub aria-label=GitHub>
+</li><li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=GitHub aria-label=GitHub>
 <a class=text-white target=_blank rel="noopener noreferrer" href=https://github.com/infilos/infilos.com>
 <i class="fab fa-github"></i>
 </a>
-</li>
-</ul>
-</div>
-<div class="col-12 col-sm-4 text-center py-2 order-sm-2">
+</li></ul></div><div class="col-12 col-sm-4 text-center py-2 order-sm-2">
 <small class=text-white>&copy; 2022 infilos.com All Rights Reserved</small>
-</div>
-</div>
-</div>
-</footer>
-</div>
-<script src=/js/popper.min.js integrity=sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49 crossorigin=anonymous></script>
+</div></div></div></footer></div><script src=/js/popper.min.js integrity=sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49 crossorigin=anonymous></script>
 <script src=/js/bootstrap.min.js integrity=sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy crossorigin=anonymous></script>
-<script src=/js/main.min.5c74b870c6953931a705f390a49c7e4c0a842ec5c83b24354758dd674343ed0d.js integrity="sha256-XHS4cMaVOTGnBfOQpJx+TAqELsXIOyQ1R1jdZ0ND7Q0=" crossorigin=anonymous></script>
-</body>
-</html>
+<script src=/js/main.min.3f3f4f1e22307ccbb13271a98be2e4dbb8386b7e67c3d606db44d3d0649f485e.js integrity="sha256-Pz9PHiIwfMuxMnGpi+Lk27g4a35nw9YG20TT0GSfSF4=" crossorigin=anonymous></script>
+</body></html>

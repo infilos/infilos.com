@@ -2,7 +2,7 @@
 <head>
 <meta charset=utf-8>
 <meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no">
-<meta name=generator content="Hugo 0.92.2">
+<meta name=generator content="Hugo 0.93.0">
 <meta name=ROBOTS content="INDEX, FOLLOW">
 <link rel="shortcut icon" href=/favicons/favicon.ico>
 <link rel=apple-touch-icon href=/favicons/apple-touch-icon-180x180.png sizes=180x180>
@@ -20,9 +20,9 @@
 类图 对于适配器的类图来说，让我们假如我们需要在应用中转换为使用一个新的日志库。我们尝试使用的新的库拥有一个log方法，它接收日志的消息和严重程度。然而，贯穿我们的整个应用，我们期望拥有info/debug/warning/error方法并且只接收日志消息，它能够自动的设置严重程度。当然，我们不能编辑原始库的代码，因此需要使用适配器模式。下面的图示展示了适配器模式的类图：
  在上面的类图中，可以发现我们的适配器 AppLogger 扩展了 Logger，并使用其实例作为一个字段。在实现这些方法的时候，我们就可以简单的调用其log方法并传入不同的参数。这也就是通用的适配器实现方式，后面的小节我们会看到具体的代码实例。可能有些情况下不能直接扩展(比如原始类为 final)，我们将展示 Scala 如何来处理这种问题。同时，我们也会展示一些推荐的用法来使用语言特性实现适配器模式。
 实例 首先，首先看一下我们不能进行修改的Logger类的代码：
-class Logger { def log(message:String, sevrvity:String):Unit = { System.out.println(s&#34;${severity.toUpperCase}: $message&#34;) } } 我们尽量保持简单以避免读者从本书的主旨上分心。下一步，我们可以要么仅仅编写一个类来扩展Logger，或者要么提供一个接口用于抽象。让我们使用第二种方式：
-trait Log { def into(message:String):Unit def debug(message:String):Unit def warning(message:String):Unit def error(message:String):Unit } 最终，我们可以创建AppLogger：
-class AppLogger extedns Logger with Log{ overrride def log(messgae:String):Unit = log(message, &#34;info&#34;) override def warning(message:String):Unit = log(message, &#34;warning&#34;) override def error(message:String):Unit = log(message, &#34;error&#34;) override def debug(message:String):Unit = log(message, &#34;debug&#34;) } 然后在我们的程序中使用：">
+class Logger {  def log(message:String, sevrvity:String):Unit = {  System.out.println(s&#34;${severity.toUpperCase}: $message&#34;)  } } 我们尽量保持简单以避免读者从本书的主旨上分心。下一步，我们可以要么仅仅编写一个类来扩展Logger，或者要么提供一个接口用于抽象。让我们使用第二种方式：
+trait Log {  def into(message:String):Unit  def debug(message:String):Unit  def warning(message:String):Unit  def error(message:String):Unit } 最终，我们可以创建AppLogger：
+class AppLogger extedns Logger with Log{  overrride def log(messgae:String):Unit = log(message, &#34;info&#34;)  override def warning(message:String):Unit = log(message, &#34;warning&#34;)  override def error(message:String):Unit = log(message, &#34;error&#34;)  override def debug(message:String):Unit = log(message, &#34;debug&#34;) } 然后在我们的程序中使用：">
 <meta property="og:type" content="article">
 <meta property="og:url" content="/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch07-1-%E9%80%82%E9%85%8D%E5%99%A8%E6%A8%A1%E5%BC%8F/"><meta property="article:section" content="模式架构">
 <meta property="og:site_name" content="infilos.com">
@@ -32,9 +32,9 @@ class AppLogger extedns Logger with Log{ overrride def log(messgae:String):Unit 
 类图 对于适配器的类图来说，让我们假如我们需要在应用中转换为使用一个新的日志库。我们尝试使用的新的库拥有一个log方法，它接收日志的消息和严重程度。然而，贯穿我们的整个应用，我们期望拥有info/debug/warning/error方法并且只接收日志消息，它能够自动的设置严重程度。当然，我们不能编辑原始库的代码，因此需要使用适配器模式。下面的图示展示了适配器模式的类图：
  在上面的类图中，可以发现我们的适配器 AppLogger 扩展了 Logger，并使用其实例作为一个字段。在实现这些方法的时候，我们就可以简单的调用其log方法并传入不同的参数。这也就是通用的适配器实现方式，后面的小节我们会看到具体的代码实例。可能有些情况下不能直接扩展(比如原始类为 final)，我们将展示 Scala 如何来处理这种问题。同时，我们也会展示一些推荐的用法来使用语言特性实现适配器模式。
 实例 首先，首先看一下我们不能进行修改的Logger类的代码：
-class Logger { def log(message:String, sevrvity:String):Unit = { System.out.println(s&#34;${severity.toUpperCase}: $message&#34;) } } 我们尽量保持简单以避免读者从本书的主旨上分心。下一步，我们可以要么仅仅编写一个类来扩展Logger，或者要么提供一个接口用于抽象。让我们使用第二种方式：
-trait Log { def into(message:String):Unit def debug(message:String):Unit def warning(message:String):Unit def error(message:String):Unit } 最终，我们可以创建AppLogger：
-class AppLogger extedns Logger with Log{ overrride def log(messgae:String):Unit = log(message, &#34;info&#34;) override def warning(message:String):Unit = log(message, &#34;warning&#34;) override def error(message:String):Unit = log(message, &#34;error&#34;) override def debug(message:String):Unit = log(message, &#34;debug&#34;) } 然后在我们的程序中使用：">
+class Logger {  def log(message:String, sevrvity:String):Unit = {  System.out.println(s&#34;${severity.toUpperCase}: $message&#34;)  } } 我们尽量保持简单以避免读者从本书的主旨上分心。下一步，我们可以要么仅仅编写一个类来扩展Logger，或者要么提供一个接口用于抽象。让我们使用第二种方式：
+trait Log {  def into(message:String):Unit  def debug(message:String):Unit  def warning(message:String):Unit  def error(message:String):Unit } 最终，我们可以创建AppLogger：
+class AppLogger extedns Logger with Log{  overrride def log(messgae:String):Unit = log(message, &#34;info&#34;)  override def warning(message:String):Unit = log(message, &#34;warning&#34;)  override def error(message:String):Unit = log(message, &#34;error&#34;)  override def debug(message:String):Unit = log(message, &#34;debug&#34;) } 然后在我们的程序中使用：">
 <meta itemprop=wordCount content="240">
 <meta itemprop=keywords content><meta name=twitter:card content="summary">
 <meta name=twitter:title content="CH07-1-适配器模式">
@@ -43,48 +43,46 @@ class AppLogger extedns Logger with Log{ overrride def log(messgae:String):Unit 
 类图 对于适配器的类图来说，让我们假如我们需要在应用中转换为使用一个新的日志库。我们尝试使用的新的库拥有一个log方法，它接收日志的消息和严重程度。然而，贯穿我们的整个应用，我们期望拥有info/debug/warning/error方法并且只接收日志消息，它能够自动的设置严重程度。当然，我们不能编辑原始库的代码，因此需要使用适配器模式。下面的图示展示了适配器模式的类图：
  在上面的类图中，可以发现我们的适配器 AppLogger 扩展了 Logger，并使用其实例作为一个字段。在实现这些方法的时候，我们就可以简单的调用其log方法并传入不同的参数。这也就是通用的适配器实现方式，后面的小节我们会看到具体的代码实例。可能有些情况下不能直接扩展(比如原始类为 final)，我们将展示 Scala 如何来处理这种问题。同时，我们也会展示一些推荐的用法来使用语言特性实现适配器模式。
 实例 首先，首先看一下我们不能进行修改的Logger类的代码：
-class Logger { def log(message:String, sevrvity:String):Unit = { System.out.println(s&#34;${severity.toUpperCase}: $message&#34;) } } 我们尽量保持简单以避免读者从本书的主旨上分心。下一步，我们可以要么仅仅编写一个类来扩展Logger，或者要么提供一个接口用于抽象。让我们使用第二种方式：
-trait Log { def into(message:String):Unit def debug(message:String):Unit def warning(message:String):Unit def error(message:String):Unit } 最终，我们可以创建AppLogger：
-class AppLogger extedns Logger with Log{ overrride def log(messgae:String):Unit = log(message, &#34;info&#34;) override def warning(message:String):Unit = log(message, &#34;warning&#34;) override def error(message:String):Unit = log(message, &#34;error&#34;) override def debug(message:String):Unit = log(message, &#34;debug&#34;) } 然后在我们的程序中使用：">
-<script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga('create','UA-123062585-1','auto'),ga('send','pageview'))</script>
+class Logger {  def log(message:String, sevrvity:String):Unit = {  System.out.println(s&#34;${severity.toUpperCase}: $message&#34;)  } } 我们尽量保持简单以避免读者从本书的主旨上分心。下一步，我们可以要么仅仅编写一个类来扩展Logger，或者要么提供一个接口用于抽象。让我们使用第二种方式：
+trait Log {  def into(message:String):Unit  def debug(message:String):Unit  def warning(message:String):Unit  def error(message:String):Unit } 最终，我们可以创建AppLogger：
+class AppLogger extedns Logger with Log{  overrride def log(messgae:String):Unit = log(message, &#34;info&#34;)  override def warning(message:String):Unit = log(message, &#34;warning&#34;)  override def error(message:String):Unit = log(message, &#34;error&#34;)  override def debug(message:String):Unit = log(message, &#34;debug&#34;) } 然后在我们的程序中使用：">
+<script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga("create","UA-123062585-1","auto"),ga("send","pageview"))</script>
 <script async src=https://www.google-analytics.com/analytics.js></script>
 <link rel=preload href=/scss/main.min.847464b684a6e89d7276700a5c500c17ab494dd1755b2654a7b27d8b59e3347e.css as=style>
 <link href=/scss/main.min.847464b684a6e89d7276700a5c500c17ab494dd1755b2654a7b27d8b59e3347e.css rel=stylesheet integrity>
 <script src=/js/jquery-3.5.1.min.js integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin=anonymous></script>
-</head>
-<body class=td-page>
+</head><body class=td-page>
 <header>
-<nav class="js-navbar-scroll navbar navbar-expand navbar-dark flex-column flex-md-row td-navbar">
+<nav class="js-navbar-scroll navbar navbar-expand-lg navbar-dark td-navbar">
 <a class=navbar-brand href=/>
-<span class=navbar-logo><svg id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512" style="enable-background:new 0 0 512 512"><path style="fill:#ffc107" d="M432.384 143.616c-4.165-4.164-10.917-4.164-15.083.0l-60.352 60.352c-4.164 4.165-4.164 10.917.0 15.083 21.187 20.463 54.951 19.876 75.413-1.311 19.962-20.668 19.962-53.435.0-74.102L432.384 143.616z"/><path style="fill:#607d8b" d="M42.667 277.334c-5.891.003-10.669-4.771-10.672-10.662-.002-4.338 2.623-8.245 6.64-9.882l234.667-96c5.455-2.233 11.687.38 13.92 5.835s-.38 11.687-5.835 13.92l-234.667 96C45.433 277.069 44.056 277.337 42.667 277.334z"/><path style="fill:#546e7a" d="M391.552 56.448l-32-32C343.938 8.745 322.689-.059 300.544.0h-3.755c-46.082.024-83.432 37.374-83.456 83.456v3.755c-.053 22.138 8.75 43.377 24.448 58.987l32 32c4.165 4.164 10.917 4.164 15.083.0L391.531 71.531C395.701 67.372 395.71 60.62 391.552 56.448z"/><path style="fill:#607d8b" d="M160 469.334c-3.279.006-6.379-1.497-8.405-4.075L34.261 315.926c-3.635-4.636-2.823-11.341 1.813-14.976s11.341-2.823 14.976 1.813l117.333 149.333c3.629 4.641 2.809 11.344-1.832 14.973C164.681 468.533 162.375 469.329 160 469.334z"/><path style="fill:#455a64" d="M487.467 86.848l-3.669-3.648c-37.687-36.557-97.71-36.197-134.955.811l-51.413 51.413c-36.996 37.25-37.357 97.263-.811 134.955l3.584 3.669c1.7 2.457 4.671 3.706 7.616 3.2 2.831.005 5.548-1.115 7.552-3.115l172.181-172.181c4.189-4.143 4.226-10.896.083-15.085-.028-.028-.055-.056-.083-.083L487.467 86.848z"/><g><path style="fill:#ffc107" d="M501.333 192H480c-5.891.0-10.667-4.776-10.667-10.667s4.776-10.667 10.667-10.667h21.333c5.891.0 10.667 4.776 10.667 10.667S507.225 192 501.333 192z"/><path style="fill:#ffc107" d="M394.667 298.667c-5.891.0-10.667-4.776-10.667-10.667v-21.333c0-5.891 4.776-10.667 10.667-10.667 5.891.0 10.667 4.776 10.667 10.667V288C405.333 293.891 400.558 298.667 394.667 298.667z"/><path style="fill:#ffc107" d="M480 277.334c-2.831.005-5.548-1.115-7.552-3.115l-21.333-21.333c-4.093-4.237-3.975-10.99.262-15.083 4.134-3.993 10.687-3.993 14.821.0l21.333 21.333c4.159 4.172 4.148 10.926-.024 15.085C485.514 276.209 482.815 277.327 480 277.334z"/></g><g><path style="fill:#455a64" d="M266.667 448H96c-29.455.0-53.333 23.878-53.333 53.333.0 5.891 4.776 10.667 10.667 10.667h256c5.891.0 10.667-4.776 10.667-10.667C320 471.878 296.122 448 266.667 448z"/><circle style="fill:#455a64" cx="32" cy="288" r="32"/></g><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/></svg></span><span class=font-weight-bold>infilos.com</span>
+<span class=navbar-logo><svg id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512" style="enable-background:new 0 0 512 512"><path style="fill:#ffc107" d="M432.384 143.616c-4.165-4.164-10.917-4.164-15.083.0l-60.352 60.352c-4.164 4.165-4.164 10.917.0 15.083 21.187 20.463 54.951 19.876 75.413-1.311 19.962-20.668 19.962-53.435.0-74.102L432.384 143.616z"/><path style="fill:#607d8b" d="M42.667 277.334c-5.891.003-10.669-4.771-10.672-10.662-.002-4.338 2.623-8.245 6.64-9.882l234.667-96c5.455-2.233 11.687.38 13.92 5.835s-.38 11.687-5.835 13.92l-234.667 96C45.433 277.069 44.056 277.337 42.667 277.334z"/><path style="fill:#546e7a" d="M391.552 56.448l-32-32C343.938 8.745 322.689-.059 300.544.0h-3.755c-46.082.024-83.432 37.374-83.456 83.456v3.755c-.053 22.138 8.75 43.377 24.448 58.987l32 32c4.165 4.164 10.917 4.164 15.083.0L391.531 71.531C395.701 67.372 395.71 60.62 391.552 56.448z"/><path style="fill:#607d8b" d="M160 469.334c-3.279.006-6.379-1.497-8.405-4.075L34.261 315.926c-3.635-4.636-2.823-11.341 1.813-14.976s11.341-2.823 14.976 1.813l117.333 149.333c3.629 4.641 2.809 11.344-1.832 14.973C164.681 468.533 162.375 469.329 160 469.334z"/><path style="fill:#455a64" d="M487.467 86.848l-3.669-3.648c-37.687-36.557-97.71-36.197-134.955.811l-51.413 51.413c-36.996 37.25-37.357 97.263-.811 134.955l3.584 3.669c1.7 2.457 4.671 3.706 7.616 3.2 2.831.005 5.548-1.115 7.552-3.115l172.181-172.181c4.189-4.143 4.226-10.896.083-15.085-.028-.028-.055-.056-.083-.083L487.467 86.848z"/><g><path style="fill:#ffc107" d="M501.333 192H480c-5.891.0-10.667-4.776-10.667-10.667s4.776-10.667 10.667-10.667h21.333c5.891.0 10.667 4.776 10.667 10.667S507.225 192 501.333 192z"/><path style="fill:#ffc107" d="M394.667 298.667c-5.891.0-10.667-4.776-10.667-10.667v-21.333c0-5.891 4.776-10.667 10.667-10.667 5.891.0 10.667 4.776 10.667 10.667V288C405.333 293.891 400.558 298.667 394.667 298.667z"/><path style="fill:#ffc107" d="M480 277.334c-2.831.005-5.548-1.115-7.552-3.115l-21.333-21.333c-4.093-4.237-3.975-10.99.262-15.083 4.134-3.993 10.687-3.993 14.821.0l21.333 21.333c4.159 4.172 4.148 10.926-.024 15.085C485.514 276.209 482.815 277.327 480 277.334z"/></g><g><path style="fill:#455a64" d="M266.667 448H96c-29.455.0-53.333 23.878-53.333 53.333.0 5.891 4.776 10.667 10.667 10.667h256c5.891.0 10.667-4.776 10.667-10.667C320 471.878 296.122 448 266.667 448z"/><circle style="fill:#455a64" cx="32" cy="288" r="32"/></g><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/></svg></span>
+<span class=font-weight-bold>infilos.com</span>
 </a>
+<button class=navbar-toggler type=button data-toggle=collapse data-target=#navbarSupportedContent aria-controls=navbarSupportedContent aria-expanded=false aria-label="Toggle navigation">
+<span class=navbar-toggler-icon></span>
+</button>
 <div class="collapse navbar-collapse" id=navbarSupportedContent>
 <ul class="navbar-nav mr-auto">
 <li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86>
 <span>基础</span>
 </a>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80>
 <span>语言</span>
 </a>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93>
 <span>框架库</span>
 </a>
-</li>
-<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+</li><li class="nav-item dropdown" style=max-width:90px;min-width:10px>
 <a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
 分布式
 <span>+</span>
 </a>
 <div class=dropdown-menu aria-labelledby=navbarDropdown>
 <a class=dropdown-item href=/%e5%88%86%e5%b8%83%e5%bc%8f/base>基本构成</a>
-</div>
-</li>
-<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+</div></li><li class="nav-item dropdown" style=max-width:90px;min-width:10px>
 <a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
 大数据
 <span>+</span>
@@ -95,9 +93,7 @@ class AppLogger extedns Logger with Log{ overrride def log(messgae:String):Unit 
 <a class=dropdown-item href=/%e6%b6%88%e6%81%af%e7%b3%bb%e7%bb%9f>消息系统</a>
 <a class=dropdown-item href=/%e5%a4%84%e7%90%86%e7%b3%bb%e7%bb%9f>处理系统</a>
 <a class=dropdown-item href=/%e6%95%b0%e6%8d%ae%e6%b2%bb%e7%90%86>数据治理</a>
-</div>
-</li>
-<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+</div></li><li class="nav-item dropdown" style=max-width:90px;min-width:10px>
 <a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
 中后台
 <span>+</span>
@@ -107,38 +103,26 @@ class AppLogger extedns Logger with Log{ overrride def log(messgae:String):Unit 
 <a class=dropdown-item href=/%e7%94%a8%e6%88%b7%e7%b3%bb%e7%bb%9f>用户系统</a>
 <a class=dropdown-item href=/%e4%ba%a4%e4%ba%92%e7%95%8c%e9%9d%a2>交互界面</a>
 <a class=dropdown-item href=/%e4%b8%9a%e5%8a%a1%e7%b3%bb%e7%bb%9f>业务系统</a>
-</div>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</div></li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e6%a8%a1%e5%bc%8f%e6%9e%b6%e6%9e%84>
 <span>模式架构</span>
 </a>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e9%9d%a2%e8%af%95%e9%97%ae%e7%ad%94>
 <span>面试</span>
 </a>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e7%ae%a1%e7%90%86%e8%b7%af%e5%be%84>
 <span>管理</span>
 </a>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e5%bc%80%e6%ba%90%e9%a1%b9%e7%9b%ae>
 <span>开源</span>
 </a>
-</li>
-</ul>
-<div class="form-inline my-2 my-lg-0">
+</li></ul><div class="form-inline my-2 my-lg-0">
 <div class="nav-item nav-search-item my-2 my-md-0">
 <input type=search class="form-control td-search-input" placeholder="&#xf002; 站内搜索…" aria-label=站内搜索… autocomplete=off>
-</div>
-</div>
-</div>
-</nav>
-</header>
-<div class="container-fluid td-outer">
+</div></div></div></nav></header><div class="container-fluid td-outer">
 <div class=td-main>
 <div class="row flex-xl-nowrap">
 <aside class="col-12 col-md-3 col-xl-2 td-sidebar d-print-none">
@@ -148,10 +132,7 @@ class AppLogger extedns Logger with Log{ overrride def log(messgae:String):Unit 
 <input type=search class="form-control td-search-input" placeholder="&#xf002; 站内搜索…" aria-label=站内搜索… autocomplete=off>
 <button class="btn btn-link td-sidebar__toggle d-md-none p-0 ml-3 fas fa-bars" type=button data-toggle=collapse data-target=#td-section-nav aria-controls=td-docs-nav aria-expanded=false aria-label="Toggle section navigation">
 </button>
-</form>
-</div>
-<div id=content-desktop></div>
-<nav class="collapse td-sidebar-nav" id=td-section-nav>
+</form></div><div id=content-desktop></div><nav class="collapse td-sidebar-nav" id=td-section-nav>
 <ul class="td-sidebar-nav__section pr-md-3 ul-0">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e6a8a1e5bc8fe69eb6e69e84-li>
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section tree-root" id=m-e6a8a1e5bc8fe69eb6e69e84><span>架构模式</span></a>
@@ -196,9 +177,7 @@ class AppLogger extedns Logger with Log{ overrride def log(messgae:String):Unit 
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch15/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch15><span>CH15-行为型-状态</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch16-li>
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch16/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch16><span>CH16-行为型-策略</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-pattern-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-pattern-li>
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-pattern><span>Scala 模式</span></a>
 <ul class="ul-3 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch01-e6a8a1e5bc8fe58886e7b1bb-li>
@@ -253,11 +232,7 @@ class AppLogger extedns Logger with Log{ overrride def log(messgae:String):Unit 
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch11-%E5%87%BD%E6%95%B0%E5%BC%8F%E6%A8%A1%E5%BC%8F%E5%BA%94%E7%94%A8/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch11-e587bde695b0e5bc8fe6a8a1e5bc8fe5ba94e794a8><span>CH11-函数式模式应用</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch12-e5ae9ee99985e5ba94e794a8-li>
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch12-%E5%AE%9E%E9%99%85%E5%BA%94%E7%94%A8/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch12-e5ae9ee99985e5ba94e794a8><span>CH12-实际应用</span></a>
-</li>
-</ul>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a8a1e5bc8fe69eb6e69e84micro-service-li>
+</li></ul></li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a8a1e5bc8fe69eb6e69e84micro-service-li>
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/micro-service/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a8a1e5bc8fe69eb6e69e84micro-service><span>微服务架构</span></a>
 <ul class="ul-2 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84micro-servicepattern-overview-li>
@@ -266,9 +241,7 @@ class AppLogger extedns Logger with Log{ overrride def log(messgae:String):Unit 
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/micro-service/ms-disasters/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84micro-servicems-disasters><span>微服务灾难</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84micro-servicefault-tolerance-li>
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/micro-service/fault-tolerance/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84micro-servicefault-tolerance><span>故障容错模式</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a8a1e5bc8fe69eb6e69e84high-conc-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a8a1e5bc8fe69eb6e69e84high-conc-li>
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a8a1e5bc8fe69eb6e69e84high-conc><span>高并发系统</span></a>
 <ul class="ul-2 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch01-li>
@@ -347,210 +320,129 @@ class AppLogger extedns Logger with Log{ overrride def log(messgae:String):Unit 
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch39/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch39><span>CH39-实战-信息流-1</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch40-li>
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch40/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch40><span>CH40-实战-信息流-2</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84ddia-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84ddia-li>
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/ddia/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a8a1e5bc8fe69eb6e69e84ddia><span>数据密集系统</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a8a1e5bc8fe69eb6e69e84rpc-li>
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/rpc/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a8a1e5bc8fe69eb6e69e84rpc><span>远程过程调用</span></a>
 <ul class="ul-2 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84rpcrpc-overview-li>
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/rpc/rpc-overview/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84rpcrpc-overview><span>RPC 概览</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a8a1e5bc8fe69eb6e69e84ddd-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a8a1e5bc8fe69eb6e69e84ddd-li>
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/ddd/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a8a1e5bc8fe69eb6e69e84ddd><span>领域驱动设计</span></a>
 <ul class="ul-2 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84dddddd-concept-essentials-li>
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/ddd/ddd-concept-essentials/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84dddddd-concept-essentials><span>DDD 概念精要</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84dddddd-instruct-micro-service-li>
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/ddd/ddd-instruct-micro-service/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84dddddd-instruct-micro-service><span>DDD 指导微服务</span></a>
-</li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-</nav>
-</div>
-</aside>
-<aside class="d-none d-xl-block col-xl-2 td-sidebar-toc d-print-none">
+</li></ul></li></ul></li></ul></nav></div></aside><aside class="d-none d-xl-block col-xl-2 td-sidebar-toc d-print-none">
 <div class="td-page-meta ml-2 pb-1 pt-2 mb-0">
 <a href=https://github.com/infilos/infilos.com/edit/master/content/zh/%e6%a8%a1%e5%bc%8f%e6%9e%b6%e6%9e%84/design-pattern/scala-pattern/CH07-1-%e9%80%82%e9%85%8d%e5%99%a8%e6%a8%a1%e5%bc%8f.md target=_blank><i class="fa fa-edit fa-fw"></i> 编辑此页</a>
 <a href="https://github.com/infilos/infilos.com/new/master/content/zh/%e6%a8%a1%e5%bc%8f%e6%9e%b6%e6%9e%84/design-pattern/scala-pattern/CH07-1-%e9%80%82%e9%85%8d%e5%99%a8%e6%a8%a1%e5%bc%8f.md?filename=change-me.md&value=---%0Atitle%3A+%22Long+Page+Title%22%0AlinkTitle%3A+%22Short+Nav+Title%22%0Aweight%3A+100%0Adescription%3A+%3E-%0A+++++Page+description+for+heading+and+indexes.%0A---%0A%0A%23%23+Heading%0A%0AEdit+this+template+to+create+your+new+page.%0A%0A%2A+Give+it+a+good+name%2C+ending+in+%60.md%60+-+e.g.+%60getting-started.md%60%0A%2A+Edit+the+%22front+matter%22+section+at+the+top+of+the+page+%28weight+controls+how+its+ordered+amongst+other+pages+in+the+same+directory%3B+lowest+number+first%29.%0A%2A+Add+a+good+commit+message+at+the+bottom+of+the+page+%28%3C80+characters%3B+use+the+extended+description+field+for+more+detail%29.%0A%2A+Create+a+new+branch+so+you+can+preview+your+new+file+and+request+a+review+via+Pull+Request.%0A" target=_blank><i class="fa fa-edit fa-fw"></i> 添加子页面</a>
 <a href="https://github.com/infilos/infilos.com/issues/new?title=CH07-1-%e9%80%82%e9%85%8d%e5%99%a8%e6%a8%a1%e5%bc%8f" target=_blank><i class="fab fa-github fa-fw"></i> 提交文档问题</a>
 <a id=print href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/_print/><i class="fa fa-print fa-fw"></i> 整节打印</a>
-</div>
-<div class=td-toc><nav id=TableOfContents>
+</div><div class=td-toc><nav id=TableOfContents>
 <ul>
-<li><a href=#类图>类图</a></li>
-<li><a href=#实例>实例</a>
+<li><a href=#类图>类图</a></li><li><a href=#实例>实例</a>
 <ul>
-<li><a href=#final-类的适配器模式>final 类的适配器模式</a></li>
-<li><a href=#scala-方式的适配器模式>Scala 方式的适配器模式</a></li>
-</ul>
-</li>
-<li><a href=#优点>优点</a></li>
-<li><a href=#缺点>缺点</a></li>
-</ul>
-</nav></div>
-</aside>
-<main class="col-12 col-md-9 col-xl-8 pl-md-5" role=main>
+<li><a href=#final-类的适配器模式>final 类的适配器模式</a></li><li><a href=#scala-方式的适配器模式>Scala 方式的适配器模式</a></li></ul></li><li><a href=#优点>优点</a></li><li><a href=#缺点>缺点</a></li></ul></nav></div></aside><main class="col-12 col-md-9 col-xl-8 pl-md-5" role=main>
 <nav aria-label=breadcrumb class="d-none d-md-block d-print-none">
 <ol class="breadcrumb spb-1">
 <li class=breadcrumb-item>
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/>架构模式</a>
-</li>
-<li class=breadcrumb-item>
+</li><li class=breadcrumb-item>
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/>设计模式</a>
-</li>
-<li class=breadcrumb-item>
+</li><li class=breadcrumb-item>
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/>Scala 模式</a>
-</li>
-<li class="breadcrumb-item active" aria-current=page>
+</li><li class="breadcrumb-item active" aria-current=page>
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch07-1-%E9%80%82%E9%85%8D%E5%99%A8%E6%A8%A1%E5%BC%8F/>CH07-1-适配器模式</a>
-</li>
-</ol>
-</nav>
-<div class=td-content>
-<h1>CH07-1-适配器模式</h1>
-<header class=article-meta>
-</header>
-<p>在很多情况下，我们需要通过将不同的组件组合在一起来让应用跑起来。然而，通常会出现不同组件的接口互相不兼容的问题。类似于使用一些公共库或任何库，我们自己并不能对其进行修改——因为别人的意见跟我们目前的配置完全一样是不太常见的。这也就是适配器的用途所在。它的目的在于在不修改源代码的情况下帮助兼容各个接口以能够在一起工作。</p>
-<p>我们将会在下面的小节中通过类图和实例来展示适配器是如何工作的。</p>
-<h2 id=类图>类图</h2>
-<p>对于适配器的类图来说，让我们假如我们需要在应用中转换为使用一个新的日志库。我们尝试使用的新的库拥有一个<code>log</code>方法，它接收日志的消息和严重程度。然而，贯穿我们的整个应用，我们期望拥有<code>info/debug/warning/error</code>方法并且只接收日志消息，它能够自动的设置严重程度。当然，我们不能编辑原始库的代码，因此需要使用适配器模式。下面的图示展示了适配器模式的类图：</p>
-<div align=center>
+</li></ol></nav><div class=td-content>
+<h1>CH07-1-适配器模式</h1><header class=article-meta>
+</header><p>在很多情况下，我们需要通过将不同的组件组合在一起来让应用跑起来。然而，通常会出现不同组件的接口互相不兼容的问题。类似于使用一些公共库或任何库，我们自己并不能对其进行修改——因为别人的意见跟我们目前的配置完全一样是不太常见的。这也就是适配器的用途所在。它的目的在于在不修改源代码的情况下帮助兼容各个接口以能够在一起工作。</p><p>我们将会在下面的小节中通过类图和实例来展示适配器是如何工作的。</p><h2 id=类图>类图</h2><p>对于适配器的类图来说，让我们假如我们需要在应用中转换为使用一个新的日志库。我们尝试使用的新的库拥有一个<code>log</code>方法，它接收日志的消息和严重程度。然而，贯穿我们的整个应用，我们期望拥有<code>info/debug/warning/error</code>方法并且只接收日志消息，它能够自动的设置严重程度。当然，我们不能编辑原始库的代码，因此需要使用适配器模式。下面的图示展示了适配器模式的类图：</p><div align=center>
 <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20190214172521.png style=display:block;width:70% alt=NAME align=center>
-</div>
-<p>在上面的类图中，可以发现我们的适配器 AppLogger 扩展了 Logger，并使用其实例作为一个字段。在实现这些方法的时候，我们就可以简单的调用其<code>log</code>方法并传入不同的参数。这也就是通用的适配器实现方式，后面的小节我们会看到具体的代码实例。可能有些情况下不能直接扩展(比如原始类为 final)，我们将展示 Scala 如何来处理这种问题。同时，我们也会展示一些推荐的用法来使用语言特性实现适配器模式。</p>
-<h2 id=实例>实例</h2>
-<p>首先，首先看一下我们不能进行修改的<code>Logger</code>类的代码：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>Logger</span> <span style=color:#ce5c00;font-weight:700>{</span>
-  <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>log</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>message</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>String</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>sevrvity</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>String</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>Unit</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>{</span>
-    <span style=color:#000>System</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>out</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>println</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>s&#34;</span><span style=color:#4e9a06>${</span><span style=color:#000>severity</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>toUpperCase</span><span style=color:#4e9a06>}</span><span style=color:#4e9a06>: </span><span style=color:#4e9a06>$message</span><span style=color:#4e9a06>&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
-  <span style=color:#ce5c00;font-weight:700>}</span>
-<span style=color:#ce5c00;font-weight:700>}</span>
-</code></pre></div><p>我们尽量保持简单以避免读者从本书的主旨上分心。下一步，我们可以要么仅仅编写一个类来扩展<code>Logger</code>，或者要么提供一个接口用于抽象。让我们使用第二种方式：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#204a87;font-weight:700>trait</span> <span style=color:#000>Log</span> <span style=color:#ce5c00;font-weight:700>{</span>
-  <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>into</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>message</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>String</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>Unit</span>
-  <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>debug</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>message</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>String</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>Unit</span>
-  <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>warning</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>message</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>String</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>Unit</span>
-  <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>error</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>message</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>String</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>Unit</span>
-<span style=color:#ce5c00;font-weight:700>}</span>
-</code></pre></div><p>最终，我们可以创建<code>AppLogger</code>：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>AppLogger</span> <span style=color:#000>extedns</span> <span style=color:#000>Logger</span> <span style=color:#204a87;font-weight:700>with</span> <span style=color:#000>Log</span><span style=color:#ce5c00;font-weight:700>{</span>
-  <span style=color:#000>overrride</span> <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>log</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>messgae</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>String</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>Unit</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>log</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>message</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#4e9a06>&#34;info&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
-  <span style=color:#204a87;font-weight:700>override</span> <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>warning</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>message</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>String</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>Unit</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>log</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>message</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#4e9a06>&#34;warning&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
-  <span style=color:#204a87;font-weight:700>override</span> <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>error</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>message</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>String</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>Unit</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>log</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>message</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#4e9a06>&#34;error&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
-  <span style=color:#204a87;font-weight:700>override</span> <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>debug</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>message</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>String</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>Unit</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>log</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>message</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#4e9a06>&#34;debug&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
-<span style=color:#ce5c00;font-weight:700>}</span>
-</code></pre></div><p>然后在我们的程序中使用：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#204a87;font-weight:700>object</span> <span style=color:#000>AdapterExample</span> <span style=color:#204a87;font-weight:700>extends</span> <span style=color:#000>App</span> <span style=color:#ce5c00;font-weight:700>{</span>
-  <span style=color:#204a87;font-weight:700>val</span> <span style=color:#000>logger</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Logger</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>AppLogger</span>
-  <span style=color:#000>logger</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>info</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;This is an info message.&#34;</span><span style=color:#ce5c00;font-weight:700>)</span> 
-  <span style=color:#000>logger</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>debug</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;Debug something here.&#34;</span><span style=color:#ce5c00;font-weight:700>)</span> 
-  <span style=color:#000>logger</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>error</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;Show an error message.&#34;</span><span style=color:#ce5c00;font-weight:700>)</span> 
-  <span style=color:#000>logger</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>warning</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;About to finish.&#34;</span><span style=color:#ce5c00;font-weight:700>)</span> 
-  <span style=color:#000>logger</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>info</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;Bye!&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
-<span style=color:#ce5c00;font-weight:700>}</span>
-</code></pre></div><blockquote>
-<p>你会发现我们并没有完全按照类图的结构实现。我们并不需要 Logger 类的实例作为我们类的一个字段，因为我们的类已经是 Logger 的一个实例了(继承自 Logger)，因此可以直接方法它的 log 方法。</p>
-</blockquote>
-<p>这就是实现和使用基本的适配器模式的方法。然而，有些情况下我们想要适配的类被声明为 final，因此不能再对其进行扩展。下面的小节将展示如何处理这种情况。</p>
-<h3 id=final-类的适配器模式>final 类的适配器模式</h3>
-<p>如果我们声明原始日志类为 final，会发现之前实现的代码将编译错误。这种场景下有另一种适配器方式：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>FinalAppLogger</span> <span style=color:#204a87;font-weight:700>extends</span> <span style=color:#000>Log</span> <span style=color:#ce5c00;font-weight:700>{</span>
-  <span style=color:#204a87;font-weight:700>private</span> <span style=color:#204a87;font-weight:700>val</span> <span style=color:#000>logger</span> <span style=color:#204a87;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>FinalLogger</span>
-  
-  <span style=color:#204a87;font-weight:700>override</span> <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>info</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>message</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>String</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Unit</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>logger</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>log</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>message</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#4e9a06>&#34;info&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
-  <span style=color:#204a87;font-weight:700>override</span> <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>warning</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>message</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>String</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Unit</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>logger</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>log</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>message</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#4e9a06>&#34;warning&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
-  <span style=color:#204a87;font-weight:700>override</span> <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>error</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>message</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>String</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Unit</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>logger</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>log</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>message</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#4e9a06>&#34;error&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
-  <span style=color:#204a87;font-weight:700>override</span> <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>debug</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>message</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>String</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Unit</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>logger</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>log</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>message</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#4e9a06>&#34;debug&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
-<span style=color:#ce5c00;font-weight:700>}</span>
-</code></pre></div><p>这里，我们简单的将最终日志类的实例包装在一个类中，并调用它的方法来传入不同的参数。这种用法跟前面的实现完全一样。或者有一种变种是将最终日志类的实例作为构造器参数传入适配日志类。这在原始日志类的创建过程需要一些额外的参数时比较有用。</p>
-<h3 id=scala-方式的适配器模式>Scala 方式的适配器模式</h3>
-<p>之前我们已经提到过很多次，Scala 是一个特性丰富的语言。基于这样的事实，我们可以使用隐式类来实现适配器的功能。这里我们会使用前面例子中的定义的 FinalLogger 来演示。</p>
-<p>隐式类会在可能的地方提供隐式转换。为了能使隐式转换生效，我们需要导入这些隐式声明，这也就是为何它们通常被声明在对象(object)或包对象(package-object)中。对于这个例子，我们将使用包对象：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#204a87;font-weight:700>package</span> <span style=color:#000>object</span> <span style=color:#000>adapter</span> <span style=color:#ce5c00;font-weight:700>{</span>
-  <span style=color:#204a87;font-weight:700>implicit</span> <span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>FinalLoggerImplicit</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>logger</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>FinalLogger</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#204a87;font-weight:700>extends</span> <span style=color:#000>Log</span><span style=color:#ce5c00;font-weight:700>{</span>
-    <span style=color:#204a87;font-weight:700>override</span> <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>info</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>message</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>String</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Unit</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>logger</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>log</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>message</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#4e9a06>&#34;info&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
-    <span style=color:#204a87;font-weight:700>override</span> <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>warning</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>message</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>String</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Unit</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>logger</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>log</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>message</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#4e9a06>&#34;warning&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
-    <span style=color:#204a87;font-weight:700>override</span> <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>error</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>message</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>String</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Unit</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>logger</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>log</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>message</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#4e9a06>&#34;error&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
-    <span style=color:#204a87;font-weight:700>override</span> <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>debug</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>message</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>String</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Unit</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>logger</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>log</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>message</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#4e9a06>&#34;debug&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
-  <span style=color:#ce5c00;font-weight:700>}</span>
-<span style=color:#ce5c00;font-weight:700>}</span>
-</code></pre></div><p>这是一个我们日志实例定义位置的包对象。它户自动将<code>FinalLogger</code>实例转换为我们的隐式类。下面的代码片段展示了如何使用它：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=color:#204a87;font-weight:700>object</span> <span style=color:#000>AdapterImplicitExample</span> <span style=color:#204a87;font-weight:700>extends</span> <span style=color:#000>App</span><span style=color:#ce5c00;font-weight:700>{</span>
-  <span style=color:#204a87;font-weight:700>val</span> <span style=color:#000>logger</span> <span style=color:#204a87;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>FinalLogger</span>
-  <span style=color:#000>logger</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>info</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;This is an info message.&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
-  <span style=color:#000>logger</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>debug</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;Debug something here.&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
-  <span style=color:#000>logger</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>error</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;Show an error message.&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
-  <span style=color:#000>logger</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>warning</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;About to finish.&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
-  <span style=color:#000>logger</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>info</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;Bye!&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
-<span style=color:#ce5c00;font-weight:700>}</span>
-</code></pre></div><h2 id=优点>优点</h2>
-<p>适配器模式可以用于代码已经被设计并编写。它可以是接口协同工作或进行兼容。其实现和用法也很直接。</p>
-<h2 id=缺点>缺点</h2>
-<p>上面例子中的最后一种实现存在一些问题。就是每当我们需要使用这个日志器的时候总是需要导入包或对象。同时，隐式类或转换可能会让代码难以阅读和理解。隐式类也存在一些限制，描述在这：<a href=http://docs.scala-lang.org/overviews/core/implicit-classes.html>implicit-classes</a>。</p>
-<p>像我们已经提到过的，当我们有一些无法改变的代码时该模式是有帮助的。如果我们能够修改原始代码，这将是最好的选择，因为在贯穿整个应用中使用适配器模式将会导致程序难以维护和理解。</p>
-<style>.feedback--answer{display:inline-block}.feedback--answer-no{margin-left:1em}.feedback--response{display:none;margin-top:1em}.feedback--response__visible{display:block}</style>
-<div class=d-print-none>
-<h2 class=feedback--title>Feedback</h2>
-<p class=feedback--question>Was this page helpful?</p>
-<button class="btn btn-primary mb-4 feedback--answer feedback--answer-yes">Yes</button>
+</div><p>在上面的类图中，可以发现我们的适配器 AppLogger 扩展了 Logger，并使用其实例作为一个字段。在实现这些方法的时候，我们就可以简单的调用其<code>log</code>方法并传入不同的参数。这也就是通用的适配器实现方式，后面的小节我们会看到具体的代码实例。可能有些情况下不能直接扩展(比如原始类为 final)，我们将展示 Scala 如何来处理这种问题。同时，我们也会展示一些推荐的用法来使用语言特性实现适配器模式。</p><h2 id=实例>实例</h2><p>首先，首先看一下我们不能进行修改的<code>Logger</code>类的代码：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=display:flex><span><span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>Logger</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>  <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>log</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>message</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>String</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>sevrvity</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>String</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>Unit</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>    <span style=color:#000>System</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>out</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>println</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>s&#34;</span><span style=color:#4e9a06>${</span><span style=color:#000>severity</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>toUpperCase</span><span style=color:#4e9a06>}</span><span style=color:#4e9a06>: </span><span style=color:#4e9a06>$message</span><span style=color:#4e9a06>&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
+</span></span><span style=display:flex><span>  <span style=color:#ce5c00;font-weight:700>}</span>
+</span></span><span style=display:flex><span><span style=color:#ce5c00;font-weight:700>}</span>
+</span></span></code></pre></div><p>我们尽量保持简单以避免读者从本书的主旨上分心。下一步，我们可以要么仅仅编写一个类来扩展<code>Logger</code>，或者要么提供一个接口用于抽象。让我们使用第二种方式：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=display:flex><span><span style=color:#204a87;font-weight:700>trait</span> <span style=color:#000>Log</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>  <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>into</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>message</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>String</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>Unit</span>
+</span></span><span style=display:flex><span>  <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>debug</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>message</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>String</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>Unit</span>
+</span></span><span style=display:flex><span>  <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>warning</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>message</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>String</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>Unit</span>
+</span></span><span style=display:flex><span>  <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>error</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>message</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>String</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>Unit</span>
+</span></span><span style=display:flex><span><span style=color:#ce5c00;font-weight:700>}</span>
+</span></span></code></pre></div><p>最终，我们可以创建<code>AppLogger</code>：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=display:flex><span><span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>AppLogger</span> <span style=color:#000>extedns</span> <span style=color:#000>Logger</span> <span style=color:#204a87;font-weight:700>with</span> <span style=color:#000>Log</span><span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>  <span style=color:#000>overrride</span> <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>log</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>messgae</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>String</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>Unit</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>log</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>message</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#4e9a06>&#34;info&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
+</span></span><span style=display:flex><span>  <span style=color:#204a87;font-weight:700>override</span> <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>warning</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>message</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>String</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>Unit</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>log</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>message</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#4e9a06>&#34;warning&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
+</span></span><span style=display:flex><span>  <span style=color:#204a87;font-weight:700>override</span> <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>error</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>message</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>String</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>Unit</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>log</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>message</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#4e9a06>&#34;error&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
+</span></span><span style=display:flex><span>  <span style=color:#204a87;font-weight:700>override</span> <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>debug</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>message</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>String</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>Unit</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>log</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>message</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#4e9a06>&#34;debug&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
+</span></span><span style=display:flex><span><span style=color:#ce5c00;font-weight:700>}</span>
+</span></span></code></pre></div><p>然后在我们的程序中使用：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=display:flex><span><span style=color:#204a87;font-weight:700>object</span> <span style=color:#000>AdapterExample</span> <span style=color:#204a87;font-weight:700>extends</span> <span style=color:#000>App</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>  <span style=color:#204a87;font-weight:700>val</span> <span style=color:#000>logger</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Logger</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>AppLogger</span>
+</span></span><span style=display:flex><span>  <span style=color:#000>logger</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>info</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;This is an info message.&#34;</span><span style=color:#ce5c00;font-weight:700>)</span> 
+</span></span><span style=display:flex><span>  <span style=color:#000>logger</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>debug</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;Debug something here.&#34;</span><span style=color:#ce5c00;font-weight:700>)</span> 
+</span></span><span style=display:flex><span>  <span style=color:#000>logger</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>error</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;Show an error message.&#34;</span><span style=color:#ce5c00;font-weight:700>)</span> 
+</span></span><span style=display:flex><span>  <span style=color:#000>logger</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>warning</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;About to finish.&#34;</span><span style=color:#ce5c00;font-weight:700>)</span> 
+</span></span><span style=display:flex><span>  <span style=color:#000>logger</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>info</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;Bye!&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
+</span></span><span style=display:flex><span><span style=color:#ce5c00;font-weight:700>}</span>
+</span></span></code></pre></div><blockquote>
+<p>你会发现我们并没有完全按照类图的结构实现。我们并不需要 Logger 类的实例作为我们类的一个字段，因为我们的类已经是 Logger 的一个实例了(继承自 Logger)，因此可以直接方法它的 log 方法。</p></blockquote><p>这就是实现和使用基本的适配器模式的方法。然而，有些情况下我们想要适配的类被声明为 final，因此不能再对其进行扩展。下面的小节将展示如何处理这种情况。</p><h3 id=final-类的适配器模式>final 类的适配器模式</h3><p>如果我们声明原始日志类为 final，会发现之前实现的代码将编译错误。这种场景下有另一种适配器方式：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=display:flex><span><span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>FinalAppLogger</span> <span style=color:#204a87;font-weight:700>extends</span> <span style=color:#000>Log</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>  <span style=color:#204a87;font-weight:700>private</span> <span style=color:#204a87;font-weight:700>val</span> <span style=color:#000>logger</span> <span style=color:#204a87;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>FinalLogger</span>
+</span></span><span style=display:flex><span>  
+</span></span><span style=display:flex><span>  <span style=color:#204a87;font-weight:700>override</span> <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>info</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>message</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>String</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Unit</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>logger</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>log</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>message</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#4e9a06>&#34;info&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
+</span></span><span style=display:flex><span>  <span style=color:#204a87;font-weight:700>override</span> <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>warning</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>message</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>String</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Unit</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>logger</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>log</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>message</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#4e9a06>&#34;warning&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
+</span></span><span style=display:flex><span>  <span style=color:#204a87;font-weight:700>override</span> <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>error</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>message</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>String</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Unit</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>logger</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>log</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>message</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#4e9a06>&#34;error&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
+</span></span><span style=display:flex><span>  <span style=color:#204a87;font-weight:700>override</span> <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>debug</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>message</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>String</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Unit</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>logger</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>log</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>message</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#4e9a06>&#34;debug&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
+</span></span><span style=display:flex><span><span style=color:#ce5c00;font-weight:700>}</span>
+</span></span></code></pre></div><p>这里，我们简单的将最终日志类的实例包装在一个类中，并调用它的方法来传入不同的参数。这种用法跟前面的实现完全一样。或者有一种变种是将最终日志类的实例作为构造器参数传入适配日志类。这在原始日志类的创建过程需要一些额外的参数时比较有用。</p><h3 id=scala-方式的适配器模式>Scala 方式的适配器模式</h3><p>之前我们已经提到过很多次，Scala 是一个特性丰富的语言。基于这样的事实，我们可以使用隐式类来实现适配器的功能。这里我们会使用前面例子中的定义的 FinalLogger 来演示。</p><p>隐式类会在可能的地方提供隐式转换。为了能使隐式转换生效，我们需要导入这些隐式声明，这也就是为何它们通常被声明在对象(object)或包对象(package-object)中。对于这个例子，我们将使用包对象：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=display:flex><span><span style=color:#204a87;font-weight:700>package</span> <span style=color:#000>object</span> <span style=color:#000>adapter</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>  <span style=color:#204a87;font-weight:700>implicit</span> <span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>FinalLoggerImplicit</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>logger</span><span style=color:#204a87;font-weight:700>:</span><span style=color:#204a87;font-weight:700>FinalLogger</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#204a87;font-weight:700>extends</span> <span style=color:#000>Log</span><span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>    <span style=color:#204a87;font-weight:700>override</span> <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>info</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>message</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>String</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Unit</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>logger</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>log</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>message</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#4e9a06>&#34;info&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
+</span></span><span style=display:flex><span>    <span style=color:#204a87;font-weight:700>override</span> <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>warning</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>message</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>String</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Unit</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>logger</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>log</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>message</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#4e9a06>&#34;warning&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
+</span></span><span style=display:flex><span>    <span style=color:#204a87;font-weight:700>override</span> <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>error</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>message</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>String</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Unit</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>logger</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>log</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>message</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#4e9a06>&#34;error&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
+</span></span><span style=display:flex><span>    <span style=color:#204a87;font-weight:700>override</span> <span style=color:#204a87;font-weight:700>def</span> <span style=color:#000>debug</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>message</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>String</span><span style=color:#ce5c00;font-weight:700>)</span><span style=color:#204a87;font-weight:700>:</span> <span style=color:#204a87;font-weight:700>Unit</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>logger</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>log</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>message</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#4e9a06>&#34;debug&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
+</span></span><span style=display:flex><span>  <span style=color:#ce5c00;font-weight:700>}</span>
+</span></span><span style=display:flex><span><span style=color:#ce5c00;font-weight:700>}</span>
+</span></span></code></pre></div><p>这是一个我们日志实例定义位置的包对象。它户自动将<code>FinalLogger</code>实例转换为我们的隐式类。下面的代码片段展示了如何使用它：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-scala data-lang=scala><span style=display:flex><span><span style=color:#204a87;font-weight:700>object</span> <span style=color:#000>AdapterImplicitExample</span> <span style=color:#204a87;font-weight:700>extends</span> <span style=color:#000>App</span><span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>  <span style=color:#204a87;font-weight:700>val</span> <span style=color:#000>logger</span> <span style=color:#204a87;font-weight:700>=</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>FinalLogger</span>
+</span></span><span style=display:flex><span>  <span style=color:#000>logger</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>info</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;This is an info message.&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
+</span></span><span style=display:flex><span>  <span style=color:#000>logger</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>debug</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;Debug something here.&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
+</span></span><span style=display:flex><span>  <span style=color:#000>logger</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>error</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;Show an error message.&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
+</span></span><span style=display:flex><span>  <span style=color:#000>logger</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>warning</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;About to finish.&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
+</span></span><span style=display:flex><span>  <span style=color:#000>logger</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#000>info</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#4e9a06>&#34;Bye!&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
+</span></span><span style=display:flex><span><span style=color:#ce5c00;font-weight:700>}</span>
+</span></span></code></pre></div><h2 id=优点>优点</h2><p>适配器模式可以用于代码已经被设计并编写。它可以是接口协同工作或进行兼容。其实现和用法也很直接。</p><h2 id=缺点>缺点</h2><p>上面例子中的最后一种实现存在一些问题。就是每当我们需要使用这个日志器的时候总是需要导入包或对象。同时，隐式类或转换可能会让代码难以阅读和理解。隐式类也存在一些限制，描述在这：<a href=http://docs.scala-lang.org/overviews/core/implicit-classes.html>implicit-classes</a>。</p><p>像我们已经提到过的，当我们有一些无法改变的代码时该模式是有帮助的。如果我们能够修改原始代码，这将是最好的选择，因为在贯穿整个应用中使用适配器模式将会导致程序难以维护和理解。</p><style>.feedback--answer{display:inline-block}.feedback--answer-no{margin-left:1em}.feedback--response{display:none;margin-top:1em}.feedback--response__visible{display:block}</style><div class=d-print-none>
+<h2 class=feedback--title>Feedback</h2><p class=feedback--question>Was this page helpful?</p><button class="btn btn-primary mb-4 feedback--answer feedback--answer-yes">Yes</button>
 <button class="btn btn-primary mb-4 feedback--answer feedback--answer-no">No</button>
 <p class="feedback--response feedback--response-yes">
 Glad to hear it! Please <a href=https://github.com/infilos/infilos.com/issues/new>tell us how we can improve</a>.
-</p>
-<p class="feedback--response feedback--response-no">
+</p><p class="feedback--response feedback--response-no">
 Sorry to hear that. Please <a href=https://github.com/infilos/infilos.com/issues/new>tell us how we can improve</a>.
-</p>
-</div>
-<script>const yesButton=document.querySelector('.feedback--answer-yes'),noButton=document.querySelector('.feedback--answer-no'),yesResponse=document.querySelector('.feedback--response-yes'),noResponse=document.querySelector('.feedback--response-no'),disableButtons=()=>{yesButton.disabled=!0,noButton.disabled=!0},sendFeedback=b=>{if(typeof ga!='function')return;const a={command:'send',hitType:'event',category:'Helpful',action:'click',label:window.location.pathname,value:b};ga(a.command,a.hitType,a.category,a.action,a.label,a.value)};yesButton.addEventListener('click',()=>{yesResponse.classList.add('feedback--response__visible'),disableButtons(),sendFeedback(1)}),noButton.addEventListener('click',()=>{noResponse.classList.add('feedback--response__visible'),disableButtons(),sendFeedback(0)})</script>
+</p></div><script>const yesButton=document.querySelector(".feedback--answer-yes"),noButton=document.querySelector(".feedback--answer-no"),yesResponse=document.querySelector(".feedback--response-yes"),noResponse=document.querySelector(".feedback--response-no"),disableButtons=()=>{yesButton.disabled=!0,noButton.disabled=!0},sendFeedback=t=>{if(typeof ga!="function")return;const e={command:"send",hitType:"event",category:"Helpful",action:"click",label:window.location.pathname,value:t};ga(e.command,e.hitType,e.category,e.action,e.label,e.value)};yesButton.addEventListener("click",()=>{yesResponse.classList.add("feedback--response__visible"),disableButtons(),sendFeedback(1)}),noButton.addEventListener("click",()=>{noResponse.classList.add("feedback--response__visible"),disableButtons(),sendFeedback(0)})</script>
 <br>
-</div>
-</main>
-</div>
-</div>
-<footer class="bg-dark py-5 row d-print-none">
+</div></main></div></div><footer class="bg-dark py-5 row d-print-none">
 <div class="container-fluid mx-sm-5">
 <div class=row>
 <div class="col-6 col-sm-4 text-xs-center order-sm-2">
-</div>
-<div class="col-6 col-sm-4 text-right text-xs-center order-sm-3">
+</div><div class="col-6 col-sm-4 text-right text-xs-center order-sm-3">
 <ul class="list-inline mb-0">
 <li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Weibo aria-label=Weibo>
 <a class=text-white target=_blank rel="noopener noreferrer" href=https://weibo.com/u/3848950217>
 <i class="fab fa-weibo"></i>
 </a>
-</li>
-<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Twitter aria-label=Twitter>
+</li><li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Twitter aria-label=Twitter>
 <a class=text-white target=_blank rel="noopener noreferrer" href=https://twitter.com/zhange_zzg>
 <i class="fab fa-twitter"></i>
 </a>
-</li>
-<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title="Stack Overflow" aria-label="Stack Overflow">
+</li><li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title="Stack Overflow" aria-label="Stack Overflow">
 <a class=text-white target=_blank rel="noopener noreferrer" href=https://stackoverflow.com>
 <i class="fab fa-stack-overflow"></i>
 </a>
-</li>
-<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=GitHub aria-label=GitHub>
+</li><li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=GitHub aria-label=GitHub>
 <a class=text-white target=_blank rel="noopener noreferrer" href=https://github.com/infilos/infilos.com>
 <i class="fab fa-github"></i>
 </a>
-</li>
-</ul>
-</div>
-<div class="col-12 col-sm-4 text-center py-2 order-sm-2">
+</li></ul></div><div class="col-12 col-sm-4 text-center py-2 order-sm-2">
 <small class=text-white>&copy; 2022 infilos.com All Rights Reserved</small>
-</div>
-</div>
-</div>
-</footer>
-</div>
-<script src=/js/popper.min.js integrity=sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49 crossorigin=anonymous></script>
+</div></div></div></footer></div><script src=/js/popper.min.js integrity=sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49 crossorigin=anonymous></script>
 <script src=/js/bootstrap.min.js integrity=sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy crossorigin=anonymous></script>
-<script src=/js/main.min.5c74b870c6953931a705f390a49c7e4c0a842ec5c83b24354758dd674343ed0d.js integrity="sha256-XHS4cMaVOTGnBfOQpJx+TAqELsXIOyQ1R1jdZ0ND7Q0=" crossorigin=anonymous></script>
-</body>
-</html>
+<script src=/js/main.min.3f3f4f1e22307ccbb13271a98be2e4dbb8386b7e67c3d606db44d3d0649f485e.js integrity="sha256-Pz9PHiIwfMuxMnGpi+Lk27g4a35nw9YG20TT0GSfSF4=" crossorigin=anonymous></script>
+</body></html>

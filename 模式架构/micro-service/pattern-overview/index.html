@@ -2,7 +2,7 @@
 <head>
 <meta charset=utf-8>
 <meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no">
-<meta name=generator content="Hugo 0.92.2">
+<meta name=generator content="Hugo 0.93.0">
 <meta name=ROBOTS content="INDEX, FOLLOW">
 <link rel="shortcut icon" href=/favicons/favicon.ico>
 <link rel=apple-touch-icon href=/favicons/apple-touch-icon-180x180.png sizes=180x180>
@@ -43,45 +43,43 @@
  产品目录服务 库存管理服务 订单管理服务 配送管理服务  按事务/2PC模式分解 你可以通过事务分解服务。然后，这样一来系统里将会存在多个事务。事务处理协调器[3]是分布式事务处理的重要参与者之一。分布式事务包括两个步骤：
  准备阶段 —— 在这个阶段，事务的所有参与者都准备提交并通知协调员他们已准备好完成事务 提交或回滚阶段 —— 在这个阶段，事务协调器向所有参与者发出提交或回滚命令  2PC 的问题在于，和单个微服务的运行时间相比，它显得相当慢。即便这些微服务跑在相同的网络里，它们之间的事务协调也确实会减慢系统速度，因此这种方法通常不适用于高负载情况。
 绞杀者模式：Strangler Pattern 上面三种，我们看到的这几个设计模式都是用来分解绿场(Greenfield)的应用程序，但是往往我们所做的工作中有 80％ 是针对灰场(Brownfield)应用程序，它们是一些大型的单体应用程序(历史遗留的代码库)。">
-<script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga('create','UA-123062585-1','auto'),ga('send','pageview'))</script>
+<script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga("create","UA-123062585-1","auto"),ga("send","pageview"))</script>
 <script async src=https://www.google-analytics.com/analytics.js></script>
 <link rel=preload href=/scss/main.min.847464b684a6e89d7276700a5c500c17ab494dd1755b2654a7b27d8b59e3347e.css as=style>
 <link href=/scss/main.min.847464b684a6e89d7276700a5c500c17ab494dd1755b2654a7b27d8b59e3347e.css rel=stylesheet integrity>
 <script src=/js/jquery-3.5.1.min.js integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin=anonymous></script>
-</head>
-<body class=td-page>
+</head><body class=td-page>
 <header>
-<nav class="js-navbar-scroll navbar navbar-expand navbar-dark flex-column flex-md-row td-navbar">
+<nav class="js-navbar-scroll navbar navbar-expand-lg navbar-dark td-navbar">
 <a class=navbar-brand href=/>
-<span class=navbar-logo><svg id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512" style="enable-background:new 0 0 512 512"><path style="fill:#ffc107" d="M432.384 143.616c-4.165-4.164-10.917-4.164-15.083.0l-60.352 60.352c-4.164 4.165-4.164 10.917.0 15.083 21.187 20.463 54.951 19.876 75.413-1.311 19.962-20.668 19.962-53.435.0-74.102L432.384 143.616z"/><path style="fill:#607d8b" d="M42.667 277.334c-5.891.003-10.669-4.771-10.672-10.662-.002-4.338 2.623-8.245 6.64-9.882l234.667-96c5.455-2.233 11.687.38 13.92 5.835s-.38 11.687-5.835 13.92l-234.667 96C45.433 277.069 44.056 277.337 42.667 277.334z"/><path style="fill:#546e7a" d="M391.552 56.448l-32-32C343.938 8.745 322.689-.059 300.544.0h-3.755c-46.082.024-83.432 37.374-83.456 83.456v3.755c-.053 22.138 8.75 43.377 24.448 58.987l32 32c4.165 4.164 10.917 4.164 15.083.0L391.531 71.531C395.701 67.372 395.71 60.62 391.552 56.448z"/><path style="fill:#607d8b" d="M160 469.334c-3.279.006-6.379-1.497-8.405-4.075L34.261 315.926c-3.635-4.636-2.823-11.341 1.813-14.976s11.341-2.823 14.976 1.813l117.333 149.333c3.629 4.641 2.809 11.344-1.832 14.973C164.681 468.533 162.375 469.329 160 469.334z"/><path style="fill:#455a64" d="M487.467 86.848l-3.669-3.648c-37.687-36.557-97.71-36.197-134.955.811l-51.413 51.413c-36.996 37.25-37.357 97.263-.811 134.955l3.584 3.669c1.7 2.457 4.671 3.706 7.616 3.2 2.831.005 5.548-1.115 7.552-3.115l172.181-172.181c4.189-4.143 4.226-10.896.083-15.085-.028-.028-.055-.056-.083-.083L487.467 86.848z"/><g><path style="fill:#ffc107" d="M501.333 192H480c-5.891.0-10.667-4.776-10.667-10.667s4.776-10.667 10.667-10.667h21.333c5.891.0 10.667 4.776 10.667 10.667S507.225 192 501.333 192z"/><path style="fill:#ffc107" d="M394.667 298.667c-5.891.0-10.667-4.776-10.667-10.667v-21.333c0-5.891 4.776-10.667 10.667-10.667 5.891.0 10.667 4.776 10.667 10.667V288C405.333 293.891 400.558 298.667 394.667 298.667z"/><path style="fill:#ffc107" d="M480 277.334c-2.831.005-5.548-1.115-7.552-3.115l-21.333-21.333c-4.093-4.237-3.975-10.99.262-15.083 4.134-3.993 10.687-3.993 14.821.0l21.333 21.333c4.159 4.172 4.148 10.926-.024 15.085C485.514 276.209 482.815 277.327 480 277.334z"/></g><g><path style="fill:#455a64" d="M266.667 448H96c-29.455.0-53.333 23.878-53.333 53.333.0 5.891 4.776 10.667 10.667 10.667h256c5.891.0 10.667-4.776 10.667-10.667C320 471.878 296.122 448 266.667 448z"/><circle style="fill:#455a64" cx="32" cy="288" r="32"/></g><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/></svg></span><span class=font-weight-bold>infilos.com</span>
+<span class=navbar-logo><svg id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512" style="enable-background:new 0 0 512 512"><path style="fill:#ffc107" d="M432.384 143.616c-4.165-4.164-10.917-4.164-15.083.0l-60.352 60.352c-4.164 4.165-4.164 10.917.0 15.083 21.187 20.463 54.951 19.876 75.413-1.311 19.962-20.668 19.962-53.435.0-74.102L432.384 143.616z"/><path style="fill:#607d8b" d="M42.667 277.334c-5.891.003-10.669-4.771-10.672-10.662-.002-4.338 2.623-8.245 6.64-9.882l234.667-96c5.455-2.233 11.687.38 13.92 5.835s-.38 11.687-5.835 13.92l-234.667 96C45.433 277.069 44.056 277.337 42.667 277.334z"/><path style="fill:#546e7a" d="M391.552 56.448l-32-32C343.938 8.745 322.689-.059 300.544.0h-3.755c-46.082.024-83.432 37.374-83.456 83.456v3.755c-.053 22.138 8.75 43.377 24.448 58.987l32 32c4.165 4.164 10.917 4.164 15.083.0L391.531 71.531C395.701 67.372 395.71 60.62 391.552 56.448z"/><path style="fill:#607d8b" d="M160 469.334c-3.279.006-6.379-1.497-8.405-4.075L34.261 315.926c-3.635-4.636-2.823-11.341 1.813-14.976s11.341-2.823 14.976 1.813l117.333 149.333c3.629 4.641 2.809 11.344-1.832 14.973C164.681 468.533 162.375 469.329 160 469.334z"/><path style="fill:#455a64" d="M487.467 86.848l-3.669-3.648c-37.687-36.557-97.71-36.197-134.955.811l-51.413 51.413c-36.996 37.25-37.357 97.263-.811 134.955l3.584 3.669c1.7 2.457 4.671 3.706 7.616 3.2 2.831.005 5.548-1.115 7.552-3.115l172.181-172.181c4.189-4.143 4.226-10.896.083-15.085-.028-.028-.055-.056-.083-.083L487.467 86.848z"/><g><path style="fill:#ffc107" d="M501.333 192H480c-5.891.0-10.667-4.776-10.667-10.667s4.776-10.667 10.667-10.667h21.333c5.891.0 10.667 4.776 10.667 10.667S507.225 192 501.333 192z"/><path style="fill:#ffc107" d="M394.667 298.667c-5.891.0-10.667-4.776-10.667-10.667v-21.333c0-5.891 4.776-10.667 10.667-10.667 5.891.0 10.667 4.776 10.667 10.667V288C405.333 293.891 400.558 298.667 394.667 298.667z"/><path style="fill:#ffc107" d="M480 277.334c-2.831.005-5.548-1.115-7.552-3.115l-21.333-21.333c-4.093-4.237-3.975-10.99.262-15.083 4.134-3.993 10.687-3.993 14.821.0l21.333 21.333c4.159 4.172 4.148 10.926-.024 15.085C485.514 276.209 482.815 277.327 480 277.334z"/></g><g><path style="fill:#455a64" d="M266.667 448H96c-29.455.0-53.333 23.878-53.333 53.333.0 5.891 4.776 10.667 10.667 10.667h256c5.891.0 10.667-4.776 10.667-10.667C320 471.878 296.122 448 266.667 448z"/><circle style="fill:#455a64" cx="32" cy="288" r="32"/></g><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/></svg></span>
+<span class=font-weight-bold>infilos.com</span>
 </a>
+<button class=navbar-toggler type=button data-toggle=collapse data-target=#navbarSupportedContent aria-controls=navbarSupportedContent aria-expanded=false aria-label="Toggle navigation">
+<span class=navbar-toggler-icon></span>
+</button>
 <div class="collapse navbar-collapse" id=navbarSupportedContent>
 <ul class="navbar-nav mr-auto">
 <li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86>
 <span>基础</span>
 </a>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80>
 <span>语言</span>
 </a>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93>
 <span>框架库</span>
 </a>
-</li>
-<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+</li><li class="nav-item dropdown" style=max-width:90px;min-width:10px>
 <a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
 分布式
 <span>+</span>
 </a>
 <div class=dropdown-menu aria-labelledby=navbarDropdown>
 <a class=dropdown-item href=/%e5%88%86%e5%b8%83%e5%bc%8f/base>基本构成</a>
-</div>
-</li>
-<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+</div></li><li class="nav-item dropdown" style=max-width:90px;min-width:10px>
 <a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
 大数据
 <span>+</span>
@@ -92,9 +90,7 @@
 <a class=dropdown-item href=/%e6%b6%88%e6%81%af%e7%b3%bb%e7%bb%9f>消息系统</a>
 <a class=dropdown-item href=/%e5%a4%84%e7%90%86%e7%b3%bb%e7%bb%9f>处理系统</a>
 <a class=dropdown-item href=/%e6%95%b0%e6%8d%ae%e6%b2%bb%e7%90%86>数据治理</a>
-</div>
-</li>
-<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+</div></li><li class="nav-item dropdown" style=max-width:90px;min-width:10px>
 <a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
 中后台
 <span>+</span>
@@ -104,38 +100,26 @@
 <a class=dropdown-item href=/%e7%94%a8%e6%88%b7%e7%b3%bb%e7%bb%9f>用户系统</a>
 <a class=dropdown-item href=/%e4%ba%a4%e4%ba%92%e7%95%8c%e9%9d%a2>交互界面</a>
 <a class=dropdown-item href=/%e4%b8%9a%e5%8a%a1%e7%b3%bb%e7%bb%9f>业务系统</a>
-</div>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</div></li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e6%a8%a1%e5%bc%8f%e6%9e%b6%e6%9e%84>
 <span>模式架构</span>
 </a>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e9%9d%a2%e8%af%95%e9%97%ae%e7%ad%94>
 <span>面试</span>
 </a>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e7%ae%a1%e7%90%86%e8%b7%af%e5%be%84>
 <span>管理</span>
 </a>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e5%bc%80%e6%ba%90%e9%a1%b9%e7%9b%ae>
 <span>开源</span>
 </a>
-</li>
-</ul>
-<div class="form-inline my-2 my-lg-0">
+</li></ul><div class="form-inline my-2 my-lg-0">
 <div class="nav-item nav-search-item my-2 my-md-0">
 <input type=search class="form-control td-search-input" placeholder="&#xf002; 站内搜索…" aria-label=站内搜索… autocomplete=off>
-</div>
-</div>
-</div>
-</nav>
-</header>
-<div class="container-fluid td-outer">
+</div></div></div></nav></header><div class="container-fluid td-outer">
 <div class=td-main>
 <div class="row flex-xl-nowrap">
 <aside class="col-12 col-md-3 col-xl-2 td-sidebar d-print-none">
@@ -145,10 +129,7 @@
 <input type=search class="form-control td-search-input" placeholder="&#xf002; 站内搜索…" aria-label=站内搜索… autocomplete=off>
 <button class="btn btn-link td-sidebar__toggle d-md-none p-0 ml-3 fas fa-bars" type=button data-toggle=collapse data-target=#td-section-nav aria-controls=td-docs-nav aria-expanded=false aria-label="Toggle section navigation">
 </button>
-</form>
-</div>
-<div id=content-desktop></div>
-<nav class="collapse td-sidebar-nav" id=td-section-nav>
+</form></div><div id=content-desktop></div><nav class="collapse td-sidebar-nav" id=td-section-nav>
 <ul class="td-sidebar-nav__section pr-md-3 ul-0">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e6a8a1e5bc8fe69eb6e69e84-li>
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section tree-root" id=m-e6a8a1e5bc8fe69eb6e69e84><span>架构模式</span></a>
@@ -193,9 +174,7 @@
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch15/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch15><span>CH15-行为型-状态</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch16-li>
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch16/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch16><span>CH16-行为型-策略</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-pattern-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-pattern-li>
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-pattern><span>Scala 模式</span></a>
 <ul class="ul-3 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch01-e6a8a1e5bc8fe58886e7b1bb-li>
@@ -250,11 +229,7 @@
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch11-%E5%87%BD%E6%95%B0%E5%BC%8F%E6%A8%A1%E5%BC%8F%E5%BA%94%E7%94%A8/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch11-e587bde695b0e5bc8fe6a8a1e5bc8fe5ba94e794a8><span>CH11-函数式模式应用</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch12-e5ae9ee99985e5ba94e794a8-li>
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch12-%E5%AE%9E%E9%99%85%E5%BA%94%E7%94%A8/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch12-e5ae9ee99985e5ba94e794a8><span>CH12-实际应用</span></a>
-</li>
-</ul>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e6a8a1e5bc8fe69eb6e69e84micro-service-li>
+</li></ul></li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e6a8a1e5bc8fe69eb6e69e84micro-service-li>
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/micro-service/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a8a1e5bc8fe69eb6e69e84micro-service><span>微服务架构</span></a>
 <ul class="ul-2 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child active-path" id=m-e6a8a1e5bc8fe69eb6e69e84micro-servicepattern-overview-li>
@@ -263,9 +238,7 @@
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/micro-service/ms-disasters/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84micro-servicems-disasters><span>微服务灾难</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84micro-servicefault-tolerance-li>
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/micro-service/fault-tolerance/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84micro-servicefault-tolerance><span>故障容错模式</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a8a1e5bc8fe69eb6e69e84high-conc-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a8a1e5bc8fe69eb6e69e84high-conc-li>
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a8a1e5bc8fe69eb6e69e84high-conc><span>高并发系统</span></a>
 <ul class="ul-2 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch01-li>
@@ -344,382 +317,111 @@
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch39/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch39><span>CH39-实战-信息流-1</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch40-li>
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch40/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch40><span>CH40-实战-信息流-2</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84ddia-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84ddia-li>
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/ddia/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a8a1e5bc8fe69eb6e69e84ddia><span>数据密集系统</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a8a1e5bc8fe69eb6e69e84rpc-li>
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/rpc/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a8a1e5bc8fe69eb6e69e84rpc><span>远程过程调用</span></a>
 <ul class="ul-2 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84rpcrpc-overview-li>
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/rpc/rpc-overview/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84rpcrpc-overview><span>RPC 概览</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a8a1e5bc8fe69eb6e69e84ddd-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a8a1e5bc8fe69eb6e69e84ddd-li>
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/ddd/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a8a1e5bc8fe69eb6e69e84ddd><span>领域驱动设计</span></a>
 <ul class="ul-2 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84dddddd-concept-essentials-li>
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/ddd/ddd-concept-essentials/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84dddddd-concept-essentials><span>DDD 概念精要</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84dddddd-instruct-micro-service-li>
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/ddd/ddd-instruct-micro-service/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84dddddd-instruct-micro-service><span>DDD 指导微服务</span></a>
-</li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-</nav>
-</div>
-</aside>
-<aside class="d-none d-xl-block col-xl-2 td-sidebar-toc d-print-none">
+</li></ul></li></ul></li></ul></nav></div></aside><aside class="d-none d-xl-block col-xl-2 td-sidebar-toc d-print-none">
 <div class="td-page-meta ml-2 pb-1 pt-2 mb-0">
 <a href=https://github.com/infilos/infilos.com/edit/master/content/zh/%e6%a8%a1%e5%bc%8f%e6%9e%b6%e6%9e%84/micro-service/pattern-overview.md target=_blank><i class="fa fa-edit fa-fw"></i> 编辑此页</a>
 <a href="https://github.com/infilos/infilos.com/new/master/content/zh/%e6%a8%a1%e5%bc%8f%e6%9e%b6%e6%9e%84/micro-service/pattern-overview.md?filename=change-me.md&value=---%0Atitle%3A+%22Long+Page+Title%22%0AlinkTitle%3A+%22Short+Nav+Title%22%0Aweight%3A+100%0Adescription%3A+%3E-%0A+++++Page+description+for+heading+and+indexes.%0A---%0A%0A%23%23+Heading%0A%0AEdit+this+template+to+create+your+new+page.%0A%0A%2A+Give+it+a+good+name%2C+ending+in+%60.md%60+-+e.g.+%60getting-started.md%60%0A%2A+Edit+the+%22front+matter%22+section+at+the+top+of+the+page+%28weight+controls+how+its+ordered+amongst+other+pages+in+the+same+directory%3B+lowest+number+first%29.%0A%2A+Add+a+good+commit+message+at+the+bottom+of+the+page+%28%3C80+characters%3B+use+the+extended+description+field+for+more+detail%29.%0A%2A+Create+a+new+branch+so+you+can+preview+your+new+file+and+request+a+review+via+Pull+Request.%0A" target=_blank><i class="fa fa-edit fa-fw"></i> 添加子页面</a>
 <a href="https://github.com/infilos/infilos.com/issues/new?title=%e6%a8%a1%e5%bc%8f%e6%a6%82%e8%a7%88" target=_blank><i class="fab fa-github fa-fw"></i> 提交文档问题</a>
 <a id=print href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/micro-service/_print/><i class="fa fa-print fa-fw"></i> 整节打印</a>
-</div>
-<div class=td-toc><nav id=TableOfContents>
+</div><div class=td-toc><nav id=TableOfContents>
 <ul>
-<li><a href=#设计目标>设计目标</a></li>
-<li><a href=#设计原则>设计原则</a></li>
-<li><a href=#模式概览>模式概览</a></li>
-<li><a href=#分解>分解</a>
+<li><a href=#设计目标>设计目标</a></li><li><a href=#设计原则>设计原则</a></li><li><a href=#模式概览>模式概览</a></li><li><a href=#分解>分解</a>
 <ul>
-<li><a href=#按业务功能分解>按业务功能分解</a></li>
-<li><a href=#按问题子域分解>按问题子域分解</a></li>
-<li><a href=#按事务2pc模式分解>按事务/2PC模式分解</a></li>
-<li><a href=#绞杀者模式strangler-pattern>绞杀者模式：Strangler Pattern</a></li>
-<li><a href=#隔仓模式bulkhead-pattern>隔仓模式：Bulkhead Pattern</a></li>
-<li><a href=#边车模式sidecar-pattern>边车模式：Sidecar Pattern</a></li>
-</ul>
-</li>
-<li><a href=#集成>集成</a>
+<li><a href=#按业务功能分解>按业务功能分解</a></li><li><a href=#按问题子域分解>按问题子域分解</a></li><li><a href=#按事务2pc模式分解>按事务/2PC模式分解</a></li><li><a href=#绞杀者模式strangler-pattern>绞杀者模式：Strangler Pattern</a></li><li><a href=#隔仓模式bulkhead-pattern>隔仓模式：Bulkhead Pattern</a></li><li><a href=#边车模式sidecar-pattern>边车模式：Sidecar Pattern</a></li></ul></li><li><a href=#集成>集成</a>
 <ul>
-<li><a href=#网关模式api-gateway>网关模式：API Gateway</a></li>
-<li><a href=#聚合器模式aggregator-pattern>聚合器模式：Aggregator Pattern</a></li>
-<li><a href=#代理模式>代理模式</a></li>
-<li><a href=#网关路由模式>网关路由模式</a></li>
-<li><a href=#链式服务模式>链式服务模式</a></li>
-<li><a href=#分支模式>分支模式</a></li>
-<li><a href=#客户端ui组合模式>客户端UI组合模式</a></li>
-</ul>
-</li>
-<li><a href=#数据库>数据库</a>
+<li><a href=#网关模式api-gateway>网关模式：API Gateway</a></li><li><a href=#聚合器模式aggregator-pattern>聚合器模式：Aggregator Pattern</a></li><li><a href=#代理模式>代理模式</a></li><li><a href=#网关路由模式>网关路由模式</a></li><li><a href=#链式服务模式>链式服务模式</a></li><li><a href=#分支模式>分支模式</a></li><li><a href=#客户端ui组合模式>客户端UI组合模式</a></li></ul></li><li><a href=#数据库>数据库</a>
 <ul>
-<li><a href=#每个服务一套数据库>每个服务一套数据库</a></li>
-<li><a href=#服务间共享数据库>服务间共享数据库</a></li>
-<li><a href=#命令和查询职责分离-cqrs>命令和查询职责分离 (CQRS)</a></li>
-<li><a href=#事件驱动>事件驱动</a></li>
-<li><a href=#saga-模式>Saga 模式</a></li>
-</ul>
-</li>
-<li><a href=#可观测性>可观测性</a>
+<li><a href=#每个服务一套数据库>每个服务一套数据库</a></li><li><a href=#服务间共享数据库>服务间共享数据库</a></li><li><a href=#命令和查询职责分离-cqrs>命令和查询职责分离 (CQRS)</a></li><li><a href=#事件驱动>事件驱动</a></li><li><a href=#saga-模式>Saga 模式</a></li></ul></li><li><a href=#可观测性>可观测性</a>
 <ul>
-<li><a href=#日志聚合>日志聚合</a></li>
-<li><a href=#性能指标>性能指标</a></li>
-<li><a href=#分布式链路追踪>分布式链路追踪</a></li>
-<li><a href=#健康检查>健康检查</a></li>
-</ul>
-</li>
-<li><a href=#横切关注点>横切关注点</a>
+<li><a href=#日志聚合>日志聚合</a></li><li><a href=#性能指标>性能指标</a></li><li><a href=#分布式链路追踪>分布式链路追踪</a></li><li><a href=#健康检查>健康检查</a></li></ul></li><li><a href=#横切关注点>横切关注点</a>
 <ul>
-<li><a href=#外部配置>外部配置</a></li>
-<li><a href=#服务发现模式>服务发现模式</a></li>
-<li><a href=#熔断器模式>熔断器模式</a></li>
-<li><a href=#蓝绿部署模式>蓝绿部署模式</a></li>
-</ul>
-</li>
-<li><a href=#参考资料>参考资料</a></li>
-</ul>
-</nav></div>
-</aside>
-<main class="col-12 col-md-9 col-xl-8 pl-md-5" role=main>
+<li><a href=#外部配置>外部配置</a></li><li><a href=#服务发现模式>服务发现模式</a></li><li><a href=#熔断器模式>熔断器模式</a></li><li><a href=#蓝绿部署模式>蓝绿部署模式</a></li></ul></li><li><a href=#参考资料>参考资料</a></li></ul></nav></div></aside><main class="col-12 col-md-9 col-xl-8 pl-md-5" role=main>
 <nav aria-label=breadcrumb class="d-none d-md-block d-print-none">
 <ol class="breadcrumb spb-1">
 <li class=breadcrumb-item>
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/>架构模式</a>
-</li>
-<li class=breadcrumb-item>
+</li><li class=breadcrumb-item>
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/micro-service/>微服务架构</a>
-</li>
-<li class="breadcrumb-item active" aria-current=page>
+</li><li class="breadcrumb-item active" aria-current=page>
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/micro-service/pattern-overview/>模式概览</a>
-</li>
-</ol>
-</nav>
-<div class=td-content>
-<h1>模式概览</h1>
-<header class=article-meta>
-</header>
-<h2 id=设计目标>设计目标</h2>
-<ul>
-<li>缩减成本：降低设计、实现和维护 IT 服务的总体成本。</li>
-<li>加快发布：加快服务从想法到部署的落地速度。</li>
-<li>增强弹性：提升服务网络的弹性。</li>
-<li>开启可见性：支持为服务和网络提供更好的可见性。</li>
-</ul>
-<h2 id=设计原则>设计原则</h2>
-<ul>
-<li>可扩展性</li>
-<li>可用性</li>
-<li>韧性</li>
-<li>灵活性</li>
-<li>自治性—独立自主性</li>
-<li>去中心化治理</li>
-<li>故障隔离</li>
-<li>自动装配</li>
-<li>持续交付—基于 DevOps</li>
-</ul>
-<h2 id=模式概览>模式概览</h2>
-<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20210507224617.png style=display:block;width:80% alt=NAME align=center> </div>
-<h2 id=分解>分解</h2>
-<h3 id=按业务功能分解>按业务功能分解</h3>
-<p>说白了，微服务就是要应用单一职责原则，把服务改造成松耦合式的。它可以按照业务功能进行分解。定义和业务功能相对应的服务。业务功能是一个来自业务架构建模 [2] 的概念。它是一个企业为了创造价值而要去做的某些事情。一个业务功能往往对应于一个业务对象，比如：</p>
-<ul>
-<li>订单管理负责订单</li>
-<li>客户管理则是负责客户</li>
-</ul>
-<h3 id=按问题子域分解>按问题子域分解</h3>
-<p>按照业务功能来分解一个应用程序可能会是一个不错的开始，但是你终将会遇到所谓的“神类”，它很难再被分解。这些类将在多个服务之间都是通用的。可以定义一些和领域驱动设计（DDD）里面的子域相对应的服务。DDD 把应用程序的问题空间 —— 也即是业务 —— 称之为域。一个域由多个子域组成。每个子域对应业务的各个不同部分。</p>
-<p>子域可以分为如下几类：</p>
-<ul>
-<li>核心：业务的核心竞争力以及应用程序最有价值的部分</li>
-<li>支撑：和业务有关但并不是一个核心竞争力。这些可以在内部实现也可以外包</li>
-<li>通用：不特定于业务，而且在理想情况下可以使用现成的软件实现</li>
-</ul>
-<p>比如一个订单管理的子域包括：</p>
-<ul>
-<li>产品目录服务</li>
-<li>库存管理服务</li>
-<li>订单管理服务</li>
-<li>配送管理服务</li>
-</ul>
-<h3 id=按事务2pc模式分解>按事务/2PC模式分解</h3>
-<p>你可以通过事务分解服务。然后，这样一来系统里将会存在多个事务。事务处理协调器[3]是分布式事务处理的重要参与者之一。分布式事务包括两个步骤：</p>
-<ul>
-<li>准备阶段 —— 在这个阶段，事务的所有参与者都准备提交并通知协调员他们已准备好完成事务</li>
-<li>提交或回滚阶段 —— 在这个阶段，事务协调器向所有参与者发出提交或回滚命令</li>
-</ul>
-<p>2PC 的问题在于，和单个微服务的运行时间相比，它显得相当慢。即便这些微服务跑在相同的网络里，它们之间的事务协调也确实会减慢系统速度，因此这种方法通常不适用于高负载情况。</p>
-<h3 id=绞杀者模式strangler-pattern>绞杀者模式：Strangler Pattern</h3>
-<p>上面三种，我们看到的这几个设计模式都是用来分解绿场(Greenfield)的应用程序，但是往往我们所做的工作中有 80％ 是针对灰场(Brownfield)应用程序，它们是一些大型的单体应用程序(历史遗留的代码库)。</p>
-<p>绞杀者模式可以解决这类问题。它会创建两个单独的应用程序，它们并排跑在同一个 URI 空间里。随着时间的流逝，直到最后，新重构的应用程序会“干掉”或替换原有的应用程序，此时就可以关掉那个老的单体应用程序。绞杀应用程序的步骤分别是转换、共存和消除[4]：</p>
-<ul>
-<li>转换：Transform，使用现代方法创建一个并行的全新站点。</li>
-<li>共存：Coexist，让现有站点保留一段时间。把针对现有站点的访问重定向到新站点，以便逐步实现所需功能。</li>
-<li>消除：Eliminate，从现有站点中删除旧功能。</li>
-</ul>
-<h3 id=隔仓模式bulkhead-pattern>隔仓模式：Bulkhead Pattern</h3>
-<p>让一个应用程序的元素和池子相对隔离，这样一来，其他应用程序将可以继续正常工作。这种模式被称为“隔舱”，因为它类似于船体的分段分区。根据使用者负载和可用性要求，将服务实例分成不同的组。这种设计有助于隔离故障，并允许用户即使在故障期间仍可为某些使用者维持服务。</p>
-<h3 id=边车模式sidecar-pattern>边车模式：Sidecar Pattern</h3>
-<p>该模式将一个应用程序的组件部署到一个单独的处理器容器里以提供隔离和封装。它还允许应用程序由异构的组件和技术组成。这种模式被称为边车模式（Sidecar），因为它类似于连接到摩托车的侧边车。在该模式中，侧边车会附加到父应用程序，并为该应用程序提供功能支持。Sidecar 还与父应用程序共享相同的生命周期，并与父应用程序一起创建和退出。Sidecar 模式有时也称为 sidekick 模式，这是我们在文章中列出的最后一个分解模式。</p>
-<h2 id=集成>集成</h2>
-<h3 id=网关模式api-gateway>网关模式：API Gateway</h3>
-<p>当一个应用程序被分解成多个较小的微服务时，这里会出现一些需要解决的问题：</p>
-<ul>
-<li>存在不同渠道对多个微服务的多次调用</li>
-<li>需要处理不同类型的协议</li>
-<li>不同的消费者可能需要不同的响应格式</li>
-</ul>
-<p>API 网关有助于解决微服务实现引发的诸多问题，而不仅限于上述提到的这些。</p>
-<ul>
-<li>API 网关是任何微服务调用的单一入口点</li>
-<li>它可以用作将请求路由到相关微服务的代理服务</li>
-<li>它可以汇总结果并发送回消费者</li>
-<li>该解决方案可以为每种特定类型的客户端创建一个细粒度的 API</li>
-<li>它还可以转换协议请求并做出响应</li>
-<li>它也可以承担微服务的身份验证/授权的责任。</li>
-</ul>
-<h3 id=聚合器模式aggregator-pattern>聚合器模式：Aggregator Pattern</h3>
-<p>将业务功能分解成几个较小的逻辑代码段后就有必要考虑如何协同每个服务返回的数据。不能把这个职责留给消费者。</p>
-<p>聚合器模式有助于解决这个问题。**它讨论了如何聚合来自不同服务的数据，然后将最终响应发送给消费者。**这里有两种实现方式[6]：</p>
-<ol>
-<li>一个组合微服务将调用所有必需的微服务，合并数据，然后在发送回数据之前对其进行转换合成。</li>
-<li>一个 API 网关还可以将请求划分成多个微服务，然后在将数据发送给使用者之前汇总数据。</li>
-</ol>
-<p>如果要应用一些业务逻辑的话，建议选择一个组合式的微服务。除此之外，API 网关作为这个问题的解决方案已经是既定的事实标准。</p>
-<h3 id=代理模式>代理模式</h3>
-<p>针对 API 网关，我们只是借助它来对外公开我们的微服务。引入 API 网关后，我们得以获得一些像安全性和对 API 进行分类这样的 API 层面功能。在这个例子里，API 网关有三个 API 模块：</p>
-<ol>
+</li></ol></nav><div class=td-content>
+<h1>模式概览</h1><header class=article-meta>
+</header><h2 id=设计目标>设计目标</h2><ul>
+<li>缩减成本：降低设计、实现和维护 IT 服务的总体成本。</li><li>加快发布：加快服务从想法到部署的落地速度。</li><li>增强弹性：提升服务网络的弹性。</li><li>开启可见性：支持为服务和网络提供更好的可见性。</li></ul><h2 id=设计原则>设计原则</h2><ul>
+<li>可扩展性</li><li>可用性</li><li>韧性</li><li>灵活性</li><li>自治性—独立自主性</li><li>去中心化治理</li><li>故障隔离</li><li>自动装配</li><li>持续交付—基于 DevOps</li></ul><h2 id=模式概览>模式概览</h2><div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20210507224617.png style=display:block;width:80% alt=NAME align=center> </div><h2 id=分解>分解</h2><h3 id=按业务功能分解>按业务功能分解</h3><p>说白了，微服务就是要应用单一职责原则，把服务改造成松耦合式的。它可以按照业务功能进行分解。定义和业务功能相对应的服务。业务功能是一个来自业务架构建模 [2] 的概念。它是一个企业为了创造价值而要去做的某些事情。一个业务功能往往对应于一个业务对象，比如：</p><ul>
+<li>订单管理负责订单</li><li>客户管理则是负责客户</li></ul><h3 id=按问题子域分解>按问题子域分解</h3><p>按照业务功能来分解一个应用程序可能会是一个不错的开始，但是你终将会遇到所谓的“神类”，它很难再被分解。这些类将在多个服务之间都是通用的。可以定义一些和领域驱动设计（DDD）里面的子域相对应的服务。DDD 把应用程序的问题空间 —— 也即是业务 —— 称之为域。一个域由多个子域组成。每个子域对应业务的各个不同部分。</p><p>子域可以分为如下几类：</p><ul>
+<li>核心：业务的核心竞争力以及应用程序最有价值的部分</li><li>支撑：和业务有关但并不是一个核心竞争力。这些可以在内部实现也可以外包</li><li>通用：不特定于业务，而且在理想情况下可以使用现成的软件实现</li></ul><p>比如一个订单管理的子域包括：</p><ul>
+<li>产品目录服务</li><li>库存管理服务</li><li>订单管理服务</li><li>配送管理服务</li></ul><h3 id=按事务2pc模式分解>按事务/2PC模式分解</h3><p>你可以通过事务分解服务。然后，这样一来系统里将会存在多个事务。事务处理协调器[3]是分布式事务处理的重要参与者之一。分布式事务包括两个步骤：</p><ul>
+<li>准备阶段 —— 在这个阶段，事务的所有参与者都准备提交并通知协调员他们已准备好完成事务</li><li>提交或回滚阶段 —— 在这个阶段，事务协调器向所有参与者发出提交或回滚命令</li></ul><p>2PC 的问题在于，和单个微服务的运行时间相比，它显得相当慢。即便这些微服务跑在相同的网络里，它们之间的事务协调也确实会减慢系统速度，因此这种方法通常不适用于高负载情况。</p><h3 id=绞杀者模式strangler-pattern>绞杀者模式：Strangler Pattern</h3><p>上面三种，我们看到的这几个设计模式都是用来分解绿场(Greenfield)的应用程序，但是往往我们所做的工作中有 80％ 是针对灰场(Brownfield)应用程序，它们是一些大型的单体应用程序(历史遗留的代码库)。</p><p>绞杀者模式可以解决这类问题。它会创建两个单独的应用程序，它们并排跑在同一个 URI 空间里。随着时间的流逝，直到最后，新重构的应用程序会“干掉”或替换原有的应用程序，此时就可以关掉那个老的单体应用程序。绞杀应用程序的步骤分别是转换、共存和消除[4]：</p><ul>
+<li>转换：Transform，使用现代方法创建一个并行的全新站点。</li><li>共存：Coexist，让现有站点保留一段时间。把针对现有站点的访问重定向到新站点，以便逐步实现所需功能。</li><li>消除：Eliminate，从现有站点中删除旧功能。</li></ul><h3 id=隔仓模式bulkhead-pattern>隔仓模式：Bulkhead Pattern</h3><p>让一个应用程序的元素和池子相对隔离，这样一来，其他应用程序将可以继续正常工作。这种模式被称为“隔舱”，因为它类似于船体的分段分区。根据使用者负载和可用性要求，将服务实例分成不同的组。这种设计有助于隔离故障，并允许用户即使在故障期间仍可为某些使用者维持服务。</p><h3 id=边车模式sidecar-pattern>边车模式：Sidecar Pattern</h3><p>该模式将一个应用程序的组件部署到一个单独的处理器容器里以提供隔离和封装。它还允许应用程序由异构的组件和技术组成。这种模式被称为边车模式（Sidecar），因为它类似于连接到摩托车的侧边车。在该模式中，侧边车会附加到父应用程序，并为该应用程序提供功能支持。Sidecar 还与父应用程序共享相同的生命周期，并与父应用程序一起创建和退出。Sidecar 模式有时也称为 sidekick 模式，这是我们在文章中列出的最后一个分解模式。</p><h2 id=集成>集成</h2><h3 id=网关模式api-gateway>网关模式：API Gateway</h3><p>当一个应用程序被分解成多个较小的微服务时，这里会出现一些需要解决的问题：</p><ul>
+<li>存在不同渠道对多个微服务的多次调用</li><li>需要处理不同类型的协议</li><li>不同的消费者可能需要不同的响应格式</li></ul><p>API 网关有助于解决微服务实现引发的诸多问题，而不仅限于上述提到的这些。</p><ul>
+<li>API 网关是任何微服务调用的单一入口点</li><li>它可以用作将请求路由到相关微服务的代理服务</li><li>它可以汇总结果并发送回消费者</li><li>该解决方案可以为每种特定类型的客户端创建一个细粒度的 API</li><li>它还可以转换协议请求并做出响应</li><li>它也可以承担微服务的身份验证/授权的责任。</li></ul><h3 id=聚合器模式aggregator-pattern>聚合器模式：Aggregator Pattern</h3><p>将业务功能分解成几个较小的逻辑代码段后就有必要考虑如何协同每个服务返回的数据。不能把这个职责留给消费者。</p><p>聚合器模式有助于解决这个问题。**它讨论了如何聚合来自不同服务的数据，然后将最终响应发送给消费者。**这里有两种实现方式[6]：</p><ol>
+<li>一个组合微服务将调用所有必需的微服务，合并数据，然后在发送回数据之前对其进行转换合成。</li><li>一个 API 网关还可以将请求划分成多个微服务，然后在将数据发送给使用者之前汇总数据。</li></ol><p>如果要应用一些业务逻辑的话，建议选择一个组合式的微服务。除此之外，API 网关作为这个问题的解决方案已经是既定的事实标准。</p><h3 id=代理模式>代理模式</h3><p>针对 API 网关，我们只是借助它来对外公开我们的微服务。引入 API 网关后，我们得以获得一些像安全性和对 API 进行分类这样的 API 层面功能。在这个例子里，API 网关有三个 API 模块：</p><ol>
 <li>
-<p>移动端 API，它实现了 FTGO 移动客户端的 API</p>
-</li>
+<p>移动端 API，它实现了 FTGO 移动客户端的 API</p></li><li>
+<p>浏览器端 API，它实现了在浏览器里运行的 JavaScript 应用程序的 API</p></li><li>
+<p>公共API，它实现了一些第三方开发人员需要的 API</p></li></ol><h3 id=网关路由模式>网关路由模式</h3><p>API 网关负责路由请求。一个 API 网关通过将请求路由到相应的服务来实现一些 API 操作。当 API 网关接收到请求时，它会查询一个路由映射，该路由映射指定了将请求路由到哪个服务。一个路由映射可以将一个 HTTP 方法和路径映射到服务的 HTTP URL。这种做法和像 NGINX 这样的 Web 服务器提供的反向代理功能一样。</p><h3 id=链式服务模式>链式服务模式</h3><p>单个服务或者微服务将会有多级依赖，举个例子：Sale 的微服务依赖 Product 微服务和 Order 微服务。链式微服务设计模式将帮助你提供合并后的请求结果。microservice-1 接收到请求后，该请求随后与 microservice-2 进行通信，还有可能正在和 microservice-3 通信。所有这些服务都是同步调用。</p><h3 id=分支模式>分支模式</h3><p>一个微服务可能需要从包括其他微服务在内的多个来源获取数据。分支微服务模式是聚合器和链式设计模式的混合，并允许来自两个或多个微服务的同时请求/响应处理。调用的微服务可以是一个微服务链。分支模式还可用于根据你的业务需求调用不同的微服务链或单个链。</p><h3 id=客户端ui组合模式>客户端UI组合模式</h3><p>通过分解业务功能/子域来开发服务时，负责用户体验的服务必须从多个微服务中提取数据。在一个单体世界里，过去只有一个从 UI 到后端服务的调用，它会检索所有数据然后刷新/提交 UI 页面。但是，现在不一样了。</p><p>对于微服务而言，我们必须把 UI 设计成一个具有屏幕/页面的多个板块/区域的框架。每个板块都将调用一个单独的后端微服务以提取数据。诸如 AngularJS 和 ReactJS 之类的框架可以帮助我们轻松地实现这一点。</p><p>这些屏幕称为单页应用程序（SPA）。每个团队都开发一个客户端 UI 组件，比如一个 AngularJS 指令，该组件实现其服务的页面/屏幕区域。UI 团队负责通过组合多个特定服务的 UI 组件来实现构建页面/屏幕的页面框架。</p><h2 id=数据库>数据库</h2><p>给微服务定义数据库架构时，我们需要考虑以下几点：</p><ol>
 <li>
-<p>浏览器端 API，它实现了在浏览器里运行的 JavaScript 应用程序的 API</p>
-</li>
+<p>服务必须是松耦合的。这样它们可以独立开发，部署和扩展</p></li><li>
+<p>业务事务可能会强制跨越多个服务的不变量</p></li><li>
+<p>一些业务事务需要查询多个服务的数据</p></li><li>
+<p>为了可扩展性考虑，数据库有时候必须是可复制和共享的</p></li><li>
+<p>不同服务存在不同的数据存储要求</p></li></ol><h3 id=每个服务一套数据库>每个服务一套数据库</h3><p>为了解决上述问题，必须为每个微服务设计一个数据库。它必须仅专用于该服务。应当只能通过微服务的 API 访问它。其他服务无法直接访问它。比如，针对关系型数据库，我们可以采用每个服务使用单独的专用表(private-tables-per-service)，每个服务单独的数据库模式(schema-per-service)或每个服务单独的数据库服务器(database-server-per-service)。</p><h3 id=服务间共享数据库>服务间共享数据库</h3><p>我们已经说过，在微服务里，为每个服务分配一套单独的数据库是理想方案。采用共享数据库在微服务里属于反模式。但是，如果应用程序是一个单体应用而且试图拆分成微服务，那么反正规化就不那么容易了。在后面的阶段里，我们可以转到每个服务一套数据库的模式，直到我们完全做到了这一点。服务之间共享数据库并不理想，但是对于上述情况，它是一个切实可行的解决方案。大多数人认为这是微服务的反模式，但是对于灰场应用程序，这是将应用程序分解成更小逻辑部分的一个很好的开始。值得一提的是，这不应当应用于绿场应用程序。</p><h3 id=命令和查询职责分离-cqrs>命令和查询职责分离 (CQRS)</h3><p>一旦实现了每个服务分配单独一套数据库（database-per-service），自然就会产生查询需求，这需要联合来自多个服务的数据。然而这是不可能的。CQRS 建议将应用程序分成两部分 —— 命令端和查询端。</p><ul>
+<li>命令端处理创建，更新和删除请求</li><li>查询端通过使用物化视图来处理查询部分</li></ul><p>这通常会搭配事件驱动模式(event sourcing pattern)一起使用，一旦有任何数据更改便会创建对应的事件。通过订阅事件流，我们便可以让物化视图保持更新。</p><h3 id=事件驱动>事件驱动</h3><p>绝大多数应用程序需要用到数据，典型的做法就是应用程序要维护当前状态。例如，在传统的创建，读取，更新和删除(CRUD)模型中，典型的数据流程是从存储中读取数据。它也包含了经常使用事务导致锁定数据的限制。</p><p>事件驱动模式[7]定义了一种方法，用于处理由一系列事件驱动的数据操作，每个事件都记录在一个 append-only 的存储中。应用程序代码向事件存储发送一系列事件，这些事件命令式的描述了对数据执行的每个操作，它们会被持久化到事件存储。每个事件代表一组数据更改（例如，AddedItemToOrder）。</p><p>这些事件将保留在充当记录系统的一个事件存储里。事件存储发布的事件的典型用途是在应用程序触发的一些动作更改实体时维护这些实体的物化视图，以及与外部系统集成。例如，一个系统可以维护一个用于填充 UI 部分所有客户订单的物化视图。当应用程序添加新订单，添加或删除订单中的项目以及添加运输信息时，描述这些更改的事件将会得到处理并用于更新物化视图。下图展示了该模式的一个概览。</p><div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20210507231634.png style=display:block;width:80% alt=NAME align=center> </div><h3 id=saga-模式>Saga 模式</h3><p>当每个服务都有它们自己的数据库，并且一个业务事务跨越多个服务时，我们该如何确保各个服务之间的数据一致性呢？ 每个请求都有一个补偿请求，它会在请求失败时执行。这可以通过两种方式实现：</p><ul>
 <li>
-<p>公共API，它实现了一些第三方开发人员需要的 API</p>
-</li>
-</ol>
-<h3 id=网关路由模式>网关路由模式</h3>
-<p>API 网关负责路由请求。一个 API 网关通过将请求路由到相应的服务来实现一些 API 操作。当 API 网关接收到请求时，它会查询一个路由映射，该路由映射指定了将请求路由到哪个服务。一个路由映射可以将一个 HTTP 方法和路径映射到服务的 HTTP URL。这种做法和像 NGINX 这样的 Web 服务器提供的反向代理功能一样。</p>
-<h3 id=链式服务模式>链式服务模式</h3>
-<p>单个服务或者微服务将会有多级依赖，举个例子：Sale 的微服务依赖 Product 微服务和 Order 微服务。链式微服务设计模式将帮助你提供合并后的请求结果。microservice-1 接收到请求后，该请求随后与 microservice-2 进行通信，还有可能正在和 microservice-3 通信。所有这些服务都是同步调用。</p>
-<h3 id=分支模式>分支模式</h3>
-<p>一个微服务可能需要从包括其他微服务在内的多个来源获取数据。分支微服务模式是聚合器和链式设计模式的混合，并允许来自两个或多个微服务的同时请求/响应处理。调用的微服务可以是一个微服务链。分支模式还可用于根据你的业务需求调用不同的微服务链或单个链。</p>
-<h3 id=客户端ui组合模式>客户端UI组合模式</h3>
-<p>通过分解业务功能/子域来开发服务时，负责用户体验的服务必须从多个微服务中提取数据。在一个单体世界里，过去只有一个从 UI 到后端服务的调用，它会检索所有数据然后刷新/提交 UI 页面。但是，现在不一样了。</p>
-<p>对于微服务而言，我们必须把 UI 设计成一个具有屏幕/页面的多个板块/区域的框架。每个板块都将调用一个单独的后端微服务以提取数据。诸如 AngularJS 和 ReactJS 之类的框架可以帮助我们轻松地实现这一点。</p>
-<p>这些屏幕称为单页应用程序（SPA）。每个团队都开发一个客户端 UI 组件，比如一个 AngularJS 指令，该组件实现其服务的页面/屏幕区域。UI 团队负责通过组合多个特定服务的 UI 组件来实现构建页面/屏幕的页面框架。</p>
-<h2 id=数据库>数据库</h2>
-<p>给微服务定义数据库架构时，我们需要考虑以下几点：</p>
-<ol>
-<li>
-<p>服务必须是松耦合的。这样它们可以独立开发，部署和扩展</p>
-</li>
-<li>
-<p>业务事务可能会强制跨越多个服务的不变量</p>
-</li>
-<li>
-<p>一些业务事务需要查询多个服务的数据</p>
-</li>
-<li>
-<p>为了可扩展性考虑，数据库有时候必须是可复制和共享的</p>
-</li>
-<li>
-<p>不同服务存在不同的数据存储要求</p>
-</li>
-</ol>
-<h3 id=每个服务一套数据库>每个服务一套数据库</h3>
-<p>为了解决上述问题，必须为每个微服务设计一个数据库。它必须仅专用于该服务。应当只能通过微服务的 API 访问它。其他服务无法直接访问它。比如，针对关系型数据库，我们可以采用每个服务使用单独的专用表(private-tables-per-service)，每个服务单独的数据库模式(schema-per-service)或每个服务单独的数据库服务器(database-server-per-service)。</p>
-<h3 id=服务间共享数据库>服务间共享数据库</h3>
-<p>我们已经说过，在微服务里，为每个服务分配一套单独的数据库是理想方案。采用共享数据库在微服务里属于反模式。但是，如果应用程序是一个单体应用而且试图拆分成微服务，那么反正规化就不那么容易了。在后面的阶段里，我们可以转到每个服务一套数据库的模式，直到我们完全做到了这一点。服务之间共享数据库并不理想，但是对于上述情况，它是一个切实可行的解决方案。大多数人认为这是微服务的反模式，但是对于灰场应用程序，这是将应用程序分解成更小逻辑部分的一个很好的开始。值得一提的是，这不应当应用于绿场应用程序。</p>
-<h3 id=命令和查询职责分离-cqrs>命令和查询职责分离 (CQRS)</h3>
-<p>一旦实现了每个服务分配单独一套数据库（database-per-service），自然就会产生查询需求，这需要联合来自多个服务的数据。然而这是不可能的。CQRS 建议将应用程序分成两部分 —— 命令端和查询端。</p>
-<ul>
-<li>命令端处理创建，更新和删除请求</li>
-<li>查询端通过使用物化视图来处理查询部分</li>
-</ul>
-<p>这通常会搭配事件驱动模式(event sourcing pattern)一起使用，一旦有任何数据更改便会创建对应的事件。通过订阅事件流，我们便可以让物化视图保持更新。</p>
-<h3 id=事件驱动>事件驱动</h3>
-<p>绝大多数应用程序需要用到数据，典型的做法就是应用程序要维护当前状态。例如，在传统的创建，读取，更新和删除(CRUD)模型中，典型的数据流程是从存储中读取数据。它也包含了经常使用事务导致锁定数据的限制。</p>
-<p>事件驱动模式[7]定义了一种方法，用于处理由一系列事件驱动的数据操作，每个事件都记录在一个 append-only 的存储中。应用程序代码向事件存储发送一系列事件，这些事件命令式的描述了对数据执行的每个操作，它们会被持久化到事件存储。每个事件代表一组数据更改（例如，AddedItemToOrder）。</p>
-<p>这些事件将保留在充当记录系统的一个事件存储里。事件存储发布的事件的典型用途是在应用程序触发的一些动作更改实体时维护这些实体的物化视图，以及与外部系统集成。例如，一个系统可以维护一个用于填充 UI 部分所有客户订单的物化视图。当应用程序添加新订单，添加或删除订单中的项目以及添加运输信息时，描述这些更改的事件将会得到处理并用于更新物化视图。下图展示了该模式的一个概览。</p>
-<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20210507231634.png style=display:block;width:80% alt=NAME align=center> </div>
-<h3 id=saga-模式>Saga 模式</h3>
-<p>当每个服务都有它们自己的数据库，并且一个业务事务跨越多个服务时，我们该如何确保各个服务之间的数据一致性呢？ 每个请求都有一个补偿请求，它会在请求失败时执行。这可以通过两种方式实现：</p>
-<ul>
-<li>
-<p>编舞（Choreography） —— 在没有中央协调的情况下，每个服务都会生成并侦听另一个服务的事件，并决定是否应该采取措施。编舞是一种指定两个或多个参与方的方案。任何一方都无法控制对方的流程，或者对这些流程有任何可见性，无法协调他们的活动和流程以共享信息和值。当需要跨控制/可见性域进行协调时，请使用编舞的方式。参考一个简单场景，你可以把编舞看作和网络协议类似。它规定了各方之间可接受的请求和响应模式。</p>
-<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20210507231732.png style=display:block;width:50% alt=NAME align=center> </div>
-</li>
-<li>
-<p>编排（Orchestration） —— 一个编排器（对象）会负责 saga 的决策和业务逻辑排序。此时你可以控制流程中的所有参与者。当它们全部处于一个控制域时，你可以控制该活动的流程。当然，这通常是你被指派到一个拥有控制权的组织里制定业务流程。</p>
-<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20210507231756.png style=display:block;width:50% alt=NAME align=center> </div>
-</li>
-</ul>
-<h2 id=可观测性>可观测性</h2>
-<h3 id=日志聚合>日志聚合</h3>
-<p>考虑一个应用程序包含多个服务的用例。请求通常跨越多个服务实例。每个服务实例均采用标准格式生成日志文件。我们需要一个集中式的日志记录服务，该服务可以汇总每个服务实例的日志。用户可以搜索和分析日志。他们可以配置在某些消息出现在日志中时触发告警。例如，PCF 就有日志聚合器，它在应用侧从 PCF 平台的每个组件（router、controller、diego等）收集日志。AWS Cloud Watch 也是这样做的。</p>
-<h3 id=性能指标>性能指标</h3>
-<p>当服务组合由于引入了微服务架构而增加时，保持对事务的监控就变得尤为关键了，如此一来就可以监控这些模式，而当有问题发生时便会发送告警。</p>
-<p>此外，需要一个度量服务来收集有关单个操作的统计信息。它应当聚合一个应用服务的指标数据，它会用来报告和告警。这里有两种用于汇总指标的模型：</p>
-<ul>
-<li>推送 —— 服务将指标推送到指标服务，例如 NewRelic，AppDynamics</li>
-<li>提取 —— 指标服务从服务中提取指标，例如 Prometheus</li>
-</ul>
-<h3 id=分布式链路追踪>分布式链路追踪</h3>
-<p>在微服务架构里，请求通常跨越多个服务。每个服务通过跨越多个服务执行一个或多个操作来处理请求。在排障时，有一个 Trace ID 是很有帮助的，我们可以端对端地跟踪一个请求。</p>
-<p>解决方案便是引入一个事务ID。可以采用如下方式：</p>
-<ul>
-<li>为每个外部请求分配一个唯一的外部请求ID</li>
-<li>将外部请求ID传递给处理该请求链路的所有服务</li>
-<li>在所有日志消息中加入该外部请求ID</li>
-</ul>
-<h3 id=健康检查>健康检查</h3>
-<p>实施微服务架构后，服务可能会出现启动了但是无法处理事务的情况。每个服务都需要有一个可用于检查应用程序运行状况的 API 端点，例如 /health。该 API 应该检查主机的状态，与其他服务/基础设施的连接以及任何其他特定的逻辑。</p>
-<h2 id=横切关注点>横切关注点</h2>
-<h3 id=外部配置>外部配置</h3>
-<p>一个服务通常还会调用其他服务和数据库。对于dev，QA，UAT，Prod等每个环境而言，API 端点的 URL 或某些配置属性可能会有所不同。这些属性中的任何一个更改都可能需要重新构建和重新部署服务。</p>
-<p>为避免代码修改，可以使用配置。把所有配置放到外面，包括端点 URL 和证书。应用程序应该在启动时或运行时加载它们。这些可以在启动时由应用程序访问，也可以在不重新启动服务器的情况下进行刷新。</p>
-<h3 id=服务发现模式>服务发现模式</h3>
-<p>在微服务出现时，我们需要在调用服务方面解决一些问题。</p>
-<p>借助容器技术，IP地址可以动态地分配给服务实例。每次地址更改时，消费端服务都会中断并且需要手动更改。</p>
-<p>对于消费端服务来说，它们必须记住每个上游服务的 URL ，这就变成紧耦合了。</p>
-<p>为此，需要创建一个服务注册中心，该注册表将保留每个生产者服务的元数据和每个服务的配置。服务实例在启动时应当注册到注册中心，而在关闭时应当注销。服务发现有两种类型：</p>
-<ul>
-<li>客户端：例如：Netflix Eureka</li>
-<li>服务端：例如：AWS ALB</li>
-</ul>
-<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20210507232039.png style=display:block;width:50% alt=NAME align=center> </div>
-<h3 id=熔断器模式>熔断器模式</h3>
-<p>一个服务通常会通过调用其他服务来检索数据，而这时候下游服务可能已经挂了。这样的话，有两个问题：首先，请求将继续抵达挂了的服务，耗尽网络资源，并且降低性能。其次，用户体验将是糟糕且不可预测的。</p>
-<p>消费端服务应通过代理来调用远程服务，该代理的表现和一个电流断路器类似。当连续的故障数超过阈值时，断路器将跳闸，并且在超时期间内，所有调用远程服务的尝试都会立即失败。超时到期后，断路器将允许有限数量的测试请求通过。如果这些请求成功，断路器则将恢复正常运行。否则，如果发生故障的话，超时时间则将再次重新开始计算。如果某些操作失败概率很高的话，采取此模式有助于防止应用程序在故障发生后仍然不断尝试调用远程服务或访问共享资源。</p>
-<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20210507232056.png style=display:block;width:50% alt=NAME align=center> </div>
-<h3 id=蓝绿部署模式>蓝绿部署模式</h3>
-<p>使用微服务架构时，一个应用可以被拆分成许多个微服务。如果我们采用停止所有服务然后再部署改进版本的方式的话，宕机时间将是非常可观的，并且会影响业务。同样，回滚也将是一场噩梦。 蓝绿部署模式可以避免这种情况。</p>
-<p>实施蓝绿部署策略可以用来减少或消除宕机。它通过运行两个相同的生产环境，Blue 和Green 来实现这一目标。 假设 Green 是现有的活动实例，Blue 是该应用程序的新版本。在任何时候，只有一个环境处于活动状态，该活动环境为所有生产流量提供服务。所有云平台均提供了用于实施蓝绿部署的选项。</p>
-<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20210507232122.png style=display:block;width:50% alt=NAME align=center> </div>
-<h2 id=参考资料>参考资料</h2>
-<ul>
-<li>[1] “Microservice Architecture: Aligning Principles, Practices, and Culture” Book by Irakli Nadareishvili, Matt McLarty, and Michael Amundsen</li>
-<li>[2] <a href=https://microservices.io/patterns/decomposition/decompose-by-business-capability.html>https://microservices.io/patterns/decomposition/decompose-by-business-capability.html</a></li>
-<li>[3] <a href=https://www.baeldung.com/transactions-across-microservices>https://www.baeldung.com/transactions-across-microservices</a></li>
-<li>[4] <a href=https://developer.ibm.com/articles/cl-strangler-application-pattern-microservices-apps-trs/>https://developer.ibm.com/articles/cl-strangler-application-pattern-microservices-apps-trs/</a></li>
-<li>[5] <a href=https://docs.microsoft.com/en-us/azure/architecture/patterns/bulkhead>https://docs.microsoft.com/en-us/azure/architecture/patterns/bulkhead</a></li>
-<li>[6] <a href=https://dzone.com/articles/design-patterns-for-microservices>https://dzone.com/articles/design-patterns-for-microservices</a></li>
-<li>[7] <a href=https://docs.microsoft.com/en-us/azure/architecture/patterns/cqrs#event-sourcing-and-cqrs>https://docs.microsoft.com/en-us/azure/architecture/patterns/cqrs#event-sourcing-and-cqrs</a></li>
-<li>8] <a href=https://docs.microsoft.com/en-us/azure/architecture/patterns/event-sourcing>https://docs.microsoft.com/en-us/azure/architecture/patterns/event-sourcing</a></li>
-<li>[9] <a href=https://www.dineshonjava.com/microservices-with-spring-boot/>https://www.dineshonjava.com/microservices-with-spring-boot/</a></li>
-<li>[10] <a href=https://docs.microsoft.com/en-us/azure/architecture/patterns/circuit-breaker>https://docs.microsoft.com/en-us/azure/architecture/patterns/circuit-breaker</a></li>
-</ul>
-<style>.feedback--answer{display:inline-block}.feedback--answer-no{margin-left:1em}.feedback--response{display:none;margin-top:1em}.feedback--response__visible{display:block}</style>
-<div class=d-print-none>
-<h2 class=feedback--title>Feedback</h2>
-<p class=feedback--question>Was this page helpful?</p>
-<button class="btn btn-primary mb-4 feedback--answer feedback--answer-yes">Yes</button>
+<p>编舞（Choreography） —— 在没有中央协调的情况下，每个服务都会生成并侦听另一个服务的事件，并决定是否应该采取措施。编舞是一种指定两个或多个参与方的方案。任何一方都无法控制对方的流程，或者对这些流程有任何可见性，无法协调他们的活动和流程以共享信息和值。当需要跨控制/可见性域进行协调时，请使用编舞的方式。参考一个简单场景，你可以把编舞看作和网络协议类似。它规定了各方之间可接受的请求和响应模式。</p><div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20210507231732.png style=display:block;width:50% alt=NAME align=center> </div></li><li>
+<p>编排（Orchestration） —— 一个编排器（对象）会负责 saga 的决策和业务逻辑排序。此时你可以控制流程中的所有参与者。当它们全部处于一个控制域时，你可以控制该活动的流程。当然，这通常是你被指派到一个拥有控制权的组织里制定业务流程。</p><div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20210507231756.png style=display:block;width:50% alt=NAME align=center> </div></li></ul><h2 id=可观测性>可观测性</h2><h3 id=日志聚合>日志聚合</h3><p>考虑一个应用程序包含多个服务的用例。请求通常跨越多个服务实例。每个服务实例均采用标准格式生成日志文件。我们需要一个集中式的日志记录服务，该服务可以汇总每个服务实例的日志。用户可以搜索和分析日志。他们可以配置在某些消息出现在日志中时触发告警。例如，PCF 就有日志聚合器，它在应用侧从 PCF 平台的每个组件（router、controller、diego等）收集日志。AWS Cloud Watch 也是这样做的。</p><h3 id=性能指标>性能指标</h3><p>当服务组合由于引入了微服务架构而增加时，保持对事务的监控就变得尤为关键了，如此一来就可以监控这些模式，而当有问题发生时便会发送告警。</p><p>此外，需要一个度量服务来收集有关单个操作的统计信息。它应当聚合一个应用服务的指标数据，它会用来报告和告警。这里有两种用于汇总指标的模型：</p><ul>
+<li>推送 —— 服务将指标推送到指标服务，例如 NewRelic，AppDynamics</li><li>提取 —— 指标服务从服务中提取指标，例如 Prometheus</li></ul><h3 id=分布式链路追踪>分布式链路追踪</h3><p>在微服务架构里，请求通常跨越多个服务。每个服务通过跨越多个服务执行一个或多个操作来处理请求。在排障时，有一个 Trace ID 是很有帮助的，我们可以端对端地跟踪一个请求。</p><p>解决方案便是引入一个事务ID。可以采用如下方式：</p><ul>
+<li>为每个外部请求分配一个唯一的外部请求ID</li><li>将外部请求ID传递给处理该请求链路的所有服务</li><li>在所有日志消息中加入该外部请求ID</li></ul><h3 id=健康检查>健康检查</h3><p>实施微服务架构后，服务可能会出现启动了但是无法处理事务的情况。每个服务都需要有一个可用于检查应用程序运行状况的 API 端点，例如 /health。该 API 应该检查主机的状态，与其他服务/基础设施的连接以及任何其他特定的逻辑。</p><h2 id=横切关注点>横切关注点</h2><h3 id=外部配置>外部配置</h3><p>一个服务通常还会调用其他服务和数据库。对于dev，QA，UAT，Prod等每个环境而言，API 端点的 URL 或某些配置属性可能会有所不同。这些属性中的任何一个更改都可能需要重新构建和重新部署服务。</p><p>为避免代码修改，可以使用配置。把所有配置放到外面，包括端点 URL 和证书。应用程序应该在启动时或运行时加载它们。这些可以在启动时由应用程序访问，也可以在不重新启动服务器的情况下进行刷新。</p><h3 id=服务发现模式>服务发现模式</h3><p>在微服务出现时，我们需要在调用服务方面解决一些问题。</p><p>借助容器技术，IP地址可以动态地分配给服务实例。每次地址更改时，消费端服务都会中断并且需要手动更改。</p><p>对于消费端服务来说，它们必须记住每个上游服务的 URL ，这就变成紧耦合了。</p><p>为此，需要创建一个服务注册中心，该注册表将保留每个生产者服务的元数据和每个服务的配置。服务实例在启动时应当注册到注册中心，而在关闭时应当注销。服务发现有两种类型：</p><ul>
+<li>客户端：例如：Netflix Eureka</li><li>服务端：例如：AWS ALB</li></ul><div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20210507232039.png style=display:block;width:50% alt=NAME align=center> </div><h3 id=熔断器模式>熔断器模式</h3><p>一个服务通常会通过调用其他服务来检索数据，而这时候下游服务可能已经挂了。这样的话，有两个问题：首先，请求将继续抵达挂了的服务，耗尽网络资源，并且降低性能。其次，用户体验将是糟糕且不可预测的。</p><p>消费端服务应通过代理来调用远程服务，该代理的表现和一个电流断路器类似。当连续的故障数超过阈值时，断路器将跳闸，并且在超时期间内，所有调用远程服务的尝试都会立即失败。超时到期后，断路器将允许有限数量的测试请求通过。如果这些请求成功，断路器则将恢复正常运行。否则，如果发生故障的话，超时时间则将再次重新开始计算。如果某些操作失败概率很高的话，采取此模式有助于防止应用程序在故障发生后仍然不断尝试调用远程服务或访问共享资源。</p><div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20210507232056.png style=display:block;width:50% alt=NAME align=center> </div><h3 id=蓝绿部署模式>蓝绿部署模式</h3><p>使用微服务架构时，一个应用可以被拆分成许多个微服务。如果我们采用停止所有服务然后再部署改进版本的方式的话，宕机时间将是非常可观的，并且会影响业务。同样，回滚也将是一场噩梦。 蓝绿部署模式可以避免这种情况。</p><p>实施蓝绿部署策略可以用来减少或消除宕机。它通过运行两个相同的生产环境，Blue 和Green 来实现这一目标。 假设 Green 是现有的活动实例，Blue 是该应用程序的新版本。在任何时候，只有一个环境处于活动状态，该活动环境为所有生产流量提供服务。所有云平台均提供了用于实施蓝绿部署的选项。</p><div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20210507232122.png style=display:block;width:50% alt=NAME align=center> </div><h2 id=参考资料>参考资料</h2><ul>
+<li>[1] “Microservice Architecture: Aligning Principles, Practices, and Culture” Book by Irakli Nadareishvili, Matt McLarty, and Michael Amundsen</li><li>[2] <a href=https://microservices.io/patterns/decomposition/decompose-by-business-capability.html>https://microservices.io/patterns/decomposition/decompose-by-business-capability.html</a></li><li>[3] <a href=https://www.baeldung.com/transactions-across-microservices>https://www.baeldung.com/transactions-across-microservices</a></li><li>[4] <a href=https://developer.ibm.com/articles/cl-strangler-application-pattern-microservices-apps-trs/>https://developer.ibm.com/articles/cl-strangler-application-pattern-microservices-apps-trs/</a></li><li>[5] <a href=https://docs.microsoft.com/en-us/azure/architecture/patterns/bulkhead>https://docs.microsoft.com/en-us/azure/architecture/patterns/bulkhead</a></li><li>[6] <a href=https://dzone.com/articles/design-patterns-for-microservices>https://dzone.com/articles/design-patterns-for-microservices</a></li><li>[7] <a href=https://docs.microsoft.com/en-us/azure/architecture/patterns/cqrs#event-sourcing-and-cqrs>https://docs.microsoft.com/en-us/azure/architecture/patterns/cqrs#event-sourcing-and-cqrs</a></li><li>8] <a href=https://docs.microsoft.com/en-us/azure/architecture/patterns/event-sourcing>https://docs.microsoft.com/en-us/azure/architecture/patterns/event-sourcing</a></li><li>[9] <a href=https://www.dineshonjava.com/microservices-with-spring-boot/>https://www.dineshonjava.com/microservices-with-spring-boot/</a></li><li>[10] <a href=https://docs.microsoft.com/en-us/azure/architecture/patterns/circuit-breaker>https://docs.microsoft.com/en-us/azure/architecture/patterns/circuit-breaker</a></li></ul><style>.feedback--answer{display:inline-block}.feedback--answer-no{margin-left:1em}.feedback--response{display:none;margin-top:1em}.feedback--response__visible{display:block}</style><div class=d-print-none>
+<h2 class=feedback--title>Feedback</h2><p class=feedback--question>Was this page helpful?</p><button class="btn btn-primary mb-4 feedback--answer feedback--answer-yes">Yes</button>
 <button class="btn btn-primary mb-4 feedback--answer feedback--answer-no">No</button>
 <p class="feedback--response feedback--response-yes">
 Glad to hear it! Please <a href=https://github.com/infilos/infilos.com/issues/new>tell us how we can improve</a>.
-</p>
-<p class="feedback--response feedback--response-no">
+</p><p class="feedback--response feedback--response-no">
 Sorry to hear that. Please <a href=https://github.com/infilos/infilos.com/issues/new>tell us how we can improve</a>.
-</p>
-</div>
-<script>const yesButton=document.querySelector('.feedback--answer-yes'),noButton=document.querySelector('.feedback--answer-no'),yesResponse=document.querySelector('.feedback--response-yes'),noResponse=document.querySelector('.feedback--response-no'),disableButtons=()=>{yesButton.disabled=!0,noButton.disabled=!0},sendFeedback=b=>{if(typeof ga!='function')return;const a={command:'send',hitType:'event',category:'Helpful',action:'click',label:window.location.pathname,value:b};ga(a.command,a.hitType,a.category,a.action,a.label,a.value)};yesButton.addEventListener('click',()=>{yesResponse.classList.add('feedback--response__visible'),disableButtons(),sendFeedback(1)}),noButton.addEventListener('click',()=>{noResponse.classList.add('feedback--response__visible'),disableButtons(),sendFeedback(0)})</script>
+</p></div><script>const yesButton=document.querySelector(".feedback--answer-yes"),noButton=document.querySelector(".feedback--answer-no"),yesResponse=document.querySelector(".feedback--response-yes"),noResponse=document.querySelector(".feedback--response-no"),disableButtons=()=>{yesButton.disabled=!0,noButton.disabled=!0},sendFeedback=t=>{if(typeof ga!="function")return;const e={command:"send",hitType:"event",category:"Helpful",action:"click",label:window.location.pathname,value:t};ga(e.command,e.hitType,e.category,e.action,e.label,e.value)};yesButton.addEventListener("click",()=>{yesResponse.classList.add("feedback--response__visible"),disableButtons(),sendFeedback(1)}),noButton.addEventListener("click",()=>{noResponse.classList.add("feedback--response__visible"),disableButtons(),sendFeedback(0)})</script>
 <br>
-</div>
-</main>
-</div>
-</div>
-<footer class="bg-dark py-5 row d-print-none">
+</div></main></div></div><footer class="bg-dark py-5 row d-print-none">
 <div class="container-fluid mx-sm-5">
 <div class=row>
 <div class="col-6 col-sm-4 text-xs-center order-sm-2">
-</div>
-<div class="col-6 col-sm-4 text-right text-xs-center order-sm-3">
+</div><div class="col-6 col-sm-4 text-right text-xs-center order-sm-3">
 <ul class="list-inline mb-0">
 <li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Weibo aria-label=Weibo>
 <a class=text-white target=_blank rel="noopener noreferrer" href=https://weibo.com/u/3848950217>
 <i class="fab fa-weibo"></i>
 </a>
-</li>
-<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Twitter aria-label=Twitter>
+</li><li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Twitter aria-label=Twitter>
 <a class=text-white target=_blank rel="noopener noreferrer" href=https://twitter.com/zhange_zzg>
 <i class="fab fa-twitter"></i>
 </a>
-</li>
-<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title="Stack Overflow" aria-label="Stack Overflow">
+</li><li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title="Stack Overflow" aria-label="Stack Overflow">
 <a class=text-white target=_blank rel="noopener noreferrer" href=https://stackoverflow.com>
 <i class="fab fa-stack-overflow"></i>
 </a>
-</li>
-<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=GitHub aria-label=GitHub>
+</li><li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=GitHub aria-label=GitHub>
 <a class=text-white target=_blank rel="noopener noreferrer" href=https://github.com/infilos/infilos.com>
 <i class="fab fa-github"></i>
 </a>
-</li>
-</ul>
-</div>
-<div class="col-12 col-sm-4 text-center py-2 order-sm-2">
+</li></ul></div><div class="col-12 col-sm-4 text-center py-2 order-sm-2">
 <small class=text-white>&copy; 2022 infilos.com All Rights Reserved</small>
-</div>
-</div>
-</div>
-</footer>
-</div>
-<script src=/js/popper.min.js integrity=sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49 crossorigin=anonymous></script>
+</div></div></div></footer></div><script src=/js/popper.min.js integrity=sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49 crossorigin=anonymous></script>
 <script src=/js/bootstrap.min.js integrity=sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy crossorigin=anonymous></script>
-<script src=/js/main.min.5c74b870c6953931a705f390a49c7e4c0a842ec5c83b24354758dd674343ed0d.js integrity="sha256-XHS4cMaVOTGnBfOQpJx+TAqELsXIOyQ1R1jdZ0ND7Q0=" crossorigin=anonymous></script>
-</body>
-</html>
+<script src=/js/main.min.3f3f4f1e22307ccbb13271a98be2e4dbb8386b7e67c3d606db44d3d0649f485e.js integrity="sha256-Pz9PHiIwfMuxMnGpi+Lk27g4a35nw9YG20TT0GSfSF4=" crossorigin=anonymous></script>
+</body></html>

@@ -2,7 +2,7 @@
 <head>
 <meta charset=utf-8>
 <meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no">
-<meta name=generator content="Hugo 0.92.2">
+<meta name=generator content="Hugo 0.93.0">
 <meta name=ROBOTS content="INDEX, FOLLOW">
 <link rel="shortcut icon" href=/favicons/favicon.ico>
 <link rel=apple-touch-icon href=/favicons/apple-touch-icon-180x180.png sizes=180x180>
@@ -64,45 +64,43 @@ RCU 和基于每 CPU 变量的统计计数 5.2.4 节描述了一个统计计数�
 设计 设计的目的是使用 RCU 而不是 final_mutex 来保护线程在 read_count 中的遍历，已获得良好的性能和扩展性，而不仅仅是保护 inc_count。但是，我们并不希望放弃求和计算的精确性。特别是，当一个特定线程退出时，我们绝对不能丢失退出线程的计数，也不能重复对它进行计数。这样的错误将导致将不精确的结果作为精确结果，换句话说，这样的错误使得结果完全没有意义。并且事实上，final_mutex 的一个目的是，确保线程不会在 read_count 运行过程中，进入并退出。
 因此，如果我们不用 final_mutex，就必须拿出其他确保一致性的方法。其中一种方法是将所有已退出线程的计数和，以及指向每线程计数的指针放到一个单一的数据结构。这样的数据结构，一旦没 read_count 使用就保持不变，以确保 read_count 看到一致的数据。
 实现 片段 13.">
-<script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga('create','UA-123062585-1','auto'),ga('send','pageview'))</script>
+<script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga("create","UA-123062585-1","auto"),ga("send","pageview"))</script>
 <script async src=https://www.google-analytics.com/analytics.js></script>
 <link rel=preload href=/scss/main.min.847464b684a6e89d7276700a5c500c17ab494dd1755b2654a7b27d8b59e3347e.css as=style>
 <link href=/scss/main.min.847464b684a6e89d7276700a5c500c17ab494dd1755b2654a7b27d8b59e3347e.css rel=stylesheet integrity>
 <script src=/js/jquery-3.5.1.min.js integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin=anonymous></script>
-</head>
-<body class=td-page>
+</head><body class=td-page>
 <header>
-<nav class="js-navbar-scroll navbar navbar-expand navbar-dark flex-column flex-md-row td-navbar">
+<nav class="js-navbar-scroll navbar navbar-expand-lg navbar-dark td-navbar">
 <a class=navbar-brand href=/>
-<span class=navbar-logo><svg id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512" style="enable-background:new 0 0 512 512"><path style="fill:#ffc107" d="M432.384 143.616c-4.165-4.164-10.917-4.164-15.083.0l-60.352 60.352c-4.164 4.165-4.164 10.917.0 15.083 21.187 20.463 54.951 19.876 75.413-1.311 19.962-20.668 19.962-53.435.0-74.102L432.384 143.616z"/><path style="fill:#607d8b" d="M42.667 277.334c-5.891.003-10.669-4.771-10.672-10.662-.002-4.338 2.623-8.245 6.64-9.882l234.667-96c5.455-2.233 11.687.38 13.92 5.835s-.38 11.687-5.835 13.92l-234.667 96C45.433 277.069 44.056 277.337 42.667 277.334z"/><path style="fill:#546e7a" d="M391.552 56.448l-32-32C343.938 8.745 322.689-.059 300.544.0h-3.755c-46.082.024-83.432 37.374-83.456 83.456v3.755c-.053 22.138 8.75 43.377 24.448 58.987l32 32c4.165 4.164 10.917 4.164 15.083.0L391.531 71.531C395.701 67.372 395.71 60.62 391.552 56.448z"/><path style="fill:#607d8b" d="M160 469.334c-3.279.006-6.379-1.497-8.405-4.075L34.261 315.926c-3.635-4.636-2.823-11.341 1.813-14.976s11.341-2.823 14.976 1.813l117.333 149.333c3.629 4.641 2.809 11.344-1.832 14.973C164.681 468.533 162.375 469.329 160 469.334z"/><path style="fill:#455a64" d="M487.467 86.848l-3.669-3.648c-37.687-36.557-97.71-36.197-134.955.811l-51.413 51.413c-36.996 37.25-37.357 97.263-.811 134.955l3.584 3.669c1.7 2.457 4.671 3.706 7.616 3.2 2.831.005 5.548-1.115 7.552-3.115l172.181-172.181c4.189-4.143 4.226-10.896.083-15.085-.028-.028-.055-.056-.083-.083L487.467 86.848z"/><g><path style="fill:#ffc107" d="M501.333 192H480c-5.891.0-10.667-4.776-10.667-10.667s4.776-10.667 10.667-10.667h21.333c5.891.0 10.667 4.776 10.667 10.667S507.225 192 501.333 192z"/><path style="fill:#ffc107" d="M394.667 298.667c-5.891.0-10.667-4.776-10.667-10.667v-21.333c0-5.891 4.776-10.667 10.667-10.667 5.891.0 10.667 4.776 10.667 10.667V288C405.333 293.891 400.558 298.667 394.667 298.667z"/><path style="fill:#ffc107" d="M480 277.334c-2.831.005-5.548-1.115-7.552-3.115l-21.333-21.333c-4.093-4.237-3.975-10.99.262-15.083 4.134-3.993 10.687-3.993 14.821.0l21.333 21.333c4.159 4.172 4.148 10.926-.024 15.085C485.514 276.209 482.815 277.327 480 277.334z"/></g><g><path style="fill:#455a64" d="M266.667 448H96c-29.455.0-53.333 23.878-53.333 53.333.0 5.891 4.776 10.667 10.667 10.667h256c5.891.0 10.667-4.776 10.667-10.667C320 471.878 296.122 448 266.667 448z"/><circle style="fill:#455a64" cx="32" cy="288" r="32"/></g><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/></svg></span><span class=font-weight-bold>infilos.com</span>
+<span class=navbar-logo><svg id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512" style="enable-background:new 0 0 512 512"><path style="fill:#ffc107" d="M432.384 143.616c-4.165-4.164-10.917-4.164-15.083.0l-60.352 60.352c-4.164 4.165-4.164 10.917.0 15.083 21.187 20.463 54.951 19.876 75.413-1.311 19.962-20.668 19.962-53.435.0-74.102L432.384 143.616z"/><path style="fill:#607d8b" d="M42.667 277.334c-5.891.003-10.669-4.771-10.672-10.662-.002-4.338 2.623-8.245 6.64-9.882l234.667-96c5.455-2.233 11.687.38 13.92 5.835s-.38 11.687-5.835 13.92l-234.667 96C45.433 277.069 44.056 277.337 42.667 277.334z"/><path style="fill:#546e7a" d="M391.552 56.448l-32-32C343.938 8.745 322.689-.059 300.544.0h-3.755c-46.082.024-83.432 37.374-83.456 83.456v3.755c-.053 22.138 8.75 43.377 24.448 58.987l32 32c4.165 4.164 10.917 4.164 15.083.0L391.531 71.531C395.701 67.372 395.71 60.62 391.552 56.448z"/><path style="fill:#607d8b" d="M160 469.334c-3.279.006-6.379-1.497-8.405-4.075L34.261 315.926c-3.635-4.636-2.823-11.341 1.813-14.976s11.341-2.823 14.976 1.813l117.333 149.333c3.629 4.641 2.809 11.344-1.832 14.973C164.681 468.533 162.375 469.329 160 469.334z"/><path style="fill:#455a64" d="M487.467 86.848l-3.669-3.648c-37.687-36.557-97.71-36.197-134.955.811l-51.413 51.413c-36.996 37.25-37.357 97.263-.811 134.955l3.584 3.669c1.7 2.457 4.671 3.706 7.616 3.2 2.831.005 5.548-1.115 7.552-3.115l172.181-172.181c4.189-4.143 4.226-10.896.083-15.085-.028-.028-.055-.056-.083-.083L487.467 86.848z"/><g><path style="fill:#ffc107" d="M501.333 192H480c-5.891.0-10.667-4.776-10.667-10.667s4.776-10.667 10.667-10.667h21.333c5.891.0 10.667 4.776 10.667 10.667S507.225 192 501.333 192z"/><path style="fill:#ffc107" d="M394.667 298.667c-5.891.0-10.667-4.776-10.667-10.667v-21.333c0-5.891 4.776-10.667 10.667-10.667 5.891.0 10.667 4.776 10.667 10.667V288C405.333 293.891 400.558 298.667 394.667 298.667z"/><path style="fill:#ffc107" d="M480 277.334c-2.831.005-5.548-1.115-7.552-3.115l-21.333-21.333c-4.093-4.237-3.975-10.99.262-15.083 4.134-3.993 10.687-3.993 14.821.0l21.333 21.333c4.159 4.172 4.148 10.926-.024 15.085C485.514 276.209 482.815 277.327 480 277.334z"/></g><g><path style="fill:#455a64" d="M266.667 448H96c-29.455.0-53.333 23.878-53.333 53.333.0 5.891 4.776 10.667 10.667 10.667h256c5.891.0 10.667-4.776 10.667-10.667C320 471.878 296.122 448 266.667 448z"/><circle style="fill:#455a64" cx="32" cy="288" r="32"/></g><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/></svg></span>
+<span class=font-weight-bold>infilos.com</span>
 </a>
+<button class=navbar-toggler type=button data-toggle=collapse data-target=#navbarSupportedContent aria-controls=navbarSupportedContent aria-expanded=false aria-label="Toggle navigation">
+<span class=navbar-toggler-icon></span>
+</button>
 <div class="collapse navbar-collapse" id=navbarSupportedContent>
 <ul class="navbar-nav mr-auto">
 <li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86>
 <span>基础</span>
 </a>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80>
 <span>语言</span>
 </a>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93>
 <span>框架库</span>
 </a>
-</li>
-<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+</li><li class="nav-item dropdown" style=max-width:90px;min-width:10px>
 <a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
 分布式
 <span>+</span>
 </a>
 <div class=dropdown-menu aria-labelledby=navbarDropdown>
 <a class=dropdown-item href=/%e5%88%86%e5%b8%83%e5%bc%8f/base>基本构成</a>
-</div>
-</li>
-<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+</div></li><li class="nav-item dropdown" style=max-width:90px;min-width:10px>
 <a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
 大数据
 <span>+</span>
@@ -113,9 +111,7 @@ RCU 和基于每 CPU 变量的统计计数 5.2.4 节描述了一个统计计数�
 <a class=dropdown-item href=/%e6%b6%88%e6%81%af%e7%b3%bb%e7%bb%9f>消息系统</a>
 <a class=dropdown-item href=/%e5%a4%84%e7%90%86%e7%b3%bb%e7%bb%9f>处理系统</a>
 <a class=dropdown-item href=/%e6%95%b0%e6%8d%ae%e6%b2%bb%e7%90%86>数据治理</a>
-</div>
-</li>
-<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+</div></li><li class="nav-item dropdown" style=max-width:90px;min-width:10px>
 <a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
 中后台
 <span>+</span>
@@ -125,38 +121,26 @@ RCU 和基于每 CPU 变量的统计计数 5.2.4 节描述了一个统计计数�
 <a class=dropdown-item href=/%e7%94%a8%e6%88%b7%e7%b3%bb%e7%bb%9f>用户系统</a>
 <a class=dropdown-item href=/%e4%ba%a4%e4%ba%92%e7%95%8c%e9%9d%a2>交互界面</a>
 <a class=dropdown-item href=/%e4%b8%9a%e5%8a%a1%e7%b3%bb%e7%bb%9f>业务系统</a>
-</div>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</div></li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e6%a8%a1%e5%bc%8f%e6%9e%b6%e6%9e%84>
 <span>模式架构</span>
 </a>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e9%9d%a2%e8%af%95%e9%97%ae%e7%ad%94>
 <span>面试</span>
 </a>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e7%ae%a1%e7%90%86%e8%b7%af%e5%be%84>
 <span>管理</span>
 </a>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e5%bc%80%e6%ba%90%e9%a1%b9%e7%9b%ae>
 <span>开源</span>
 </a>
-</li>
-</ul>
-<div class="form-inline my-2 my-lg-0">
+</li></ul><div class="form-inline my-2 my-lg-0">
 <div class="nav-item nav-search-item my-2 my-md-0">
 <input type=search class="form-control td-search-input" placeholder="&#xf002; 站内搜索…" aria-label=站内搜索… autocomplete=off>
-</div>
-</div>
-</div>
-</nav>
-</header>
-<div class="container-fluid td-outer">
+</div></div></div></nav></header><div class="container-fluid td-outer">
 <div class=td-main>
 <div class="row flex-xl-nowrap">
 <aside class="col-12 col-md-3 col-xl-2 td-sidebar d-print-none">
@@ -166,10 +150,7 @@ RCU 和基于每 CPU 变量的统计计数 5.2.4 节描述了一个统计计数�
 <input type=search class="form-control td-search-input" placeholder="&#xf002; 站内搜索…" aria-label=站内搜索… autocomplete=off>
 <button class="btn btn-link td-sidebar__toggle d-md-none p-0 ml-3 fas fa-bars" type=button data-toggle=collapse data-target=#td-section-nav aria-controls=td-docs-nav aria-expanded=false aria-label="Toggle section navigation">
 </button>
-</form>
-</div>
-<div id=content-desktop></div>
-<nav class="collapse td-sidebar-nav" id=td-section-nav>
+</form></div><div id=content-desktop></div><nav class="collapse td-sidebar-nav" id=td-section-nav>
 <ul class="td-sidebar-nav__section pr-md-3 ul-0">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e7bc96e7a88be8afade8a880-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section tree-root" id=m-e7bc96e7a88be8afade8a880><span>编程语言</span></a>
@@ -196,9 +177,7 @@ RCU 和基于每 CPU 变量的统计计数 5.2.4 节描述了一个统计计数�
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-base/ch07-%E5%8F%8D%E5%B0%84%E6%9C%BA%E5%88%B6/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-basech07-e58f8de5b084e69cbae588b6><span>CH07-反射机制</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-basech08-spie69cbae588b6-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-base/ch08-spi%E6%9C%BA%E5%88%B6/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-basech08-spie69cbae588b6><span>CH08-SPI 机制</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-collection-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-collection-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-collection/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880javajava-collection><span>Java 集合</span></a>
 <ul class="ul-3 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-collectionch01-e99b86e59088e7bb93e69e84-li>
@@ -221,9 +200,7 @@ RCU 和基于每 CPU 变量的统计计数 5.2.4 节描述了一个统计计数�
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-collection/ch09-weakhashmap/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-collectionch09-weakhashmap><span>CH09-WeakHashMap</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-collectionch10-stream-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-collection/ch10-stream/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-collectionch10-stream><span>CH10-Stream</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrent-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrent-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880javajava-concurrent><span>Java 并发</span></a>
 <ul class="ul-3 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch01-e5b9b6e58f91e4bd93e7b3bb-li>
@@ -290,9 +267,7 @@ RCU 和基于每 CPU 变量的统计计数 5.2.4 节描述了一个统计计数�
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch31-allqueues/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch31-allqueues><span>CH31-AllQueues</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch32-allpools-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch32-allpools/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch32-allpools><span>CH32-AllPools</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-io-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-io-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-io/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880javajava-io><span>Java I/0</span></a>
 <ul class="ul-3 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-ioch01-ioe58886e7b1bb-li>
@@ -321,9 +296,7 @@ RCU 和基于每 CPU 变量的统计计数 5.2.4 节描述了一个统计计数�
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-io/ch12-%E9%9B%B6%E6%8B%B7%E8%B4%9D/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-ioch12-e99bb6e68bb7e8b49d><span>CH12-零拷贝</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-ioch13-e58685e5ad98e698a0e5b084-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-io/ch13-%E5%86%85%E5%AD%98%E6%98%A0%E5%B0%84/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-ioch13-e58685e5ad98e698a0e5b084><span>CH13-内存映射</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-effective-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-effective-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-effective/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880javajava-effective><span>Java Effective</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-debug-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-debug/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880javajava-debug><span>Java Debug</span></a>
@@ -336,17 +309,15 @@ RCU 和基于每 CPU 变量的统计计数 5.2.4 节描述了一个统计计数�
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-debug/linux-cmd/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-debuglinux-cmd><span>Linux 命令</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-debugjdk-tools-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-debug/jdk-tools/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-debugjdk-tools><span>调试工具集</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-debugjava-agent-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-debug/java-agent/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-debugjava-agent><span>Java Agent</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-debugdynamic-debug-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-debug/dynamic-debug/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-debugdynamic-debug><span>动态调试技术</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-debugarthas-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-debug/arthas/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-debugarthas><span>Arthas</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-debuglocal-debug-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-debug/local-debug/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-debuglocal-debug><span>本地调试</span></a>
-</li>
-</ul>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e7bc96e7a88be8afade8a880jvm-core-li>
+</li></ul></li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e7bc96e7a88be8afade8a880jvm-core-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-core><span>JVM 核心</span></a>
 <ul class="ul-2 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-li>
@@ -382,9 +353,7 @@ RCU 和基于每 CPU 变量的统计计数 5.2.4 节描述了一个统计计数�
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm/ch14-jvm%E8%B0%83%E8%AF%95%E5%B7%A5%E5%85%B7/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch14-jvme8b083e8af95e5b7a5e585b7><span>CH14-JVM调试工具</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch15-jvme58aa8e68081e8b083e8af95-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm/ch15-jvm%E5%8A%A8%E6%80%81%E8%B0%83%E8%AF%95/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch15-jvme58aa8e68081e8b083e8af95><span>CH15-JVM动态调试</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-133-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-133-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/jmm-133/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-133><span>JSR 133</span></a>
 <ul class="ul-3 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-133ch01-e68c87e4bba4e9878de68e92-li>
@@ -395,9 +364,7 @@ RCU 和基于每 CPU 变量的统计计数 5.2.4 节描述了一个统计计数�
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/jmm-133/ch03-%E5%A4%9A%E5%A4%84%E7%90%86%E5%99%A8/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-133ch03-e5a49ae5a484e79086e599a8><span>CH03-多处理器</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-133ch04-e5bc80e58f91e68c87e58d97-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/jmm-133/ch04-%E5%BC%80%E5%8F%91%E6%8C%87%E5%8D%97/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-133ch04-e5bc80e58f91e68c87e58d97><span>CH04-开发指南</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-spec-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-spec-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/jmm-spec/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-spec><span>JMM 规范</span></a>
 <ul class="ul-3 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-specch01-jmme8a784e88c83-li>
@@ -410,9 +377,7 @@ RCU 和基于每 CPU 变量的统计计数 5.2.4 节描述了一个统计计数�
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/jmm-spec/ch04-jsr133-faq/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-specch04-jsr133-faq><span>CH04-JSR133-FAQ</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-specch05-jsr133-cook-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/jmm-spec/ch05-jsr133-cook/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-specch05-jsr133-cook><span>CH05-JSR133-Cook</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v2/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2><span>JVM 深入理解 V2</span></a>
 <ul class="ul-3 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch01-e8b5b0e8bf9bjava-li>
@@ -445,13 +410,9 @@ RCU 和基于每 CPU 变量的统计计数 5.2.4 节描述了一个统计计数�
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v2/endix-b-%E6%8C%87%E4%BB%A4%E8%A1%A8/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2endix-b-e68c87e4bba4e8a1a8><span>Endix-B-字节码指令</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2endix-c-e58f82e695b0e8a1a8-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v2/endix-c-%E5%8F%82%E6%95%B0%E8%A1%A8/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2endix-c-e58f82e695b0e8a1a8><span>Endix-C-虚拟机参数</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v3-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v3-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v3/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v3><span>JVM 深入理解 V3</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e7bc96e7a88be8afade8a880jvm-concurrent-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e7bc96e7a88be8afade8a880jvm-concurrent-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-concurrent><span>JVM 并发</span></a>
 <ul class="ul-2 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practice-li>
@@ -489,9 +450,7 @@ RCU 和基于每 CPU 变量的统计计数 5.2.4 节描述了一个统计计数�
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/java-con-practice/ch15-%E5%8E%9F%E5%AD%90%E4%B8%8E%E9%9D%9E%E9%98%BB%E5%A1%9E%E5%90%8C%E6%AD%A5/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech15-e58e9fe5ad90e4b88ee99d9ee998bbe5a19ee5908ce6ada5><span>CH15-原子与非阻塞同步</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech16-e58685e5ad98e6a8a1e59e8b-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/java-con-practice/ch16-%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech16-e58685e5ad98e6a8a1e59e8b><span>CH16-内存模型</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-pattern-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-pattern-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/java-con-pattern/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-pattern><span>Java 并发模式</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallel-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/dive-parallel/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallel><span>深入理解并行</span></a>
@@ -528,9 +487,7 @@ RCU 和基于每 CPU 变量的统计计数 5.2.4 节描述了一个统计计数�
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/dive-parallel/ch15/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch15><span>CH15-高级同步-内存序</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelendix-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/dive-parallel/endix/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelendix><span>ENDIX-C-内存屏障</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-model-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-model-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/seven-con-model/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-model><span>七并发模型</span></a>
 <ul class="ul-3 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-modelch01-li>
@@ -551,10 +508,41 @@ RCU 和基于每 CPU 变量的统计计数 5.2.4 节描述了一个统计计数�
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/seven-con-model/ch08/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-modelch08><span>CH08-Lambda 架构</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-modelch09-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/seven-con-model/ch09/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-modelch09><span>CH09-未来方向</span></a>
-</li>
-</ul>
-</li>
-</ul>
+</li></ul></li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e7bc96e7a88be8afade8a880jvm-dismantle-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-dismantle/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-dismantle><span>JVM 拆解</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech01-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-dismantle/ch01/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech01><span>CH01-开始运行</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech02-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-dismantle/ch02/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech02><span>CH02-基本类型</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech03-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-dismantle/ch03/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech03><span>CH03-类加载</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech04-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-dismantle/ch04/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech04><span>CH04-方法调用-上</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech05-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-dismantle/ch05/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech05><span>CH05-方法调用-下</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech06-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-dismantle/ch06/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech06><span>CH06-异常处理</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech07-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-dismantle/ch07/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech07><span>CH07-实现反射</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech08-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-dismantle/ch08/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech08><span>CH08-invokedynamic-上</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech09-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-dismantle/ch09/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech09><span>CH09-invokedynamic-下</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech10-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-dismantle/ch10/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech10><span>CH10-对象内存布局</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech11-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-dismantle/ch11/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech11><span>CH11-垃圾回收-上</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech12-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-dismantle/ch12/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech12><span>CH12-垃圾回收-下</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech13-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-dismantle/ch13/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech13><span>CH13-内存模型</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech14-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-dismantle/ch14/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech14><span>CH14-Synchronized</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech99-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-dismantle/ch99/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech99><span>CH99-常用工具</span></a>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e7bc96e7a88be8afade8a880jvm-performance-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-performance/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-performance><span>JVM 性能</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e7bc96e7a88be8afade8a880scala-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880scala><span>Scala 编程</span></a>
 <ul class="ul-2 foldable">
@@ -653,9 +641,7 @@ RCU 和基于每 CPU 变量的统计计数 5.2.4 节描述了一个统计计数�
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/async-programming/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coreasync-programming><span>异步编程</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-corescala-style-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/scala-style/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-corescala-style><span>战略Scala风格</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-func-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-func-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-func/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880scalascala-func><span>Scala 函数式</span></a>
 <ul class="ul-3 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-funcch00-e7b2bee8a681-li>
@@ -668,11 +654,7 @@ RCU 和基于每 CPU 变量的统计计数 5.2.4 节描述了一个统计计数�
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-func/ch03-%E6%95%B0%E6%8D%AE/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-funcch03-e695b0e68dae><span>CH03-数据</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-funcch04-e5bc82e5b8b8-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-func/ch04-%E5%BC%82%E5%B8%B8/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-funcch04-e5bc82e5b8b8><span>CH04-异常</span></a>
-</li>
-</ul>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e7bc96e7a88be8afade8a880rust-li>
+</li></ul></li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e7bc96e7a88be8afade8a880rust-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/rust/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880rust><span>Rust 编程</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e7bc96e7a88be8afade8a880golang-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/golang/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880golang><span>Golang 编程</span></a>
@@ -693,253 +675,122 @@ RCU 和基于每 CPU 变量的统计计数 5.2.4 节描述了一个统计计数�
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/frontend/vue/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880frontendvue><span>Vue 3</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880frontendreact-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/frontend/react/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880frontendreact><span>React</span></a>
-</li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-</nav>
-</div>
-</aside>
-<aside class="d-none d-xl-block col-xl-2 td-sidebar-toc d-print-none">
+</li></ul></li></ul></li></ul></nav></div></aside><aside class="d-none d-xl-block col-xl-2 td-sidebar-toc d-print-none">
 <div class="td-page-meta ml-2 pb-1 pt-2 mb-0">
 <a href=https://github.com/infilos/infilos.com/edit/master/content/zh/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/jvm-concurrent/dive-parallel/CH13.md target=_blank><i class="fa fa-edit fa-fw"></i> 编辑此页</a>
 <a href="https://github.com/infilos/infilos.com/new/master/content/zh/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/jvm-concurrent/dive-parallel/CH13.md?filename=change-me.md&value=---%0Atitle%3A+%22Long+Page+Title%22%0AlinkTitle%3A+%22Short+Nav+Title%22%0Aweight%3A+100%0Adescription%3A+%3E-%0A+++++Page+description+for+heading+and+indexes.%0A---%0A%0A%23%23+Heading%0A%0AEdit+this+template+to+create+your+new+page.%0A%0A%2A+Give+it+a+good+name%2C+ending+in+%60.md%60+-+e.g.+%60getting-started.md%60%0A%2A+Edit+the+%22front+matter%22+section+at+the+top+of+the+page+%28weight+controls+how+its+ordered+amongst+other+pages+in+the+same+directory%3B+lowest+number+first%29.%0A%2A+Add+a+good+commit+message+at+the+bottom+of+the+page+%28%3C80+characters%3B+use+the+extended+description+field+for+more+detail%29.%0A%2A+Create+a+new+branch+so+you+can+preview+your+new+file+and+request+a+review+via+Pull+Request.%0A" target=_blank><i class="fa fa-edit fa-fw"></i> 添加子页面</a>
 <a href="https://github.com/infilos/infilos.com/issues/new?title=CH13-%e7%bb%bc%e5%90%88%e5%ba%94%e7%94%a8" target=_blank><i class="fab fa-github fa-fw"></i> 提交文档问题</a>
 <a id=print href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/dive-parallel/_print/><i class="fa fa-print fa-fw"></i> 整节打印</a>
-</div>
-<div class=td-toc><nav id=TableOfContents>
+</div><div class=td-toc><nav id=TableOfContents>
 <ul>
 <li><a href=#计数难题>计数难题</a>
 <ul>
-<li><a href=#对更新进行计数>对更新进行计数</a></li>
-<li><a href=#对查找进行计数>对查找进行计数</a></li>
-</ul>
-</li>
-<li><a href=#使用-rcu-拯救并行软件性能>使用 RCU 拯救并行软件性能</a>
+<li><a href=#对更新进行计数>对更新进行计数</a></li><li><a href=#对查找进行计数>对查找进行计数</a></li></ul></li><li><a href=#使用-rcu-拯救并行软件性能>使用 RCU 拯救并行软件性能</a>
 <ul>
-<li><a href=#rcu-和基于每-cpu-变量的统计计数>RCU 和基于每 CPU 变量的统计计数</a></li>
-<li><a href=#rcu-及可插拔-io-设备的计数器>RCU 及可插拔 IO 设备的计数器</a></li>
-<li><a href=#数组及长度>数组及长度</a></li>
-<li><a href=#相关联的字段>相关联的字段</a></li>
-</ul>
-</li>
-<li><a href=#散列问题>散列问题</a>
+<li><a href=#rcu-和基于每-cpu-变量的统计计数>RCU 和基于每 CPU 变量的统计计数</a></li><li><a href=#rcu-及可插拔-io-设备的计数器>RCU 及可插拔 IO 设备的计数器</a></li><li><a href=#数组及长度>数组及长度</a></li><li><a href=#相关联的字段>相关联的字段</a></li></ul></li><li><a href=#散列问题>散列问题</a>
 <ul>
-<li><a href=#相关联的数据元素>相关联的数据元素</a></li>
-<li><a href=#对更新友好的哈希表遍历>对更新友好的哈希表遍历</a></li>
-</ul>
-</li>
-</ul>
-</nav></div>
-</aside>
-<main class="col-12 col-md-9 col-xl-8 pl-md-5" role=main>
+<li><a href=#相关联的数据元素>相关联的数据元素</a></li><li><a href=#对更新友好的哈希表遍历>对更新友好的哈希表遍历</a></li></ul></li></ul></nav></div></aside><main class="col-12 col-md-9 col-xl-8 pl-md-5" role=main>
 <nav aria-label=breadcrumb class="d-none d-md-block d-print-none">
 <ol class="breadcrumb spb-1">
 <li class=breadcrumb-item>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/>编程语言</a>
-</li>
-<li class=breadcrumb-item>
+</li><li class=breadcrumb-item>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/>JVM 并发</a>
-</li>
-<li class=breadcrumb-item>
+</li><li class=breadcrumb-item>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/dive-parallel/>深入理解并行</a>
-</li>
-<li class="breadcrumb-item active" aria-current=page>
+</li><li class="breadcrumb-item active" aria-current=page>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/dive-parallel/ch13/>CH13-综合应用</a>
-</li>
-</ol>
-</nav>
-<div class=td-content>
-<h1>CH13-综合应用</h1>
-<header class=article-meta>
-</header>
-<p>本章会给出一些处理某些并发编程难题的提示。</p>
-<h2 id=计数难题>计数难题</h2>
-<h3 id=对更新进行计数>对更新进行计数</h3>
-<p>假设薛定谔想要对每一只动物的更新数量进行计数，并且这些更新使用一个没数据元素锁进行同步。这样的计数怎样才能做得最好？</p>
-<p>当然，可以考虑第 5 章中任何一种计数算法，但是在这种情况下，最优的方法简单的多。仅仅需要在每一个数据元素中放置一个计数器，并且在元素锁的保护下递增元素就行了。</p>
-<h3 id=对查找进行计数>对查找进行计数</h3>
-<p>如果薛定谔还想对每只动物的查找进行计数，而这些查找由 RCU 保护。怎样的计数才能做到最好？</p>
-<p>一种方法是像 13.1.1 节所述，由一个每元素锁来对查找计数进行保护。不幸的是，这将要求所有查找过程都获得这个锁，在大型系统中，这将形成一个严重的瓶颈。</p>
-<p>另一种方法是对计数说“不”，就像 noatime 挂载选项的例子。如果这种方法可行，那显然是最好的办法。毕竟，什么都没有比什么都不做还快。如果查找计数不能被省略，就继续读下去。</p>
-<p>第 5 章中的任何计数都可以做成服务，5.2 节中描述的统计计数可能是最常见的选择。但是，这导致大量的内存访问，所需要的计数器数量是数据元素的数量乘以线程数量。</p>
-<p>如果内存开销太大，另一个方法是保持每 socket 计数，而不是每 CPU 计数，请注意图 10.8 所示的哈希表性能结果。这需要计数递增作为原子操作，尤其对于用户态来说更是这样。在用户态中，一个特定的线程可能随时迁移到另一个 CPU 上运行。</p>
-<p>如果某些元素被频繁的查找，那么存在一些其他方法。这些方法通过维护一个每线程日志来进行批量更新，其对特定元素的多次日志操作可以被合并。当对一个特定日志操作达到一定的递增次数，或者一定的时间过去以后，日志记录将被反映到相应的数据元素中去。Silas Boyd-Wickizer 已经做了一些工作。</p>
-<h2 id=使用-rcu-拯救并行软件性能>使用 RCU 拯救并行软件性能</h2>
-<p>本节展示如何对本书较早讨论的某些例子应用 RCU 技术。某些情况下，RCU 提供更加简单的代码，另外一些情况下则能提供更好的性能和可扩展性，还有一些情况下，同时提供两者的优势。</p>
-<h3 id=rcu-和基于每-cpu-变量的统计计数>RCU 和基于每 CPU 变量的统计计数</h3>
-<p>5.2.4 节描述了一个统计计数的实现，该实现提供了良好的性能，大致的说是简单的递增，并且能够线性扩展——但仅仅通过 inc_count 递增。不幸的是，需要通过 read_count 读取其值的线程需要获得一个全局锁，因此招致高的高效，并且扩展性不佳。</p>
-<h4 id=设计>设计</h4>
-<p>设计的目的是使用 RCU 而不是 final_mutex 来保护线程在 read_count 中的遍历，已获得良好的性能和扩展性，而不仅仅是保护 inc_count。但是，我们并不希望放弃求和计算的精确性。特别是，当一个特定线程退出时，我们绝对不能丢失退出线程的计数，也不能重复对它进行计数。这样的错误将导致将不精确的结果作为精确结果，换句话说，这样的错误使得结果完全没有意义。并且事实上，final_mutex 的一个目的是，确保线程不会在 read_count 运行过程中，进入并退出。</p>
-<p>因此，如果我们不用 final_mutex，就必须拿出其他确保一致性的方法。其中一种方法是将所有已退出线程的计数和，以及指向每线程计数的指针放到一个单一的数据结构。这样的数据结构，一旦没 read_count 使用就保持不变，以确保 read_count 看到一致的数据。</p>
-<h4 id=实现>实现</h4>
-<p>片段 13.5 第 1~4 行展示了 countarray 结构，它包含一个 total 字段，用于对之前已经退出线程的计数、counterp[] 数组，指向当前正在运行的每线程 counter。这个及饿哦股允许特定的 read_count 执行过程看到一致的计数总和，以及运行线程的集合。</p>
-<div align=center>
+</li></ol></nav><div class=td-content>
+<h1>CH13-综合应用</h1><header class=article-meta>
+</header><p>本章会给出一些处理某些并发编程难题的提示。</p><h2 id=计数难题>计数难题</h2><h3 id=对更新进行计数>对更新进行计数</h3><p>假设薛定谔想要对每一只动物的更新数量进行计数，并且这些更新使用一个没数据元素锁进行同步。这样的计数怎样才能做得最好？</p><p>当然，可以考虑第 5 章中任何一种计数算法，但是在这种情况下，最优的方法简单的多。仅仅需要在每一个数据元素中放置一个计数器，并且在元素锁的保护下递增元素就行了。</p><h3 id=对查找进行计数>对查找进行计数</h3><p>如果薛定谔还想对每只动物的查找进行计数，而这些查找由 RCU 保护。怎样的计数才能做到最好？</p><p>一种方法是像 13.1.1 节所述，由一个每元素锁来对查找计数进行保护。不幸的是，这将要求所有查找过程都获得这个锁，在大型系统中，这将形成一个严重的瓶颈。</p><p>另一种方法是对计数说“不”，就像 noatime 挂载选项的例子。如果这种方法可行，那显然是最好的办法。毕竟，什么都没有比什么都不做还快。如果查找计数不能被省略，就继续读下去。</p><p>第 5 章中的任何计数都可以做成服务，5.2 节中描述的统计计数可能是最常见的选择。但是，这导致大量的内存访问，所需要的计数器数量是数据元素的数量乘以线程数量。</p><p>如果内存开销太大，另一个方法是保持每 socket 计数，而不是每 CPU 计数，请注意图 10.8 所示的哈希表性能结果。这需要计数递增作为原子操作，尤其对于用户态来说更是这样。在用户态中，一个特定的线程可能随时迁移到另一个 CPU 上运行。</p><p>如果某些元素被频繁的查找，那么存在一些其他方法。这些方法通过维护一个每线程日志来进行批量更新，其对特定元素的多次日志操作可以被合并。当对一个特定日志操作达到一定的递增次数，或者一定的时间过去以后，日志记录将被反映到相应的数据元素中去。Silas Boyd-Wickizer 已经做了一些工作。</p><h2 id=使用-rcu-拯救并行软件性能>使用 RCU 拯救并行软件性能</h2><p>本节展示如何对本书较早讨论的某些例子应用 RCU 技术。某些情况下，RCU 提供更加简单的代码，另外一些情况下则能提供更好的性能和可扩展性，还有一些情况下，同时提供两者的优势。</p><h3 id=rcu-和基于每-cpu-变量的统计计数>RCU 和基于每 CPU 变量的统计计数</h3><p>5.2.4 节描述了一个统计计数的实现，该实现提供了良好的性能，大致的说是简单的递增，并且能够线性扩展——但仅仅通过 inc_count 递增。不幸的是，需要通过 read_count 读取其值的线程需要获得一个全局锁，因此招致高的高效，并且扩展性不佳。</p><h4 id=设计>设计</h4><p>设计的目的是使用 RCU 而不是 final_mutex 来保护线程在 read_count 中的遍历，已获得良好的性能和扩展性，而不仅仅是保护 inc_count。但是，我们并不希望放弃求和计算的精确性。特别是，当一个特定线程退出时，我们绝对不能丢失退出线程的计数，也不能重复对它进行计数。这样的错误将导致将不精确的结果作为精确结果，换句话说，这样的错误使得结果完全没有意义。并且事实上，final_mutex 的一个目的是，确保线程不会在 read_count 运行过程中，进入并退出。</p><p>因此，如果我们不用 final_mutex，就必须拿出其他确保一致性的方法。其中一种方法是将所有已退出线程的计数和，以及指向每线程计数的指针放到一个单一的数据结构。这样的数据结构，一旦没 read_count 使用就保持不变，以确保 read_count 看到一致的数据。</p><h4 id=实现>实现</h4><p>片段 13.5 第 1~4 行展示了 countarray 结构，它包含一个 total 字段，用于对之前已经退出线程的计数、counterp[] 数组，指向当前正在运行的每线程 counter。这个及饿哦股允许特定的 read_count 执行过程看到一致的计数总和，以及运行线程的集合。</p><div align=center>
 <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20180922202936.png style=display:block;width:100% alt=NAME align=center>
-</div>
-<p>第 6~8 行包含每线程 counter 变量的定义，全局指针 countarray 引用单签 countarray 结构，以及 final_mutex 自旋锁。</p>
-<p>第 10~13 行展示 inc_count，与之前没有变化。</p>
-<p>第 15~29 行展示 read_count，它被大量修改了。第 21~27 行以 rcu_read_lock 和 rcu_read_unlock 代替获得、释放 final_mutex 锁。第 22 行使用 rcu_dereference 将当前 countarray 数据结构的快照获取到临时变量 cap 中。正确的使用 RCU 将确保：在第 27 行的 RCU 读端临界区结束前，该 countarray 数据结构不会被释放掉。第 23 行初始化 sum 作为 cap->total，它表示之前已经退出的线程计数值之和。第 23~26 行将正在运行的线程对应的每线程计数值添加到 sum 中。最后第 28 行返回 sum。</p>
-<p>countarray 的初始值由第 31~39 行的 count_init 提供。这个函数在第一个线程创建之前运行，其任务是分配初始数据结构，并将其置为 0，然后将它赋值给 countarray。</p>
-<p>第 41~48 行展示了 count_register_thread 函数，他被每一个新创建线程所调用。第 43 行获取当前线程的索引，第 45 行获取 final_mutex，的 46 行将指针指向线程的 counter，第 47 行释放 final_mutex 锁。</p>
-<p>第 50~70 行展示了 count_unregister_thread 函数，没一个线程在退出前，条用此函数。第 56~60 行分配一个新的 countarray 数据结构，第 61 行获得 final_mutex 锁，第 67 行释放锁。第 62 行将当前 countarray 的值复制到新分配的副本，第 63 行将现存线程的 counterp 添加到新结构的总和值中，第 64 行将真正退出线程的 counterp[] 数组元素置空，第 66 行保留当前值(很快就会变成旧的)countarray 结构的指针引用，第 66 行使用 rcu_assign_pointer 设置 countarray 结构的新版本。第 68 行等待一个优雅周期的流逝。这样，任何可能并发执行 read_count，并且可能拥有对旧的 countarray 结构引用的线程，都能退出它们的 RCU 读端临界区，并放弃对这些结构的引用。因此，第 69 行能够安全释放旧的 countarray 结构。</p>
-<h4 id=讨论>讨论</h4>
-<p>对 RCU 的使用，使得正在退出的线程进行等待，直到其他线程保证，其已经结束对退出线程的 thread 变量的使用。这允许 read_count 函数免于使用锁，因而对 inc_count 和 read_count 函数来说，都为其提供了优良的性能和可扩展性。但是这些性能和扩展性来自于代码复杂性的增加。希望编译器和库函数的编写者能够提供用户层的 RCU，以实现跨越线程安全访问 thread 变量，大大减少 thread 变量使用者所能见到的复杂性。</p>
-<h3 id=rcu-及可插拔-io-设备的计数器>RCU 及可插拔 IO 设备的计数器</h3>
-<p>5.5 节展示了一对奇怪的代码段，以处理对可插拔设备的 IO 访问计数。由于需要获取读写锁，因此这些代码段会在快速路径上(开始一个 IO)招致过高的负载。</p>
-<p>执行 IO 的代码与原来的代码非常类似，它使用 RCU 读端临界区代替原代码中的读写锁的读端临界区。</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=color:#0000cf;font-weight:700>1</span> <span style=color:#000>rcu_read_lock</span><span style=color:#000;font-weight:700>();</span> 
-<span style=color:#0000cf;font-weight:700>2</span> <span style=color:#000>if</span> <span style=color:#000;font-weight:700>(</span><span style=color:#000>removing</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000;font-weight:700>{</span> 
-<span style=color:#0000cf;font-weight:700>3</span> 	<span style=color:#000>rcu_read_unlock</span><span style=color:#000;font-weight:700>();</span> 
-<span style=color:#0000cf;font-weight:700>4</span> 	<span style=color:#000>cancel_io</span><span style=color:#000;font-weight:700>();</span> 
-<span style=color:#0000cf;font-weight:700>5</span> <span style=color:#000;font-weight:700>}</span> <span style=color:#204a87;font-weight:700>else</span> <span style=color:#000;font-weight:700>{</span> 
-<span style=color:#0000cf;font-weight:700>6</span> 	<span style=color:#000>add_count</span><span style=color:#000;font-weight:700>(</span><span style=color:#0000cf;font-weight:700>1</span><span style=color:#000;font-weight:700>);</span> 
-<span style=color:#0000cf;font-weight:700>7</span> 	<span style=color:#000>rcu_read_unlock</span><span style=color:#000;font-weight:700>();</span> 
-<span style=color:#0000cf;font-weight:700>8</span> 	<span style=color:#000>do_io</span><span style=color:#000;font-weight:700>();</span> 
-<span style=color:#0000cf;font-weight:700>9</span> 	<span style=color:#000>sub_count</span><span style=color:#000;font-weight:700>(</span><span style=color:#0000cf;font-weight:700>1</span><span style=color:#000;font-weight:700>);</span> 
-<span style=color:#0000cf;font-weight:700>10</span> <span style=color:#000;font-weight:700>}</span>
-</code></pre></div><p>RCU 读端原语拥有极小的负载，因此提升了快速路径的速度。</p>
-<p>移除设备的新代码片段如下：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=color:#0000cf;font-weight:700>1</span> <span style=color:#000>spin_lock</span><span style=color:#000;font-weight:700>(</span><span style=color:#ce5c00;font-weight:700>&amp;</span><span style=color:#000>mylock</span><span style=color:#000;font-weight:700>);</span> 
-<span style=color:#0000cf;font-weight:700>2</span> <span style=color:#000>removing</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#0000cf;font-weight:700>1</span><span style=color:#000;font-weight:700>;</span> 
-<span style=color:#0000cf;font-weight:700>3</span> <span style=color:#000>sub_count</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>mybias</span><span style=color:#000;font-weight:700>);</span> 
-<span style=color:#0000cf;font-weight:700>4</span> <span style=color:#000>spin_unlock</span><span style=color:#000;font-weight:700>(</span><span style=color:#ce5c00;font-weight:700>&amp;</span><span style=color:#000>mylock</span><span style=color:#000;font-weight:700>);</span> 
-<span style=color:#0000cf;font-weight:700>5</span> <span style=color:#000>synchronize_rcu</span><span style=color:#000;font-weight:700>();</span> 
-<span style=color:#0000cf;font-weight:700>6</span> <span style=color:#000>while</span> <span style=color:#000;font-weight:700>(</span><span style=color:#000>read_count</span><span style=color:#000;font-weight:700>()</span> <span style=color:#ce5c00;font-weight:700>!=</span> <span style=color:#0000cf;font-weight:700>0</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000;font-weight:700>{</span> 
-<span style=color:#0000cf;font-weight:700>7</span> 	<span style=color:#000>poll</span><span style=color:#000;font-weight:700>(</span><span style=color:#204a87>NULL</span><span style=color:#000;font-weight:700>,</span> <span style=color:#0000cf;font-weight:700>0</span><span style=color:#000;font-weight:700>,</span> <span style=color:#0000cf;font-weight:700>1</span><span style=color:#000;font-weight:700>);</span> 
-<span style=color:#0000cf;font-weight:700>8</span> <span style=color:#000;font-weight:700>}</span> 
-<span style=color:#0000cf;font-weight:700>9</span> <span style=color:#000>remove_device</span><span style=color:#000;font-weight:700>();</span>
-</code></pre></div><p>在此，我们将读写锁替换为排他自旋锁，并增加 synchronize_rcu 以等待所有 RCU 读端临界区完成。由于 synchronize_rcu 的缘故，一旦我们允许到第 6 行，就能够知道，所有剩余 IO 已经被识别到了。</p>
-<p>当然 synchronize_rcu 的开销可能比较大。不过，既然移除设备这种情况比较少见，那么这种方法通常是一个不错的权衡。</p>
-<h3 id=数组及长度>数组及长度</h3>
-<p>如果我们有一个受 RCU 保护的可变长度数组，如下面的代码片段：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=color:#0000cf;font-weight:700>1</span> <span style=color:#204a87;font-weight:700>struct</span> <span style=color:#000>foo</span> <span style=color:#000;font-weight:700>{</span> 
-<span style=color:#0000cf;font-weight:700>2</span> 	<span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>length</span><span style=color:#000;font-weight:700>;</span> 
-<span style=color:#0000cf;font-weight:700>3</span> 	<span style=color:#204a87;font-weight:700>char</span> <span style=color:#ce5c00;font-weight:700>*</span><span style=color:#000>a</span><span style=color:#000;font-weight:700>;</span> 
-<span style=color:#0000cf;font-weight:700>4</span> <span style=color:#000;font-weight:700>};</span>
-</code></pre></div><p>数组 ->a[] 的长度可能会动态变化。在任意时刻，其长度由字段 ->length 表示。当然，这带来了如下竞争条件。</p>
-<ol>
-<li>数组被初始化为 16 个字节，因此 length 等于 16。</li>
-<li>CPU0 紧挨着 length 的值，得到 16。</li>
-<li>CPU1 压缩数组长度到 8，并将 ->a[] 赋值为指向新 8 字节长的内存块的指针。</li>
-<li>CPU0 从 ->a[] 获取到新的指针，并且将新值存储到元素 12 中。由于数组仅仅有 8 个字符，这导致 SEGV 或内存破坏。</li>
-</ol>
-<p>我们可以使用内存屏障来放置这种情况。该方法确实可行，但是带来了读端的开销，更糟的是需要显式使用内存屏障。</p>
-<p>一个更好的办法是将值及数组放进同一个数据结构，如下所示：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=color:#0000cf;font-weight:700>1</span> <span style=color:#204a87;font-weight:700>struct</span> <span style=color:#000>foo_a</span> <span style=color:#000;font-weight:700>{</span> 
-<span style=color:#0000cf;font-weight:700>2</span> 	<span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>length</span><span style=color:#000;font-weight:700>;</span> 
-<span style=color:#0000cf;font-weight:700>3</span> 	<span style=color:#204a87;font-weight:700>char</span> <span style=color:#000>a</span><span style=color:#000;font-weight:700>[</span><span style=color:#0000cf;font-weight:700>0</span><span style=color:#000;font-weight:700>];</span> 
-<span style=color:#0000cf;font-weight:700>4</span> <span style=color:#000;font-weight:700>};</span> 
-<span style=color:#0000cf;font-weight:700>5</span> 
-<span style=color:#0000cf;font-weight:700>6</span> <span style=color:#204a87;font-weight:700>struct</span> <span style=color:#000>foo</span> <span style=color:#000;font-weight:700>{</span> 
-<span style=color:#0000cf;font-weight:700>7</span> 	<span style=color:#204a87;font-weight:700>struct</span> <span style=color:#000>foo_a</span> <span style=color:#ce5c00;font-weight:700>*</span><span style=color:#000>fa</span><span style=color:#000;font-weight:700>;</span> 
-<span style=color:#0000cf;font-weight:700>8</span> <span style=color:#000;font-weight:700>};</span>
-</code></pre></div><p>分配一个新的数组(foo_a 数据结构)，然后为新的数组长度提供一个新的存储空间。这意味着，如果某个 CPU 获得 fa 引用，也就能能确保 length 能够与 a 的长度相匹配。</p>
-<ol>
-<li>数组最初为 16 字节，因此 length 等于 16.</li>
-<li>CPU0 加载 fa 的值，获得指向数据结构的指针，该数据结构包含值 16，以及 16 字节的数组。</li>
-<li>CPU0 加载 fa->length 的值，获得其值 16.</li>
-<li>CPU 压缩数组，使其长度为 8，并且将指针赋值为新分配的 foo_a 数据结构，该结构包含一个 8 字节的内存块 a。</li>
-<li>CPU 0 从 a 获得新指针，并且将新值存储到第 12 个元素。由于 CPU0 仍然引用旧的 foo_a 数据结构，该结构包含 16 字节的数组，一切都正常。</li>
-</ol>
-<p>当然，在所有情况下，CPU1 必须在释放旧数组前等待下一个优雅周期。</p>
-<h3 id=相关联的字段>相关联的字段</h3>
-<p>假设每一只薛定谔动物由下面所示的数据元素表示：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=color:#0000cf;font-weight:700>1</span> <span style=color:#204a87;font-weight:700>struct</span> <span style=color:#000>animal</span> <span style=color:#000;font-weight:700>{</span> 
-<span style=color:#0000cf;font-weight:700>2</span> 	<span style=color:#204a87;font-weight:700>char</span> <span style=color:#000>name</span><span style=color:#000;font-weight:700>[</span><span style=color:#0000cf;font-weight:700>40</span><span style=color:#000;font-weight:700>];</span> 
-<span style=color:#0000cf;font-weight:700>3</span> 	<span style=color:#204a87;font-weight:700>double</span> <span style=color:#000>age</span><span style=color:#000;font-weight:700>;</span> 
-<span style=color:#0000cf;font-weight:700>4</span> 	<span style=color:#204a87;font-weight:700>double</span> <span style=color:#000>meas_1</span><span style=color:#000;font-weight:700>;</span> 
-<span style=color:#0000cf;font-weight:700>5</span> 	<span style=color:#204a87;font-weight:700>double</span> <span style=color:#000>meas_2</span><span style=color:#000;font-weight:700>;</span> 
-<span style=color:#0000cf;font-weight:700>6</span> 	<span style=color:#204a87;font-weight:700>double</span> <span style=color:#000>meas_3</span><span style=color:#000;font-weight:700>;</span> 
-<span style=color:#0000cf;font-weight:700>7</span> 	<span style=color:#204a87;font-weight:700>char</span> <span style=color:#000>photo</span><span style=color:#000;font-weight:700>[</span><span style=color:#0000cf;font-weight:700>0</span><span style=color:#000;font-weight:700>];</span> <span style=color:#8f5902;font-style:italic>/* large bitmap. */</span> 
-<span style=color:#0000cf;font-weight:700>8</span> <span style=color:#000;font-weight:700>};</span>
-</code></pre></div><p>meas_1、meas_2、meas_3 字段是一组相关联的计量字段，它们被频繁更新。读端从单词完整更新的角度看到这三个值，这是特别重要的，如果读端看到 meas_1 的旧值，而看到 meas_2 和 meas_3 的新值，读端将会变得非常迷惑。我们怎样才能确保读端看到协调一致的三个值呢？</p>
-<p>一种方法是分配一个新的 animal 数据结构，将旧结构复制到新结构中，更新新结构的三个字段，然后，通过更新指针的方式，将旧的结构替换为新的结构。这确保所有读 端看到测量值的一致集合。但是由于 photo 字段的原因，这需要复制一个大的数据结构。这样的复制操作可能带来不能接受的大开销。</p>
-<p>另一种方式是如下所示中的那样插入一个中间层：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=color:#0000cf;font-weight:700>1</span> <span style=color:#204a87;font-weight:700>struct</span> <span style=color:#000>measurement</span> <span style=color:#000;font-weight:700>{</span> 
-<span style=color:#0000cf;font-weight:700>2</span> 	<span style=color:#204a87;font-weight:700>double</span> <span style=color:#000>meas_1</span><span style=color:#000;font-weight:700>;</span> 
-<span style=color:#0000cf;font-weight:700>3</span> 	<span style=color:#204a87;font-weight:700>double</span> <span style=color:#000>meas_2</span><span style=color:#000;font-weight:700>;</span> 
-<span style=color:#0000cf;font-weight:700>4</span> 	<span style=color:#204a87;font-weight:700>double</span> <span style=color:#000>meas_3</span><span style=color:#000;font-weight:700>;</span> 
-<span style=color:#0000cf;font-weight:700>5</span> <span style=color:#000;font-weight:700>};</span> 
-<span style=color:#0000cf;font-weight:700>6</span> 
-<span style=color:#0000cf;font-weight:700>7</span> <span style=color:#204a87;font-weight:700>struct</span> <span style=color:#000>animal</span> <span style=color:#000;font-weight:700>{</span> 
-<span style=color:#0000cf;font-weight:700>8</span> 	<span style=color:#204a87;font-weight:700>char</span> <span style=color:#000>name</span><span style=color:#000;font-weight:700>[</span><span style=color:#0000cf;font-weight:700>40</span><span style=color:#000;font-weight:700>];</span> 
-<span style=color:#0000cf;font-weight:700>9</span> 	<span style=color:#204a87;font-weight:700>double</span> <span style=color:#000>age</span><span style=color:#000;font-weight:700>;</span> 
-<span style=color:#0000cf;font-weight:700>10</span> 	<span style=color:#204a87;font-weight:700>struct</span> <span style=color:#000>measurement</span> <span style=color:#ce5c00;font-weight:700>*</span><span style=color:#000>mp</span><span style=color:#000;font-weight:700>;</span> 
-<span style=color:#0000cf;font-weight:700>11</span> 	<span style=color:#204a87;font-weight:700>char</span> <span style=color:#000>photo</span><span style=color:#000;font-weight:700>[</span><span style=color:#0000cf;font-weight:700>0</span><span style=color:#000;font-weight:700>];</span> <span style=color:#8f5902;font-style:italic>/* large bitmap. */</span> 
-<span style=color:#0000cf;font-weight:700>12</span> <span style=color:#000;font-weight:700>};</span>
-</code></pre></div><p>当进行一次新的测量时，一个新的 measurement 数据结构被分配，将测量值填充到该结构，并且 animal 的及饿哦股 mp 字段被更新为指向先 measurement 结构，这是使用 rcu_asign_pointer 完成的更新。当一个优雅周期流逝以后，旧的 measurement 数据可以被释放。</p>
-<p>这种方式运行读端以最小的开销，看到所选字段的关联值。</p>
-<h2 id=散列问题>散列问题</h2>
-<p>本节着眼于在处理哈希表时，可能会碰上的一些问题。请注意，这些问题也适用于许多其他与搜索相关的数据结构。</p>
-<h3 id=相关联的数据元素>相关联的数据元素</h3>
-<p>这种情形类似于 13.2.4 节中的问题：存在一个哈希表，我们需要两个或更多元素的关联视图。这些数据元素被同时更新，并且我们不希望看到不同元素之间的不同版本。</p>
-<p>一种方式是使用顺序锁，这样更新将在 write_seqlock 的保护下进行。而要求一致性的读请求将在 read_seqbegin/read_seqretry 循环体中进行。请注意，顺序锁并不是 RCU 保护机制的替代品：顺序锁是保护并发修改操作，而 RCU 仍然是需要的，它保护并发的删除。</p>
-<p>当相关数据元素少，读这些元素的时间很短，更新速度也低的时候，这种方式可以运行的很好。否则，更新可能会频繁发生，以至于读者总是不能完成。要逃避读者饥饿问题，一种方式是在读端重试太多次之后让其使用写端原语，但是这会同时降低性能和扩展性。</p>
-<p>另外，如果写端原语使用得太频繁，那么，由于锁竞争的原因，将带来性能和扩展性的问题。要避免这个问题，其中一种方法是维护一个每数据元素的顺序锁，并且，在更新时应该持有所有涉及元素的锁。但是复杂性在于：在单词扫描数据库期间，需要获得所有数据的文档视图。</p>
-<p>如果元素分组被良好定义且有持久性，那么一种方式是将指针添加到数据元素中，将特定组的元素链接在一起。读者就能遍历所有这些指针，以访问同一组内的所有元素。</p>
-<h3 id=对更新友好的哈希表遍历>对更新友好的哈希表遍历</h3>
-<p>如果需要对哈希表中的所有元素进行统计扫描。例如，薛定谔可能希望计算所有动物的平均长度——重量比率。更进一步假设，薛定谔愿意忽略在统计扫描进行时，那些正在从哈希表中添加或移除的动物引起的轻微错误。那么如何来控制并发性？</p>
-<p>一种方法是：将统计扫描置于 RCU 读端临界区之内。这允许更新并发的进行，而不影响扫描进程。特别是，扫描过程并不阻塞更新操作，反之亦然。这允许对包含大量数据元素的哈希表进行扫描，这样的扫描将被优雅的支持，即使面对高频率的更新时也是如此。</p>
-<style>.feedback--answer{display:inline-block}.feedback--answer-no{margin-left:1em}.feedback--response{display:none;margin-top:1em}.feedback--response__visible{display:block}</style>
-<div class=d-print-none>
-<h2 class=feedback--title>Feedback</h2>
-<p class=feedback--question>Was this page helpful?</p>
-<button class="btn btn-primary mb-4 feedback--answer feedback--answer-yes">Yes</button>
+</div><p>第 6~8 行包含每线程 counter 变量的定义，全局指针 countarray 引用单签 countarray 结构，以及 final_mutex 自旋锁。</p><p>第 10~13 行展示 inc_count，与之前没有变化。</p><p>第 15~29 行展示 read_count，它被大量修改了。第 21~27 行以 rcu_read_lock 和 rcu_read_unlock 代替获得、释放 final_mutex 锁。第 22 行使用 rcu_dereference 将当前 countarray 数据结构的快照获取到临时变量 cap 中。正确的使用 RCU 将确保：在第 27 行的 RCU 读端临界区结束前，该 countarray 数据结构不会被释放掉。第 23 行初始化 sum 作为 cap->total，它表示之前已经退出的线程计数值之和。第 23~26 行将正在运行的线程对应的每线程计数值添加到 sum 中。最后第 28 行返回 sum。</p><p>countarray 的初始值由第 31~39 行的 count_init 提供。这个函数在第一个线程创建之前运行，其任务是分配初始数据结构，并将其置为 0，然后将它赋值给 countarray。</p><p>第 41~48 行展示了 count_register_thread 函数，他被每一个新创建线程所调用。第 43 行获取当前线程的索引，第 45 行获取 final_mutex，的 46 行将指针指向线程的 counter，第 47 行释放 final_mutex 锁。</p><p>第 50~70 行展示了 count_unregister_thread 函数，没一个线程在退出前，条用此函数。第 56~60 行分配一个新的 countarray 数据结构，第 61 行获得 final_mutex 锁，第 67 行释放锁。第 62 行将当前 countarray 的值复制到新分配的副本，第 63 行将现存线程的 counterp 添加到新结构的总和值中，第 64 行将真正退出线程的 counterp[] 数组元素置空，第 66 行保留当前值(很快就会变成旧的)countarray 结构的指针引用，第 66 行使用 rcu_assign_pointer 设置 countarray 结构的新版本。第 68 行等待一个优雅周期的流逝。这样，任何可能并发执行 read_count，并且可能拥有对旧的 countarray 结构引用的线程，都能退出它们的 RCU 读端临界区，并放弃对这些结构的引用。因此，第 69 行能够安全释放旧的 countarray 结构。</p><h4 id=讨论>讨论</h4><p>对 RCU 的使用，使得正在退出的线程进行等待，直到其他线程保证，其已经结束对退出线程的 thread 变量的使用。这允许 read_count 函数免于使用锁，因而对 inc_count 和 read_count 函数来说，都为其提供了优良的性能和可扩展性。但是这些性能和扩展性来自于代码复杂性的增加。希望编译器和库函数的编写者能够提供用户层的 RCU，以实现跨越线程安全访问 thread 变量，大大减少 thread 变量使用者所能见到的复杂性。</p><h3 id=rcu-及可插拔-io-设备的计数器>RCU 及可插拔 IO 设备的计数器</h3><p>5.5 节展示了一对奇怪的代码段，以处理对可插拔设备的 IO 访问计数。由于需要获取读写锁，因此这些代码段会在快速路径上(开始一个 IO)招致过高的负载。</p><p>执行 IO 的代码与原来的代码非常类似，它使用 RCU 读端临界区代替原代码中的读写锁的读端临界区。</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=display:flex><span><span style=color:#0000cf;font-weight:700>1</span> <span style=color:#000>rcu_read_lock</span><span style=color:#000;font-weight:700>();</span> 
+</span></span><span style=display:flex><span><span style=color:#0000cf;font-weight:700>2</span> <span style=color:#000>if</span> <span style=color:#000;font-weight:700>(</span><span style=color:#000>removing</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000;font-weight:700>{</span> 
+</span></span><span style=display:flex><span><span style=color:#0000cf;font-weight:700>3</span> 	<span style=color:#000>rcu_read_unlock</span><span style=color:#000;font-weight:700>();</span> 
+</span></span><span style=display:flex><span><span style=color:#0000cf;font-weight:700>4</span> 	<span style=color:#000>cancel_io</span><span style=color:#000;font-weight:700>();</span> 
+</span></span><span style=display:flex><span><span style=color:#0000cf;font-weight:700>5</span> <span style=color:#000;font-weight:700>}</span> <span style=color:#204a87;font-weight:700>else</span> <span style=color:#000;font-weight:700>{</span> 
+</span></span><span style=display:flex><span><span style=color:#0000cf;font-weight:700>6</span> 	<span style=color:#000>add_count</span><span style=color:#000;font-weight:700>(</span><span style=color:#0000cf;font-weight:700>1</span><span style=color:#000;font-weight:700>);</span> 
+</span></span><span style=display:flex><span><span style=color:#0000cf;font-weight:700>7</span> 	<span style=color:#000>rcu_read_unlock</span><span style=color:#000;font-weight:700>();</span> 
+</span></span><span style=display:flex><span><span style=color:#0000cf;font-weight:700>8</span> 	<span style=color:#000>do_io</span><span style=color:#000;font-weight:700>();</span> 
+</span></span><span style=display:flex><span><span style=color:#0000cf;font-weight:700>9</span> 	<span style=color:#000>sub_count</span><span style=color:#000;font-weight:700>(</span><span style=color:#0000cf;font-weight:700>1</span><span style=color:#000;font-weight:700>);</span> 
+</span></span><span style=display:flex><span><span style=color:#0000cf;font-weight:700>10</span> <span style=color:#000;font-weight:700>}</span>
+</span></span></code></pre></div><p>RCU 读端原语拥有极小的负载，因此提升了快速路径的速度。</p><p>移除设备的新代码片段如下：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=display:flex><span><span style=color:#0000cf;font-weight:700>1</span> <span style=color:#000>spin_lock</span><span style=color:#000;font-weight:700>(</span><span style=color:#ce5c00;font-weight:700>&amp;</span><span style=color:#000>mylock</span><span style=color:#000;font-weight:700>);</span> 
+</span></span><span style=display:flex><span><span style=color:#0000cf;font-weight:700>2</span> <span style=color:#000>removing</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#0000cf;font-weight:700>1</span><span style=color:#000;font-weight:700>;</span> 
+</span></span><span style=display:flex><span><span style=color:#0000cf;font-weight:700>3</span> <span style=color:#000>sub_count</span><span style=color:#000;font-weight:700>(</span><span style=color:#000>mybias</span><span style=color:#000;font-weight:700>);</span> 
+</span></span><span style=display:flex><span><span style=color:#0000cf;font-weight:700>4</span> <span style=color:#000>spin_unlock</span><span style=color:#000;font-weight:700>(</span><span style=color:#ce5c00;font-weight:700>&amp;</span><span style=color:#000>mylock</span><span style=color:#000;font-weight:700>);</span> 
+</span></span><span style=display:flex><span><span style=color:#0000cf;font-weight:700>5</span> <span style=color:#000>synchronize_rcu</span><span style=color:#000;font-weight:700>();</span> 
+</span></span><span style=display:flex><span><span style=color:#0000cf;font-weight:700>6</span> <span style=color:#000>while</span> <span style=color:#000;font-weight:700>(</span><span style=color:#000>read_count</span><span style=color:#000;font-weight:700>()</span> <span style=color:#ce5c00;font-weight:700>!=</span> <span style=color:#0000cf;font-weight:700>0</span><span style=color:#000;font-weight:700>)</span> <span style=color:#000;font-weight:700>{</span> 
+</span></span><span style=display:flex><span><span style=color:#0000cf;font-weight:700>7</span> 	<span style=color:#000>poll</span><span style=color:#000;font-weight:700>(</span><span style=color:#204a87>NULL</span><span style=color:#000;font-weight:700>,</span> <span style=color:#0000cf;font-weight:700>0</span><span style=color:#000;font-weight:700>,</span> <span style=color:#0000cf;font-weight:700>1</span><span style=color:#000;font-weight:700>);</span> 
+</span></span><span style=display:flex><span><span style=color:#0000cf;font-weight:700>8</span> <span style=color:#000;font-weight:700>}</span> 
+</span></span><span style=display:flex><span><span style=color:#0000cf;font-weight:700>9</span> <span style=color:#000>remove_device</span><span style=color:#000;font-weight:700>();</span>
+</span></span></code></pre></div><p>在此，我们将读写锁替换为排他自旋锁，并增加 synchronize_rcu 以等待所有 RCU 读端临界区完成。由于 synchronize_rcu 的缘故，一旦我们允许到第 6 行，就能够知道，所有剩余 IO 已经被识别到了。</p><p>当然 synchronize_rcu 的开销可能比较大。不过，既然移除设备这种情况比较少见，那么这种方法通常是一个不错的权衡。</p><h3 id=数组及长度>数组及长度</h3><p>如果我们有一个受 RCU 保护的可变长度数组，如下面的代码片段：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=display:flex><span><span style=color:#0000cf;font-weight:700>1</span> <span style=color:#204a87;font-weight:700>struct</span> <span style=color:#000>foo</span> <span style=color:#000;font-weight:700>{</span> 
+</span></span><span style=display:flex><span><span style=color:#0000cf;font-weight:700>2</span> 	<span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>length</span><span style=color:#000;font-weight:700>;</span> 
+</span></span><span style=display:flex><span><span style=color:#0000cf;font-weight:700>3</span> 	<span style=color:#204a87;font-weight:700>char</span> <span style=color:#ce5c00;font-weight:700>*</span><span style=color:#000>a</span><span style=color:#000;font-weight:700>;</span> 
+</span></span><span style=display:flex><span><span style=color:#0000cf;font-weight:700>4</span> <span style=color:#000;font-weight:700>};</span>
+</span></span></code></pre></div><p>数组 ->a[] 的长度可能会动态变化。在任意时刻，其长度由字段 ->length 表示。当然，这带来了如下竞争条件。</p><ol>
+<li>数组被初始化为 16 个字节，因此 length 等于 16。</li><li>CPU0 紧挨着 length 的值，得到 16。</li><li>CPU1 压缩数组长度到 8，并将 ->a[] 赋值为指向新 8 字节长的内存块的指针。</li><li>CPU0 从 ->a[] 获取到新的指针，并且将新值存储到元素 12 中。由于数组仅仅有 8 个字符，这导致 SEGV 或内存破坏。</li></ol><p>我们可以使用内存屏障来放置这种情况。该方法确实可行，但是带来了读端的开销，更糟的是需要显式使用内存屏障。</p><p>一个更好的办法是将值及数组放进同一个数据结构，如下所示：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=display:flex><span><span style=color:#0000cf;font-weight:700>1</span> <span style=color:#204a87;font-weight:700>struct</span> <span style=color:#000>foo_a</span> <span style=color:#000;font-weight:700>{</span> 
+</span></span><span style=display:flex><span><span style=color:#0000cf;font-weight:700>2</span> 	<span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>length</span><span style=color:#000;font-weight:700>;</span> 
+</span></span><span style=display:flex><span><span style=color:#0000cf;font-weight:700>3</span> 	<span style=color:#204a87;font-weight:700>char</span> <span style=color:#000>a</span><span style=color:#000;font-weight:700>[</span><span style=color:#0000cf;font-weight:700>0</span><span style=color:#000;font-weight:700>];</span> 
+</span></span><span style=display:flex><span><span style=color:#0000cf;font-weight:700>4</span> <span style=color:#000;font-weight:700>};</span> 
+</span></span><span style=display:flex><span><span style=color:#0000cf;font-weight:700>5</span> 
+</span></span><span style=display:flex><span><span style=color:#0000cf;font-weight:700>6</span> <span style=color:#204a87;font-weight:700>struct</span> <span style=color:#000>foo</span> <span style=color:#000;font-weight:700>{</span> 
+</span></span><span style=display:flex><span><span style=color:#0000cf;font-weight:700>7</span> 	<span style=color:#204a87;font-weight:700>struct</span> <span style=color:#000>foo_a</span> <span style=color:#ce5c00;font-weight:700>*</span><span style=color:#000>fa</span><span style=color:#000;font-weight:700>;</span> 
+</span></span><span style=display:flex><span><span style=color:#0000cf;font-weight:700>8</span> <span style=color:#000;font-weight:700>};</span>
+</span></span></code></pre></div><p>分配一个新的数组(foo_a 数据结构)，然后为新的数组长度提供一个新的存储空间。这意味着，如果某个 CPU 获得 fa 引用，也就能能确保 length 能够与 a 的长度相匹配。</p><ol>
+<li>数组最初为 16 字节，因此 length 等于 16.</li><li>CPU0 加载 fa 的值，获得指向数据结构的指针，该数据结构包含值 16，以及 16 字节的数组。</li><li>CPU0 加载 fa->length 的值，获得其值 16.</li><li>CPU 压缩数组，使其长度为 8，并且将指针赋值为新分配的 foo_a 数据结构，该结构包含一个 8 字节的内存块 a。</li><li>CPU 0 从 a 获得新指针，并且将新值存储到第 12 个元素。由于 CPU0 仍然引用旧的 foo_a 数据结构，该结构包含 16 字节的数组，一切都正常。</li></ol><p>当然，在所有情况下，CPU1 必须在释放旧数组前等待下一个优雅周期。</p><h3 id=相关联的字段>相关联的字段</h3><p>假设每一只薛定谔动物由下面所示的数据元素表示：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=display:flex><span><span style=color:#0000cf;font-weight:700>1</span> <span style=color:#204a87;font-weight:700>struct</span> <span style=color:#000>animal</span> <span style=color:#000;font-weight:700>{</span> 
+</span></span><span style=display:flex><span><span style=color:#0000cf;font-weight:700>2</span> 	<span style=color:#204a87;font-weight:700>char</span> <span style=color:#000>name</span><span style=color:#000;font-weight:700>[</span><span style=color:#0000cf;font-weight:700>40</span><span style=color:#000;font-weight:700>];</span> 
+</span></span><span style=display:flex><span><span style=color:#0000cf;font-weight:700>3</span> 	<span style=color:#204a87;font-weight:700>double</span> <span style=color:#000>age</span><span style=color:#000;font-weight:700>;</span> 
+</span></span><span style=display:flex><span><span style=color:#0000cf;font-weight:700>4</span> 	<span style=color:#204a87;font-weight:700>double</span> <span style=color:#000>meas_1</span><span style=color:#000;font-weight:700>;</span> 
+</span></span><span style=display:flex><span><span style=color:#0000cf;font-weight:700>5</span> 	<span style=color:#204a87;font-weight:700>double</span> <span style=color:#000>meas_2</span><span style=color:#000;font-weight:700>;</span> 
+</span></span><span style=display:flex><span><span style=color:#0000cf;font-weight:700>6</span> 	<span style=color:#204a87;font-weight:700>double</span> <span style=color:#000>meas_3</span><span style=color:#000;font-weight:700>;</span> 
+</span></span><span style=display:flex><span><span style=color:#0000cf;font-weight:700>7</span> 	<span style=color:#204a87;font-weight:700>char</span> <span style=color:#000>photo</span><span style=color:#000;font-weight:700>[</span><span style=color:#0000cf;font-weight:700>0</span><span style=color:#000;font-weight:700>];</span> <span style=color:#8f5902;font-style:italic>/* large bitmap. */</span> 
+</span></span><span style=display:flex><span><span style=color:#0000cf;font-weight:700>8</span> <span style=color:#000;font-weight:700>};</span>
+</span></span></code></pre></div><p>meas_1、meas_2、meas_3 字段是一组相关联的计量字段，它们被频繁更新。读端从单词完整更新的角度看到这三个值，这是特别重要的，如果读端看到 meas_1 的旧值，而看到 meas_2 和 meas_3 的新值，读端将会变得非常迷惑。我们怎样才能确保读端看到协调一致的三个值呢？</p><p>一种方法是分配一个新的 animal 数据结构，将旧结构复制到新结构中，更新新结构的三个字段，然后，通过更新指针的方式，将旧的结构替换为新的结构。这确保所有读 端看到测量值的一致集合。但是由于 photo 字段的原因，这需要复制一个大的数据结构。这样的复制操作可能带来不能接受的大开销。</p><p>另一种方式是如下所示中的那样插入一个中间层：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=display:flex><span><span style=color:#0000cf;font-weight:700>1</span> <span style=color:#204a87;font-weight:700>struct</span> <span style=color:#000>measurement</span> <span style=color:#000;font-weight:700>{</span> 
+</span></span><span style=display:flex><span><span style=color:#0000cf;font-weight:700>2</span> 	<span style=color:#204a87;font-weight:700>double</span> <span style=color:#000>meas_1</span><span style=color:#000;font-weight:700>;</span> 
+</span></span><span style=display:flex><span><span style=color:#0000cf;font-weight:700>3</span> 	<span style=color:#204a87;font-weight:700>double</span> <span style=color:#000>meas_2</span><span style=color:#000;font-weight:700>;</span> 
+</span></span><span style=display:flex><span><span style=color:#0000cf;font-weight:700>4</span> 	<span style=color:#204a87;font-weight:700>double</span> <span style=color:#000>meas_3</span><span style=color:#000;font-weight:700>;</span> 
+</span></span><span style=display:flex><span><span style=color:#0000cf;font-weight:700>5</span> <span style=color:#000;font-weight:700>};</span> 
+</span></span><span style=display:flex><span><span style=color:#0000cf;font-weight:700>6</span> 
+</span></span><span style=display:flex><span><span style=color:#0000cf;font-weight:700>7</span> <span style=color:#204a87;font-weight:700>struct</span> <span style=color:#000>animal</span> <span style=color:#000;font-weight:700>{</span> 
+</span></span><span style=display:flex><span><span style=color:#0000cf;font-weight:700>8</span> 	<span style=color:#204a87;font-weight:700>char</span> <span style=color:#000>name</span><span style=color:#000;font-weight:700>[</span><span style=color:#0000cf;font-weight:700>40</span><span style=color:#000;font-weight:700>];</span> 
+</span></span><span style=display:flex><span><span style=color:#0000cf;font-weight:700>9</span> 	<span style=color:#204a87;font-weight:700>double</span> <span style=color:#000>age</span><span style=color:#000;font-weight:700>;</span> 
+</span></span><span style=display:flex><span><span style=color:#0000cf;font-weight:700>10</span> 	<span style=color:#204a87;font-weight:700>struct</span> <span style=color:#000>measurement</span> <span style=color:#ce5c00;font-weight:700>*</span><span style=color:#000>mp</span><span style=color:#000;font-weight:700>;</span> 
+</span></span><span style=display:flex><span><span style=color:#0000cf;font-weight:700>11</span> 	<span style=color:#204a87;font-weight:700>char</span> <span style=color:#000>photo</span><span style=color:#000;font-weight:700>[</span><span style=color:#0000cf;font-weight:700>0</span><span style=color:#000;font-weight:700>];</span> <span style=color:#8f5902;font-style:italic>/* large bitmap. */</span> 
+</span></span><span style=display:flex><span><span style=color:#0000cf;font-weight:700>12</span> <span style=color:#000;font-weight:700>};</span>
+</span></span></code></pre></div><p>当进行一次新的测量时，一个新的 measurement 数据结构被分配，将测量值填充到该结构，并且 animal 的及饿哦股 mp 字段被更新为指向先 measurement 结构，这是使用 rcu_asign_pointer 完成的更新。当一个优雅周期流逝以后，旧的 measurement 数据可以被释放。</p><p>这种方式运行读端以最小的开销，看到所选字段的关联值。</p><h2 id=散列问题>散列问题</h2><p>本节着眼于在处理哈希表时，可能会碰上的一些问题。请注意，这些问题也适用于许多其他与搜索相关的数据结构。</p><h3 id=相关联的数据元素>相关联的数据元素</h3><p>这种情形类似于 13.2.4 节中的问题：存在一个哈希表，我们需要两个或更多元素的关联视图。这些数据元素被同时更新，并且我们不希望看到不同元素之间的不同版本。</p><p>一种方式是使用顺序锁，这样更新将在 write_seqlock 的保护下进行。而要求一致性的读请求将在 read_seqbegin/read_seqretry 循环体中进行。请注意，顺序锁并不是 RCU 保护机制的替代品：顺序锁是保护并发修改操作，而 RCU 仍然是需要的，它保护并发的删除。</p><p>当相关数据元素少，读这些元素的时间很短，更新速度也低的时候，这种方式可以运行的很好。否则，更新可能会频繁发生，以至于读者总是不能完成。要逃避读者饥饿问题，一种方式是在读端重试太多次之后让其使用写端原语，但是这会同时降低性能和扩展性。</p><p>另外，如果写端原语使用得太频繁，那么，由于锁竞争的原因，将带来性能和扩展性的问题。要避免这个问题，其中一种方法是维护一个每数据元素的顺序锁，并且，在更新时应该持有所有涉及元素的锁。但是复杂性在于：在单词扫描数据库期间，需要获得所有数据的文档视图。</p><p>如果元素分组被良好定义且有持久性，那么一种方式是将指针添加到数据元素中，将特定组的元素链接在一起。读者就能遍历所有这些指针，以访问同一组内的所有元素。</p><h3 id=对更新友好的哈希表遍历>对更新友好的哈希表遍历</h3><p>如果需要对哈希表中的所有元素进行统计扫描。例如，薛定谔可能希望计算所有动物的平均长度——重量比率。更进一步假设，薛定谔愿意忽略在统计扫描进行时，那些正在从哈希表中添加或移除的动物引起的轻微错误。那么如何来控制并发性？</p><p>一种方法是：将统计扫描置于 RCU 读端临界区之内。这允许更新并发的进行，而不影响扫描进程。特别是，扫描过程并不阻塞更新操作，反之亦然。这允许对包含大量数据元素的哈希表进行扫描，这样的扫描将被优雅的支持，即使面对高频率的更新时也是如此。</p><style>.feedback--answer{display:inline-block}.feedback--answer-no{margin-left:1em}.feedback--response{display:none;margin-top:1em}.feedback--response__visible{display:block}</style><div class=d-print-none>
+<h2 class=feedback--title>Feedback</h2><p class=feedback--question>Was this page helpful?</p><button class="btn btn-primary mb-4 feedback--answer feedback--answer-yes">Yes</button>
 <button class="btn btn-primary mb-4 feedback--answer feedback--answer-no">No</button>
 <p class="feedback--response feedback--response-yes">
 Glad to hear it! Please <a href=https://github.com/infilos/infilos.com/issues/new>tell us how we can improve</a>.
-</p>
-<p class="feedback--response feedback--response-no">
+</p><p class="feedback--response feedback--response-no">
 Sorry to hear that. Please <a href=https://github.com/infilos/infilos.com/issues/new>tell us how we can improve</a>.
-</p>
-</div>
-<script>const yesButton=document.querySelector('.feedback--answer-yes'),noButton=document.querySelector('.feedback--answer-no'),yesResponse=document.querySelector('.feedback--response-yes'),noResponse=document.querySelector('.feedback--response-no'),disableButtons=()=>{yesButton.disabled=!0,noButton.disabled=!0},sendFeedback=b=>{if(typeof ga!='function')return;const a={command:'send',hitType:'event',category:'Helpful',action:'click',label:window.location.pathname,value:b};ga(a.command,a.hitType,a.category,a.action,a.label,a.value)};yesButton.addEventListener('click',()=>{yesResponse.classList.add('feedback--response__visible'),disableButtons(),sendFeedback(1)}),noButton.addEventListener('click',()=>{noResponse.classList.add('feedback--response__visible'),disableButtons(),sendFeedback(0)})</script>
+</p></div><script>const yesButton=document.querySelector(".feedback--answer-yes"),noButton=document.querySelector(".feedback--answer-no"),yesResponse=document.querySelector(".feedback--response-yes"),noResponse=document.querySelector(".feedback--response-no"),disableButtons=()=>{yesButton.disabled=!0,noButton.disabled=!0},sendFeedback=t=>{if(typeof ga!="function")return;const e={command:"send",hitType:"event",category:"Helpful",action:"click",label:window.location.pathname,value:t};ga(e.command,e.hitType,e.category,e.action,e.label,e.value)};yesButton.addEventListener("click",()=>{yesResponse.classList.add("feedback--response__visible"),disableButtons(),sendFeedback(1)}),noButton.addEventListener("click",()=>{noResponse.classList.add("feedback--response__visible"),disableButtons(),sendFeedback(0)})</script>
 <br>
-</div>
-</main>
-</div>
-</div>
-<footer class="bg-dark py-5 row d-print-none">
+</div></main></div></div><footer class="bg-dark py-5 row d-print-none">
 <div class="container-fluid mx-sm-5">
 <div class=row>
 <div class="col-6 col-sm-4 text-xs-center order-sm-2">
-</div>
-<div class="col-6 col-sm-4 text-right text-xs-center order-sm-3">
+</div><div class="col-6 col-sm-4 text-right text-xs-center order-sm-3">
 <ul class="list-inline mb-0">
 <li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Weibo aria-label=Weibo>
 <a class=text-white target=_blank rel="noopener noreferrer" href=https://weibo.com/u/3848950217>
 <i class="fab fa-weibo"></i>
 </a>
-</li>
-<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Twitter aria-label=Twitter>
+</li><li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Twitter aria-label=Twitter>
 <a class=text-white target=_blank rel="noopener noreferrer" href=https://twitter.com/zhange_zzg>
 <i class="fab fa-twitter"></i>
 </a>
-</li>
-<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title="Stack Overflow" aria-label="Stack Overflow">
+</li><li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title="Stack Overflow" aria-label="Stack Overflow">
 <a class=text-white target=_blank rel="noopener noreferrer" href=https://stackoverflow.com>
 <i class="fab fa-stack-overflow"></i>
 </a>
-</li>
-<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=GitHub aria-label=GitHub>
+</li><li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=GitHub aria-label=GitHub>
 <a class=text-white target=_blank rel="noopener noreferrer" href=https://github.com/infilos/infilos.com>
 <i class="fab fa-github"></i>
 </a>
-</li>
-</ul>
-</div>
-<div class="col-12 col-sm-4 text-center py-2 order-sm-2">
+</li></ul></div><div class="col-12 col-sm-4 text-center py-2 order-sm-2">
 <small class=text-white>&copy; 2022 infilos.com All Rights Reserved</small>
-</div>
-</div>
-</div>
-</footer>
-</div>
-<script src=/js/popper.min.js integrity=sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49 crossorigin=anonymous></script>
+</div></div></div></footer></div><script src=/js/popper.min.js integrity=sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49 crossorigin=anonymous></script>
 <script src=/js/bootstrap.min.js integrity=sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy crossorigin=anonymous></script>
-<script src=/js/main.min.5c74b870c6953931a705f390a49c7e4c0a842ec5c83b24354758dd674343ed0d.js integrity="sha256-XHS4cMaVOTGnBfOQpJx+TAqELsXIOyQ1R1jdZ0ND7Q0=" crossorigin=anonymous></script>
-</body>
-</html>
+<script src=/js/main.min.3f3f4f1e22307ccbb13271a98be2e4dbb8386b7e67c3d606db44d3d0649f485e.js integrity="sha256-Pz9PHiIwfMuxMnGpi+Lk27g4a35nw9YG20TT0GSfSF4=" crossorigin=anonymous></script>
+</body></html>

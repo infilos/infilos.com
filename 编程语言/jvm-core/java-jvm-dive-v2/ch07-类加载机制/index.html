@@ -2,7 +2,7 @@
 <head>
 <meta charset=utf-8>
 <meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no">
-<meta name=generator content="Hugo 0.92.2">
+<meta name=generator content="Hugo 0.93.0">
 <meta name=ROBOTS content="INDEX, FOLLOW">
 <link rel="shortcut icon" href=/favicons/favicon.ico>
 <link rel=apple-touch-icon href=/favicons/apple-touch-icon-180x180.png sizes=180x180>
@@ -22,7 +22,7 @@
  遇到 new、getstatic、putstatic、invokestatic 这四种字节码指令时，如果没有对类进行初始化，则需要先触发对应类的初始化。 使用 java.lang.reflect 中的方法对类进行反射调用。 当初始化一个类的时候，发现其父类尚未被初始化。 当虚拟机启动时，用户需要制定一个将要执行的主类(包含 main 方法的类)。 (JDK 7)如果一个 MethodHandle 实例最后的解析结果是 REF_getStatic、REF_putStatic、REF_invikeStatic 的方法句柄对应类类没有被初始化。  这 5 种场景中的行为成为对一个类进行主动引用。除此之外，所有引用类的行为都不会触发初始化，称为被动引用。
 被动引用场景 通过子类引用父类的静态字段 不会导致子类初始化。会引起父类的初始化和子类的加载。
 通过数组定义来引用类 不会触发此类的初始化。
-public class NotInitialization{ public static void main(String[]args){ SuperClass[]sca=new SuperClass[10]； } } 这段代码不会触发 SuperClass 类的初始化，但会触发一个名为 [Lorg.fenixsoft.classloading.SuperClass 类的初始化，这是一个由 JVM 自动生成的、直接继承于 java.">
+public class NotInitialization{  public static void main(String[]args){  SuperClass[]sca=new SuperClass[10]；  } } 这段代码不会触发 SuperClass 类的初始化，但会触发一个名为 [Lorg.">
 <meta property="og:type" content="article">
 <meta property="og:url" content="/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v2/ch07-%E7%B1%BB%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6/"><meta property="article:section" content="编程语言">
 <meta property="og:site_name" content="infilos.com">
@@ -34,7 +34,7 @@ public class NotInitialization{ public static void main(String[]args){ SuperClas
  遇到 new、getstatic、putstatic、invokestatic 这四种字节码指令时，如果没有对类进行初始化，则需要先触发对应类的初始化。 使用 java.lang.reflect 中的方法对类进行反射调用。 当初始化一个类的时候，发现其父类尚未被初始化。 当虚拟机启动时，用户需要制定一个将要执行的主类(包含 main 方法的类)。 (JDK 7)如果一个 MethodHandle 实例最后的解析结果是 REF_getStatic、REF_putStatic、REF_invikeStatic 的方法句柄对应类类没有被初始化。  这 5 种场景中的行为成为对一个类进行主动引用。除此之外，所有引用类的行为都不会触发初始化，称为被动引用。
 被动引用场景 通过子类引用父类的静态字段 不会导致子类初始化。会引起父类的初始化和子类的加载。
 通过数组定义来引用类 不会触发此类的初始化。
-public class NotInitialization{ public static void main(String[]args){ SuperClass[]sca=new SuperClass[10]； } } 这段代码不会触发 SuperClass 类的初始化，但会触发一个名为 [Lorg.fenixsoft.classloading.SuperClass 类的初始化，这是一个由 JVM 自动生成的、直接继承于 java.">
+public class NotInitialization{  public static void main(String[]args){  SuperClass[]sca=new SuperClass[10]；  } } 这段代码不会触发 SuperClass 类的初始化，但会触发一个名为 [Lorg.">
 <meta itemprop=wordCount content="632">
 <meta itemprop=keywords content><meta name=twitter:card content="summary">
 <meta name=twitter:title content="CH07-类加载">
@@ -45,46 +45,44 @@ public class NotInitialization{ public static void main(String[]args){ SuperClas
  遇到 new、getstatic、putstatic、invokestatic 这四种字节码指令时，如果没有对类进行初始化，则需要先触发对应类的初始化。 使用 java.lang.reflect 中的方法对类进行反射调用。 当初始化一个类的时候，发现其父类尚未被初始化。 当虚拟机启动时，用户需要制定一个将要执行的主类(包含 main 方法的类)。 (JDK 7)如果一个 MethodHandle 实例最后的解析结果是 REF_getStatic、REF_putStatic、REF_invikeStatic 的方法句柄对应类类没有被初始化。  这 5 种场景中的行为成为对一个类进行主动引用。除此之外，所有引用类的行为都不会触发初始化，称为被动引用。
 被动引用场景 通过子类引用父类的静态字段 不会导致子类初始化。会引起父类的初始化和子类的加载。
 通过数组定义来引用类 不会触发此类的初始化。
-public class NotInitialization{ public static void main(String[]args){ SuperClass[]sca=new SuperClass[10]； } } 这段代码不会触发 SuperClass 类的初始化，但会触发一个名为 [Lorg.fenixsoft.classloading.SuperClass 类的初始化，这是一个由 JVM 自动生成的、直接继承于 java.">
-<script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga('create','UA-123062585-1','auto'),ga('send','pageview'))</script>
+public class NotInitialization{  public static void main(String[]args){  SuperClass[]sca=new SuperClass[10]；  } } 这段代码不会触发 SuperClass 类的初始化，但会触发一个名为 [Lorg.">
+<script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga("create","UA-123062585-1","auto"),ga("send","pageview"))</script>
 <script async src=https://www.google-analytics.com/analytics.js></script>
 <link rel=preload href=/scss/main.min.847464b684a6e89d7276700a5c500c17ab494dd1755b2654a7b27d8b59e3347e.css as=style>
 <link href=/scss/main.min.847464b684a6e89d7276700a5c500c17ab494dd1755b2654a7b27d8b59e3347e.css rel=stylesheet integrity>
 <script src=/js/jquery-3.5.1.min.js integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin=anonymous></script>
-</head>
-<body class=td-page>
+</head><body class=td-page>
 <header>
-<nav class="js-navbar-scroll navbar navbar-expand navbar-dark flex-column flex-md-row td-navbar">
+<nav class="js-navbar-scroll navbar navbar-expand-lg navbar-dark td-navbar">
 <a class=navbar-brand href=/>
-<span class=navbar-logo><svg id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512" style="enable-background:new 0 0 512 512"><path style="fill:#ffc107" d="M432.384 143.616c-4.165-4.164-10.917-4.164-15.083.0l-60.352 60.352c-4.164 4.165-4.164 10.917.0 15.083 21.187 20.463 54.951 19.876 75.413-1.311 19.962-20.668 19.962-53.435.0-74.102L432.384 143.616z"/><path style="fill:#607d8b" d="M42.667 277.334c-5.891.003-10.669-4.771-10.672-10.662-.002-4.338 2.623-8.245 6.64-9.882l234.667-96c5.455-2.233 11.687.38 13.92 5.835s-.38 11.687-5.835 13.92l-234.667 96C45.433 277.069 44.056 277.337 42.667 277.334z"/><path style="fill:#546e7a" d="M391.552 56.448l-32-32C343.938 8.745 322.689-.059 300.544.0h-3.755c-46.082.024-83.432 37.374-83.456 83.456v3.755c-.053 22.138 8.75 43.377 24.448 58.987l32 32c4.165 4.164 10.917 4.164 15.083.0L391.531 71.531C395.701 67.372 395.71 60.62 391.552 56.448z"/><path style="fill:#607d8b" d="M160 469.334c-3.279.006-6.379-1.497-8.405-4.075L34.261 315.926c-3.635-4.636-2.823-11.341 1.813-14.976s11.341-2.823 14.976 1.813l117.333 149.333c3.629 4.641 2.809 11.344-1.832 14.973C164.681 468.533 162.375 469.329 160 469.334z"/><path style="fill:#455a64" d="M487.467 86.848l-3.669-3.648c-37.687-36.557-97.71-36.197-134.955.811l-51.413 51.413c-36.996 37.25-37.357 97.263-.811 134.955l3.584 3.669c1.7 2.457 4.671 3.706 7.616 3.2 2.831.005 5.548-1.115 7.552-3.115l172.181-172.181c4.189-4.143 4.226-10.896.083-15.085-.028-.028-.055-.056-.083-.083L487.467 86.848z"/><g><path style="fill:#ffc107" d="M501.333 192H480c-5.891.0-10.667-4.776-10.667-10.667s4.776-10.667 10.667-10.667h21.333c5.891.0 10.667 4.776 10.667 10.667S507.225 192 501.333 192z"/><path style="fill:#ffc107" d="M394.667 298.667c-5.891.0-10.667-4.776-10.667-10.667v-21.333c0-5.891 4.776-10.667 10.667-10.667 5.891.0 10.667 4.776 10.667 10.667V288C405.333 293.891 400.558 298.667 394.667 298.667z"/><path style="fill:#ffc107" d="M480 277.334c-2.831.005-5.548-1.115-7.552-3.115l-21.333-21.333c-4.093-4.237-3.975-10.99.262-15.083 4.134-3.993 10.687-3.993 14.821.0l21.333 21.333c4.159 4.172 4.148 10.926-.024 15.085C485.514 276.209 482.815 277.327 480 277.334z"/></g><g><path style="fill:#455a64" d="M266.667 448H96c-29.455.0-53.333 23.878-53.333 53.333.0 5.891 4.776 10.667 10.667 10.667h256c5.891.0 10.667-4.776 10.667-10.667C320 471.878 296.122 448 266.667 448z"/><circle style="fill:#455a64" cx="32" cy="288" r="32"/></g><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/></svg></span><span class=font-weight-bold>infilos.com</span>
+<span class=navbar-logo><svg id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512" style="enable-background:new 0 0 512 512"><path style="fill:#ffc107" d="M432.384 143.616c-4.165-4.164-10.917-4.164-15.083.0l-60.352 60.352c-4.164 4.165-4.164 10.917.0 15.083 21.187 20.463 54.951 19.876 75.413-1.311 19.962-20.668 19.962-53.435.0-74.102L432.384 143.616z"/><path style="fill:#607d8b" d="M42.667 277.334c-5.891.003-10.669-4.771-10.672-10.662-.002-4.338 2.623-8.245 6.64-9.882l234.667-96c5.455-2.233 11.687.38 13.92 5.835s-.38 11.687-5.835 13.92l-234.667 96C45.433 277.069 44.056 277.337 42.667 277.334z"/><path style="fill:#546e7a" d="M391.552 56.448l-32-32C343.938 8.745 322.689-.059 300.544.0h-3.755c-46.082.024-83.432 37.374-83.456 83.456v3.755c-.053 22.138 8.75 43.377 24.448 58.987l32 32c4.165 4.164 10.917 4.164 15.083.0L391.531 71.531C395.701 67.372 395.71 60.62 391.552 56.448z"/><path style="fill:#607d8b" d="M160 469.334c-3.279.006-6.379-1.497-8.405-4.075L34.261 315.926c-3.635-4.636-2.823-11.341 1.813-14.976s11.341-2.823 14.976 1.813l117.333 149.333c3.629 4.641 2.809 11.344-1.832 14.973C164.681 468.533 162.375 469.329 160 469.334z"/><path style="fill:#455a64" d="M487.467 86.848l-3.669-3.648c-37.687-36.557-97.71-36.197-134.955.811l-51.413 51.413c-36.996 37.25-37.357 97.263-.811 134.955l3.584 3.669c1.7 2.457 4.671 3.706 7.616 3.2 2.831.005 5.548-1.115 7.552-3.115l172.181-172.181c4.189-4.143 4.226-10.896.083-15.085-.028-.028-.055-.056-.083-.083L487.467 86.848z"/><g><path style="fill:#ffc107" d="M501.333 192H480c-5.891.0-10.667-4.776-10.667-10.667s4.776-10.667 10.667-10.667h21.333c5.891.0 10.667 4.776 10.667 10.667S507.225 192 501.333 192z"/><path style="fill:#ffc107" d="M394.667 298.667c-5.891.0-10.667-4.776-10.667-10.667v-21.333c0-5.891 4.776-10.667 10.667-10.667 5.891.0 10.667 4.776 10.667 10.667V288C405.333 293.891 400.558 298.667 394.667 298.667z"/><path style="fill:#ffc107" d="M480 277.334c-2.831.005-5.548-1.115-7.552-3.115l-21.333-21.333c-4.093-4.237-3.975-10.99.262-15.083 4.134-3.993 10.687-3.993 14.821.0l21.333 21.333c4.159 4.172 4.148 10.926-.024 15.085C485.514 276.209 482.815 277.327 480 277.334z"/></g><g><path style="fill:#455a64" d="M266.667 448H96c-29.455.0-53.333 23.878-53.333 53.333.0 5.891 4.776 10.667 10.667 10.667h256c5.891.0 10.667-4.776 10.667-10.667C320 471.878 296.122 448 266.667 448z"/><circle style="fill:#455a64" cx="32" cy="288" r="32"/></g><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/></svg></span>
+<span class=font-weight-bold>infilos.com</span>
 </a>
+<button class=navbar-toggler type=button data-toggle=collapse data-target=#navbarSupportedContent aria-controls=navbarSupportedContent aria-expanded=false aria-label="Toggle navigation">
+<span class=navbar-toggler-icon></span>
+</button>
 <div class="collapse navbar-collapse" id=navbarSupportedContent>
 <ul class="navbar-nav mr-auto">
 <li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86>
 <span>基础</span>
 </a>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80>
 <span>语言</span>
 </a>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93>
 <span>框架库</span>
 </a>
-</li>
-<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+</li><li class="nav-item dropdown" style=max-width:90px;min-width:10px>
 <a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
 分布式
 <span>+</span>
 </a>
 <div class=dropdown-menu aria-labelledby=navbarDropdown>
 <a class=dropdown-item href=/%e5%88%86%e5%b8%83%e5%bc%8f/base>基本构成</a>
-</div>
-</li>
-<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+</div></li><li class="nav-item dropdown" style=max-width:90px;min-width:10px>
 <a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
 大数据
 <span>+</span>
@@ -95,9 +93,7 @@ public class NotInitialization{ public static void main(String[]args){ SuperClas
 <a class=dropdown-item href=/%e6%b6%88%e6%81%af%e7%b3%bb%e7%bb%9f>消息系统</a>
 <a class=dropdown-item href=/%e5%a4%84%e7%90%86%e7%b3%bb%e7%bb%9f>处理系统</a>
 <a class=dropdown-item href=/%e6%95%b0%e6%8d%ae%e6%b2%bb%e7%90%86>数据治理</a>
-</div>
-</li>
-<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+</div></li><li class="nav-item dropdown" style=max-width:90px;min-width:10px>
 <a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
 中后台
 <span>+</span>
@@ -107,38 +103,26 @@ public class NotInitialization{ public static void main(String[]args){ SuperClas
 <a class=dropdown-item href=/%e7%94%a8%e6%88%b7%e7%b3%bb%e7%bb%9f>用户系统</a>
 <a class=dropdown-item href=/%e4%ba%a4%e4%ba%92%e7%95%8c%e9%9d%a2>交互界面</a>
 <a class=dropdown-item href=/%e4%b8%9a%e5%8a%a1%e7%b3%bb%e7%bb%9f>业务系统</a>
-</div>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</div></li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e6%a8%a1%e5%bc%8f%e6%9e%b6%e6%9e%84>
 <span>模式架构</span>
 </a>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e9%9d%a2%e8%af%95%e9%97%ae%e7%ad%94>
 <span>面试</span>
 </a>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e7%ae%a1%e7%90%86%e8%b7%af%e5%be%84>
 <span>管理</span>
 </a>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e5%bc%80%e6%ba%90%e9%a1%b9%e7%9b%ae>
 <span>开源</span>
 </a>
-</li>
-</ul>
-<div class="form-inline my-2 my-lg-0">
+</li></ul><div class="form-inline my-2 my-lg-0">
 <div class="nav-item nav-search-item my-2 my-md-0">
 <input type=search class="form-control td-search-input" placeholder="&#xf002; 站内搜索…" aria-label=站内搜索… autocomplete=off>
-</div>
-</div>
-</div>
-</nav>
-</header>
-<div class="container-fluid td-outer">
+</div></div></div></nav></header><div class="container-fluid td-outer">
 <div class=td-main>
 <div class="row flex-xl-nowrap">
 <aside class="col-12 col-md-3 col-xl-2 td-sidebar d-print-none">
@@ -148,10 +132,7 @@ public class NotInitialization{ public static void main(String[]args){ SuperClas
 <input type=search class="form-control td-search-input" placeholder="&#xf002; 站内搜索…" aria-label=站内搜索… autocomplete=off>
 <button class="btn btn-link td-sidebar__toggle d-md-none p-0 ml-3 fas fa-bars" type=button data-toggle=collapse data-target=#td-section-nav aria-controls=td-docs-nav aria-expanded=false aria-label="Toggle section navigation">
 </button>
-</form>
-</div>
-<div id=content-desktop></div>
-<nav class="collapse td-sidebar-nav" id=td-section-nav>
+</form></div><div id=content-desktop></div><nav class="collapse td-sidebar-nav" id=td-section-nav>
 <ul class="td-sidebar-nav__section pr-md-3 ul-0">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e7bc96e7a88be8afade8a880-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section tree-root" id=m-e7bc96e7a88be8afade8a880><span>编程语言</span></a>
@@ -178,9 +159,7 @@ public class NotInitialization{ public static void main(String[]args){ SuperClas
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-base/ch07-%E5%8F%8D%E5%B0%84%E6%9C%BA%E5%88%B6/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-basech07-e58f8de5b084e69cbae588b6><span>CH07-反射机制</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-basech08-spie69cbae588b6-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-base/ch08-spi%E6%9C%BA%E5%88%B6/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-basech08-spie69cbae588b6><span>CH08-SPI 机制</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-collection-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-collection-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-collection/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880javajava-collection><span>Java 集合</span></a>
 <ul class="ul-3 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-collectionch01-e99b86e59088e7bb93e69e84-li>
@@ -203,9 +182,7 @@ public class NotInitialization{ public static void main(String[]args){ SuperClas
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-collection/ch09-weakhashmap/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-collectionch09-weakhashmap><span>CH09-WeakHashMap</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-collectionch10-stream-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-collection/ch10-stream/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-collectionch10-stream><span>CH10-Stream</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrent-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrent-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880javajava-concurrent><span>Java 并发</span></a>
 <ul class="ul-3 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch01-e5b9b6e58f91e4bd93e7b3bb-li>
@@ -272,9 +249,7 @@ public class NotInitialization{ public static void main(String[]args){ SuperClas
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch31-allqueues/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch31-allqueues><span>CH31-AllQueues</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch32-allpools-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-concurrent/ch32-allpools/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-concurrentch32-allpools><span>CH32-AllPools</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-io-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-io-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-io/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880javajava-io><span>Java I/0</span></a>
 <ul class="ul-3 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-ioch01-ioe58886e7b1bb-li>
@@ -303,9 +278,7 @@ public class NotInitialization{ public static void main(String[]args){ SuperClas
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-io/ch12-%E9%9B%B6%E6%8B%B7%E8%B4%9D/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-ioch12-e99bb6e68bb7e8b49d><span>CH12-零拷贝</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-ioch13-e58685e5ad98e698a0e5b084-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-io/ch13-%E5%86%85%E5%AD%98%E6%98%A0%E5%B0%84/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-ioch13-e58685e5ad98e698a0e5b084><span>CH13-内存映射</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-effective-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-effective-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-effective/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880javajava-effective><span>Java Effective</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-debug-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-debug/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880javajava-debug><span>Java Debug</span></a>
@@ -318,17 +291,15 @@ public class NotInitialization{ public static void main(String[]args){ SuperClas
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-debug/linux-cmd/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-debuglinux-cmd><span>Linux 命令</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-debugjdk-tools-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-debug/jdk-tools/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-debugjdk-tools><span>调试工具集</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-debugjava-agent-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-debug/java-agent/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-debugjava-agent><span>Java Agent</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-debugdynamic-debug-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-debug/dynamic-debug/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-debugdynamic-debug><span>动态调试技术</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-debugarthas-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-debug/arthas/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-debugarthas><span>Arthas</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880javajava-debuglocal-debug-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/java/java-debug/local-debug/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880javajava-debuglocal-debug><span>本地调试</span></a>
-</li>
-</ul>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e7bc96e7a88be8afade8a880jvm-core-li>
+</li></ul></li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e7bc96e7a88be8afade8a880jvm-core-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-core><span>JVM 核心</span></a>
 <ul class="ul-2 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-li>
@@ -364,9 +335,7 @@ public class NotInitialization{ public static void main(String[]args){ SuperClas
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm/ch14-jvm%E8%B0%83%E8%AF%95%E5%B7%A5%E5%85%B7/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch14-jvme8b083e8af95e5b7a5e585b7><span>CH14-JVM调试工具</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch15-jvme58aa8e68081e8b083e8af95-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm/ch15-jvm%E5%8A%A8%E6%80%81%E8%B0%83%E8%AF%95/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvmch15-jvme58aa8e68081e8b083e8af95><span>CH15-JVM动态调试</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-133-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-133-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/jmm-133/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-133><span>JSR 133</span></a>
 <ul class="ul-3 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-133ch01-e68c87e4bba4e9878de68e92-li>
@@ -377,9 +346,7 @@ public class NotInitialization{ public static void main(String[]args){ SuperClas
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/jmm-133/ch03-%E5%A4%9A%E5%A4%84%E7%90%86%E5%99%A8/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-133ch03-e5a49ae5a484e79086e599a8><span>CH03-多处理器</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-133ch04-e5bc80e58f91e68c87e58d97-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/jmm-133/ch04-%E5%BC%80%E5%8F%91%E6%8C%87%E5%8D%97/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-133ch04-e5bc80e58f91e68c87e58d97><span>CH04-开发指南</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-spec-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-spec-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/jmm-spec/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-spec><span>JMM 规范</span></a>
 <ul class="ul-3 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-specch01-jmme8a784e88c83-li>
@@ -392,9 +359,7 @@ public class NotInitialization{ public static void main(String[]args){ SuperClas
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/jmm-spec/ch04-jsr133-faq/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-specch04-jsr133-faq><span>CH04-JSR133-FAQ</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-specch05-jsr133-cook-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/jmm-spec/ch05-jsr133-cook/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejmm-specch05-jsr133-cook><span>CH05-JSR133-Cook</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v2/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2><span>JVM 深入理解 V2</span></a>
 <ul class="ul-3 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2ch01-e8b5b0e8bf9bjava-li>
@@ -427,13 +392,9 @@ public class NotInitialization{ public static void main(String[]args){ SuperClas
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v2/endix-b-%E6%8C%87%E4%BB%A4%E8%A1%A8/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2endix-b-e68c87e4bba4e8a1a8><span>Endix-B-字节码指令</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2endix-c-e58f82e695b0e8a1a8-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v2/endix-c-%E5%8F%82%E6%95%B0%E8%A1%A8/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v2endix-c-e58f82e695b0e8a1a8><span>Endix-C-虚拟机参数</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v3-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v3-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v3/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-corejava-jvm-dive-v3><span>JVM 深入理解 V3</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e7bc96e7a88be8afade8a880jvm-concurrent-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e7bc96e7a88be8afade8a880jvm-concurrent-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-concurrent><span>JVM 并发</span></a>
 <ul class="ul-2 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practice-li>
@@ -471,9 +432,7 @@ public class NotInitialization{ public static void main(String[]args){ SuperClas
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/java-con-practice/ch15-%E5%8E%9F%E5%AD%90%E4%B8%8E%E9%9D%9E%E9%98%BB%E5%A1%9E%E5%90%8C%E6%AD%A5/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech15-e58e9fe5ad90e4b88ee99d9ee998bbe5a19ee5908ce6ada5><span>CH15-原子与非阻塞同步</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech16-e58685e5ad98e6a8a1e59e8b-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/java-con-practice/ch16-%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-practicech16-e58685e5ad98e6a8a1e59e8b><span>CH16-内存模型</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-pattern-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-pattern-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/java-con-pattern/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-concurrentjava-con-pattern><span>Java 并发模式</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallel-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/dive-parallel/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallel><span>深入理解并行</span></a>
@@ -510,9 +469,7 @@ public class NotInitialization{ public static void main(String[]args){ SuperClas
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/dive-parallel/ch15/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelch15><span>CH15-高级同步-内存序</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelendix-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/dive-parallel/endix/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentdive-parallelendix><span>ENDIX-C-内存屏障</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-model-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-model-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/seven-con-model/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-model><span>七并发模型</span></a>
 <ul class="ul-3 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-modelch01-li>
@@ -533,10 +490,41 @@ public class NotInitialization{ public static void main(String[]args){ SuperClas
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/seven-con-model/ch08/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-modelch08><span>CH08-Lambda 架构</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-modelch09-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-concurrent/seven-con-model/ch09/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-concurrentseven-con-modelch09><span>CH09-未来方向</span></a>
-</li>
-</ul>
-</li>
-</ul>
+</li></ul></li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e7bc96e7a88be8afade8a880jvm-dismantle-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-dismantle/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-dismantle><span>JVM 拆解</span></a>
+<ul class="ul-2 foldable">
+<li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech01-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-dismantle/ch01/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech01><span>CH01-开始运行</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech02-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-dismantle/ch02/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech02><span>CH02-基本类型</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech03-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-dismantle/ch03/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech03><span>CH03-类加载</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech04-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-dismantle/ch04/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech04><span>CH04-方法调用-上</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech05-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-dismantle/ch05/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech05><span>CH05-方法调用-下</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech06-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-dismantle/ch06/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech06><span>CH06-异常处理</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech07-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-dismantle/ch07/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech07><span>CH07-实现反射</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech08-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-dismantle/ch08/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech08><span>CH08-invokedynamic-上</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech09-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-dismantle/ch09/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech09><span>CH09-invokedynamic-下</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech10-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-dismantle/ch10/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech10><span>CH10-对象内存布局</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech11-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-dismantle/ch11/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech11><span>CH11-垃圾回收-上</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech12-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-dismantle/ch12/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech12><span>CH12-垃圾回收-下</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech13-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-dismantle/ch13/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech13><span>CH13-内存模型</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech14-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-dismantle/ch14/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech14><span>CH14-Synchronized</span></a>
+</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech99-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-dismantle/ch99/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880jvm-dismantlech99><span>CH99-常用工具</span></a>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e7bc96e7a88be8afade8a880jvm-performance-li>
+<a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-performance/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880jvm-performance><span>JVM 性能</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e7bc96e7a88be8afade8a880scala-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880scala><span>Scala 编程</span></a>
 <ul class="ul-2 foldable">
@@ -635,9 +623,7 @@ public class NotInitialization{ public static void main(String[]args){ SuperClas
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/async-programming/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-coreasync-programming><span>异步编程</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-corescala-style-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-core/scala-style/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-corescala-style><span>战略Scala风格</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-func-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-func-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-func/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880scalascala-func><span>Scala 函数式</span></a>
 <ul class="ul-3 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-funcch00-e7b2bee8a681-li>
@@ -650,11 +636,7 @@ public class NotInitialization{ public static void main(String[]args){ SuperClas
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-func/ch03-%E6%95%B0%E6%8D%AE/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-funcch03-e695b0e68dae><span>CH03-数据</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880scalascala-funcch04-e5bc82e5b8b8-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/scala/scala-func/ch04-%E5%BC%82%E5%B8%B8/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e7bc96e7a88be8afade8a880scalascala-funcch04-e5bc82e5b8b8><span>CH04-异常</span></a>
-</li>
-</ul>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e7bc96e7a88be8afade8a880rust-li>
+</li></ul></li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e7bc96e7a88be8afade8a880rust-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/rust/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880rust><span>Rust 编程</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e7bc96e7a88be8afade8a880golang-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/golang/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880golang><span>Golang 编程</span></a>
@@ -675,322 +657,102 @@ public class NotInitialization{ public static void main(String[]args){ SuperClas
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/frontend/vue/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880frontendvue><span>Vue 3</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e7bc96e7a88be8afade8a880frontendreact-li>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/frontend/react/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e7bc96e7a88be8afade8a880frontendreact><span>React</span></a>
-</li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-</nav>
-</div>
-</aside>
-<aside class="d-none d-xl-block col-xl-2 td-sidebar-toc d-print-none">
+</li></ul></li></ul></li></ul></nav></div></aside><aside class="d-none d-xl-block col-xl-2 td-sidebar-toc d-print-none">
 <div class="td-page-meta ml-2 pb-1 pt-2 mb-0">
 <a href=https://github.com/infilos/infilos.com/edit/master/content/zh/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/jvm-core/java-jvm-dive-v2/CH07-%e7%b1%bb%e5%8a%a0%e8%bd%bd%e6%9c%ba%e5%88%b6.md target=_blank><i class="fa fa-edit fa-fw"></i> 编辑此页</a>
 <a href="https://github.com/infilos/infilos.com/new/master/content/zh/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80/jvm-core/java-jvm-dive-v2/CH07-%e7%b1%bb%e5%8a%a0%e8%bd%bd%e6%9c%ba%e5%88%b6.md?filename=change-me.md&value=---%0Atitle%3A+%22Long+Page+Title%22%0AlinkTitle%3A+%22Short+Nav+Title%22%0Aweight%3A+100%0Adescription%3A+%3E-%0A+++++Page+description+for+heading+and+indexes.%0A---%0A%0A%23%23+Heading%0A%0AEdit+this+template+to+create+your+new+page.%0A%0A%2A+Give+it+a+good+name%2C+ending+in+%60.md%60+-+e.g.+%60getting-started.md%60%0A%2A+Edit+the+%22front+matter%22+section+at+the+top+of+the+page+%28weight+controls+how+its+ordered+amongst+other+pages+in+the+same+directory%3B+lowest+number+first%29.%0A%2A+Add+a+good+commit+message+at+the+bottom+of+the+page+%28%3C80+characters%3B+use+the+extended+description+field+for+more+detail%29.%0A%2A+Create+a+new+branch+so+you+can+preview+your+new+file+and+request+a+review+via+Pull+Request.%0A" target=_blank><i class="fa fa-edit fa-fw"></i> 添加子页面</a>
 <a href="https://github.com/infilos/infilos.com/issues/new?title=CH07-%e7%b1%bb%e5%8a%a0%e8%bd%bd" target=_blank><i class="fab fa-github fa-fw"></i> 提交文档问题</a>
 <a id=print href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v2/_print/><i class="fa fa-print fa-fw"></i> 整节打印</a>
-</div>
-<div class=td-toc><nav id=TableOfContents>
+</div><div class=td-toc><nav id=TableOfContents>
 <ul>
-<li><a href=#71-概述>7.1 概述</a></li>
-<li><a href=#72-类加载的时机>7.2 类加载的时机</a>
+<li><a href=#71-概述>7.1 概述</a></li><li><a href=#72-类加载的时机>7.2 类加载的时机</a>
 <ul>
-<li><a href=#被动引用场景>被动引用场景</a></li>
-<li><a href=#接口初始化>接口初始化</a></li>
-</ul>
-</li>
-<li><a href=#73-类的加载过程>7.3 类的加载过程</a>
+<li><a href=#被动引用场景>被动引用场景</a></li><li><a href=#接口初始化>接口初始化</a></li></ul></li><li><a href=#73-类的加载过程>7.3 类的加载过程</a>
 <ul>
-<li><a href=#731-加载>7.3.1 加载</a></li>
-<li><a href=#732-验证>7.3.2 验证</a></li>
-<li><a href=#733-准备>7.3.3 准备</a></li>
-<li><a href=#734-解析>7.3.4 解析</a></li>
-<li><a href=#735-初始化>7.3.5 初始化</a></li>
-</ul>
-</li>
-<li><a href=#74-类加载器>7.4 类加载器</a>
+<li><a href=#731-加载>7.3.1 加载</a></li><li><a href=#732-验证>7.3.2 验证</a></li><li><a href=#733-准备>7.3.3 准备</a></li><li><a href=#734-解析>7.3.4 解析</a></li><li><a href=#735-初始化>7.3.5 初始化</a></li></ul></li><li><a href=#74-类加载器>7.4 类加载器</a>
 <ul>
-<li><a href=#741-类与类加载器>7.4.1 类与类加载器</a></li>
-<li><a href=#742-双亲委派模型>7.4.2 双亲委派模型</a></li>
-<li><a href=#743-破坏双亲委派模型>7.4.3 破坏双亲委派模型</a></li>
-</ul>
-</li>
-<li><a href=#75-本章小结>7.5 本章小结</a></li>
-</ul>
-</nav></div>
-</aside>
-<main class="col-12 col-md-9 col-xl-8 pl-md-5" role=main>
+<li><a href=#741-类与类加载器>7.4.1 类与类加载器</a></li><li><a href=#742-双亲委派模型>7.4.2 双亲委派模型</a></li><li><a href=#743-破坏双亲委派模型>7.4.3 破坏双亲委派模型</a></li></ul></li><li><a href=#75-本章小结>7.5 本章小结</a></li></ul></nav></div></aside><main class="col-12 col-md-9 col-xl-8 pl-md-5" role=main>
 <nav aria-label=breadcrumb class="d-none d-md-block d-print-none">
 <ol class="breadcrumb spb-1">
 <li class=breadcrumb-item>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/>编程语言</a>
-</li>
-<li class=breadcrumb-item>
+</li><li class=breadcrumb-item>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/>JVM 核心</a>
-</li>
-<li class=breadcrumb-item>
+</li><li class=breadcrumb-item>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v2/>JVM 深入理解 V2</a>
-</li>
-<li class="breadcrumb-item active" aria-current=page>
+</li><li class="breadcrumb-item active" aria-current=page>
 <a href=/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/jvm-core/java-jvm-dive-v2/ch07-%E7%B1%BB%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6/>CH07-类加载</a>
-</li>
-</ol>
-</nav>
-<div class=td-content>
-<h1>CH07-类加载</h1>
-<header class=article-meta>
-</header>
-<h2 id=71-概述>7.1 概述</h2>
-<p>虚拟机把描述类的数据从Class文件加载到内存，并对数据进行校验、转换解析和初始化，最终形成可以被虚拟机直接使用的Java类型，这就是虚拟机的类加载机制。</p>
-<p>与那些在编译期执行连接过程的语言不同，Java 中类型的加载、连接、初始化过程均在运行时进行。这种类加载机制会为运行时增加一些性能开销，但也给 Java 提供了高度的灵活性：基于这种运行时动态加载和连接的能力，Java 中天生就可以动态扩展语言的特性。</p>
-<h2 id=72-类加载的时机>7.2 类加载的时机</h2>
-<p>类的完整生命周期：加载、验证、准备、解析、初始化、使用、卸载。其中验证、准备、解析这三个部分被合称为连接。</p>
-<div align=center>
+</li></ol></nav><div class=td-content>
+<h1>CH07-类加载</h1><header class=article-meta>
+</header><h2 id=71-概述>7.1 概述</h2><p>虚拟机把描述类的数据从Class文件加载到内存，并对数据进行校验、转换解析和初始化，最终形成可以被虚拟机直接使用的Java类型，这就是虚拟机的类加载机制。</p><p>与那些在编译期执行连接过程的语言不同，Java 中类型的加载、连接、初始化过程均在运行时进行。这种类加载机制会为运行时增加一些性能开销，但也给 Java 提供了高度的灵活性：基于这种运行时动态加载和连接的能力，Java 中天生就可以动态扩展语言的特性。</p><h2 id=72-类加载的时机>7.2 类加载的时机</h2><p>类的完整生命周期：加载、验证、准备、解析、初始化、使用、卸载。其中验证、准备、解析这三个部分被合称为连接。</p><div align=center>
 <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20181202190335.png style=display:block;width:70% alt=NAME align=center>
-</div>
-<ul>
-<li>大致固定的“开始顺序”：加载、验证、准备、初始化、卸载。</li>
-<li>各个阶段开始后会以交叉混合方式进行，即在一个阶段的执行过程中调用、激活另一个阶段。</li>
-<li>解析阶段的开始时机不一定，它在某些情况下可以在初始化节点之后进行，这是为了支持 Java 的运行时绑定(或称动态绑定、晚期绑定)。</li>
-</ul>
-<p>JVM 规范并没有定义开始加载一个类的时机，因此取决于具体的 JVM 实现。但对于初始化阶段，JVM 规范严格规定了 <strong>有且仅有 5 种情况</strong> 必须立即对类执行“初始化”(因此初始化的前置阶段必须在之前开始)：</p>
-<ol>
-<li>遇到 new、getstatic、putstatic、invokestatic 这四种字节码指令时，如果没有对类进行初始化，则需要先触发对应类的初始化。</li>
-<li>使用 <code>java.lang.reflect</code> 中的方法对类进行反射调用。</li>
-<li>当初始化一个类的时候，发现其父类尚未被初始化。</li>
-<li>当虚拟机启动时，用户需要制定一个将要执行的主类(包含 main 方法的类)。</li>
-<li>(JDK 7)如果一个 <code>MethodHandle</code> 实例最后的解析结果是 <code>REF_getStatic</code>、<code>REF_putStatic</code>、<code>REF_invikeStatic</code> 的方法句柄对应类类没有被初始化。</li>
-</ol>
-<p>这 5 种场景中的行为成为对一个类进行主动引用。除此之外，所有引用类的行为都不会触发初始化，称为被动引用。</p>
-<h3 id=被动引用场景>被动引用场景</h3>
-<h4 id=通过子类引用父类的静态字段>通过子类引用父类的静态字段</h4>
-<p>不会导致子类初始化。会引起父类的初始化和子类的加载。</p>
-<h4 id=通过数组定义来引用类>通过数组定义来引用类</h4>
-<p>不会触发此类的初始化。</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>public class NotInitialization{
-  public static void main(String[]args){
-    SuperClass[]sca=new SuperClass[10]；
-  }
-}
-</code></pre></div><p>这段代码不会触发 SuperClass 类的初始化，但会触发一个名为 <code>[Lorg.fenixsoft.classloading.SuperClass</code> 类的初始化，这是一个由 JVM 自动生成的、直接继承于 <code>java.lang.Object</code> 的子类，创建动作由字节码指令 newarray 触发。</p>
-<blockquote>
-<p>在 JVM 内部，自动生成了一个类来封装数组数据(因此数组操作在 Java 中比在 C/C++ 中安全，后者是直接移动指针)，该类值暴露了共有的 length 属性和 clone 方法。</p>
-</blockquote>
-<h4 id=应用类的常量字段>应用类的常量字段</h4>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>public class ConstClass{
-  static{
-    System.out.println(&#34;ConstClass init!&#34;)；
-  }
-  public static final String HELLOWORLD=&#34;hello world&#34;；
-}
-
-public class NotInitialization{
-  public static void main(String[]args){
-    System.out.println(ConstClass.HELLOWORLD)；
-  }
-}
-</code></pre></div><p>该示例中并不会引起类 ConstClass 的加载。因为在编译阶段通过常量传播优化，已经将此常量的值存储到了类 NotInitialization 常量池中，以后 NotInitialization 对该常量的引用实质上是对自身常量池的引用。即，NotInitialization 的 Class 文件中并没有对类 ConstClass 的符号引用入口，这两个类在编译成 Class 之后便不存在任何关联了。</p>
-<h3 id=接口初始化>接口初始化</h3>
-<p>接口也有初始化过程。在类中一般使用静态块来显示初始化信息，而接口中不能使用静态块，但编译器仍然会为接口生成 <code>&lt;clinit>()</code> 类构造器，用于初始化接口中所定义的成员变量。</p>
-<p>接口与类真正有所区别的地方在于上面所述 5 种主动引用情况的第 3 种：当一个类在初始化时，要求其父类全部都已经初始化过了；但是一个接口在初始化时，并不要求其父接口全部都完成了初始化，只有在真正使用到父接口时(如引用父接口中的常量)才会将其初始化。</p>
-<h2 id=73-类的加载过程>7.3 类的加载过程</h2>
-<h3 id=731-加载>7.3.1 加载</h3>
-<p>加载阶段，虚拟机要完成的 3 件事情：</p>
-<ol>
-<li>通过一个类的完全限定名来获取该类的二进制字节流。</li>
-<li>将二进制字节流表示的静态存储结构转化为方法区的运行时数据结构。</li>
-<li>在内存中生成一个代表该类的 <code>java.lang.Class</code> 对象，作为在方法区中该类的各种信息的访问入口。</li>
-</ol>
-<p>在 JVM 规范中并没有具体规定一定要从哪获取、怎样获取二进制字节流，因此具有很大的灵活性。基于这一点有很多有意义的实现：</p>
-<ul>
-<li>从 ZIP 包中获取，这最终成为了日后 JAR/EAR/WAR 格式的基础。</li>
-<li>从网络中获取，典型应用是 Applet。</li>
-<li>运行时计算生成，应用最多的就是动态代理技术。</li>
-<li>由其他文件生成，典型应用是 JSP。</li>
-<li>从数据库中获取。</li>
-<li>等等。</li>
-</ul>
-<p>相对于类加载过程的其他阶段，一个非数组类在加载阶段的获取二进制字节流操作是可控性最强的，因为既可以使用系统提供的“引导类加载器”来加载，也可以由用户自定义的类加载器来加载，开发人员可以通过自定义的类加载器来控制字节流的获取方式。</p>
-<p>数组类本省不能通过类加载器创建，它是由 JVM 直接创建的。但数组类仍与类加载器有着密切的联系，因为数组类的元素类型最终需要靠类加载器来创建。一个数组类(简称 C)的创建过程遵循以下规则：</p>
-<ul>
-<li>如果数组的元素类型是引用类型，就递归采用本节中定义的加载过程来加载该元素类型，数组 C 将在加载元素类型的类加载器的名称空间上被标识(一个类必须与其加载器来确定唯一性)。</li>
-<li>如果数组的元素类型不是引用类型，JVM 将会把数组 C 标记位与引导类加载关联。</li>
-<li>数组类的可见性与元素类型的可见性一致，如果元素类型不是引用类型，则数组类的可见性为 public。</li>
-</ul>
-<p>加载阶段与连接阶段是交叉进行的(如一部分字节码文件格式校验动作)，加载阶段尚未完成，连接阶段可能已经开始，但这些夹杂在加载阶段的动作仍然属于连接阶段，这两个阶段的开始时间依然保持着固定的先后顺序。</p>
-<h3 id=732-验证>7.3.2 验证</h3>
-<p>连接节点的第一步，为了确保 Class 文件的字节码中包含的信息符合当前虚拟机的要求，且不会危害虚拟机自身的安全。</p>
-<p>Class 文件并不一定由 Java 源码编译而来。在字节码语言层面上，Java 代码无法做到的(比较危险的)事情都是可以实现的。虚拟机如果不检查输入的字节流而对其完全信任的话，很有可能因为载入了有害的字节流而导致系统崩溃。</p>
-<p>验证阶段是非常重要的，该阶段是否严谨，决定了 JVM 是否能够承受恶意代码的攻击。从执行性能的角度来看，验证阶段的工作量在类加载子系统中占有相当大一部分。</p>
-<p>验证阶段主要可以分为以下 4 个检验动作：</p>
-<ol>
-<li>文件格式验证</li>
-<li>元数据验证</li>
-<li>字节码验证</li>
-<li>符号引用验证</li>
-</ol>
-<p>详细细节可以参考虚拟机规范。</p>
-<h3 id=733-准备>7.3.3 准备</h3>
-<p>正式为类变量(静态变量)分配内存设置初始值(零值)，这些变量所使用的内存将被分配在方法区。</p>
-<p>假设一个类变量的定义为 <code>public static int value=123；</code>，那么该字段在准备阶段之后的值仍然为 int 类型的零值，即 0。因为在该阶段尚未开始执行任何 Java 方法，而把 value 赋值为 123 的 putstatic 指令会在程序被编译后放在类构造器的 <code>&lt;clinit>()</code> 方法中，并在初始化节点执行。</p>
-<p>一种特殊情况：如果类字段的字段属性表存在 ConstantValue 属性，那么在准备阶段变量 value 就会被初始化为 ConstantValue 属性所指定的值。</p>
-<p>假设将上面的定义修改为 <code>public static final int value=123；</code>，这是 Javac 将会为 value 生成 ConstantValue 属性，在准备阶段 JVM 就会根据 ConstantValue 的设置将 value 赋值为 123。</p>
-<p>基本数据类型的零值：</p>
-<div align=center>
+</div><ul>
+<li>大致固定的“开始顺序”：加载、验证、准备、初始化、卸载。</li><li>各个阶段开始后会以交叉混合方式进行，即在一个阶段的执行过程中调用、激活另一个阶段。</li><li>解析阶段的开始时机不一定，它在某些情况下可以在初始化节点之后进行，这是为了支持 Java 的运行时绑定(或称动态绑定、晚期绑定)。</li></ul><p>JVM 规范并没有定义开始加载一个类的时机，因此取决于具体的 JVM 实现。但对于初始化阶段，JVM 规范严格规定了 <strong>有且仅有 5 种情况</strong> 必须立即对类执行“初始化”(因此初始化的前置阶段必须在之前开始)：</p><ol>
+<li>遇到 new、getstatic、putstatic、invokestatic 这四种字节码指令时，如果没有对类进行初始化，则需要先触发对应类的初始化。</li><li>使用 <code>java.lang.reflect</code> 中的方法对类进行反射调用。</li><li>当初始化一个类的时候，发现其父类尚未被初始化。</li><li>当虚拟机启动时，用户需要制定一个将要执行的主类(包含 main 方法的类)。</li><li>(JDK 7)如果一个 <code>MethodHandle</code> 实例最后的解析结果是 <code>REF_getStatic</code>、<code>REF_putStatic</code>、<code>REF_invikeStatic</code> 的方法句柄对应类类没有被初始化。</li></ol><p>这 5 种场景中的行为成为对一个类进行主动引用。除此之外，所有引用类的行为都不会触发初始化，称为被动引用。</p><h3 id=被动引用场景>被动引用场景</h3><h4 id=通过子类引用父类的静态字段>通过子类引用父类的静态字段</h4><p>不会导致子类初始化。会引起父类的初始化和子类的加载。</p><h4 id=通过数组定义来引用类>通过数组定义来引用类</h4><p>不会触发此类的初始化。</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback><span style=display:flex><span>public class NotInitialization{
+</span></span><span style=display:flex><span>  public static void main(String[]args){
+</span></span><span style=display:flex><span>    SuperClass[]sca=new SuperClass[10]；
+</span></span><span style=display:flex><span>  }
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>这段代码不会触发 SuperClass 类的初始化，但会触发一个名为 <code>[Lorg.fenixsoft.classloading.SuperClass</code> 类的初始化，这是一个由 JVM 自动生成的、直接继承于 <code>java.lang.Object</code> 的子类，创建动作由字节码指令 newarray 触发。</p><blockquote>
+<p>在 JVM 内部，自动生成了一个类来封装数组数据(因此数组操作在 Java 中比在 C/C++ 中安全，后者是直接移动指针)，该类值暴露了共有的 length 属性和 clone 方法。</p></blockquote><h4 id=应用类的常量字段>应用类的常量字段</h4><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback><span style=display:flex><span>public class ConstClass{
+</span></span><span style=display:flex><span>  static{
+</span></span><span style=display:flex><span>    System.out.println(&#34;ConstClass init!&#34;)；
+</span></span><span style=display:flex><span>  }
+</span></span><span style=display:flex><span>  public static final String HELLOWORLD=&#34;hello world&#34;；
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>public class NotInitialization{
+</span></span><span style=display:flex><span>  public static void main(String[]args){
+</span></span><span style=display:flex><span>    System.out.println(ConstClass.HELLOWORLD)；
+</span></span><span style=display:flex><span>  }
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>该示例中并不会引起类 ConstClass 的加载。因为在编译阶段通过常量传播优化，已经将此常量的值存储到了类 NotInitialization 常量池中，以后 NotInitialization 对该常量的引用实质上是对自身常量池的引用。即，NotInitialization 的 Class 文件中并没有对类 ConstClass 的符号引用入口，这两个类在编译成 Class 之后便不存在任何关联了。</p><h3 id=接口初始化>接口初始化</h3><p>接口也有初始化过程。在类中一般使用静态块来显示初始化信息，而接口中不能使用静态块，但编译器仍然会为接口生成 <code>&lt;clinit>()</code> 类构造器，用于初始化接口中所定义的成员变量。</p><p>接口与类真正有所区别的地方在于上面所述 5 种主动引用情况的第 3 种：当一个类在初始化时，要求其父类全部都已经初始化过了；但是一个接口在初始化时，并不要求其父接口全部都完成了初始化，只有在真正使用到父接口时(如引用父接口中的常量)才会将其初始化。</p><h2 id=73-类的加载过程>7.3 类的加载过程</h2><h3 id=731-加载>7.3.1 加载</h3><p>加载阶段，虚拟机要完成的 3 件事情：</p><ol>
+<li>通过一个类的完全限定名来获取该类的二进制字节流。</li><li>将二进制字节流表示的静态存储结构转化为方法区的运行时数据结构。</li><li>在内存中生成一个代表该类的 <code>java.lang.Class</code> 对象，作为在方法区中该类的各种信息的访问入口。</li></ol><p>在 JVM 规范中并没有具体规定一定要从哪获取、怎样获取二进制字节流，因此具有很大的灵活性。基于这一点有很多有意义的实现：</p><ul>
+<li>从 ZIP 包中获取，这最终成为了日后 JAR/EAR/WAR 格式的基础。</li><li>从网络中获取，典型应用是 Applet。</li><li>运行时计算生成，应用最多的就是动态代理技术。</li><li>由其他文件生成，典型应用是 JSP。</li><li>从数据库中获取。</li><li>等等。</li></ul><p>相对于类加载过程的其他阶段，一个非数组类在加载阶段的获取二进制字节流操作是可控性最强的，因为既可以使用系统提供的“引导类加载器”来加载，也可以由用户自定义的类加载器来加载，开发人员可以通过自定义的类加载器来控制字节流的获取方式。</p><p>数组类本省不能通过类加载器创建，它是由 JVM 直接创建的。但数组类仍与类加载器有着密切的联系，因为数组类的元素类型最终需要靠类加载器来创建。一个数组类(简称 C)的创建过程遵循以下规则：</p><ul>
+<li>如果数组的元素类型是引用类型，就递归采用本节中定义的加载过程来加载该元素类型，数组 C 将在加载元素类型的类加载器的名称空间上被标识(一个类必须与其加载器来确定唯一性)。</li><li>如果数组的元素类型不是引用类型，JVM 将会把数组 C 标记位与引导类加载关联。</li><li>数组类的可见性与元素类型的可见性一致，如果元素类型不是引用类型，则数组类的可见性为 public。</li></ul><p>加载阶段与连接阶段是交叉进行的(如一部分字节码文件格式校验动作)，加载阶段尚未完成，连接阶段可能已经开始，但这些夹杂在加载阶段的动作仍然属于连接阶段，这两个阶段的开始时间依然保持着固定的先后顺序。</p><h3 id=732-验证>7.3.2 验证</h3><p>连接节点的第一步，为了确保 Class 文件的字节码中包含的信息符合当前虚拟机的要求，且不会危害虚拟机自身的安全。</p><p>Class 文件并不一定由 Java 源码编译而来。在字节码语言层面上，Java 代码无法做到的(比较危险的)事情都是可以实现的。虚拟机如果不检查输入的字节流而对其完全信任的话，很有可能因为载入了有害的字节流而导致系统崩溃。</p><p>验证阶段是非常重要的，该阶段是否严谨，决定了 JVM 是否能够承受恶意代码的攻击。从执行性能的角度来看，验证阶段的工作量在类加载子系统中占有相当大一部分。</p><p>验证阶段主要可以分为以下 4 个检验动作：</p><ol>
+<li>文件格式验证</li><li>元数据验证</li><li>字节码验证</li><li>符号引用验证</li></ol><p>详细细节可以参考虚拟机规范。</p><h3 id=733-准备>7.3.3 准备</h3><p>正式为类变量(静态变量)分配内存设置初始值(零值)，这些变量所使用的内存将被分配在方法区。</p><p>假设一个类变量的定义为 <code>public static int value=123；</code>，那么该字段在准备阶段之后的值仍然为 int 类型的零值，即 0。因为在该阶段尚未开始执行任何 Java 方法，而把 value 赋值为 123 的 putstatic 指令会在程序被编译后放在类构造器的 <code>&lt;clinit>()</code> 方法中，并在初始化节点执行。</p><p>一种特殊情况：如果类字段的字段属性表存在 ConstantValue 属性，那么在准备阶段变量 value 就会被初始化为 ConstantValue 属性所指定的值。</p><p>假设将上面的定义修改为 <code>public static final int value=123；</code>，这是 Javac 将会为 value 生成 ConstantValue 属性，在准备阶段 JVM 就会根据 ConstantValue 的设置将 value 赋值为 123。</p><p>基本数据类型的零值：</p><div align=center>
 <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20181202201634.png style=display:block;width:70% alt=NAME align=center>
-</div>
-<h3 id=734-解析>7.3.4 解析</h3>
-<p>将常量池中的符号引用替换为直接引用的过程。</p>
-<p>符号引用：以一组符号来描述所引用的目标，符合可以是任何形式的字面量，只要使用时能够无歧义的定位到目标即可。符号引用与虚拟机实现的内存布局无关，引用的目标并不一定已经加载到内存中。各种虚拟机实现的内存布局可以各不相同，但是它们能接受的符号引用必须都是一致的，因为符号引用的字面量形式明确定义在Java虚拟机规范的Class文件格式中。</p>
-<p>直接引用：直接引用可以是直接指向目标的指针、相对偏移量或是一个能间接定位到目标的句柄。直接引用是和虚拟机实现的内存布局相关的，同一个符号引用在不同虚拟机实例上翻译出来的直接引用一般不会相同。如果有了直接引用，那引用的目标必定已经在内存中存在。</p>
-<p>JVM 规范中并未规定解析阶段发生的具体时间，只要求在执行 anewarray、checkcast、getfield、getstatic、instanceof、invokedynamic、invokeinterface、invokespecial、invokestatic、invokevirtual、ldc、ldc_w、multianewarray、new、putfield、putstatic 这 16 个用于操作符号引用的字节码指令之前，先对其使用的符号引用进行解析。所有虚拟机实现可以根据需要来判断是要在类加载时就对常量池中的符号引用进行解析，还是等到一个符号引用将要被使用时再去解析。</p>
-<p>解析动作主要针对类或接口、字段、类方法、接口方法、方法类型、方法句柄、调用点，这 7 类符号进行，分别对应于常量池中的 CONSTANT_Class_info、CONSTANT_Fieldref_info、CONSTANT_Methodref_info、CONSTANT_InterfaceMethodref_info、CONSTANT_MethodType_info、CONSTANT_MethodHandle_info和CONSTANT_InvokeDynamic_info 这 7 种常量类型。</p>
-<p>这里介绍前 4 种引用的解析过程，后 3 种与动态语言的支持相关，会在第 8 章介绍完 invokedynamic 指令的语义之后再做介绍。</p>
-<h4 id=1-类或接口>1. 类或接口</h4>
-<p>假设当前类为 D，如果要把一个未解析过的符号引用 N 解析为一个类或接口 C 的直接引用，虚拟机要完成的解析过程包含以下 3 个步骤：</p>
-<ol>
-<li>如果 C 不是一个数组类型，虚拟机将会把代表 N 的完全限定名传递给 D 的类加载器来加载这个类 C。在加载过程中，由于元数据验证、字节码验证的需要，又可能触发其他相关类的加载动作，如该类的父类或父接口。一旦该过程出现任何异常，解析过程宣告失败。</li>
-<li>如果 C 是一个数组类型，并且数组的元素类型为对象，即 N 的描述符会以类似 <code>[Ljava/lang/Integer</code> 的形式，那将会按照第一步的规则首先加载素组元素的类型。完成后由虚拟机生成一个代表次数组维度和元素的数组对象。</li>
-<li>如果上述步骤没有出现任何异常，那么 C 在虚拟机中实际已经称为了一个有效的类或接口了，但在解析完成之前要进行符号引用验证，以确认 D 是否具备对 C 的访问权限。如果不具备访问权限，将抛出 <code>java.lang.IllegalAccessError</code> 异常。</li>
-</ol>
-<h4 id=2-字段解析>2. 字段解析</h4>
-<p>首先将会对字段表内 class_index 项中索引的 CONSTANT_Class_info 符号引用进行解析，也就是字段所属的类或接口的符号引用。如果该过程中出现异常将会导致本解析过程失败；如果解析成功完成，那么将该字段所属的类或接口用 C 表示，虚拟机规范中要求按照如下步骤对 C 进行后续字段的搜索：</p>
-<ol>
-<li>如果 C 本身包含了简单名称和字段描述符都与目标相匹配的字段，则返回该字段的直接引用，查找结束。</li>
-<li>否则，如果在 C 中实现了接口，将会安装继承关系从下往上递归搜索各个接口及父接口，如果接口中包含了简单名称和字段描述符都与目标相匹配的字段，则返回该字段的直接引用，查找结束。</li>
-<li>否则，如果 C 不是 <code>java.lang.Object</code> 的话，将会安装继承关系递归搜索其父类，如果在父类中包含了简单名称和字段描述符都与目标相匹配的字段，则返回该字段的直接引用，查找结束。</li>
-<li>否则，查找是被，抛出 <code>java.lang.NoSuchFieldError</code> 异常。</li>
-</ol>
-<p>如果查找过程成功返回了引用，将会对该字段进行权限验证，如果发现不具备对该字段的访问权限，将抛出 <code>java.lang.IllegalAccessError</code> 异常。</p>
-<p>在实际应用中，虚拟机的编译器实现可能会比上述规范更加严格，如果一个字段同时出现在 C 的接口和父类中，或者同时出现在自己或父类的多个实现接口中，那么编译器可能会直接拒绝编译。</p>
-<h4 id=3-类方法解析>3. 类方法解析</h4>
-<p>类方法解析的第一个步骤与字段解析一样，也需要解析出类方法表的 class_index 项中索引的方法所属的类或接口的符号引用，如果解析成功，我们依然用 C 表示该类，接下来虚拟机会按照如下步骤进行后续的类方法搜索：</p>
-<ol>
-<li>类方法和接口方法符号引用的常量类型定义是分开的，如果在类方法中发现 class_index 中索引的 C 是个接口，那就直接抛出 <code>java.lang.IncompatibleClassChangeError</code> 异常。</li>
-<li>如果通过了第 1 步，在类 C 中查找是否有简单名称和描述符都与目标相匹配的方法，如果有则返回这个方法的直接引用，结束查找。</li>
-<li>否则，在类 C 的父类中查找是否有简单名称和描述符都与目标相匹配的方法，如果有则返回这个方法的直接引用，查找结束。</li>
-<li>否则，在类 C 实现的接口列表及它们的父接口之中递归查找是否有简单名称和描述符都与目标相匹配的方法，如果存在匹配的方法，说明类 C 是一个抽象类，这时查找结束，抛出 <code>java.lang.AbstractMethodError</code> 异常。</li>
-<li>否则，宣告方法查找失败，抛出 <code>java.lang.NoSuchMethodError</code> 异常。</li>
-</ol>
-<p>最后，如果查找过程成功返回了直接引用，将会对这个方法进行权限验证，如果发现不具备对此方法的访问权限，将抛出 <code>java.lang.IllegalAccessError</code> 异常。</p>
-<h4 id=4-接口方法解析>4. 接口方法解析</h4>
-<p>接口方法也需要解析出接口方法表的 class_index 项中索引的方法所属的类或接口的符号引用，如果解析成功，依然用 C 表示这个接口，接下来虚拟机会按照如下步骤进行后续的接口方法搜索：</p>
-<ol>
-<li>与类解析不同，如果在接口方法表中发现 class_index 中的索引 C 是一个类而不是接口，将直接抛出 <code>java.lang.IncompatibleClassChangeError</code> 异常。</li>
-<li>否则，在接口 C 中查找是否有简单名称和描述符都与目标相匹配的方法，如果有则返回这个方法的直接引用，结束查找。</li>
-<li>否则，在接口 C 的父接口中递归查找，直到 <code>java.lang.Object</code> 类为止(包括该类)，查找是否有简单名称和描述符都与目标相匹配的方法，如果有则返回这个方法的直接引用，结束查找。</li>
-<li>否则，宣告方法查找失败，抛出 <code>java.lang.NoSuchMethodError</code> 异常。</li>
-</ol>
-<p>由于接口中所有的方法默认都是 public 访问权限，因此不存在访问权限问题，即也不会抛出 <code>java.lang.IllegalAccessError</code> 异常。</p>
-<h3 id=735-初始化>7.3.5 初始化</h3>
-<p>这是类加载过程的最后一步。前面已介绍的过程中，除了在加载阶段用户应用程序可以通过自定义类加载器参与之外，其余动作完全由虚拟机主导和控制。到了初始化阶段，才开始真正执行类中定义的 Java 程序字节码。</p>
-<p>在准备阶段，变量已经赋过一次系统要求的初始值，而在初始化阶段，则根据程序员通过程序制定的主观计划去初始化类变量和其他资源，或者可以从另外一个角度来表达：初始化阶段是执行类构造器 <code>&lt;clinit>()</code> 方法的过程。</p>
-<p><code>&lt;clinit>()</code> 方法是由编译器自动收集类中的所有类变量的赋值动作和静态语句块中的语句合并产生的，收集顺序取决于语句在代码源文件中出现的顺序，静态语句块只能访问到定义在静态语句块之前的变量，但可以为定义在其后的变量赋值而不能访问。</p>
-<p><code>&lt;clinit>()</code> 方法与类的构造函数(类实例构造器) <code>&lt;init>()</code> 方法不同，它不需要显式的调用父类构造器，虚拟机会保证在子类的 <code>&lt;clinit>()</code> 方法执行之前，父类的 <code>&lt;clinit>()</code> 方法已经执行完毕。因此在虚拟机中第一个被执行的 <code>&lt;clinit>()</code> 方法一定属于 <code>java.lang.Object</code>。</p>
-<p>如果一个类中没有静态语句块会对变量的赋值操作，那么编译器就不会为其生成该方法。</p>
-<p>接口中不能使用静态语句块，但仍然有变量初始化的赋值操作，因此接口与类一样都会生成 <code>&lt;clinit>()</code> 方法。但与类不同的是，执行接口的 <code>&lt;clinit>()</code> 方法不需要首先执行父接口的 <code>&lt;clinit>()</code> 方法。因为当父接口中定义的变量使用时，父接口才会初始化。另外，接口的实现类在初始化时也不会执行父接口的 <code>&lt;clinit>()</code> 方法。</p>
-<p>虚拟机会保证一个类的 <code>&lt;clinit>()</code> 方法在多线程环境中能够被正确的加锁、同步，如果多个线程同时去初始化一个类，那么只会有一个线程去执行该类的 <code>&lt;clinit>()</code> 方法，其他线程都有阻塞等待，直到活动线程执行 <code>&lt;clinit>()</code> 方法完毕。如果在一个类的 <code>&lt;clinit>()</code> 方法中有耗时很长的操作，就可能会造成多个进程阻塞。</p>
-<h2 id=74-类加载器>7.4 类加载器</h2>
-<p>虚拟机设计团队把类加载阶段中：“通过一个类的完全限定名来获取描述此类的二进制字节流”，这样一个动作放到了 JVM 外部来实现，以便让应用程序自己决定如何获取需要的类。实现这个动作的代码模块被称为“类加载器”。</p>
-<h3 id=741-类与类加载器>7.4.1 类与类加载器</h3>
-<p>在一个 JVM 实例内，对于任意一个类，都需要由加载它的类加载器和这个类本身来共同确立其唯一性，每个类加载器都有一个独立的类名称空间。</p>
-<p>两个相等的类，意味着由同一个虚拟机加载。相等性包括 Class 对象的 equals 方法、isAssignableFrom 方法、isInstance 方法返回的结果，也包括使用 isinstanceof 关键字对对象所属的类进行关系判定等情况。</p>
-<h3 id=742-双亲委派模型>7.4.2 双亲委派模型</h3>
-<p>从 JVM 的角度来看，只有两种不同的类加载器：一种是启动类加载器，由 C++ 语言实现，是 JVM 的一部分；另一种就是所有其他的加载器，均由 Java 语言实现，独立于虚拟机外部，并且全部继承自抽象类 <code>java.lang.ClassLoader</code>。</p>
-<p>从应用开发的角度看，绝大部分的 Java 程序都会用到以下 3 种类加载器：</p>
-<p><strong>启动类加载器</strong>：负责将存放在 <code>&lt;JAVA_HOME>/lib</code> 目录中、或者被 <code>-Xbootclasspath</code> 参数指定的路径中的、并且是虚拟机识别的(以文件名识别，如 <code>rt.jar</code>)类库加载到虚拟机内存中。该加载器无法被 Java 程序直接引用，如果在编写自定义加载器时需要将加载请求委派给引导类加载器，可以直接使用 null 作为自定义加载器的父加载器。</p>
-<p><strong>扩展类加载器</strong>：由 <code>sun.misc.Launcher$ExtClassLoader</code> 实现，负责加载 <code>&lt;JAVA_HOME>/lib/ext</code> 目录中的、或者被 <code>java.ext.dirs</code> 系统变量指定的路径中的所有类库，可以被开发者直接使用。</p>
-<p><strong>应用类加载器</strong>：由 <code>sun.misc.Launcher$AppClassloader</code> 实现。是 <code>ClassLoader.getSystemClassLoader</code> 的返回值，一般也称为系统类加载器。负责加载用户类路径(ClassPath)中所有的类库，可以被开发者直接使用。如果应用中没有自定义实现任何加载器，一般情况下就是程序中默认的加载器。</p>
-<div align=center>
+</div><h3 id=734-解析>7.3.4 解析</h3><p>将常量池中的符号引用替换为直接引用的过程。</p><p>符号引用：以一组符号来描述所引用的目标，符合可以是任何形式的字面量，只要使用时能够无歧义的定位到目标即可。符号引用与虚拟机实现的内存布局无关，引用的目标并不一定已经加载到内存中。各种虚拟机实现的内存布局可以各不相同，但是它们能接受的符号引用必须都是一致的，因为符号引用的字面量形式明确定义在Java虚拟机规范的Class文件格式中。</p><p>直接引用：直接引用可以是直接指向目标的指针、相对偏移量或是一个能间接定位到目标的句柄。直接引用是和虚拟机实现的内存布局相关的，同一个符号引用在不同虚拟机实例上翻译出来的直接引用一般不会相同。如果有了直接引用，那引用的目标必定已经在内存中存在。</p><p>JVM 规范中并未规定解析阶段发生的具体时间，只要求在执行 anewarray、checkcast、getfield、getstatic、instanceof、invokedynamic、invokeinterface、invokespecial、invokestatic、invokevirtual、ldc、ldc_w、multianewarray、new、putfield、putstatic 这 16 个用于操作符号引用的字节码指令之前，先对其使用的符号引用进行解析。所有虚拟机实现可以根据需要来判断是要在类加载时就对常量池中的符号引用进行解析，还是等到一个符号引用将要被使用时再去解析。</p><p>解析动作主要针对类或接口、字段、类方法、接口方法、方法类型、方法句柄、调用点，这 7 类符号进行，分别对应于常量池中的 CONSTANT_Class_info、CONSTANT_Fieldref_info、CONSTANT_Methodref_info、CONSTANT_InterfaceMethodref_info、CONSTANT_MethodType_info、CONSTANT_MethodHandle_info和CONSTANT_InvokeDynamic_info 这 7 种常量类型。</p><p>这里介绍前 4 种引用的解析过程，后 3 种与动态语言的支持相关，会在第 8 章介绍完 invokedynamic 指令的语义之后再做介绍。</p><h4 id=1-类或接口>1. 类或接口</h4><p>假设当前类为 D，如果要把一个未解析过的符号引用 N 解析为一个类或接口 C 的直接引用，虚拟机要完成的解析过程包含以下 3 个步骤：</p><ol>
+<li>如果 C 不是一个数组类型，虚拟机将会把代表 N 的完全限定名传递给 D 的类加载器来加载这个类 C。在加载过程中，由于元数据验证、字节码验证的需要，又可能触发其他相关类的加载动作，如该类的父类或父接口。一旦该过程出现任何异常，解析过程宣告失败。</li><li>如果 C 是一个数组类型，并且数组的元素类型为对象，即 N 的描述符会以类似 <code>[Ljava/lang/Integer</code> 的形式，那将会按照第一步的规则首先加载素组元素的类型。完成后由虚拟机生成一个代表次数组维度和元素的数组对象。</li><li>如果上述步骤没有出现任何异常，那么 C 在虚拟机中实际已经称为了一个有效的类或接口了，但在解析完成之前要进行符号引用验证，以确认 D 是否具备对 C 的访问权限。如果不具备访问权限，将抛出 <code>java.lang.IllegalAccessError</code> 异常。</li></ol><h4 id=2-字段解析>2. 字段解析</h4><p>首先将会对字段表内 class_index 项中索引的 CONSTANT_Class_info 符号引用进行解析，也就是字段所属的类或接口的符号引用。如果该过程中出现异常将会导致本解析过程失败；如果解析成功完成，那么将该字段所属的类或接口用 C 表示，虚拟机规范中要求按照如下步骤对 C 进行后续字段的搜索：</p><ol>
+<li>如果 C 本身包含了简单名称和字段描述符都与目标相匹配的字段，则返回该字段的直接引用，查找结束。</li><li>否则，如果在 C 中实现了接口，将会安装继承关系从下往上递归搜索各个接口及父接口，如果接口中包含了简单名称和字段描述符都与目标相匹配的字段，则返回该字段的直接引用，查找结束。</li><li>否则，如果 C 不是 <code>java.lang.Object</code> 的话，将会安装继承关系递归搜索其父类，如果在父类中包含了简单名称和字段描述符都与目标相匹配的字段，则返回该字段的直接引用，查找结束。</li><li>否则，查找是被，抛出 <code>java.lang.NoSuchFieldError</code> 异常。</li></ol><p>如果查找过程成功返回了引用，将会对该字段进行权限验证，如果发现不具备对该字段的访问权限，将抛出 <code>java.lang.IllegalAccessError</code> 异常。</p><p>在实际应用中，虚拟机的编译器实现可能会比上述规范更加严格，如果一个字段同时出现在 C 的接口和父类中，或者同时出现在自己或父类的多个实现接口中，那么编译器可能会直接拒绝编译。</p><h4 id=3-类方法解析>3. 类方法解析</h4><p>类方法解析的第一个步骤与字段解析一样，也需要解析出类方法表的 class_index 项中索引的方法所属的类或接口的符号引用，如果解析成功，我们依然用 C 表示该类，接下来虚拟机会按照如下步骤进行后续的类方法搜索：</p><ol>
+<li>类方法和接口方法符号引用的常量类型定义是分开的，如果在类方法中发现 class_index 中索引的 C 是个接口，那就直接抛出 <code>java.lang.IncompatibleClassChangeError</code> 异常。</li><li>如果通过了第 1 步，在类 C 中查找是否有简单名称和描述符都与目标相匹配的方法，如果有则返回这个方法的直接引用，结束查找。</li><li>否则，在类 C 的父类中查找是否有简单名称和描述符都与目标相匹配的方法，如果有则返回这个方法的直接引用，查找结束。</li><li>否则，在类 C 实现的接口列表及它们的父接口之中递归查找是否有简单名称和描述符都与目标相匹配的方法，如果存在匹配的方法，说明类 C 是一个抽象类，这时查找结束，抛出 <code>java.lang.AbstractMethodError</code> 异常。</li><li>否则，宣告方法查找失败，抛出 <code>java.lang.NoSuchMethodError</code> 异常。</li></ol><p>最后，如果查找过程成功返回了直接引用，将会对这个方法进行权限验证，如果发现不具备对此方法的访问权限，将抛出 <code>java.lang.IllegalAccessError</code> 异常。</p><h4 id=4-接口方法解析>4. 接口方法解析</h4><p>接口方法也需要解析出接口方法表的 class_index 项中索引的方法所属的类或接口的符号引用，如果解析成功，依然用 C 表示这个接口，接下来虚拟机会按照如下步骤进行后续的接口方法搜索：</p><ol>
+<li>与类解析不同，如果在接口方法表中发现 class_index 中的索引 C 是一个类而不是接口，将直接抛出 <code>java.lang.IncompatibleClassChangeError</code> 异常。</li><li>否则，在接口 C 中查找是否有简单名称和描述符都与目标相匹配的方法，如果有则返回这个方法的直接引用，结束查找。</li><li>否则，在接口 C 的父接口中递归查找，直到 <code>java.lang.Object</code> 类为止(包括该类)，查找是否有简单名称和描述符都与目标相匹配的方法，如果有则返回这个方法的直接引用，结束查找。</li><li>否则，宣告方法查找失败，抛出 <code>java.lang.NoSuchMethodError</code> 异常。</li></ol><p>由于接口中所有的方法默认都是 public 访问权限，因此不存在访问权限问题，即也不会抛出 <code>java.lang.IllegalAccessError</code> 异常。</p><h3 id=735-初始化>7.3.5 初始化</h3><p>这是类加载过程的最后一步。前面已介绍的过程中，除了在加载阶段用户应用程序可以通过自定义类加载器参与之外，其余动作完全由虚拟机主导和控制。到了初始化阶段，才开始真正执行类中定义的 Java 程序字节码。</p><p>在准备阶段，变量已经赋过一次系统要求的初始值，而在初始化阶段，则根据程序员通过程序制定的主观计划去初始化类变量和其他资源，或者可以从另外一个角度来表达：初始化阶段是执行类构造器 <code>&lt;clinit>()</code> 方法的过程。</p><p><code>&lt;clinit>()</code> 方法是由编译器自动收集类中的所有类变量的赋值动作和静态语句块中的语句合并产生的，收集顺序取决于语句在代码源文件中出现的顺序，静态语句块只能访问到定义在静态语句块之前的变量，但可以为定义在其后的变量赋值而不能访问。</p><p><code>&lt;clinit>()</code> 方法与类的构造函数(类实例构造器) <code>&lt;init>()</code> 方法不同，它不需要显式的调用父类构造器，虚拟机会保证在子类的 <code>&lt;clinit>()</code> 方法执行之前，父类的 <code>&lt;clinit>()</code> 方法已经执行完毕。因此在虚拟机中第一个被执行的 <code>&lt;clinit>()</code> 方法一定属于 <code>java.lang.Object</code>。</p><p>如果一个类中没有静态语句块会对变量的赋值操作，那么编译器就不会为其生成该方法。</p><p>接口中不能使用静态语句块，但仍然有变量初始化的赋值操作，因此接口与类一样都会生成 <code>&lt;clinit>()</code> 方法。但与类不同的是，执行接口的 <code>&lt;clinit>()</code> 方法不需要首先执行父接口的 <code>&lt;clinit>()</code> 方法。因为当父接口中定义的变量使用时，父接口才会初始化。另外，接口的实现类在初始化时也不会执行父接口的 <code>&lt;clinit>()</code> 方法。</p><p>虚拟机会保证一个类的 <code>&lt;clinit>()</code> 方法在多线程环境中能够被正确的加锁、同步，如果多个线程同时去初始化一个类，那么只会有一个线程去执行该类的 <code>&lt;clinit>()</code> 方法，其他线程都有阻塞等待，直到活动线程执行 <code>&lt;clinit>()</code> 方法完毕。如果在一个类的 <code>&lt;clinit>()</code> 方法中有耗时很长的操作，就可能会造成多个进程阻塞。</p><h2 id=74-类加载器>7.4 类加载器</h2><p>虚拟机设计团队把类加载阶段中：“通过一个类的完全限定名来获取描述此类的二进制字节流”，这样一个动作放到了 JVM 外部来实现，以便让应用程序自己决定如何获取需要的类。实现这个动作的代码模块被称为“类加载器”。</p><h3 id=741-类与类加载器>7.4.1 类与类加载器</h3><p>在一个 JVM 实例内，对于任意一个类，都需要由加载它的类加载器和这个类本身来共同确立其唯一性，每个类加载器都有一个独立的类名称空间。</p><p>两个相等的类，意味着由同一个虚拟机加载。相等性包括 Class 对象的 equals 方法、isAssignableFrom 方法、isInstance 方法返回的结果，也包括使用 isinstanceof 关键字对对象所属的类进行关系判定等情况。</p><h3 id=742-双亲委派模型>7.4.2 双亲委派模型</h3><p>从 JVM 的角度来看，只有两种不同的类加载器：一种是启动类加载器，由 C++ 语言实现，是 JVM 的一部分；另一种就是所有其他的加载器，均由 Java 语言实现，独立于虚拟机外部，并且全部继承自抽象类 <code>java.lang.ClassLoader</code>。</p><p>从应用开发的角度看，绝大部分的 Java 程序都会用到以下 3 种类加载器：</p><p><strong>启动类加载器</strong>：负责将存放在 <code>&lt;JAVA_HOME>/lib</code> 目录中、或者被 <code>-Xbootclasspath</code> 参数指定的路径中的、并且是虚拟机识别的(以文件名识别，如 <code>rt.jar</code>)类库加载到虚拟机内存中。该加载器无法被 Java 程序直接引用，如果在编写自定义加载器时需要将加载请求委派给引导类加载器，可以直接使用 null 作为自定义加载器的父加载器。</p><p><strong>扩展类加载器</strong>：由 <code>sun.misc.Launcher$ExtClassLoader</code> 实现，负责加载 <code>&lt;JAVA_HOME>/lib/ext</code> 目录中的、或者被 <code>java.ext.dirs</code> 系统变量指定的路径中的所有类库，可以被开发者直接使用。</p><p><strong>应用类加载器</strong>：由 <code>sun.misc.Launcher$AppClassloader</code> 实现。是 <code>ClassLoader.getSystemClassLoader</code> 的返回值，一般也称为系统类加载器。负责加载用户类路径(ClassPath)中所有的类库，可以被开发者直接使用。如果应用中没有自定义实现任何加载器，一般情况下就是程序中默认的加载器。</p><div align=center>
 <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20181203215202.png style=display:block;width:70% alt=NAME align=center>
-</div>
-<p>上图展示了这几种加载器之间的关系，称为类加载器的“双亲委派模型”。该模型要求除了顶层的启动类加载器外，其余的类加载器都应当有字节的父类加载器。这里所指的类加载器之间的父子关系不使用类继承形式来实现，而是使用组合关系来将加载请求为派给父类加载器。</p>
-<p>双亲委派模型的工作过程是：如果一个类加载器收到了类加载请求，他首先不会自己去尝试执行加载，而是把该请求委派给父加载器去完成加载，每一个层次的加载器都是如此，因此所有的加载请求最终都应该传送到顶层的启动类加载器中，只有当父加载器反馈自己无法完成该加载请求时(在搜索范围内无法找到需要的类)，子加载器才会尝试自己去加载。</p>
-<p>这种模型的好处就是，Java 类随着其类加载器一起具备了一种优先级层次关系。比如 Objcet 类，它被存放在 <code>rt.jar</code> 中，无论哪个加载器要加载该类，最终都是委派给处于模型最顶层的启动类加载器进行加载，因此 Object 类在程序的各个类加载器中都是同一个类。如果没有使用双亲委派模型，而是由各个类加载器自己去加载的话，如果用户字节编写了一个名为 <code>java.lang.Object</code> 的类，Java 类型体系中的最基础行为就无法得到保证。</p>
-<h3 id=743-破坏双亲委派模型>7.4.3 破坏双亲委派模型</h3>
-<p>双亲委派模型并非一个强制性的约束模型，而 Java 设计者推荐给开发者的类加载器实现方式。</p>
-<p>下面是种对这种模型的“破坏(创新)”形式。</p>
-<h4 id=1-历史遗留>1. 历史遗留</h4>
-<p>第一次“被破坏”其实发生在双亲委派模型出现之前，即 JDK 1.2 发布之前。由于双亲委派模型在 JDK 1.2 之后才被引入，而类加载器和抽象类 <code>java.lang.ClassLoader</code> 在早在 JDK 1.0 时代就已经存在，面对已经存在的用户自定义加载器实现，Java 设计者在引入双亲委派模型时不得不做出一些妥协。为了向前兼容，JDK 1.2 之后的 <code>java.lang.ClassLoader</code> 添加了一个新的 protected 方法 findClass。在此之前，用户继承 ClassLoader 时唯一的目的就是重新 loadClass 方法，因为虚拟机在进行类加载时会调用加载器的私有方法 loadClassInternal，而该方法的唯一逻辑就是调用 loadClass 方法。</p>
-<p>在 JDK 1.2 之后已经不提倡覆写 loadClass 方法，而应当把自己的类加载逻辑编写在 findClass 方法中，在 loadClass 方法的逻辑里如果父类记载失败，则会调用自己的 findClass 方法来完成加载，这样就可以保证新编写的类加载器都符合双亲委派模型。</p>
-<h4 id=2-模型缺陷>2. 模型缺陷</h4>
-<p>双亲委派模型很好的解决了各个加载器对基础类的统一问题(越基础的类越由上层的加载器完成加载)，基础类之所以被称为“基础”，是因为它们总是作为被用户代码调用的 API。但有时候基础类也需要调用用户代码。</p>
-<p>如 JNDI 服务，它的代码由启动类加载器完成加载(rt.jar)，但 JNDI 的目的就是对资源进行集中管理和查找，它需要调用由独立厂商实现并部署在应用程序 ClassPath 下的 JNDI 接口提供者(SPI)代码，但启动类加载器并不认识这些代码。</p>
-<p>为了解决该问题，Java 设计团队只好引入了一个不太优雅的设计：线程上下文加载器。该加载器可以通过 Thread 类的 setContextClassLoader 方法进行设置，如果线程创建时还未设置，它将会从父线程中继承一个加载器，如果在应用程序的全局范围内都没有设置过，那么就使用应用程序类加载器。</p>
-<p>JDNI 使用该加载器来加载所需的 SPI 代码，也就是父类加载器请求子类加载器来完成对类的加载操作，这种行为实际上是打通了双亲委派模型的层次结构来逆向使用类加载器，也违背了双亲委派模型的一般性原则。Java 中的所有 SPI 的加载动作基本都采用这种方式。</p>
-<h4 id=3-动态性>3. 动态性</h4>
-<p>这里所说的动态性指的是：代码热替换、模块热部署等。OSGI 已经成为了业界“事实上”的 Java 模块化标准，而 OSGI 实现模块化热部署的关键就是它自已定义的类加载器机制。每个程序模块(Bundle)都有一个自己的类加载器，当需要更换一个 Bundle 时，就把 Bundle 连同类加载器一起替换掉以实现代码的热替换。</p>
-<p>在 OSGI 环境下，类加载器不再是双亲委派模型中的树状结构，而是进一步发展为更加复杂的网状结构，当收到类加载请求时，OSGI 将按照下面的顺序来搜索类：</p>
-<ol>
-<li>将以 <code>java.*</code> 开头的类委派给父类加载器。</li>
-<li>否则，将委派列表名单内的类委派给父类加载器。</li>
-<li>否则，将 import 列表中的类委派给 Export 这个类所属的 Bundle 的类加载器。</li>
-<li>否则，查找当前 Bundle 的 ClassPath，使用自己的类加载器。</li>
-<li>否则，查找类师傅在自己的 Fragment Bundle 中，如果在，则委派给 Fragment Bundle 的类加载器。</li>
-<li>否则，查找 Dynamic Import 列表的 Bundle，委派给对应 Bundle 的类加载器。</li>
-<li>否则，类查找失败。</li>
-</ol>
-<p>以上查找顺序中只有开头两点符合双亲委派模型，其余的类查找都在平级的类加载器中机进行。</p>
-<h2 id=75-本章小结>7.5 本章小结</h2>
-<p>本章介绍了类加载过程的“加载”、“验证”、“准备”、“解析”和“初始化”5个阶段中虚拟机进行了哪些动作，还介绍了类加载器的工作原理及其对虚拟机的意义。</p>
-<style>.feedback--answer{display:inline-block}.feedback--answer-no{margin-left:1em}.feedback--response{display:none;margin-top:1em}.feedback--response__visible{display:block}</style>
-<div class=d-print-none>
-<h2 class=feedback--title>Feedback</h2>
-<p class=feedback--question>Was this page helpful?</p>
-<button class="btn btn-primary mb-4 feedback--answer feedback--answer-yes">Yes</button>
+</div><p>上图展示了这几种加载器之间的关系，称为类加载器的“双亲委派模型”。该模型要求除了顶层的启动类加载器外，其余的类加载器都应当有字节的父类加载器。这里所指的类加载器之间的父子关系不使用类继承形式来实现，而是使用组合关系来将加载请求为派给父类加载器。</p><p>双亲委派模型的工作过程是：如果一个类加载器收到了类加载请求，他首先不会自己去尝试执行加载，而是把该请求委派给父加载器去完成加载，每一个层次的加载器都是如此，因此所有的加载请求最终都应该传送到顶层的启动类加载器中，只有当父加载器反馈自己无法完成该加载请求时(在搜索范围内无法找到需要的类)，子加载器才会尝试自己去加载。</p><p>这种模型的好处就是，Java 类随着其类加载器一起具备了一种优先级层次关系。比如 Objcet 类，它被存放在 <code>rt.jar</code> 中，无论哪个加载器要加载该类，最终都是委派给处于模型最顶层的启动类加载器进行加载，因此 Object 类在程序的各个类加载器中都是同一个类。如果没有使用双亲委派模型，而是由各个类加载器自己去加载的话，如果用户字节编写了一个名为 <code>java.lang.Object</code> 的类，Java 类型体系中的最基础行为就无法得到保证。</p><h3 id=743-破坏双亲委派模型>7.4.3 破坏双亲委派模型</h3><p>双亲委派模型并非一个强制性的约束模型，而 Java 设计者推荐给开发者的类加载器实现方式。</p><p>下面是种对这种模型的“破坏(创新)”形式。</p><h4 id=1-历史遗留>1. 历史遗留</h4><p>第一次“被破坏”其实发生在双亲委派模型出现之前，即 JDK 1.2 发布之前。由于双亲委派模型在 JDK 1.2 之后才被引入，而类加载器和抽象类 <code>java.lang.ClassLoader</code> 在早在 JDK 1.0 时代就已经存在，面对已经存在的用户自定义加载器实现，Java 设计者在引入双亲委派模型时不得不做出一些妥协。为了向前兼容，JDK 1.2 之后的 <code>java.lang.ClassLoader</code> 添加了一个新的 protected 方法 findClass。在此之前，用户继承 ClassLoader 时唯一的目的就是重新 loadClass 方法，因为虚拟机在进行类加载时会调用加载器的私有方法 loadClassInternal，而该方法的唯一逻辑就是调用 loadClass 方法。</p><p>在 JDK 1.2 之后已经不提倡覆写 loadClass 方法，而应当把自己的类加载逻辑编写在 findClass 方法中，在 loadClass 方法的逻辑里如果父类记载失败，则会调用自己的 findClass 方法来完成加载，这样就可以保证新编写的类加载器都符合双亲委派模型。</p><h4 id=2-模型缺陷>2. 模型缺陷</h4><p>双亲委派模型很好的解决了各个加载器对基础类的统一问题(越基础的类越由上层的加载器完成加载)，基础类之所以被称为“基础”，是因为它们总是作为被用户代码调用的 API。但有时候基础类也需要调用用户代码。</p><p>如 JNDI 服务，它的代码由启动类加载器完成加载(rt.jar)，但 JNDI 的目的就是对资源进行集中管理和查找，它需要调用由独立厂商实现并部署在应用程序 ClassPath 下的 JNDI 接口提供者(SPI)代码，但启动类加载器并不认识这些代码。</p><p>为了解决该问题，Java 设计团队只好引入了一个不太优雅的设计：线程上下文加载器。该加载器可以通过 Thread 类的 setContextClassLoader 方法进行设置，如果线程创建时还未设置，它将会从父线程中继承一个加载器，如果在应用程序的全局范围内都没有设置过，那么就使用应用程序类加载器。</p><p>JDNI 使用该加载器来加载所需的 SPI 代码，也就是父类加载器请求子类加载器来完成对类的加载操作，这种行为实际上是打通了双亲委派模型的层次结构来逆向使用类加载器，也违背了双亲委派模型的一般性原则。Java 中的所有 SPI 的加载动作基本都采用这种方式。</p><h4 id=3-动态性>3. 动态性</h4><p>这里所说的动态性指的是：代码热替换、模块热部署等。OSGI 已经成为了业界“事实上”的 Java 模块化标准，而 OSGI 实现模块化热部署的关键就是它自已定义的类加载器机制。每个程序模块(Bundle)都有一个自己的类加载器，当需要更换一个 Bundle 时，就把 Bundle 连同类加载器一起替换掉以实现代码的热替换。</p><p>在 OSGI 环境下，类加载器不再是双亲委派模型中的树状结构，而是进一步发展为更加复杂的网状结构，当收到类加载请求时，OSGI 将按照下面的顺序来搜索类：</p><ol>
+<li>将以 <code>java.*</code> 开头的类委派给父类加载器。</li><li>否则，将委派列表名单内的类委派给父类加载器。</li><li>否则，将 import 列表中的类委派给 Export 这个类所属的 Bundle 的类加载器。</li><li>否则，查找当前 Bundle 的 ClassPath，使用自己的类加载器。</li><li>否则，查找类师傅在自己的 Fragment Bundle 中，如果在，则委派给 Fragment Bundle 的类加载器。</li><li>否则，查找 Dynamic Import 列表的 Bundle，委派给对应 Bundle 的类加载器。</li><li>否则，类查找失败。</li></ol><p>以上查找顺序中只有开头两点符合双亲委派模型，其余的类查找都在平级的类加载器中机进行。</p><h2 id=75-本章小结>7.5 本章小结</h2><p>本章介绍了类加载过程的“加载”、“验证”、“准备”、“解析”和“初始化”5个阶段中虚拟机进行了哪些动作，还介绍了类加载器的工作原理及其对虚拟机的意义。</p><style>.feedback--answer{display:inline-block}.feedback--answer-no{margin-left:1em}.feedback--response{display:none;margin-top:1em}.feedback--response__visible{display:block}</style><div class=d-print-none>
+<h2 class=feedback--title>Feedback</h2><p class=feedback--question>Was this page helpful?</p><button class="btn btn-primary mb-4 feedback--answer feedback--answer-yes">Yes</button>
 <button class="btn btn-primary mb-4 feedback--answer feedback--answer-no">No</button>
 <p class="feedback--response feedback--response-yes">
 Glad to hear it! Please <a href=https://github.com/infilos/infilos.com/issues/new>tell us how we can improve</a>.
-</p>
-<p class="feedback--response feedback--response-no">
+</p><p class="feedback--response feedback--response-no">
 Sorry to hear that. Please <a href=https://github.com/infilos/infilos.com/issues/new>tell us how we can improve</a>.
-</p>
-</div>
-<script>const yesButton=document.querySelector('.feedback--answer-yes'),noButton=document.querySelector('.feedback--answer-no'),yesResponse=document.querySelector('.feedback--response-yes'),noResponse=document.querySelector('.feedback--response-no'),disableButtons=()=>{yesButton.disabled=!0,noButton.disabled=!0},sendFeedback=b=>{if(typeof ga!='function')return;const a={command:'send',hitType:'event',category:'Helpful',action:'click',label:window.location.pathname,value:b};ga(a.command,a.hitType,a.category,a.action,a.label,a.value)};yesButton.addEventListener('click',()=>{yesResponse.classList.add('feedback--response__visible'),disableButtons(),sendFeedback(1)}),noButton.addEventListener('click',()=>{noResponse.classList.add('feedback--response__visible'),disableButtons(),sendFeedback(0)})</script>
+</p></div><script>const yesButton=document.querySelector(".feedback--answer-yes"),noButton=document.querySelector(".feedback--answer-no"),yesResponse=document.querySelector(".feedback--response-yes"),noResponse=document.querySelector(".feedback--response-no"),disableButtons=()=>{yesButton.disabled=!0,noButton.disabled=!0},sendFeedback=t=>{if(typeof ga!="function")return;const e={command:"send",hitType:"event",category:"Helpful",action:"click",label:window.location.pathname,value:t};ga(e.command,e.hitType,e.category,e.action,e.label,e.value)};yesButton.addEventListener("click",()=>{yesResponse.classList.add("feedback--response__visible"),disableButtons(),sendFeedback(1)}),noButton.addEventListener("click",()=>{noResponse.classList.add("feedback--response__visible"),disableButtons(),sendFeedback(0)})</script>
 <br>
-</div>
-</main>
-</div>
-</div>
-<footer class="bg-dark py-5 row d-print-none">
+</div></main></div></div><footer class="bg-dark py-5 row d-print-none">
 <div class="container-fluid mx-sm-5">
 <div class=row>
 <div class="col-6 col-sm-4 text-xs-center order-sm-2">
-</div>
-<div class="col-6 col-sm-4 text-right text-xs-center order-sm-3">
+</div><div class="col-6 col-sm-4 text-right text-xs-center order-sm-3">
 <ul class="list-inline mb-0">
 <li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Weibo aria-label=Weibo>
 <a class=text-white target=_blank rel="noopener noreferrer" href=https://weibo.com/u/3848950217>
 <i class="fab fa-weibo"></i>
 </a>
-</li>
-<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Twitter aria-label=Twitter>
+</li><li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Twitter aria-label=Twitter>
 <a class=text-white target=_blank rel="noopener noreferrer" href=https://twitter.com/zhange_zzg>
 <i class="fab fa-twitter"></i>
 </a>
-</li>
-<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title="Stack Overflow" aria-label="Stack Overflow">
+</li><li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title="Stack Overflow" aria-label="Stack Overflow">
 <a class=text-white target=_blank rel="noopener noreferrer" href=https://stackoverflow.com>
 <i class="fab fa-stack-overflow"></i>
 </a>
-</li>
-<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=GitHub aria-label=GitHub>
+</li><li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=GitHub aria-label=GitHub>
 <a class=text-white target=_blank rel="noopener noreferrer" href=https://github.com/infilos/infilos.com>
 <i class="fab fa-github"></i>
 </a>
-</li>
-</ul>
-</div>
-<div class="col-12 col-sm-4 text-center py-2 order-sm-2">
+</li></ul></div><div class="col-12 col-sm-4 text-center py-2 order-sm-2">
 <small class=text-white>&copy; 2022 infilos.com All Rights Reserved</small>
-</div>
-</div>
-</div>
-</footer>
-</div>
-<script src=/js/popper.min.js integrity=sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49 crossorigin=anonymous></script>
+</div></div></div></footer></div><script src=/js/popper.min.js integrity=sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49 crossorigin=anonymous></script>
 <script src=/js/bootstrap.min.js integrity=sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy crossorigin=anonymous></script>
-<script src=/js/main.min.5c74b870c6953931a705f390a49c7e4c0a842ec5c83b24354758dd674343ed0d.js integrity="sha256-XHS4cMaVOTGnBfOQpJx+TAqELsXIOyQ1R1jdZ0ND7Q0=" crossorigin=anonymous></script>
-</body>
-</html>
+<script src=/js/main.min.3f3f4f1e22307ccbb13271a98be2e4dbb8386b7e67c3d606db44d3d0649f485e.js integrity="sha256-Pz9PHiIwfMuxMnGpi+Lk27g4a35nw9YG20TT0GSfSF4=" crossorigin=anonymous></script>
+</body></html>

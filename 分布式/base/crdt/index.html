@@ -2,7 +2,7 @@
 <head>
 <meta charset=utf-8>
 <meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no">
-<meta name=generator content="Hugo 0.92.2">
+<meta name=generator content="Hugo 0.93.0">
 <meta name=ROBOTS content="INDEX, FOLLOW">
 <link rel="shortcut icon" href=/favicons/favicon.ico>
 <link rel=apple-touch-icon href=/favicons/apple-touch-icon-180x180.png sizes=180x180>
@@ -61,45 +61,43 @@ CAP 定理告诉我们，在构建分布式系统时，Consistency(一致性)、
 使用那些信息能够达到最终一致 在实际应用中，我们需要考虑多种数据类型的应用和场景，设计一个能够保证最终一致性的数据结构会变得很复杂。
 而 CRDT 就是这样一些适用于不同场景的、可以保持最终一致性的数据结构的统称。围绕 CRDT 理论，则涵盖了：
  它们应该具有怎样的基本表现形式 满足一些什么样的条件才可以保持最终一致性，毕竟不能每次都穷举所有情况 不断寻找一些通用的、有大量应用场景的 CRDT，并努力提高其空间、时间效率  前面提到的 CRDT 相关论文总结了目前为止人们在 CRDT 这件事情上的认识程度，简要总结如下：">
-<script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga('create','UA-123062585-1','auto'),ga('send','pageview'))</script>
+<script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga("create","UA-123062585-1","auto"),ga("send","pageview"))</script>
 <script async src=https://www.google-analytics.com/analytics.js></script>
 <link rel=preload href=/scss/main.min.847464b684a6e89d7276700a5c500c17ab494dd1755b2654a7b27d8b59e3347e.css as=style>
 <link href=/scss/main.min.847464b684a6e89d7276700a5c500c17ab494dd1755b2654a7b27d8b59e3347e.css rel=stylesheet integrity>
 <script src=/js/jquery-3.5.1.min.js integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin=anonymous></script>
-</head>
-<body class=td-page>
+</head><body class=td-page>
 <header>
-<nav class="js-navbar-scroll navbar navbar-expand navbar-dark flex-column flex-md-row td-navbar">
+<nav class="js-navbar-scroll navbar navbar-expand-lg navbar-dark td-navbar">
 <a class=navbar-brand href=/>
-<span class=navbar-logo><svg id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512" style="enable-background:new 0 0 512 512"><path style="fill:#ffc107" d="M432.384 143.616c-4.165-4.164-10.917-4.164-15.083.0l-60.352 60.352c-4.164 4.165-4.164 10.917.0 15.083 21.187 20.463 54.951 19.876 75.413-1.311 19.962-20.668 19.962-53.435.0-74.102L432.384 143.616z"/><path style="fill:#607d8b" d="M42.667 277.334c-5.891.003-10.669-4.771-10.672-10.662-.002-4.338 2.623-8.245 6.64-9.882l234.667-96c5.455-2.233 11.687.38 13.92 5.835s-.38 11.687-5.835 13.92l-234.667 96C45.433 277.069 44.056 277.337 42.667 277.334z"/><path style="fill:#546e7a" d="M391.552 56.448l-32-32C343.938 8.745 322.689-.059 300.544.0h-3.755c-46.082.024-83.432 37.374-83.456 83.456v3.755c-.053 22.138 8.75 43.377 24.448 58.987l32 32c4.165 4.164 10.917 4.164 15.083.0L391.531 71.531C395.701 67.372 395.71 60.62 391.552 56.448z"/><path style="fill:#607d8b" d="M160 469.334c-3.279.006-6.379-1.497-8.405-4.075L34.261 315.926c-3.635-4.636-2.823-11.341 1.813-14.976s11.341-2.823 14.976 1.813l117.333 149.333c3.629 4.641 2.809 11.344-1.832 14.973C164.681 468.533 162.375 469.329 160 469.334z"/><path style="fill:#455a64" d="M487.467 86.848l-3.669-3.648c-37.687-36.557-97.71-36.197-134.955.811l-51.413 51.413c-36.996 37.25-37.357 97.263-.811 134.955l3.584 3.669c1.7 2.457 4.671 3.706 7.616 3.2 2.831.005 5.548-1.115 7.552-3.115l172.181-172.181c4.189-4.143 4.226-10.896.083-15.085-.028-.028-.055-.056-.083-.083L487.467 86.848z"/><g><path style="fill:#ffc107" d="M501.333 192H480c-5.891.0-10.667-4.776-10.667-10.667s4.776-10.667 10.667-10.667h21.333c5.891.0 10.667 4.776 10.667 10.667S507.225 192 501.333 192z"/><path style="fill:#ffc107" d="M394.667 298.667c-5.891.0-10.667-4.776-10.667-10.667v-21.333c0-5.891 4.776-10.667 10.667-10.667 5.891.0 10.667 4.776 10.667 10.667V288C405.333 293.891 400.558 298.667 394.667 298.667z"/><path style="fill:#ffc107" d="M480 277.334c-2.831.005-5.548-1.115-7.552-3.115l-21.333-21.333c-4.093-4.237-3.975-10.99.262-15.083 4.134-3.993 10.687-3.993 14.821.0l21.333 21.333c4.159 4.172 4.148 10.926-.024 15.085C485.514 276.209 482.815 277.327 480 277.334z"/></g><g><path style="fill:#455a64" d="M266.667 448H96c-29.455.0-53.333 23.878-53.333 53.333.0 5.891 4.776 10.667 10.667 10.667h256c5.891.0 10.667-4.776 10.667-10.667C320 471.878 296.122 448 266.667 448z"/><circle style="fill:#455a64" cx="32" cy="288" r="32"/></g><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/></svg></span><span class=font-weight-bold>infilos.com</span>
+<span class=navbar-logo><svg id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512" style="enable-background:new 0 0 512 512"><path style="fill:#ffc107" d="M432.384 143.616c-4.165-4.164-10.917-4.164-15.083.0l-60.352 60.352c-4.164 4.165-4.164 10.917.0 15.083 21.187 20.463 54.951 19.876 75.413-1.311 19.962-20.668 19.962-53.435.0-74.102L432.384 143.616z"/><path style="fill:#607d8b" d="M42.667 277.334c-5.891.003-10.669-4.771-10.672-10.662-.002-4.338 2.623-8.245 6.64-9.882l234.667-96c5.455-2.233 11.687.38 13.92 5.835s-.38 11.687-5.835 13.92l-234.667 96C45.433 277.069 44.056 277.337 42.667 277.334z"/><path style="fill:#546e7a" d="M391.552 56.448l-32-32C343.938 8.745 322.689-.059 300.544.0h-3.755c-46.082.024-83.432 37.374-83.456 83.456v3.755c-.053 22.138 8.75 43.377 24.448 58.987l32 32c4.165 4.164 10.917 4.164 15.083.0L391.531 71.531C395.701 67.372 395.71 60.62 391.552 56.448z"/><path style="fill:#607d8b" d="M160 469.334c-3.279.006-6.379-1.497-8.405-4.075L34.261 315.926c-3.635-4.636-2.823-11.341 1.813-14.976s11.341-2.823 14.976 1.813l117.333 149.333c3.629 4.641 2.809 11.344-1.832 14.973C164.681 468.533 162.375 469.329 160 469.334z"/><path style="fill:#455a64" d="M487.467 86.848l-3.669-3.648c-37.687-36.557-97.71-36.197-134.955.811l-51.413 51.413c-36.996 37.25-37.357 97.263-.811 134.955l3.584 3.669c1.7 2.457 4.671 3.706 7.616 3.2 2.831.005 5.548-1.115 7.552-3.115l172.181-172.181c4.189-4.143 4.226-10.896.083-15.085-.028-.028-.055-.056-.083-.083L487.467 86.848z"/><g><path style="fill:#ffc107" d="M501.333 192H480c-5.891.0-10.667-4.776-10.667-10.667s4.776-10.667 10.667-10.667h21.333c5.891.0 10.667 4.776 10.667 10.667S507.225 192 501.333 192z"/><path style="fill:#ffc107" d="M394.667 298.667c-5.891.0-10.667-4.776-10.667-10.667v-21.333c0-5.891 4.776-10.667 10.667-10.667 5.891.0 10.667 4.776 10.667 10.667V288C405.333 293.891 400.558 298.667 394.667 298.667z"/><path style="fill:#ffc107" d="M480 277.334c-2.831.005-5.548-1.115-7.552-3.115l-21.333-21.333c-4.093-4.237-3.975-10.99.262-15.083 4.134-3.993 10.687-3.993 14.821.0l21.333 21.333c4.159 4.172 4.148 10.926-.024 15.085C485.514 276.209 482.815 277.327 480 277.334z"/></g><g><path style="fill:#455a64" d="M266.667 448H96c-29.455.0-53.333 23.878-53.333 53.333.0 5.891 4.776 10.667 10.667 10.667h256c5.891.0 10.667-4.776 10.667-10.667C320 471.878 296.122 448 266.667 448z"/><circle style="fill:#455a64" cx="32" cy="288" r="32"/></g><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/></svg></span>
+<span class=font-weight-bold>infilos.com</span>
 </a>
+<button class=navbar-toggler type=button data-toggle=collapse data-target=#navbarSupportedContent aria-controls=navbarSupportedContent aria-expanded=false aria-label="Toggle navigation">
+<span class=navbar-toggler-icon></span>
+</button>
 <div class="collapse navbar-collapse" id=navbarSupportedContent>
 <ul class="navbar-nav mr-auto">
 <li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86>
 <span>基础</span>
 </a>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80>
 <span>语言</span>
 </a>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93>
 <span>框架库</span>
 </a>
-</li>
-<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+</li><li class="nav-item dropdown" style=max-width:90px;min-width:10px>
 <a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
 分布式
 <span>+</span>
 </a>
 <div class=dropdown-menu aria-labelledby=navbarDropdown>
 <a class=dropdown-item href=/%e5%88%86%e5%b8%83%e5%bc%8f/base>基本构成</a>
-</div>
-</li>
-<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+</div></li><li class="nav-item dropdown" style=max-width:90px;min-width:10px>
 <a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
 大数据
 <span>+</span>
@@ -110,9 +108,7 @@ CAP 定理告诉我们，在构建分布式系统时，Consistency(一致性)、
 <a class=dropdown-item href=/%e6%b6%88%e6%81%af%e7%b3%bb%e7%bb%9f>消息系统</a>
 <a class=dropdown-item href=/%e5%a4%84%e7%90%86%e7%b3%bb%e7%bb%9f>处理系统</a>
 <a class=dropdown-item href=/%e6%95%b0%e6%8d%ae%e6%b2%bb%e7%90%86>数据治理</a>
-</div>
-</li>
-<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+</div></li><li class="nav-item dropdown" style=max-width:90px;min-width:10px>
 <a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
 中后台
 <span>+</span>
@@ -122,38 +118,26 @@ CAP 定理告诉我们，在构建分布式系统时，Consistency(一致性)、
 <a class=dropdown-item href=/%e7%94%a8%e6%88%b7%e7%b3%bb%e7%bb%9f>用户系统</a>
 <a class=dropdown-item href=/%e4%ba%a4%e4%ba%92%e7%95%8c%e9%9d%a2>交互界面</a>
 <a class=dropdown-item href=/%e4%b8%9a%e5%8a%a1%e7%b3%bb%e7%bb%9f>业务系统</a>
-</div>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</div></li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e6%a8%a1%e5%bc%8f%e6%9e%b6%e6%9e%84>
 <span>模式架构</span>
 </a>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e9%9d%a2%e8%af%95%e9%97%ae%e7%ad%94>
 <span>面试</span>
 </a>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e7%ae%a1%e7%90%86%e8%b7%af%e5%be%84>
 <span>管理</span>
 </a>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e5%bc%80%e6%ba%90%e9%a1%b9%e7%9b%ae>
 <span>开源</span>
 </a>
-</li>
-</ul>
-<div class="form-inline my-2 my-lg-0">
+</li></ul><div class="form-inline my-2 my-lg-0">
 <div class="nav-item nav-search-item my-2 my-md-0">
 <input type=search class="form-control td-search-input" placeholder="&#xf002; 站内搜索…" aria-label=站内搜索… autocomplete=off>
-</div>
-</div>
-</div>
-</nav>
-</header>
-<div class="container-fluid td-outer">
+</div></div></div></nav></header><div class="container-fluid td-outer">
 <div class=td-main>
 <div class="row flex-xl-nowrap">
 <aside class="col-12 col-md-3 col-xl-2 td-sidebar d-print-none">
@@ -163,10 +147,7 @@ CAP 定理告诉我们，在构建分布式系统时，Consistency(一致性)、
 <input type=search class="form-control td-search-input" placeholder="&#xf002; 站内搜索…" aria-label=站内搜索… autocomplete=off>
 <button class="btn btn-link td-sidebar__toggle d-md-none p-0 ml-3 fas fa-bars" type=button data-toggle=collapse data-target=#td-section-nav aria-controls=td-docs-nav aria-expanded=false aria-label="Toggle section navigation">
 </button>
-</form>
-</div>
-<div id=content-desktop></div>
-<nav class="collapse td-sidebar-nav" id=td-section-nav>
+</form></div><div id=content-desktop></div><nav class="collapse td-sidebar-nav" id=td-section-nav>
 <ul class="td-sidebar-nav__section pr-md-3 ul-0">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e58886e5b883e5bc8f-li>
 <a href=/%E5%88%86%E5%B8%83%E5%BC%8F/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section tree-root" id=m-e58886e5b883e5bc8f><span>分布式</span></a>
@@ -214,172 +195,69 @@ CAP 定理告诉我们，在构建分布式系统时，Consistency(一致性)、
 <a href=/%E5%88%86%E5%B8%83%E5%BC%8F/base/%E5%85%A8%E5%B1%80%E5%94%AF%E4%B8%80%E6%A0%87%E8%AF%86/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e58886e5b883e5bc8fbasee585a8e5b180e594afe4b880e6a087e8af86><span>全局唯一标识</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e58886e5b883e5bc8fbasee58886e5b883e5bc8fe8b0ace8afaf-li>
 <a href=/%E5%88%86%E5%B8%83%E5%BC%8F/base/%E5%88%86%E5%B8%83%E5%BC%8F%E8%B0%AC%E8%AF%AF/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e58886e5b883e5bc8fbasee58886e5b883e5bc8fe8b0ace8afaf><span>分布式谬误</span></a>
-</li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-</nav>
-</div>
-</aside>
-<aside class="d-none d-xl-block col-xl-2 td-sidebar-toc d-print-none">
+</li></ul></li></ul></li></ul></nav></div></aside><aside class="d-none d-xl-block col-xl-2 td-sidebar-toc d-print-none">
 <div class="td-page-meta ml-2 pb-1 pt-2 mb-0">
 <a href=https://github.com/infilos/infilos.com/edit/master/content/zh/%e5%88%86%e5%b8%83%e5%bc%8f/base/crdt.md target=_blank><i class="fa fa-edit fa-fw"></i> 编辑此页</a>
 <a href="https://github.com/infilos/infilos.com/new/master/content/zh/%e5%88%86%e5%b8%83%e5%bc%8f/base/crdt.md?filename=change-me.md&value=---%0Atitle%3A+%22Long+Page+Title%22%0AlinkTitle%3A+%22Short+Nav+Title%22%0Aweight%3A+100%0Adescription%3A+%3E-%0A+++++Page+description+for+heading+and+indexes.%0A---%0A%0A%23%23+Heading%0A%0AEdit+this+template+to+create+your+new+page.%0A%0A%2A+Give+it+a+good+name%2C+ending+in+%60.md%60+-+e.g.+%60getting-started.md%60%0A%2A+Edit+the+%22front+matter%22+section+at+the+top+of+the+page+%28weight+controls+how+its+ordered+amongst+other+pages+in+the+same+directory%3B+lowest+number+first%29.%0A%2A+Add+a+good+commit+message+at+the+bottom+of+the+page+%28%3C80+characters%3B+use+the+extended+description+field+for+more+detail%29.%0A%2A+Create+a+new+branch+so+you+can+preview+your+new+file+and+request+a+review+via+Pull+Request.%0A" target=_blank><i class="fa fa-edit fa-fw"></i> 添加子页面</a>
 <a href="https://github.com/infilos/infilos.com/issues/new?title=CRDT" target=_blank><i class="fab fa-github fa-fw"></i> 提交文档问题</a>
 <a id=print href=/%E5%88%86%E5%B8%83%E5%BC%8F/base/_print/><i class="fa fa-print fa-fw"></i> 整节打印</a>
-</div>
-<div class=td-toc><nav id=TableOfContents>
+</div><div class=td-toc><nav id=TableOfContents>
 <ul>
-<li><a href=#什么是-crdt>什么是 CRDT</a></li>
-<li><a href=#一致性的难题>一致性的难题</a></li>
-<li><a href=#使用那些信息能够达到最终一致>使用那些信息能够达到最终一致</a></li>
-<li><a href=#如何在实际系统中应用>如何在实际系统中应用</a></li>
-<li><a href=#谁应该使用>谁应该使用？</a></li>
-<li><a href=#总结>总结</a></li>
-<li><a href=#reference>Reference</a></li>
-</ul>
-</nav></div>
-</aside>
-<main class="col-12 col-md-9 col-xl-8 pl-md-5" role=main>
+<li><a href=#什么是-crdt>什么是 CRDT</a></li><li><a href=#一致性的难题>一致性的难题</a></li><li><a href=#使用那些信息能够达到最终一致>使用那些信息能够达到最终一致</a></li><li><a href=#如何在实际系统中应用>如何在实际系统中应用</a></li><li><a href=#谁应该使用>谁应该使用？</a></li><li><a href=#总结>总结</a></li><li><a href=#reference>Reference</a></li></ul></nav></div></aside><main class="col-12 col-md-9 col-xl-8 pl-md-5" role=main>
 <nav aria-label=breadcrumb class="d-none d-md-block d-print-none">
 <ol class="breadcrumb spb-1">
 <li class=breadcrumb-item>
 <a href=/%E5%88%86%E5%B8%83%E5%BC%8F/>分布式</a>
-</li>
-<li class=breadcrumb-item>
+</li><li class=breadcrumb-item>
 <a href=/%E5%88%86%E5%B8%83%E5%BC%8F/base/>基本构成</a>
-</li>
-<li class="breadcrumb-item active" aria-current=page>
+</li><li class="breadcrumb-item active" aria-current=page>
 <a href=/%E5%88%86%E5%B8%83%E5%BC%8F/base/crdt/>CRDT</a>
-</li>
-</ol>
-</nav>
-<div class=td-content>
-<h1>CRDT</h1>
-<header class=article-meta>
-</header>
-<p>我们了解到分布式一些规律原则之后，就要着手考虑如何来实现解决方案，一致性算法的前提是数据结构，或者说一切算法的根基都是数据结构，设计良好的数据结构加上精妙的算法可以高效的解决现实的问题。经过前人不断的探索，我们得知分布式系统被广泛采用的数据结构CRDT。</p>
-<p>参考《谈谈CRDT》,A comprehensive study of Convergent and Commutative Replicated Data Types</p>
+</li></ol></nav><div class=td-content>
+<h1>CRDT</h1><header class=article-meta>
+</header><p>我们了解到分布式一些规律原则之后，就要着手考虑如何来实现解决方案，一致性算法的前提是数据结构，或者说一切算法的根基都是数据结构，设计良好的数据结构加上精妙的算法可以高效的解决现实的问题。经过前人不断的探索，我们得知分布式系统被广泛采用的数据结构CRDT。</p><p>参考《谈谈CRDT》,A comprehensive study of Convergent and Commutative Replicated Data Types</p><ul>
+<li>基于状态(state-based)：即将各个节点之间的CRDT数据直接进行合并，所有节点都能最终合并到同一个状态，数据合并的顺序不会影响到最终的结果。</li><li>基于操作(operation-based)：将每一次对数据的操作通知给其他节点。只要节点知道了对数据的所有操作（收到操作的顺序可以是任意的），就能合并到同一个状态。</li></ul><hr>
+<h2 id=什么是-crdt>什么是 CRDT</h2><p>CRDT 是 Conflict-Free Replicated Data Type 的缩写，即<strong>无冲突的可复制数据类型</strong>。</p><p>它用于解决分布式系统的最终一致性问题，即，在分布式系统中，应用采用什么样的数据结构来保证最终一致性？而 CRDT 是目前理论界给出的答案，相关论文为 <a href=http://hal.upmc.fr/file/index/docid/555588/filename/techreport.pdf>A comprehensive study of Convergent and Commutative Replicated Data Types</a>。</p><h2 id=一致性的难题>一致性的难题</h2><p>构建一个分布式系统并不难，而难的是构建一个与单机系统的正确性一样的分布式系统，即 <a href=https://en.wikipedia.org/wiki/CAP_theorem>CAP 定理</a>。</p><p>CAP 定理告诉我们，在构建分布式系统时，Consistency(一致性)、Availability(可用性)、Partition tolerance(分区容错性)，三者只能同时选取两项。</p><p>其中，分区容错性是任何生产环境下的分布式系统所必须的，因此，只有在 C、A 之间做出取舍：</p><ul>
+<li>选择一致性：构建一个强一致性系统，比如符合 ACID 特性的数据库系统。</li><li>选择可用性：构建一个最终一致性系统，比如 NoSQL 系统。</li></ul><p>选择一致性时数据一旦落地就是一致的，但是可用性不能实时保证，比如系统有时忙于一致性处理，无法对外提供服务。</p><p>选择可用性时则时刻都能保证可用，但是各个节点在同一时刻所持有的数据可能并不一致，但经过一段时间后，数据在各节点间会达到一致状态。</p><p><strong>因此，现在的分布式系统总是会偏向于选择 AP，以提供一个无单点故障、总是可用且更高吞吐的系统。</strong></p><h2 id=使用那些信息能够达到最终一致>使用那些信息能够达到最终一致</h2><p>在实际应用中，我们需要考虑多种数据类型的应用和场景，设计一个能够保证最终一致性的数据结构会变得很复杂。</p><p>而 CRDT 就是这样一些适用于不同场景的、可以保持最终一致性的数据结构的统称。围绕 CRDT 理论，则涵盖了：</p><ul>
+<li>它们应该具有怎样的基本表现形式</li><li>满足一些什么样的条件才可以保持最终一致性，毕竟不能每次都穷举所有情况</li><li>不断寻找一些通用的、有大量应用场景的 CRDT，并努力提高其空间、时间效率</li></ul><p>前面提到的 CRDT 相关论文总结了目前为止人们在 CRDT 这件事情上的认识程度，简要总结如下：</p><ul>
+<li>定义了 CRDT</li><li>列举了 CRDT 的两种基本形式：
 <ul>
-<li>基于状态(state-based)：即将各个节点之间的CRDT数据直接进行合并，所有节点都能最终合并到同一个状态，数据合并的顺序不会影响到最终的结果。</li>
-<li>基于操作(operation-based)：将每一次对数据的操作通知给其他节点。只要节点知道了对数据的所有操作（收到操作的顺序可以是任意的），就能合并到同一个状态。</li>
-</ul>
-<hr>
-<h2 id=什么是-crdt>什么是 CRDT</h2>
-<p>CRDT 是 Conflict-Free Replicated Data Type 的缩写，即<strong>无冲突的可复制数据类型</strong>。</p>
-<p>它用于解决分布式系统的最终一致性问题，即，在分布式系统中，应用采用什么样的数据结构来保证最终一致性？而 CRDT 是目前理论界给出的答案，相关论文为 <a href=http://hal.upmc.fr/file/index/docid/555588/filename/techreport.pdf>A comprehensive study of Convergent and Commutative Replicated Data Types</a>。</p>
-<h2 id=一致性的难题>一致性的难题</h2>
-<p>构建一个分布式系统并不难，而难的是构建一个与单机系统的正确性一样的分布式系统，即 <a href=https://en.wikipedia.org/wiki/CAP_theorem>CAP 定理</a>。</p>
-<p>CAP 定理告诉我们，在构建分布式系统时，Consistency(一致性)、Availability(可用性)、Partition tolerance(分区容错性)，三者只能同时选取两项。</p>
-<p>其中，分区容错性是任何生产环境下的分布式系统所必须的，因此，只有在 C、A 之间做出取舍：</p>
-<ul>
-<li>选择一致性：构建一个强一致性系统，比如符合 ACID 特性的数据库系统。</li>
-<li>选择可用性：构建一个最终一致性系统，比如 NoSQL 系统。</li>
-</ul>
-<p>选择一致性时数据一旦落地就是一致的，但是可用性不能实时保证，比如系统有时忙于一致性处理，无法对外提供服务。</p>
-<p>选择可用性时则时刻都能保证可用，但是各个节点在同一时刻所持有的数据可能并不一致，但经过一段时间后，数据在各节点间会达到一致状态。</p>
-<p><strong>因此，现在的分布式系统总是会偏向于选择 AP，以提供一个无单点故障、总是可用且更高吞吐的系统。</strong></p>
-<h2 id=使用那些信息能够达到最终一致>使用那些信息能够达到最终一致</h2>
-<p>在实际应用中，我们需要考虑多种数据类型的应用和场景，设计一个能够保证最终一致性的数据结构会变得很复杂。</p>
-<p>而 CRDT 就是这样一些适用于不同场景的、可以保持最终一致性的数据结构的统称。围绕 CRDT 理论，则涵盖了：</p>
-<ul>
-<li>它们应该具有怎样的基本表现形式</li>
-<li>满足一些什么样的条件才可以保持最终一致性，毕竟不能每次都穷举所有情况</li>
-<li>不断寻找一些通用的、有大量应用场景的 CRDT，并努力提高其空间、时间效率</li>
-</ul>
-<p>前面提到的 CRDT 相关论文总结了目前为止人们在 CRDT 这件事情上的认识程度，简要总结如下：</p>
-<ul>
-<li>定义了 CRDT</li>
-<li>列举了 CRDT 的两种基本形式：
-<ul>
-<li>基于状态的 CRDT：存储最终值</li>
-<li>基于操作的 CRDT：存储操作记录</li>
-</ul>
-</li>
-<li>界定了 CRDT 能够满足最终一致性的边界条件。比如，设计一个 CRDT，只需要验证它是否满足这些边界条件，即可知道它是否能够保持最终一致性</li>
-<li>界定了两类 CRDT 在系统中应用时，需要的信息交换的边界条件。即回答怎样才能叫做”收集到足够多的信息“</li>
-<li>枚举了当前已知的 CRDT，包括计数器(counter)、寄存器(register)、集合(set)、图(graph)等几个种类</li>
-<li>在现实中应用如何应用 CRDT，尤其是如何回收存储空间的问题</li>
-</ul>
-<h2 id=如何在实际系统中应用>如何在实际系统中应用</h2>
-<p>最终一致性分布式框架 RiakCore 的应用方式：</p>
-<ul>
-<li>抛弃自己缩写的数据结构，实现 CRDT，或者使用已有的 CRDT Library</li>
-<li>参考 CRDT 的一致性可判断条件(即”收集到足够多的信息“)，在需要判断最终一致性时收集它们</li>
-<li>抛弃自己所写的一致性判断算法，实现 CRDT 的一致性合并算法，或者使用已有的 CRDT Library</li>
-</ul>
-<blockquote>
-<p><a href=https://github.com/basho/riak>Riak</a> 是一个由 Erlang 编写的分布式、去中心化的数据存储系统，<a href=https://github.com/basho/riak_core>Riak Core</a> 定义了其数据分发和扩展的形式，可以被认为是一个用于构建分布式、可扩展、高容错应用的工具集。</p>
-</blockquote>
-<h2 id=谁应该使用>谁应该使用？</h2>
-<p>所有力求追踪一致性的系统，都应该使用 CRDT。如果一个最终一致性的分布式系统还有没有使用 CRDT，要么是其所使用的数据结构已经实现了 CRDT 的一种或几种，虽然可能很粗糙，要么是这个系统在最终一致性上的保证存在问题。</p>
-<h2 id=总结>总结</h2>
-<p>CRDT 并未给用户层面带来影响，但是从管理员、开发者的角度来看，CRDT 给了我们基于逻辑来判断分布式系统能否保证最终一致性的能力。</p>
-<h2 id=reference>Reference</h2>
-<ul>
-<li><a href=http://blog.chinaunix.net/uid-608135-id-4730055.html>Eventual Consistency：谈谈 CRDT</a></li>
-<li><a href=http://liyu1981.github.io/what-is-CRDT/>http://liyu1981.github.io/what-is-CRDT/</a></li>
-<li><a href=http://christophermeiklejohn.com/crdt/2014/07/22/readings-in-crdts.html>http://christophermeiklejohn.com/crdt/2014/07/22/readings-in-crdts.html</a></li>
-</ul>
-<style>.feedback--answer{display:inline-block}.feedback--answer-no{margin-left:1em}.feedback--response{display:none;margin-top:1em}.feedback--response__visible{display:block}</style>
-<div class=d-print-none>
-<h2 class=feedback--title>Feedback</h2>
-<p class=feedback--question>Was this page helpful?</p>
-<button class="btn btn-primary mb-4 feedback--answer feedback--answer-yes">Yes</button>
+<li>基于状态的 CRDT：存储最终值</li><li>基于操作的 CRDT：存储操作记录</li></ul></li><li>界定了 CRDT 能够满足最终一致性的边界条件。比如，设计一个 CRDT，只需要验证它是否满足这些边界条件，即可知道它是否能够保持最终一致性</li><li>界定了两类 CRDT 在系统中应用时，需要的信息交换的边界条件。即回答怎样才能叫做”收集到足够多的信息“</li><li>枚举了当前已知的 CRDT，包括计数器(counter)、寄存器(register)、集合(set)、图(graph)等几个种类</li><li>在现实中应用如何应用 CRDT，尤其是如何回收存储空间的问题</li></ul><h2 id=如何在实际系统中应用>如何在实际系统中应用</h2><p>最终一致性分布式框架 RiakCore 的应用方式：</p><ul>
+<li>抛弃自己缩写的数据结构，实现 CRDT，或者使用已有的 CRDT Library</li><li>参考 CRDT 的一致性可判断条件(即”收集到足够多的信息“)，在需要判断最终一致性时收集它们</li><li>抛弃自己所写的一致性判断算法，实现 CRDT 的一致性合并算法，或者使用已有的 CRDT Library</li></ul><blockquote>
+<p><a href=https://github.com/basho/riak>Riak</a> 是一个由 Erlang 编写的分布式、去中心化的数据存储系统，<a href=https://github.com/basho/riak_core>Riak Core</a> 定义了其数据分发和扩展的形式，可以被认为是一个用于构建分布式、可扩展、高容错应用的工具集。</p></blockquote><h2 id=谁应该使用>谁应该使用？</h2><p>所有力求追踪一致性的系统，都应该使用 CRDT。如果一个最终一致性的分布式系统还有没有使用 CRDT，要么是其所使用的数据结构已经实现了 CRDT 的一种或几种，虽然可能很粗糙，要么是这个系统在最终一致性上的保证存在问题。</p><h2 id=总结>总结</h2><p>CRDT 并未给用户层面带来影响，但是从管理员、开发者的角度来看，CRDT 给了我们基于逻辑来判断分布式系统能否保证最终一致性的能力。</p><h2 id=reference>Reference</h2><ul>
+<li><a href=http://blog.chinaunix.net/uid-608135-id-4730055.html>Eventual Consistency：谈谈 CRDT</a></li><li><a href=http://liyu1981.github.io/what-is-CRDT/>http://liyu1981.github.io/what-is-CRDT/</a></li><li><a href=http://christophermeiklejohn.com/crdt/2014/07/22/readings-in-crdts.html>http://christophermeiklejohn.com/crdt/2014/07/22/readings-in-crdts.html</a></li></ul><style>.feedback--answer{display:inline-block}.feedback--answer-no{margin-left:1em}.feedback--response{display:none;margin-top:1em}.feedback--response__visible{display:block}</style><div class=d-print-none>
+<h2 class=feedback--title>Feedback</h2><p class=feedback--question>Was this page helpful?</p><button class="btn btn-primary mb-4 feedback--answer feedback--answer-yes">Yes</button>
 <button class="btn btn-primary mb-4 feedback--answer feedback--answer-no">No</button>
 <p class="feedback--response feedback--response-yes">
 Glad to hear it! Please <a href=https://github.com/infilos/infilos.com/issues/new>tell us how we can improve</a>.
-</p>
-<p class="feedback--response feedback--response-no">
+</p><p class="feedback--response feedback--response-no">
 Sorry to hear that. Please <a href=https://github.com/infilos/infilos.com/issues/new>tell us how we can improve</a>.
-</p>
-</div>
-<script>const yesButton=document.querySelector('.feedback--answer-yes'),noButton=document.querySelector('.feedback--answer-no'),yesResponse=document.querySelector('.feedback--response-yes'),noResponse=document.querySelector('.feedback--response-no'),disableButtons=()=>{yesButton.disabled=!0,noButton.disabled=!0},sendFeedback=b=>{if(typeof ga!='function')return;const a={command:'send',hitType:'event',category:'Helpful',action:'click',label:window.location.pathname,value:b};ga(a.command,a.hitType,a.category,a.action,a.label,a.value)};yesButton.addEventListener('click',()=>{yesResponse.classList.add('feedback--response__visible'),disableButtons(),sendFeedback(1)}),noButton.addEventListener('click',()=>{noResponse.classList.add('feedback--response__visible'),disableButtons(),sendFeedback(0)})</script>
+</p></div><script>const yesButton=document.querySelector(".feedback--answer-yes"),noButton=document.querySelector(".feedback--answer-no"),yesResponse=document.querySelector(".feedback--response-yes"),noResponse=document.querySelector(".feedback--response-no"),disableButtons=()=>{yesButton.disabled=!0,noButton.disabled=!0},sendFeedback=t=>{if(typeof ga!="function")return;const e={command:"send",hitType:"event",category:"Helpful",action:"click",label:window.location.pathname,value:t};ga(e.command,e.hitType,e.category,e.action,e.label,e.value)};yesButton.addEventListener("click",()=>{yesResponse.classList.add("feedback--response__visible"),disableButtons(),sendFeedback(1)}),noButton.addEventListener("click",()=>{noResponse.classList.add("feedback--response__visible"),disableButtons(),sendFeedback(0)})</script>
 <br>
-</div>
-</main>
-</div>
-</div>
-<footer class="bg-dark py-5 row d-print-none">
+</div></main></div></div><footer class="bg-dark py-5 row d-print-none">
 <div class="container-fluid mx-sm-5">
 <div class=row>
 <div class="col-6 col-sm-4 text-xs-center order-sm-2">
-</div>
-<div class="col-6 col-sm-4 text-right text-xs-center order-sm-3">
+</div><div class="col-6 col-sm-4 text-right text-xs-center order-sm-3">
 <ul class="list-inline mb-0">
 <li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Weibo aria-label=Weibo>
 <a class=text-white target=_blank rel="noopener noreferrer" href=https://weibo.com/u/3848950217>
 <i class="fab fa-weibo"></i>
 </a>
-</li>
-<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Twitter aria-label=Twitter>
+</li><li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Twitter aria-label=Twitter>
 <a class=text-white target=_blank rel="noopener noreferrer" href=https://twitter.com/zhange_zzg>
 <i class="fab fa-twitter"></i>
 </a>
-</li>
-<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title="Stack Overflow" aria-label="Stack Overflow">
+</li><li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title="Stack Overflow" aria-label="Stack Overflow">
 <a class=text-white target=_blank rel="noopener noreferrer" href=https://stackoverflow.com>
 <i class="fab fa-stack-overflow"></i>
 </a>
-</li>
-<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=GitHub aria-label=GitHub>
+</li><li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=GitHub aria-label=GitHub>
 <a class=text-white target=_blank rel="noopener noreferrer" href=https://github.com/infilos/infilos.com>
 <i class="fab fa-github"></i>
 </a>
-</li>
-</ul>
-</div>
-<div class="col-12 col-sm-4 text-center py-2 order-sm-2">
+</li></ul></div><div class="col-12 col-sm-4 text-center py-2 order-sm-2">
 <small class=text-white>&copy; 2022 infilos.com All Rights Reserved</small>
-</div>
-</div>
-</div>
-</footer>
-</div>
-<script src=/js/popper.min.js integrity=sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49 crossorigin=anonymous></script>
+</div></div></div></footer></div><script src=/js/popper.min.js integrity=sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49 crossorigin=anonymous></script>
 <script src=/js/bootstrap.min.js integrity=sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy crossorigin=anonymous></script>
-<script src=/js/main.min.5c74b870c6953931a705f390a49c7e4c0a842ec5c83b24354758dd674343ed0d.js integrity="sha256-XHS4cMaVOTGnBfOQpJx+TAqELsXIOyQ1R1jdZ0ND7Q0=" crossorigin=anonymous></script>
-</body>
-</html>
+<script src=/js/main.min.3f3f4f1e22307ccbb13271a98be2e4dbb8386b7e67c3d606db44d3d0649f485e.js integrity="sha256-Pz9PHiIwfMuxMnGpi+Lk27g4a35nw9YG20TT0GSfSF4=" crossorigin=anonymous></script>
+</body></html>

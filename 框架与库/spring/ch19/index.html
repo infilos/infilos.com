@@ -2,7 +2,7 @@
 <head>
 <meta charset=utf-8>
 <meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no">
-<meta name=generator content="Hugo 0.92.2">
+<meta name=generator content="Hugo 0.93.0">
 <meta name=ROBOTS content="INDEX, FOLLOW">
 <link rel="shortcut icon" href=/favicons/favicon.ico>
 <link rel=apple-touch-icon href=/favicons/apple-touch-icon-180x180.png sizes=180x180>
@@ -18,10 +18,10 @@
 <meta property="og:description" content="Servlet Servlet（Server Applet），全称Java Servlet。是用Java编写的服务器端程序。其主要功能在于交互式地浏览和修改数据，生成动态Web内容。狭义的Servlet是指Java语言实现的一个接口，广义的Servlet是指任何实现了这个Servlet接口的类，一般情况下，人们将Servlet理解为后者。
 web开发的本质就一句话：客户端和服务器交换数据。于是你使用 Java 的 Socket 套接字进行编程，去处理客户端来的 tcp 请求，经过编解码处理读取请求体，获取请求行，然后找到请求行对应的处理逻辑步入服务器的处理中，处理完毕把对应的结果返回给当前的 Socket 链接，响应完毕，关闭 Socket。
 以上过程，你有没有发现其实是两个部分：
- 建立连接，传输数据，关闭连接，你肯定知道这些步骤不是你所开发的web服务去处理的，而是tomcat容器帮你做了这些事情。 拿到请求行之后去找对应的 url 路由，这一部分是谁做的呢？在如今 SpringBoot 横行的时代，去配置化已经成为趋势，编程越来越简单导致的后果就是越来越难以理解事物最开始的样子。还记得 SpringMVC工程中的 web.xml文件吗？是否还记得在web.xml中有这么一段配置呢：  <servlet> <servlet-name>SpringMVC</servlet-name> <servlet-class>org.springframework.web.servlet.DispatcherServlet </servlet-class> <init-param> <param-name>contextConfigLocation</param-name> <param-value>classpath*:/spring/SpringMVC-servlet.xml</param-value> </init-param> <load-on-startup>1</load-on-startup> </servlet> <servlet-mapping> <servlet-name>SpringMVC</servlet-name> <url-pattern>/</url-pattern> </servlet-mapping> Spring 的核心就是一个 Servlet,它拦截了所有的请求,将请求交给 DispatcherServlet 去处理。
+ 建立连接，传输数据，关闭连接，你肯定知道这些步骤不是你所开发的web服务去处理的，而是tomcat容器帮你做了这些事情。 拿到请求行之后去找对应的 url 路由，这一部分是谁做的呢？在如今 SpringBoot 横行的时代，去配置化已经成为趋势，编程越来越简单导致的后果就是越来越难以理解事物最开始的样子。还记得 SpringMVC工程中的 web.xml文件吗？是否还记得在web.xml中有这么一段配置呢：  <servlet> 	<servlet-name>SpringMVC</servlet-name> 	<servlet-class>org.springframework.web.servlet.DispatcherServlet 	</servlet-class> 	<init-param> 	<param-name>contextConfigLocation</param-name> 	<param-value>classpath*:/spring/SpringMVC-servlet.xml</param-value> 	</init-param> 	<load-on-startup>1</load-on-startup> </servlet>  <servlet-mapping> 	<servlet-name>SpringMVC</servlet-name> 	<url-pattern>/</url-pattern> </servlet-mapping> Spring 的核心就是一个 Servlet,它拦截了所有的请求,将请求交给 DispatcherServlet 去处理。
 我们再来问一遍，Servlet 到底是什么，它就是一段处理 web 请求的逻辑，并不是很高深的东西。
 再来看 Java 中的 Servlet，它只是一个接口：
-package javax.servlet; import java.io.IOException; public interface Servlet { public void init(ServletConfig config) throws ServletException; public ServletConfig getServletConfig(); public void service(ServletRequest req, ServletResponse res) throws ServletException, IOException; public String getServletInfo(); public void destroy(); } Servlet 接口规定请求从容器到达 web 服务端的规范，最重要的三个步骤是:">
+package javax.servlet;  import java.io.IOException;  public interface Servlet {   public void init(ServletConfig config) throws ServletException;   public ServletConfig getServletConfig();   public void service(ServletRequest req, ServletResponse res)  throws ServletException, IOException;   public String getServletInfo();   public void destroy(); } Servlet 接口规定请求从容器到达 web 服务端的规范，最重要的三个步骤是:">
 <meta property="og:type" content="article">
 <meta property="og:url" content="/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/spring/ch19/"><meta property="article:section" content="框架与库">
 <meta property="og:site_name" content="infilos.com">
@@ -29,59 +29,57 @@ package javax.servlet; import java.io.IOException; public interface Servlet { pu
 <meta itemprop=description content="Servlet Servlet（Server Applet），全称Java Servlet。是用Java编写的服务器端程序。其主要功能在于交互式地浏览和修改数据，生成动态Web内容。狭义的Servlet是指Java语言实现的一个接口，广义的Servlet是指任何实现了这个Servlet接口的类，一般情况下，人们将Servlet理解为后者。
 web开发的本质就一句话：客户端和服务器交换数据。于是你使用 Java 的 Socket 套接字进行编程，去处理客户端来的 tcp 请求，经过编解码处理读取请求体，获取请求行，然后找到请求行对应的处理逻辑步入服务器的处理中，处理完毕把对应的结果返回给当前的 Socket 链接，响应完毕，关闭 Socket。
 以上过程，你有没有发现其实是两个部分：
- 建立连接，传输数据，关闭连接，你肯定知道这些步骤不是你所开发的web服务去处理的，而是tomcat容器帮你做了这些事情。 拿到请求行之后去找对应的 url 路由，这一部分是谁做的呢？在如今 SpringBoot 横行的时代，去配置化已经成为趋势，编程越来越简单导致的后果就是越来越难以理解事物最开始的样子。还记得 SpringMVC工程中的 web.xml文件吗？是否还记得在web.xml中有这么一段配置呢：  <servlet> <servlet-name>SpringMVC</servlet-name> <servlet-class>org.springframework.web.servlet.DispatcherServlet </servlet-class> <init-param> <param-name>contextConfigLocation</param-name> <param-value>classpath*:/spring/SpringMVC-servlet.xml</param-value> </init-param> <load-on-startup>1</load-on-startup> </servlet> <servlet-mapping> <servlet-name>SpringMVC</servlet-name> <url-pattern>/</url-pattern> </servlet-mapping> Spring 的核心就是一个 Servlet,它拦截了所有的请求,将请求交给 DispatcherServlet 去处理。
+ 建立连接，传输数据，关闭连接，你肯定知道这些步骤不是你所开发的web服务去处理的，而是tomcat容器帮你做了这些事情。 拿到请求行之后去找对应的 url 路由，这一部分是谁做的呢？在如今 SpringBoot 横行的时代，去配置化已经成为趋势，编程越来越简单导致的后果就是越来越难以理解事物最开始的样子。还记得 SpringMVC工程中的 web.xml文件吗？是否还记得在web.xml中有这么一段配置呢：  <servlet> 	<servlet-name>SpringMVC</servlet-name> 	<servlet-class>org.springframework.web.servlet.DispatcherServlet 	</servlet-class> 	<init-param> 	<param-name>contextConfigLocation</param-name> 	<param-value>classpath*:/spring/SpringMVC-servlet.xml</param-value> 	</init-param> 	<load-on-startup>1</load-on-startup> </servlet>  <servlet-mapping> 	<servlet-name>SpringMVC</servlet-name> 	<url-pattern>/</url-pattern> </servlet-mapping> Spring 的核心就是一个 Servlet,它拦截了所有的请求,将请求交给 DispatcherServlet 去处理。
 我们再来问一遍，Servlet 到底是什么，它就是一段处理 web 请求的逻辑，并不是很高深的东西。
 再来看 Java 中的 Servlet，它只是一个接口：
-package javax.servlet; import java.io.IOException; public interface Servlet { public void init(ServletConfig config) throws ServletException; public ServletConfig getServletConfig(); public void service(ServletRequest req, ServletResponse res) throws ServletException, IOException; public String getServletInfo(); public void destroy(); } Servlet 接口规定请求从容器到达 web 服务端的规范，最重要的三个步骤是:">
+package javax.servlet;  import java.io.IOException;  public interface Servlet {   public void init(ServletConfig config) throws ServletException;   public ServletConfig getServletConfig();   public void service(ServletRequest req, ServletResponse res)  throws ServletException, IOException;   public String getServletInfo();   public void destroy(); } Servlet 接口规定请求从容器到达 web 服务端的规范，最重要的三个步骤是:">
 <meta itemprop=wordCount content="453">
 <meta itemprop=keywords content><meta name=twitter:card content="summary">
 <meta name=twitter:title content="CH19-Servlet">
 <meta name=twitter:description content="Servlet Servlet（Server Applet），全称Java Servlet。是用Java编写的服务器端程序。其主要功能在于交互式地浏览和修改数据，生成动态Web内容。狭义的Servlet是指Java语言实现的一个接口，广义的Servlet是指任何实现了这个Servlet接口的类，一般情况下，人们将Servlet理解为后者。
 web开发的本质就一句话：客户端和服务器交换数据。于是你使用 Java 的 Socket 套接字进行编程，去处理客户端来的 tcp 请求，经过编解码处理读取请求体，获取请求行，然后找到请求行对应的处理逻辑步入服务器的处理中，处理完毕把对应的结果返回给当前的 Socket 链接，响应完毕，关闭 Socket。
 以上过程，你有没有发现其实是两个部分：
- 建立连接，传输数据，关闭连接，你肯定知道这些步骤不是你所开发的web服务去处理的，而是tomcat容器帮你做了这些事情。 拿到请求行之后去找对应的 url 路由，这一部分是谁做的呢？在如今 SpringBoot 横行的时代，去配置化已经成为趋势，编程越来越简单导致的后果就是越来越难以理解事物最开始的样子。还记得 SpringMVC工程中的 web.xml文件吗？是否还记得在web.xml中有这么一段配置呢：  <servlet> <servlet-name>SpringMVC</servlet-name> <servlet-class>org.springframework.web.servlet.DispatcherServlet </servlet-class> <init-param> <param-name>contextConfigLocation</param-name> <param-value>classpath*:/spring/SpringMVC-servlet.xml</param-value> </init-param> <load-on-startup>1</load-on-startup> </servlet> <servlet-mapping> <servlet-name>SpringMVC</servlet-name> <url-pattern>/</url-pattern> </servlet-mapping> Spring 的核心就是一个 Servlet,它拦截了所有的请求,将请求交给 DispatcherServlet 去处理。
+ 建立连接，传输数据，关闭连接，你肯定知道这些步骤不是你所开发的web服务去处理的，而是tomcat容器帮你做了这些事情。 拿到请求行之后去找对应的 url 路由，这一部分是谁做的呢？在如今 SpringBoot 横行的时代，去配置化已经成为趋势，编程越来越简单导致的后果就是越来越难以理解事物最开始的样子。还记得 SpringMVC工程中的 web.xml文件吗？是否还记得在web.xml中有这么一段配置呢：  <servlet> 	<servlet-name>SpringMVC</servlet-name> 	<servlet-class>org.springframework.web.servlet.DispatcherServlet 	</servlet-class> 	<init-param> 	<param-name>contextConfigLocation</param-name> 	<param-value>classpath*:/spring/SpringMVC-servlet.xml</param-value> 	</init-param> 	<load-on-startup>1</load-on-startup> </servlet>  <servlet-mapping> 	<servlet-name>SpringMVC</servlet-name> 	<url-pattern>/</url-pattern> </servlet-mapping> Spring 的核心就是一个 Servlet,它拦截了所有的请求,将请求交给 DispatcherServlet 去处理。
 我们再来问一遍，Servlet 到底是什么，它就是一段处理 web 请求的逻辑，并不是很高深的东西。
 再来看 Java 中的 Servlet，它只是一个接口：
-package javax.servlet; import java.io.IOException; public interface Servlet { public void init(ServletConfig config) throws ServletException; public ServletConfig getServletConfig(); public void service(ServletRequest req, ServletResponse res) throws ServletException, IOException; public String getServletInfo(); public void destroy(); } Servlet 接口规定请求从容器到达 web 服务端的规范，最重要的三个步骤是:">
-<script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga('create','UA-123062585-1','auto'),ga('send','pageview'))</script>
+package javax.servlet;  import java.io.IOException;  public interface Servlet {   public void init(ServletConfig config) throws ServletException;   public ServletConfig getServletConfig();   public void service(ServletRequest req, ServletResponse res)  throws ServletException, IOException;   public String getServletInfo();   public void destroy(); } Servlet 接口规定请求从容器到达 web 服务端的规范，最重要的三个步骤是:">
+<script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga("create","UA-123062585-1","auto"),ga("send","pageview"))</script>
 <script async src=https://www.google-analytics.com/analytics.js></script>
 <link rel=preload href=/scss/main.min.847464b684a6e89d7276700a5c500c17ab494dd1755b2654a7b27d8b59e3347e.css as=style>
 <link href=/scss/main.min.847464b684a6e89d7276700a5c500c17ab494dd1755b2654a7b27d8b59e3347e.css rel=stylesheet integrity>
 <script src=/js/jquery-3.5.1.min.js integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin=anonymous></script>
-</head>
-<body class=td-page>
+</head><body class=td-page>
 <header>
-<nav class="js-navbar-scroll navbar navbar-expand navbar-dark flex-column flex-md-row td-navbar">
+<nav class="js-navbar-scroll navbar navbar-expand-lg navbar-dark td-navbar">
 <a class=navbar-brand href=/>
-<span class=navbar-logo><svg id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512" style="enable-background:new 0 0 512 512"><path style="fill:#ffc107" d="M432.384 143.616c-4.165-4.164-10.917-4.164-15.083.0l-60.352 60.352c-4.164 4.165-4.164 10.917.0 15.083 21.187 20.463 54.951 19.876 75.413-1.311 19.962-20.668 19.962-53.435.0-74.102L432.384 143.616z"/><path style="fill:#607d8b" d="M42.667 277.334c-5.891.003-10.669-4.771-10.672-10.662-.002-4.338 2.623-8.245 6.64-9.882l234.667-96c5.455-2.233 11.687.38 13.92 5.835s-.38 11.687-5.835 13.92l-234.667 96C45.433 277.069 44.056 277.337 42.667 277.334z"/><path style="fill:#546e7a" d="M391.552 56.448l-32-32C343.938 8.745 322.689-.059 300.544.0h-3.755c-46.082.024-83.432 37.374-83.456 83.456v3.755c-.053 22.138 8.75 43.377 24.448 58.987l32 32c4.165 4.164 10.917 4.164 15.083.0L391.531 71.531C395.701 67.372 395.71 60.62 391.552 56.448z"/><path style="fill:#607d8b" d="M160 469.334c-3.279.006-6.379-1.497-8.405-4.075L34.261 315.926c-3.635-4.636-2.823-11.341 1.813-14.976s11.341-2.823 14.976 1.813l117.333 149.333c3.629 4.641 2.809 11.344-1.832 14.973C164.681 468.533 162.375 469.329 160 469.334z"/><path style="fill:#455a64" d="M487.467 86.848l-3.669-3.648c-37.687-36.557-97.71-36.197-134.955.811l-51.413 51.413c-36.996 37.25-37.357 97.263-.811 134.955l3.584 3.669c1.7 2.457 4.671 3.706 7.616 3.2 2.831.005 5.548-1.115 7.552-3.115l172.181-172.181c4.189-4.143 4.226-10.896.083-15.085-.028-.028-.055-.056-.083-.083L487.467 86.848z"/><g><path style="fill:#ffc107" d="M501.333 192H480c-5.891.0-10.667-4.776-10.667-10.667s4.776-10.667 10.667-10.667h21.333c5.891.0 10.667 4.776 10.667 10.667S507.225 192 501.333 192z"/><path style="fill:#ffc107" d="M394.667 298.667c-5.891.0-10.667-4.776-10.667-10.667v-21.333c0-5.891 4.776-10.667 10.667-10.667 5.891.0 10.667 4.776 10.667 10.667V288C405.333 293.891 400.558 298.667 394.667 298.667z"/><path style="fill:#ffc107" d="M480 277.334c-2.831.005-5.548-1.115-7.552-3.115l-21.333-21.333c-4.093-4.237-3.975-10.99.262-15.083 4.134-3.993 10.687-3.993 14.821.0l21.333 21.333c4.159 4.172 4.148 10.926-.024 15.085C485.514 276.209 482.815 277.327 480 277.334z"/></g><g><path style="fill:#455a64" d="M266.667 448H96c-29.455.0-53.333 23.878-53.333 53.333.0 5.891 4.776 10.667 10.667 10.667h256c5.891.0 10.667-4.776 10.667-10.667C320 471.878 296.122 448 266.667 448z"/><circle style="fill:#455a64" cx="32" cy="288" r="32"/></g><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/></svg></span><span class=font-weight-bold>infilos.com</span>
+<span class=navbar-logo><svg id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512" style="enable-background:new 0 0 512 512"><path style="fill:#ffc107" d="M432.384 143.616c-4.165-4.164-10.917-4.164-15.083.0l-60.352 60.352c-4.164 4.165-4.164 10.917.0 15.083 21.187 20.463 54.951 19.876 75.413-1.311 19.962-20.668 19.962-53.435.0-74.102L432.384 143.616z"/><path style="fill:#607d8b" d="M42.667 277.334c-5.891.003-10.669-4.771-10.672-10.662-.002-4.338 2.623-8.245 6.64-9.882l234.667-96c5.455-2.233 11.687.38 13.92 5.835s-.38 11.687-5.835 13.92l-234.667 96C45.433 277.069 44.056 277.337 42.667 277.334z"/><path style="fill:#546e7a" d="M391.552 56.448l-32-32C343.938 8.745 322.689-.059 300.544.0h-3.755c-46.082.024-83.432 37.374-83.456 83.456v3.755c-.053 22.138 8.75 43.377 24.448 58.987l32 32c4.165 4.164 10.917 4.164 15.083.0L391.531 71.531C395.701 67.372 395.71 60.62 391.552 56.448z"/><path style="fill:#607d8b" d="M160 469.334c-3.279.006-6.379-1.497-8.405-4.075L34.261 315.926c-3.635-4.636-2.823-11.341 1.813-14.976s11.341-2.823 14.976 1.813l117.333 149.333c3.629 4.641 2.809 11.344-1.832 14.973C164.681 468.533 162.375 469.329 160 469.334z"/><path style="fill:#455a64" d="M487.467 86.848l-3.669-3.648c-37.687-36.557-97.71-36.197-134.955.811l-51.413 51.413c-36.996 37.25-37.357 97.263-.811 134.955l3.584 3.669c1.7 2.457 4.671 3.706 7.616 3.2 2.831.005 5.548-1.115 7.552-3.115l172.181-172.181c4.189-4.143 4.226-10.896.083-15.085-.028-.028-.055-.056-.083-.083L487.467 86.848z"/><g><path style="fill:#ffc107" d="M501.333 192H480c-5.891.0-10.667-4.776-10.667-10.667s4.776-10.667 10.667-10.667h21.333c5.891.0 10.667 4.776 10.667 10.667S507.225 192 501.333 192z"/><path style="fill:#ffc107" d="M394.667 298.667c-5.891.0-10.667-4.776-10.667-10.667v-21.333c0-5.891 4.776-10.667 10.667-10.667 5.891.0 10.667 4.776 10.667 10.667V288C405.333 293.891 400.558 298.667 394.667 298.667z"/><path style="fill:#ffc107" d="M480 277.334c-2.831.005-5.548-1.115-7.552-3.115l-21.333-21.333c-4.093-4.237-3.975-10.99.262-15.083 4.134-3.993 10.687-3.993 14.821.0l21.333 21.333c4.159 4.172 4.148 10.926-.024 15.085C485.514 276.209 482.815 277.327 480 277.334z"/></g><g><path style="fill:#455a64" d="M266.667 448H96c-29.455.0-53.333 23.878-53.333 53.333.0 5.891 4.776 10.667 10.667 10.667h256c5.891.0 10.667-4.776 10.667-10.667C320 471.878 296.122 448 266.667 448z"/><circle style="fill:#455a64" cx="32" cy="288" r="32"/></g><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/></svg></span>
+<span class=font-weight-bold>infilos.com</span>
 </a>
+<button class=navbar-toggler type=button data-toggle=collapse data-target=#navbarSupportedContent aria-controls=navbarSupportedContent aria-expanded=false aria-label="Toggle navigation">
+<span class=navbar-toggler-icon></span>
+</button>
 <div class="collapse navbar-collapse" id=navbarSupportedContent>
 <ul class="navbar-nav mr-auto">
 <li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86>
 <span>基础</span>
 </a>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80>
 <span>语言</span>
 </a>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93>
 <span>框架库</span>
 </a>
-</li>
-<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+</li><li class="nav-item dropdown" style=max-width:90px;min-width:10px>
 <a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
 分布式
 <span>+</span>
 </a>
 <div class=dropdown-menu aria-labelledby=navbarDropdown>
 <a class=dropdown-item href=/%e5%88%86%e5%b8%83%e5%bc%8f/base>基本构成</a>
-</div>
-</li>
-<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+</div></li><li class="nav-item dropdown" style=max-width:90px;min-width:10px>
 <a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
 大数据
 <span>+</span>
@@ -92,9 +90,7 @@ package javax.servlet; import java.io.IOException; public interface Servlet { pu
 <a class=dropdown-item href=/%e6%b6%88%e6%81%af%e7%b3%bb%e7%bb%9f>消息系统</a>
 <a class=dropdown-item href=/%e5%a4%84%e7%90%86%e7%b3%bb%e7%bb%9f>处理系统</a>
 <a class=dropdown-item href=/%e6%95%b0%e6%8d%ae%e6%b2%bb%e7%90%86>数据治理</a>
-</div>
-</li>
-<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+</div></li><li class="nav-item dropdown" style=max-width:90px;min-width:10px>
 <a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
 中后台
 <span>+</span>
@@ -104,38 +100,26 @@ package javax.servlet; import java.io.IOException; public interface Servlet { pu
 <a class=dropdown-item href=/%e7%94%a8%e6%88%b7%e7%b3%bb%e7%bb%9f>用户系统</a>
 <a class=dropdown-item href=/%e4%ba%a4%e4%ba%92%e7%95%8c%e9%9d%a2>交互界面</a>
 <a class=dropdown-item href=/%e4%b8%9a%e5%8a%a1%e7%b3%bb%e7%bb%9f>业务系统</a>
-</div>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</div></li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e6%a8%a1%e5%bc%8f%e6%9e%b6%e6%9e%84>
 <span>模式架构</span>
 </a>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e9%9d%a2%e8%af%95%e9%97%ae%e7%ad%94>
 <span>面试</span>
 </a>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e7%ae%a1%e7%90%86%e8%b7%af%e5%be%84>
 <span>管理</span>
 </a>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e5%bc%80%e6%ba%90%e9%a1%b9%e7%9b%ae>
 <span>开源</span>
 </a>
-</li>
-</ul>
-<div class="form-inline my-2 my-lg-0">
+</li></ul><div class="form-inline my-2 my-lg-0">
 <div class="nav-item nav-search-item my-2 my-md-0">
 <input type=search class="form-control td-search-input" placeholder="&#xf002; 站内搜索…" aria-label=站内搜索… autocomplete=off>
-</div>
-</div>
-</div>
-</nav>
-</header>
-<div class="container-fluid td-outer">
+</div></div></div></nav></header><div class="container-fluid td-outer">
 <div class=td-main>
 <div class="row flex-xl-nowrap">
 <aside class="col-12 col-md-3 col-xl-2 td-sidebar d-print-none">
@@ -145,10 +129,7 @@ package javax.servlet; import java.io.IOException; public interface Servlet { pu
 <input type=search class="form-control td-search-input" placeholder="&#xf002; 站内搜索…" aria-label=站内搜索… autocomplete=off>
 <button class="btn btn-link td-sidebar__toggle d-md-none p-0 ml-3 fas fa-bars" type=button data-toggle=collapse data-target=#td-section-nav aria-controls=td-docs-nav aria-expanded=false aria-label="Toggle section navigation">
 </button>
-</form>
-</div>
-<div id=content-desktop></div>
-<nav class="collapse td-sidebar-nav" id=td-section-nav>
+</form></div><div id=content-desktop></div><nav class="collapse td-sidebar-nav" id=td-section-nav>
 <ul class="td-sidebar-nav__section pr-md-3 ul-0">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e6a186e69eb6e4b88ee5ba93-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section tree-root" id=m-e6a186e69eb6e4b88ee5ba93><span>框架库</span></a>
@@ -198,9 +179,7 @@ package javax.servlet; import java.io.IOException; public interface Servlet { pu
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/spring/ch21/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93springch21><span>CH21-跨域问题</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a186e69eb6e4b88ee5ba93springch22-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/spring/ch22/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93springch22><span>CH22-SpEL表达式</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a186e69eb6e4b88ee5ba93spring-ioc-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a186e69eb6e4b88ee5ba93spring-ioc-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/spring-ioc/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a186e69eb6e4b88ee5ba93spring-ioc><span>Spring IOC</span></a>
 <ul class="ul-2 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93spring-iocch01-li>
@@ -219,18 +198,14 @@ package javax.servlet; import java.io.IOException; public interface Servlet { pu
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/spring-ioc/ch07/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93spring-iocch07><span>CH07-生命周期扩展</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93spring-iocch08-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/spring-ioc/ch08/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93spring-iocch08><span>CH08-控制加载顺序</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a186e69eb6e4b88ee5ba93spring-aop-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a186e69eb6e4b88ee5ba93spring-aop-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/spring-aop/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a186e69eb6e4b88ee5ba93spring-aop><span>Spring AOP</span></a>
 <ul class="ul-2 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93spring-aopch01-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/spring-aop/ch01/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93spring-aopch01><span>AOP 理论</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93spring-aopch02-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/spring-aop/ch02/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93spring-aopch02><span>AOP 实战</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a186e69eb6e4b88ee5ba93mybatis-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a186e69eb6e4b88ee5ba93mybatis-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/mybatis/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a186e69eb6e4b88ee5ba93mybatis><span>Mybatis</span></a>
 <ul class="ul-2 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93mybatisch01-li>
@@ -269,9 +244,7 @@ package javax.servlet; import java.io.IOException; public interface Servlet { pu
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/mybatis/ch17/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93mybatisch17><span>CH17-二级缓存原理</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93mybatisch18-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/mybatis/ch18/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93mybatisch18><span>CH18-性能优化</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a186e69eb6e4b88ee5ba93hikari-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a186e69eb6e4b88ee5ba93hikari-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/hikari/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a186e69eb6e4b88ee5ba93hikari><span>Hikari</span></a>
 <ul class="ul-2 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93hikarich01-li>
@@ -298,18 +271,14 @@ package javax.servlet; import java.io.IOException; public interface Servlet { pu
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/hikari/ch11/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93hikarich11><span>常见问题</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93hikarich12-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/hikari/ch12/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93hikarich12><span>扩展技术</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a186e69eb6e4b88ee5ba93unified-udf-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a186e69eb6e4b88ee5ba93unified-udf-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/unified-udf/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a186e69eb6e4b88ee5ba93unified-udf><span>Udf Modeling</span></a>
 <ul class="ul-2 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93unified-udftransport-at-linkedin-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/unified-udf/transport-at-linkedin/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93unified-udftransport-at-linkedin><span>Transport UDF at Linkedin</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93unified-udfflink-type-system-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/unified-udf/flink-type-system/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93unified-udfflink-type-system><span>Flink Type System</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a186e69eb6e4b88ee5ba93parboiled-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a186e69eb6e4b88ee5ba93parboiled-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/parboiled/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a186e69eb6e4b88ee5ba93parboiled><span>Parboiled</span></a>
 <ul class="ul-2 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93parboiledch01-motivation-li>
@@ -330,9 +299,7 @@ package javax.servlet; import java.io.IOException; public interface Servlet { pu
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/parboiled/ch08-scala-apis/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93parboiledch08-scala-apis><span>CH08-Scala APIs</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93parboiledch09-advanced-topics-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/parboiled/ch09-advanced-topics/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93parboiledch09-advanced-topics><span>CH09-Advanced Topics</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a186e69eb6e4b88ee5ba93netty-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a186e69eb6e4b88ee5ba93netty-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/netty/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a186e69eb6e4b88ee5ba93netty><span>Netty</span></a>
 <ul class="ul-2 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93nettych01-li>
@@ -365,9 +332,7 @@ package javax.servlet; import java.io.IOException; public interface Servlet { pu
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/netty/ch15/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93nettych15><span>CH15-EventLoop 与线程模型</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93nettych03-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/netty/ch03/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93nettych03><span></span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a186e69eb6e4b88ee5ba93reactor-netty-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a186e69eb6e4b88ee5ba93reactor-netty-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/reactor-netty/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a186e69eb6e4b88ee5ba93reactor-netty><span>Reactor Netty</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a186e69eb6e4b88ee5ba93thymeleaf-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/thymeleaf/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a186e69eb6e4b88ee5ba93thymeleaf><span>Thymeleaf</span></a>
@@ -394,234 +359,126 @@ package javax.servlet; import java.io.IOException; public interface Servlet { pu
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/thymeleaf/ch10/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93thymeleafch10><span>CH10-注释及注释块</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93thymeleafch11-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/thymeleaf/ch11/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93thymeleafch11><span>CH11-内联</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a186e69eb6e4b88ee5ba93spring-cloud-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a186e69eb6e4b88ee5ba93spring-cloud-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/spring-cloud/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a186e69eb6e4b88ee5ba93spring-cloud><span>Spring Cloud</span></a>
 <ul class="ul-2 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93spring-cloudch01-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/spring-cloud/ch01/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93spring-cloudch01><span>Gateway 请求过程</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a186e69eb6e4b88ee5ba93dubbo-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a186e69eb6e4b88ee5ba93dubbo-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/dubbo/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a186e69eb6e4b88ee5ba93dubbo><span>Dubbo</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a186e69eb6e4b88ee5ba93guava-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/guava/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a186e69eb6e4b88ee5ba93guava><span>Guava</span></a>
 <ul class="ul-2 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93guavaratelimiter-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/guava/ratelimiter/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93guavaratelimiter><span>RateLimiter</span></a>
-</li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-</nav>
-</div>
-</aside>
-<aside class="d-none d-xl-block col-xl-2 td-sidebar-toc d-print-none">
+</li></ul></li></ul></li></ul></nav></div></aside><aside class="d-none d-xl-block col-xl-2 td-sidebar-toc d-print-none">
 <div class="td-page-meta ml-2 pb-1 pt-2 mb-0">
 <a href=https://github.com/infilos/infilos.com/edit/master/content/zh/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93/spring/CH19.md target=_blank><i class="fa fa-edit fa-fw"></i> 编辑此页</a>
 <a href="https://github.com/infilos/infilos.com/new/master/content/zh/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93/spring/CH19.md?filename=change-me.md&value=---%0Atitle%3A+%22Long+Page+Title%22%0AlinkTitle%3A+%22Short+Nav+Title%22%0Aweight%3A+100%0Adescription%3A+%3E-%0A+++++Page+description+for+heading+and+indexes.%0A---%0A%0A%23%23+Heading%0A%0AEdit+this+template+to+create+your+new+page.%0A%0A%2A+Give+it+a+good+name%2C+ending+in+%60.md%60+-+e.g.+%60getting-started.md%60%0A%2A+Edit+the+%22front+matter%22+section+at+the+top+of+the+page+%28weight+controls+how+its+ordered+amongst+other+pages+in+the+same+directory%3B+lowest+number+first%29.%0A%2A+Add+a+good+commit+message+at+the+bottom+of+the+page+%28%3C80+characters%3B+use+the+extended+description+field+for+more+detail%29.%0A%2A+Create+a+new+branch+so+you+can+preview+your+new+file+and+request+a+review+via+Pull+Request.%0A" target=_blank><i class="fa fa-edit fa-fw"></i> 添加子页面</a>
 <a href="https://github.com/infilos/infilos.com/issues/new?title=CH19-Servlet" target=_blank><i class="fab fa-github fa-fw"></i> 提交文档问题</a>
 <a id=print href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/spring/_print/><i class="fa fa-print fa-fw"></i> 整节打印</a>
-</div>
-</aside>
-<main class="col-12 col-md-9 col-xl-8 pl-md-5" role=main>
+</div></aside><main class="col-12 col-md-9 col-xl-8 pl-md-5" role=main>
 <nav aria-label=breadcrumb class="d-none d-md-block d-print-none">
 <ol class="breadcrumb spb-1">
 <li class=breadcrumb-item>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/>框架库</a>
-</li>
-<li class=breadcrumb-item>
+</li><li class=breadcrumb-item>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/spring/>Spring</a>
-</li>
-<li class="breadcrumb-item active" aria-current=page>
+</li><li class="breadcrumb-item active" aria-current=page>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/spring/ch19/>CH19-Servlet</a>
-</li>
-</ol>
-</nav>
-<div class=td-content>
-<h1>CH19-Servlet</h1>
-<header class=article-meta>
-</header>
-<h2 id=servlet>Servlet</h2>
-<p><strong>Servlet</strong>（Server Applet），全称<strong>Java Servlet</strong>。是用<a href=https://zh.wikipedia.org/wiki/Java>Java</a>编写的<a href=https://zh.wikipedia.org/wiki/%E6%9C%8D%E5%8A%A1%E5%99%A8>服务器</a>端<a href=https://zh.wikipedia.org/wiki/%E7%A8%8B%E5%BA%8F>程序</a>。其主要功能在于交互式地浏览和修改数据，生成动态<a href=https://zh.wikipedia.org/wiki/Web>Web</a>内容。狭义的Servlet是指Java语言实现的一个<a href=https://zh.wikipedia.org/wiki/%E6%8E%A5%E5%8F%A3>接口</a>，广义的Servlet是指任何实现了这个Servlet接口的<a href=https://zh.wikipedia.org/wiki/%E7%B1%BB_(%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%A7%91%E5%AD%A6)>类</a>，一般情况下，人们将Servlet理解为后者。</p>
-<p>web开发的本质就一句话：客户端和服务器交换数据。于是你使用 Java 的 Socket 套接字进行编程，去处理客户端来的 tcp 请求，经过编解码处理读取请求体，获取请求行，然后找到请求行对应的处理逻辑步入服务器的处理中，处理完毕把对应的结果返回给当前的 Socket 链接，响应完毕，关闭 Socket。</p>
-<p>以上过程，你有没有发现其实是两个部分：</p>
-<ol>
-<li>建立连接，传输数据，关闭连接，你肯定知道这些步骤不是你所开发的web服务去处理的，而是tomcat容器帮你做了这些事情。</li>
-<li>拿到请求行之后去找对应的 url 路由，这一部分是谁做的呢？在如今 SpringBoot 横行的时代，去配置化已经成为趋势，编程越来越简单导致的后果就是越来越难以理解事物最开始的样子。还记得 SpringMVC工程中的 web.xml文件吗？是否还记得在web.xml中有这么一段配置呢：</li>
-</ol>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-xml data-lang=xml><span style=color:#204a87;font-weight:700>&lt;servlet&gt;</span>
-	<span style=color:#204a87;font-weight:700>&lt;servlet-name&gt;</span>SpringMVC<span style=color:#204a87;font-weight:700>&lt;/servlet-name&gt;</span>
-	<span style=color:#204a87;font-weight:700>&lt;servlet-class&gt;</span>org.springframework.web.servlet.DispatcherServlet
-	<span style=color:#204a87;font-weight:700>&lt;/servlet-class&gt;</span>
-	<span style=color:#204a87;font-weight:700>&lt;init-param&gt;</span>
-		<span style=color:#204a87;font-weight:700>&lt;param-name&gt;</span>contextConfigLocation<span style=color:#204a87;font-weight:700>&lt;/param-name&gt;</span>
-		<span style=color:#204a87;font-weight:700>&lt;param-value&gt;</span>classpath*:/spring/SpringMVC-servlet.xml<span style=color:#204a87;font-weight:700>&lt;/param-value&gt;</span>
-	<span style=color:#204a87;font-weight:700>&lt;/init-param&gt;</span>
-	<span style=color:#204a87;font-weight:700>&lt;load-on-startup&gt;</span>1<span style=color:#204a87;font-weight:700>&lt;/load-on-startup&gt;</span>
-<span style=color:#204a87;font-weight:700>&lt;/servlet&gt;</span>
-
-<span style=color:#204a87;font-weight:700>&lt;servlet-mapping&gt;</span>
-	<span style=color:#204a87;font-weight:700>&lt;servlet-name&gt;</span>SpringMVC<span style=color:#204a87;font-weight:700>&lt;/servlet-name&gt;</span>
-	<span style=color:#204a87;font-weight:700>&lt;url-pattern&gt;</span>/<span style=color:#204a87;font-weight:700>&lt;/url-pattern&gt;</span>
-<span style=color:#204a87;font-weight:700>&lt;/servlet-mapping&gt;</span>
-</code></pre></div><p><strong>Spring 的核心就是一个 Servlet,它拦截了所有的请求,将请求交给 DispatcherServlet 去处理。</strong></p>
-<p>我们再来问一遍，Servlet 到底是什么，它就是一段处理 web 请求的逻辑，并不是很高深的东西。</p>
-<p>再来看 Java 中的 Servlet，它只是一个接口：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#204a87;font-weight:700>package</span> <span style=color:#000>javax.servlet</span><span style=color:#ce5c00;font-weight:700>;</span>
-
-<span style=color:#204a87;font-weight:700>import</span> <span style=color:#000>java.io.IOException</span><span style=color:#ce5c00;font-weight:700>;</span>
-
-<span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>interface</span> <span style=color:#000>Servlet</span> <span style=color:#ce5c00;font-weight:700>{</span>
-
-    <span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>void</span> <span style=color:#000>init</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>ServletConfig</span> <span style=color:#000>config</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#204a87;font-weight:700>throws</span> <span style=color:#000>ServletException</span><span style=color:#ce5c00;font-weight:700>;</span>
-
-    <span style=color:#204a87;font-weight:700>public</span> <span style=color:#000>ServletConfig</span> <span style=color:#000>getServletConfig</span><span style=color:#ce5c00;font-weight:700>();</span>
-
-    <span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>void</span> <span style=color:#000>service</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>ServletRequest</span> <span style=color:#000>req</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>ServletResponse</span> <span style=color:#000>res</span><span style=color:#ce5c00;font-weight:700>)</span>
-            <span style=color:#204a87;font-weight:700>throws</span> <span style=color:#000>ServletException</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>IOException</span><span style=color:#ce5c00;font-weight:700>;</span>
-
-    <span style=color:#204a87;font-weight:700>public</span> <span style=color:#000>String</span> <span style=color:#000>getServletInfo</span><span style=color:#ce5c00;font-weight:700>();</span>
-
-    <span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>void</span> <span style=color:#000>destroy</span><span style=color:#ce5c00;font-weight:700>();</span>
-<span style=color:#ce5c00;font-weight:700>}</span>
-</code></pre></div><p>Servlet 接口规定请求从容器到达 web 服务端的规范，最重要的三个步骤是:</p>
-<ol>
-<li>init()：初始化请求的时候要做什么；</li>
-<li>service()：拿到请求的时候要做什么；</li>
-<li>destory()：处理完请求销毁的时候要做什么。</li>
-</ol>
-<p>所有实现 Servlet 的实现方都是在这个规范的基础上进行开发。那么 Servlet 中的数据是从哪里来的呢？答案就是 Servlet 容器。容器才是真正与客户端打交道的那一方。Servlet容器只有一个，而 Servlet 可以有多个。常见的Servlet容器Tomcat,它监听了客户端的请求端口,根据请求行信息确定将请求交给哪个Servlet 处理，找到处理的Servlet之后，调用该Servlet的 service() 方法，处理完毕将对应的处理结果包装成ServletResponse 对象返回给客户端。</p>
-<h2 id=servlet-容器>Servlet 容器</h2>
-<p>上面说过，Servlet 只是一个处理请求的应用程序，光有Servlet是无法运行起来的，需要有一个 main 方法去调用你的这段 Servlet 程序才行。所以这里出现了Servlet 容器的概念。Servlet容器的主要作用是：</p>
-<ol>
-<li>建立连接；</li>
-<li>调用Servlet处理请求；</li>
-<li>响应请求给客户端；</li>
-<li>释放连接；</li>
-</ol>
-<p>这上面的四步，如果是你来设计的话是否可以用一个模板方法搞定，1，3，4都是固定的步骤，不会因为请求不同而有很大的变化。2却会因为对应的请求不同需要业务逻辑自己去实现不同的处理。所以这里抽象出来了 Servlet，Servlet想怎么玩就怎么玩，这是你自己的事情。容器帮你做的是你不想做的脏活累活。</p>
-<p>另外，既然叫做容器肯定是能装多个Servlet，并且可以管理Servlet的声明周期。这些功能应该是容器必备的。</p>
-<p>上面提到了 web.xml 中的 DispatcherServlet，它是 Spring 中定义的一个 Servlet，实现了 Servlet 接口，本质也是一个 Servlet。只是它是 HttpServlet 的继承者，主要处理 http 请求。所以 Spring 程序本质是就是一个 Servlet。SpringMVC 帮你做了本该你去实现的逻辑，你看不到并不代表它不是。</p>
-<p>好啦，以上通俗的语言解释了什么是 Servlet，什么是 Servlet 容器，以及 Servlet 和 Servlet 容器之间的关系。</p>
-<h2 id=tomcat>Tomcat</h2>
-<p>Tomcat是啥呢？本质上是一个 Servlet 容器，实现了对 Java Servlet 规范的支持。同时 Tomcat 也提供了处理HTTP请求的能力，所以也可以作为一个Web服务器。了解到Tomcat有 Web服务器和 Servlet容器的功能，那么 Tomcat总体是如何设计的呢？我们来看一张简图：</p>
-<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211017140013.png style=display:block;width:80% alt=NAME align=center> </div>
-<p>Java web 应用如果部署到 Tomcat 中，一个Tomcat就表示一个服务。一个 Server 服务器可以包含多个 Service 服务，Tomcat 默认的 Service 服务是 Catalina，而一个 Service 服务可以包含多个连接器，因为 Tomcat 支持多种网络协议，包括 HTTP/1.1、HTTP/2、AJP 等等，一个 Service 服务还会包括一个容器，容器外部会有一层 Engine 引擎所包裹，负责与处理连接器的请求与响应，连接器与容器之间通过 ServletRequest 和 ServletResponse 对象进行交流。</p>
-<p>Tomcat容器的设计提现在一个核心文件中：server.xml。这个文件充分展示了Tomcat的高度抽象设计：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-xml data-lang=xml><span style=color:#204a87;font-weight:700>&lt;Server</span> <span style=color:#c4a000>port=</span><span style=color:#4e9a06>&#34;8005&#34;</span> <span style=color:#c4a000>shutdown=</span><span style=color:#4e9a06>&#34;SHUTDOWN&#34;</span><span style=color:#204a87;font-weight:700>&gt;</span>
-    <span style=color:#204a87;font-weight:700>&lt;Service</span> <span style=color:#c4a000>name=</span><span style=color:#4e9a06>&#34;Catalina&#34;</span><span style=color:#204a87;font-weight:700>&gt;</span>
-        <span style=color:#204a87;font-weight:700>&lt;Connector</span> <span style=color:#c4a000>port=</span><span style=color:#4e9a06>&#34;8080&#34;</span> <span style=color:#c4a000>protocol=</span><span style=color:#4e9a06>&#34;HTTP/1.1&#34;</span>
-                   <span style=color:#c4a000>connectionTimeout=</span><span style=color:#4e9a06>&#34;20000&#34;</span>
-                   <span style=color:#c4a000>redirectPort=</span><span style=color:#4e9a06>&#34;8443&#34;</span><span style=color:#204a87;font-weight:700>/&gt;</span>
-      	<span style=color:#204a87;font-weight:700>&lt;Connector</span> <span style=color:#c4a000>port=</span><span style=color:#4e9a06>&#34;8009&#34;</span> <span style=color:#c4a000>protocol=</span><span style=color:#4e9a06>&#34;AJP/1.3&#34;</span> <span style=color:#c4a000>redirectPort=</span><span style=color:#4e9a06>&#34;8443&#34;</span><span style=color:#204a87;font-weight:700>/&gt;</span>
-				<span style=color:#204a87;font-weight:700>&lt;Engine</span> <span style=color:#c4a000>name=</span><span style=color:#4e9a06>&#34;Catalina&#34;</span> <span style=color:#c4a000>defaultHost=</span><span style=color:#4e9a06>&#34;localhost&#34;</span><span style=color:#204a87;font-weight:700>&gt;</span>
-          	<span style=color:#204a87;font-weight:700>&lt;Host</span> <span style=color:#c4a000>name=</span><span style=color:#4e9a06>&#34;localhost&#34;</span> <span style=color:#c4a000>appBase=</span><span style=color:#4e9a06>&#34;webapps&#34;</span>
-                    	<span style=color:#c4a000>unpackWARs=</span><span style=color:#4e9a06>&#34;true&#34;</span> <span style=color:#c4a000>autoDeploy=</span><span style=color:#4e9a06>&#34;true&#34;</span><span style=color:#204a87;font-weight:700>&gt;</span>
-            <span style=color:#204a87;font-weight:700>&lt;/Host&gt;</span>
-        <span style=color:#204a87;font-weight:700>&lt;/Engine&gt;</span>
-    <span style=color:#204a87;font-weight:700>&lt;/Service&gt;</span>
-<span style=color:#204a87;font-weight:700>&lt;/Server&gt;</span>
-</code></pre></div><p>其中：</p>
-<ol>
+</li></ol></nav><div class=td-content>
+<h1>CH19-Servlet</h1><header class=article-meta>
+</header><h2 id=servlet>Servlet</h2><p><strong>Servlet</strong>（Server Applet），全称<strong>Java Servlet</strong>。是用<a href=https://zh.wikipedia.org/wiki/Java>Java</a>编写的<a href=https://zh.wikipedia.org/wiki/%E6%9C%8D%E5%8A%A1%E5%99%A8>服务器</a>端<a href=https://zh.wikipedia.org/wiki/%E7%A8%8B%E5%BA%8F>程序</a>。其主要功能在于交互式地浏览和修改数据，生成动态<a href=https://zh.wikipedia.org/wiki/Web>Web</a>内容。狭义的Servlet是指Java语言实现的一个<a href=https://zh.wikipedia.org/wiki/%E6%8E%A5%E5%8F%A3>接口</a>，广义的Servlet是指任何实现了这个Servlet接口的<a href=https://zh.wikipedia.org/wiki/%E7%B1%BB_(%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%A7%91%E5%AD%A6)>类</a>，一般情况下，人们将Servlet理解为后者。</p><p>web开发的本质就一句话：客户端和服务器交换数据。于是你使用 Java 的 Socket 套接字进行编程，去处理客户端来的 tcp 请求，经过编解码处理读取请求体，获取请求行，然后找到请求行对应的处理逻辑步入服务器的处理中，处理完毕把对应的结果返回给当前的 Socket 链接，响应完毕，关闭 Socket。</p><p>以上过程，你有没有发现其实是两个部分：</p><ol>
+<li>建立连接，传输数据，关闭连接，你肯定知道这些步骤不是你所开发的web服务去处理的，而是tomcat容器帮你做了这些事情。</li><li>拿到请求行之后去找对应的 url 路由，这一部分是谁做的呢？在如今 SpringBoot 横行的时代，去配置化已经成为趋势，编程越来越简单导致的后果就是越来越难以理解事物最开始的样子。还记得 SpringMVC工程中的 web.xml文件吗？是否还记得在web.xml中有这么一段配置呢：</li></ol><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-xml data-lang=xml><span style=display:flex><span><span style=color:#204a87;font-weight:700>&lt;servlet&gt;</span>
+</span></span><span style=display:flex><span>	<span style=color:#204a87;font-weight:700>&lt;servlet-name&gt;</span>SpringMVC<span style=color:#204a87;font-weight:700>&lt;/servlet-name&gt;</span>
+</span></span><span style=display:flex><span>	<span style=color:#204a87;font-weight:700>&lt;servlet-class&gt;</span>org.springframework.web.servlet.DispatcherServlet
+</span></span><span style=display:flex><span>	<span style=color:#204a87;font-weight:700>&lt;/servlet-class&gt;</span>
+</span></span><span style=display:flex><span>	<span style=color:#204a87;font-weight:700>&lt;init-param&gt;</span>
+</span></span><span style=display:flex><span>		<span style=color:#204a87;font-weight:700>&lt;param-name&gt;</span>contextConfigLocation<span style=color:#204a87;font-weight:700>&lt;/param-name&gt;</span>
+</span></span><span style=display:flex><span>		<span style=color:#204a87;font-weight:700>&lt;param-value&gt;</span>classpath*:/spring/SpringMVC-servlet.xml<span style=color:#204a87;font-weight:700>&lt;/param-value&gt;</span>
+</span></span><span style=display:flex><span>	<span style=color:#204a87;font-weight:700>&lt;/init-param&gt;</span>
+</span></span><span style=display:flex><span>	<span style=color:#204a87;font-weight:700>&lt;load-on-startup&gt;</span>1<span style=color:#204a87;font-weight:700>&lt;/load-on-startup&gt;</span>
+</span></span><span style=display:flex><span><span style=color:#204a87;font-weight:700>&lt;/servlet&gt;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#204a87;font-weight:700>&lt;servlet-mapping&gt;</span>
+</span></span><span style=display:flex><span>	<span style=color:#204a87;font-weight:700>&lt;servlet-name&gt;</span>SpringMVC<span style=color:#204a87;font-weight:700>&lt;/servlet-name&gt;</span>
+</span></span><span style=display:flex><span>	<span style=color:#204a87;font-weight:700>&lt;url-pattern&gt;</span>/<span style=color:#204a87;font-weight:700>&lt;/url-pattern&gt;</span>
+</span></span><span style=display:flex><span><span style=color:#204a87;font-weight:700>&lt;/servlet-mapping&gt;</span>
+</span></span></code></pre></div><p><strong>Spring 的核心就是一个 Servlet,它拦截了所有的请求,将请求交给 DispatcherServlet 去处理。</strong></p><p>我们再来问一遍，Servlet 到底是什么，它就是一段处理 web 请求的逻辑，并不是很高深的东西。</p><p>再来看 Java 中的 Servlet，它只是一个接口：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=display:flex><span><span style=color:#204a87;font-weight:700>package</span> <span style=color:#000>javax.servlet</span><span style=color:#ce5c00;font-weight:700>;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#204a87;font-weight:700>import</span> <span style=color:#000>java.io.IOException</span><span style=color:#ce5c00;font-weight:700>;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>interface</span> <span style=color:#000>Servlet</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>void</span> <span style=color:#000>init</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>ServletConfig</span> <span style=color:#000>config</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#204a87;font-weight:700>throws</span> <span style=color:#000>ServletException</span><span style=color:#ce5c00;font-weight:700>;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#204a87;font-weight:700>public</span> <span style=color:#000>ServletConfig</span> <span style=color:#000>getServletConfig</span><span style=color:#ce5c00;font-weight:700>();</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>void</span> <span style=color:#000>service</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>ServletRequest</span> <span style=color:#000>req</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>ServletResponse</span> <span style=color:#000>res</span><span style=color:#ce5c00;font-weight:700>)</span>
+</span></span><span style=display:flex><span>            <span style=color:#204a87;font-weight:700>throws</span> <span style=color:#000>ServletException</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>IOException</span><span style=color:#ce5c00;font-weight:700>;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#204a87;font-weight:700>public</span> <span style=color:#000>String</span> <span style=color:#000>getServletInfo</span><span style=color:#ce5c00;font-weight:700>();</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>void</span> <span style=color:#000>destroy</span><span style=color:#ce5c00;font-weight:700>();</span>
+</span></span><span style=display:flex><span><span style=color:#ce5c00;font-weight:700>}</span>
+</span></span></code></pre></div><p>Servlet 接口规定请求从容器到达 web 服务端的规范，最重要的三个步骤是:</p><ol>
+<li>init()：初始化请求的时候要做什么；</li><li>service()：拿到请求的时候要做什么；</li><li>destory()：处理完请求销毁的时候要做什么。</li></ol><p>所有实现 Servlet 的实现方都是在这个规范的基础上进行开发。那么 Servlet 中的数据是从哪里来的呢？答案就是 Servlet 容器。容器才是真正与客户端打交道的那一方。Servlet容器只有一个，而 Servlet 可以有多个。常见的Servlet容器Tomcat,它监听了客户端的请求端口,根据请求行信息确定将请求交给哪个Servlet 处理，找到处理的Servlet之后，调用该Servlet的 service() 方法，处理完毕将对应的处理结果包装成ServletResponse 对象返回给客户端。</p><h2 id=servlet-容器>Servlet 容器</h2><p>上面说过，Servlet 只是一个处理请求的应用程序，光有Servlet是无法运行起来的，需要有一个 main 方法去调用你的这段 Servlet 程序才行。所以这里出现了Servlet 容器的概念。Servlet容器的主要作用是：</p><ol>
+<li>建立连接；</li><li>调用Servlet处理请求；</li><li>响应请求给客户端；</li><li>释放连接；</li></ol><p>这上面的四步，如果是你来设计的话是否可以用一个模板方法搞定，1，3，4都是固定的步骤，不会因为请求不同而有很大的变化。2却会因为对应的请求不同需要业务逻辑自己去实现不同的处理。所以这里抽象出来了 Servlet，Servlet想怎么玩就怎么玩，这是你自己的事情。容器帮你做的是你不想做的脏活累活。</p><p>另外，既然叫做容器肯定是能装多个Servlet，并且可以管理Servlet的声明周期。这些功能应该是容器必备的。</p><p>上面提到了 web.xml 中的 DispatcherServlet，它是 Spring 中定义的一个 Servlet，实现了 Servlet 接口，本质也是一个 Servlet。只是它是 HttpServlet 的继承者，主要处理 http 请求。所以 Spring 程序本质是就是一个 Servlet。SpringMVC 帮你做了本该你去实现的逻辑，你看不到并不代表它不是。</p><p>好啦，以上通俗的语言解释了什么是 Servlet，什么是 Servlet 容器，以及 Servlet 和 Servlet 容器之间的关系。</p><h2 id=tomcat>Tomcat</h2><p>Tomcat是啥呢？本质上是一个 Servlet 容器，实现了对 Java Servlet 规范的支持。同时 Tomcat 也提供了处理HTTP请求的能力，所以也可以作为一个Web服务器。了解到Tomcat有 Web服务器和 Servlet容器的功能，那么 Tomcat总体是如何设计的呢？我们来看一张简图：</p><div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211017140013.png style=display:block;width:80% alt=NAME align=center> </div><p>Java web 应用如果部署到 Tomcat 中，一个Tomcat就表示一个服务。一个 Server 服务器可以包含多个 Service 服务，Tomcat 默认的 Service 服务是 Catalina，而一个 Service 服务可以包含多个连接器，因为 Tomcat 支持多种网络协议，包括 HTTP/1.1、HTTP/2、AJP 等等，一个 Service 服务还会包括一个容器，容器外部会有一层 Engine 引擎所包裹，负责与处理连接器的请求与响应，连接器与容器之间通过 ServletRequest 和 ServletResponse 对象进行交流。</p><p>Tomcat容器的设计提现在一个核心文件中：server.xml。这个文件充分展示了Tomcat的高度抽象设计：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-xml data-lang=xml><span style=display:flex><span><span style=color:#204a87;font-weight:700>&lt;Server</span> <span style=color:#c4a000>port=</span><span style=color:#4e9a06>&#34;8005&#34;</span> <span style=color:#c4a000>shutdown=</span><span style=color:#4e9a06>&#34;SHUTDOWN&#34;</span><span style=color:#204a87;font-weight:700>&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:#204a87;font-weight:700>&lt;Service</span> <span style=color:#c4a000>name=</span><span style=color:#4e9a06>&#34;Catalina&#34;</span><span style=color:#204a87;font-weight:700>&gt;</span>
+</span></span><span style=display:flex><span>        <span style=color:#204a87;font-weight:700>&lt;Connector</span> <span style=color:#c4a000>port=</span><span style=color:#4e9a06>&#34;8080&#34;</span> <span style=color:#c4a000>protocol=</span><span style=color:#4e9a06>&#34;HTTP/1.1&#34;</span>
+</span></span><span style=display:flex><span>                   <span style=color:#c4a000>connectionTimeout=</span><span style=color:#4e9a06>&#34;20000&#34;</span>
+</span></span><span style=display:flex><span>                   <span style=color:#c4a000>redirectPort=</span><span style=color:#4e9a06>&#34;8443&#34;</span><span style=color:#204a87;font-weight:700>/&gt;</span>
+</span></span><span style=display:flex><span>      	<span style=color:#204a87;font-weight:700>&lt;Connector</span> <span style=color:#c4a000>port=</span><span style=color:#4e9a06>&#34;8009&#34;</span> <span style=color:#c4a000>protocol=</span><span style=color:#4e9a06>&#34;AJP/1.3&#34;</span> <span style=color:#c4a000>redirectPort=</span><span style=color:#4e9a06>&#34;8443&#34;</span><span style=color:#204a87;font-weight:700>/&gt;</span>
+</span></span><span style=display:flex><span>				<span style=color:#204a87;font-weight:700>&lt;Engine</span> <span style=color:#c4a000>name=</span><span style=color:#4e9a06>&#34;Catalina&#34;</span> <span style=color:#c4a000>defaultHost=</span><span style=color:#4e9a06>&#34;localhost&#34;</span><span style=color:#204a87;font-weight:700>&gt;</span>
+</span></span><span style=display:flex><span>          	<span style=color:#204a87;font-weight:700>&lt;Host</span> <span style=color:#c4a000>name=</span><span style=color:#4e9a06>&#34;localhost&#34;</span> <span style=color:#c4a000>appBase=</span><span style=color:#4e9a06>&#34;webapps&#34;</span>
+</span></span><span style=display:flex><span>                    	<span style=color:#c4a000>unpackWARs=</span><span style=color:#4e9a06>&#34;true&#34;</span> <span style=color:#c4a000>autoDeploy=</span><span style=color:#4e9a06>&#34;true&#34;</span><span style=color:#204a87;font-weight:700>&gt;</span>
+</span></span><span style=display:flex><span>            <span style=color:#204a87;font-weight:700>&lt;/Host&gt;</span>
+</span></span><span style=display:flex><span>        <span style=color:#204a87;font-weight:700>&lt;/Engine&gt;</span>
+</span></span><span style=display:flex><span>    <span style=color:#204a87;font-weight:700>&lt;/Service&gt;</span>
+</span></span><span style=display:flex><span><span style=color:#204a87;font-weight:700>&lt;/Server&gt;</span>
+</span></span></code></pre></div><p>其中：</p><ol>
 <li>
-<p>Server 组件是管理 tomcat 实例的组件，可以监听一个端口，从此端口上可以远程向该实例发送 shutdown 关闭命令。</p>
-</li>
-<li>
-<p>Service 组件是一个逻辑组件，用于绑定 connector 和 container，有了 service 表示可以向外提供服务，就像是一般的 daemon 类服务的 service。可以认为一个 service 就启动一个JVM，更严格地说，一个 engine 组件才对应一个 JVM （定义负载均衡时，jvmRoute 就定义在 Engine 组件上用来标识这个 JVM ），只不过 connector 也工作在 JVM 中。</p>
-<p><strong>小故事</strong>：</p>
-<p>是否关注到 Service name = Catalina，实际上 Tomcat 的前身就是 Catalina，这是一个岛的名字，而</p>
-<p>Catalina 只是一个 Servlet 容器，为<a href=https://en.wikipedia.org/wiki/Java_servlet>Servlet</a>和 JavaServer Pages（JSP）实现了<a href=https://en.wikipedia.org/wiki/Sun_Microsystems>Sun Microsystems</a>的规范。</p>
-<p>Tomcat 的作者 <a href=https://en.wikipedia.org/wiki/James_Duncan_Davidson>詹姆斯·邓肯·戴维森</a>，Sun Microsystems 的软件架构师在后来 Sun Microsystems 向 Apache Software Foundation 捐赠该项目中发挥了重要作用。当时他认为许多开源项目都有与 <a href="https://en.wikipedia.org/wiki/O'Reilly_Media">O&rsquo;Reilly</a> 相关的书籍，封面上有动物，所以他想以动物命名。后来这位老哥想到了猫。他认为这只动物代表着某种可以自己生存的东西，当2003年 O&rsquo;Reilly 发行带有<a href=https://en.wikipedia.org/wiki/Snow_leopard>雪豹</a>的 Tomcat 书籍时，他希望看到动物封面的愿望终于实现了。</p>
-</li>
-<li>
-<p>Connector 组件是监听组件，它有四个作用：</p>
-<ol>
-<li>开启监听套接字，监听外界请求，并和客户端建立 TCP 连接；</li>
-<li>使用 protocolHandler 解析请求中的协议和端口等信息，如 http 协议、AJP 协议；</li>
-<li>根据解析到的信息，使用 processer 将分析后的请求转发给绑定的 Engine；</li>
-<li>接收响应数据并返回给客户端。</li>
-</ol>
-<p>上面的 server.xml 配置我们能看到有两个 Connector。</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-xml data-lang=xml><span style=color:#204a87;font-weight:700>&lt;Connector</span> <span style=color:#c4a000>port=</span><span style=color:#4e9a06>&#34;8080&#34;</span> <span style=color:#c4a000>protocol=</span><span style=color:#4e9a06>&#34;HTTP/1.1&#34;</span> <span style=color:#c4a000>connectionTimeout=</span><span style=color:#4e9a06>&#34;20000&#34;</span> <span style=color:#c4a000>redirectPort=</span><span style=color:#4e9a06>&#34;8443&#34;</span><span style=color:#204a87;font-weight:700>/&gt;</span>
-</code></pre></div><p>这个 Connector 表示通过 8080 端口使用 HTTP/1.1版本的协议来访问 Tomcat。</p>
-<p>我们知道 80 端口是为 HTTP(HyperText Transport Protocol) 即 超文本传输协议 开放的，主要用于万维网传输信息的协议。而我们一般在 Tomcat 中监听的是一个非 80 端口。那为啥不直接在 Tomcat 中写上 80 端口，即所有 HTTP 请求都可以收到。这是因为在生产环境中，一般不会直接暴露原始服务给外网，一方面是安全性，另一方面是 负载均衡处理 和 静态资源处理。所以会在原始服务上加一层代理，代理来监听 80 端口，再将服务暴露端口的请求转发给对应服务。</p>
-<p>第二个 Connector：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-xml data-lang=xml><span style=color:#204a87;font-weight:700>&lt;Connector</span> <span style=color:#c4a000>port=</span><span style=color:#4e9a06>&#34;8009&#34;</span> <span style=color:#c4a000>protocol=</span><span style=color:#4e9a06>&#34;AJP/1.3&#34;</span> <span style=color:#c4a000>redirectPort=</span><span style=color:#4e9a06>&#34;8443&#34;</span><span style=color:#204a87;font-weight:700>/&gt;</span>
-</code></pre></div><p>这个 Connector 监听 8009 端口的 AJP 协议连接。AJP 协议负责和其他的 HTTP 服务器(如 Apache )建立连接；在把 Tomcat 与其他 HTTP 服务器集成时，就需要用到这个连接器。之所以使用 Tomcat 和其他服务器集成，是因为 Tomcat 可以用作 Servlet/JSP 容器，但是对静态资源的处理速度较慢，不如 Apache 和 IIS 等 HTTP 服务器。因此常常将 Tomcat 与 Apache 等集成，前者作 Servlet 容器，后者处理静态资源，而 AJP 协议便负责 Tomcat 和 Apache 的连接。</p>
-</li>
-</ol>
-<p>Container 表示一类组件，在配置文件(server.xml)中没有体现出来。它包含4个容器类组件：Engine容器、Host容器、Context容器 和 wrapper容器。</p>
-<p><strong>Engine</strong> 容器用于从 Connector 组件处接收已建立的 TCP 连接，还用于接收客户端发送的 HTTP 请求并分析请求，然后按照分析的结果将相关参数传递给匹配出的虚拟主机。Engine 还用于指定默认的虚拟主机。</p>
-<p><strong>Host</strong> 容器定义虚拟主机，对应了服务器中一个网络名实体（如”www.baidu.com”，或IP地址”23.0.32.1”）。为了使用户可以通过域名连接 Tomcat 服务器，这个域名应该在域名服务器已经注册过。</p>
-<p>比如上例中的配置：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-xml data-lang=xml><span style=color:#204a87;font-weight:700>&lt;Host</span> <span style=color:#c4a000>name=</span><span style=color:#4e9a06>&#34;localhost&#34;</span> <span style=color:#c4a000>appBase=</span><span style=color:#4e9a06>&#34;webapps&#34;</span> <span style=color:#c4a000>unpackWARs=</span><span style=color:#4e9a06>&#34;true&#34;</span> <span style=color:#c4a000>autoDeploy=</span><span style=color:#4e9a06>&#34;true&#34;</span><span style=color:#204a87;font-weight:700>&gt;</span>
-</code></pre></div><p>name=localhost 表示当前对应的请求是本机，这是因为已经配置了Nginx代理的原因，如果没有配置代理，那么这里就必须是真实的IP 或者域名。注意后面的 appBase，appBase表示当前 web资源所在的目录。</p>
-<p><strong>Context</strong> 容器主要是根据 path 和 docBase 获取一些信息，将结果交给其内的 wrapper 组件进行处理（它提供wrapper运行的环境，所以它叫上下文context）。一般来说，都采用默认的标准 wrapper 类，因此在 Context 容器中几乎不会出现 wrapper 组件。</p>
-<p><strong>wrapper</strong> 容器对应 Servlet 的处理过程。它开启 Servlet 的生命周期，根据 Context 给出的信息以及解析 web.xml 中的映射关系，负责装载相关的类，初始化 servlet 对象 <code>init()</code>、执行 servlet 代码 <code>service()</code> 以及服务结束时 servlet 对象的销毁 <code>destory()</code>。</p>
-<p>根据上面描述的 tomcat 组件体系结构，处理请求的大致过程其实很容易推导出来：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>CopyClient(request)--&gt;Connector--&gt;Engine--&gt;Host--&gt;Context--&gt;Wrapper(response data)--&gt;Connector(response header)--&gt;Client
-</code></pre></div><p>可以看到宏观上 Tomcat 设计的真是非常精妙，层叠式的容器设计呈现出一种美感。Connector 和 Container 两大组件涵盖主要功能，这种复合组件化的设计思想我们是否可以应用在业务系统中呢。</p>
-<style>.feedback--answer{display:inline-block}.feedback--answer-no{margin-left:1em}.feedback--response{display:none;margin-top:1em}.feedback--response__visible{display:block}</style>
-<div class=d-print-none>
-<h2 class=feedback--title>Feedback</h2>
-<p class=feedback--question>Was this page helpful?</p>
-<button class="btn btn-primary mb-4 feedback--answer feedback--answer-yes">Yes</button>
+<p>Server 组件是管理 tomcat 实例的组件，可以监听一个端口，从此端口上可以远程向该实例发送 shutdown 关闭命令。</p></li><li>
+<p>Service 组件是一个逻辑组件，用于绑定 connector 和 container，有了 service 表示可以向外提供服务，就像是一般的 daemon 类服务的 service。可以认为一个 service 就启动一个JVM，更严格地说，一个 engine 组件才对应一个 JVM （定义负载均衡时，jvmRoute 就定义在 Engine 组件上用来标识这个 JVM ），只不过 connector 也工作在 JVM 中。</p><p><strong>小故事</strong>：</p><p>是否关注到 Service name = Catalina，实际上 Tomcat 的前身就是 Catalina，这是一个岛的名字，而</p><p>Catalina 只是一个 Servlet 容器，为<a href=https://en.wikipedia.org/wiki/Java_servlet>Servlet</a>和 JavaServer Pages（JSP）实现了<a href=https://en.wikipedia.org/wiki/Sun_Microsystems>Sun Microsystems</a>的规范。</p><p>Tomcat 的作者 <a href=https://en.wikipedia.org/wiki/James_Duncan_Davidson>詹姆斯·邓肯·戴维森</a>，Sun Microsystems 的软件架构师在后来 Sun Microsystems 向 Apache Software Foundation 捐赠该项目中发挥了重要作用。当时他认为许多开源项目都有与 <a href="https://en.wikipedia.org/wiki/O'Reilly_Media">O&rsquo;Reilly</a> 相关的书籍，封面上有动物，所以他想以动物命名。后来这位老哥想到了猫。他认为这只动物代表着某种可以自己生存的东西，当2003年 O&rsquo;Reilly 发行带有<a href=https://en.wikipedia.org/wiki/Snow_leopard>雪豹</a>的 Tomcat 书籍时，他希望看到动物封面的愿望终于实现了。</p></li><li>
+<p>Connector 组件是监听组件，它有四个作用：</p><ol>
+<li>开启监听套接字，监听外界请求，并和客户端建立 TCP 连接；</li><li>使用 protocolHandler 解析请求中的协议和端口等信息，如 http 协议、AJP 协议；</li><li>根据解析到的信息，使用 processer 将分析后的请求转发给绑定的 Engine；</li><li>接收响应数据并返回给客户端。</li></ol><p>上面的 server.xml 配置我们能看到有两个 Connector。</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-xml data-lang=xml><span style=display:flex><span><span style=color:#204a87;font-weight:700>&lt;Connector</span> <span style=color:#c4a000>port=</span><span style=color:#4e9a06>&#34;8080&#34;</span> <span style=color:#c4a000>protocol=</span><span style=color:#4e9a06>&#34;HTTP/1.1&#34;</span> <span style=color:#c4a000>connectionTimeout=</span><span style=color:#4e9a06>&#34;20000&#34;</span> <span style=color:#c4a000>redirectPort=</span><span style=color:#4e9a06>&#34;8443&#34;</span><span style=color:#204a87;font-weight:700>/&gt;</span>
+</span></span></code></pre></div><p>这个 Connector 表示通过 8080 端口使用 HTTP/1.1版本的协议来访问 Tomcat。</p><p>我们知道 80 端口是为 HTTP(HyperText Transport Protocol) 即 超文本传输协议 开放的，主要用于万维网传输信息的协议。而我们一般在 Tomcat 中监听的是一个非 80 端口。那为啥不直接在 Tomcat 中写上 80 端口，即所有 HTTP 请求都可以收到。这是因为在生产环境中，一般不会直接暴露原始服务给外网，一方面是安全性，另一方面是 负载均衡处理 和 静态资源处理。所以会在原始服务上加一层代理，代理来监听 80 端口，再将服务暴露端口的请求转发给对应服务。</p><p>第二个 Connector：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-xml data-lang=xml><span style=display:flex><span><span style=color:#204a87;font-weight:700>&lt;Connector</span> <span style=color:#c4a000>port=</span><span style=color:#4e9a06>&#34;8009&#34;</span> <span style=color:#c4a000>protocol=</span><span style=color:#4e9a06>&#34;AJP/1.3&#34;</span> <span style=color:#c4a000>redirectPort=</span><span style=color:#4e9a06>&#34;8443&#34;</span><span style=color:#204a87;font-weight:700>/&gt;</span>
+</span></span></code></pre></div><p>这个 Connector 监听 8009 端口的 AJP 协议连接。AJP 协议负责和其他的 HTTP 服务器(如 Apache )建立连接；在把 Tomcat 与其他 HTTP 服务器集成时，就需要用到这个连接器。之所以使用 Tomcat 和其他服务器集成，是因为 Tomcat 可以用作 Servlet/JSP 容器，但是对静态资源的处理速度较慢，不如 Apache 和 IIS 等 HTTP 服务器。因此常常将 Tomcat 与 Apache 等集成，前者作 Servlet 容器，后者处理静态资源，而 AJP 协议便负责 Tomcat 和 Apache 的连接。</p></li></ol><p>Container 表示一类组件，在配置文件(server.xml)中没有体现出来。它包含4个容器类组件：Engine容器、Host容器、Context容器 和 wrapper容器。</p><p><strong>Engine</strong> 容器用于从 Connector 组件处接收已建立的 TCP 连接，还用于接收客户端发送的 HTTP 请求并分析请求，然后按照分析的结果将相关参数传递给匹配出的虚拟主机。Engine 还用于指定默认的虚拟主机。</p><p><strong>Host</strong> 容器定义虚拟主机，对应了服务器中一个网络名实体（如”www.baidu.com”，或IP地址”23.0.32.1”）。为了使用户可以通过域名连接 Tomcat 服务器，这个域名应该在域名服务器已经注册过。</p><p>比如上例中的配置：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-xml data-lang=xml><span style=display:flex><span><span style=color:#204a87;font-weight:700>&lt;Host</span> <span style=color:#c4a000>name=</span><span style=color:#4e9a06>&#34;localhost&#34;</span> <span style=color:#c4a000>appBase=</span><span style=color:#4e9a06>&#34;webapps&#34;</span> <span style=color:#c4a000>unpackWARs=</span><span style=color:#4e9a06>&#34;true&#34;</span> <span style=color:#c4a000>autoDeploy=</span><span style=color:#4e9a06>&#34;true&#34;</span><span style=color:#204a87;font-weight:700>&gt;</span>
+</span></span></code></pre></div><p>name=localhost 表示当前对应的请求是本机，这是因为已经配置了Nginx代理的原因，如果没有配置代理，那么这里就必须是真实的IP 或者域名。注意后面的 appBase，appBase表示当前 web资源所在的目录。</p><p><strong>Context</strong> 容器主要是根据 path 和 docBase 获取一些信息，将结果交给其内的 wrapper 组件进行处理（它提供wrapper运行的环境，所以它叫上下文context）。一般来说，都采用默认的标准 wrapper 类，因此在 Context 容器中几乎不会出现 wrapper 组件。</p><p><strong>wrapper</strong> 容器对应 Servlet 的处理过程。它开启 Servlet 的生命周期，根据 Context 给出的信息以及解析 web.xml 中的映射关系，负责装载相关的类，初始化 servlet 对象 <code>init()</code>、执行 servlet 代码 <code>service()</code> 以及服务结束时 servlet 对象的销毁 <code>destory()</code>。</p><p>根据上面描述的 tomcat 组件体系结构，处理请求的大致过程其实很容易推导出来：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback><span style=display:flex><span>CopyClient(request)--&gt;Connector--&gt;Engine--&gt;Host--&gt;Context--&gt;Wrapper(response data)--&gt;Connector(response header)--&gt;Client
+</span></span></code></pre></div><p>可以看到宏观上 Tomcat 设计的真是非常精妙，层叠式的容器设计呈现出一种美感。Connector 和 Container 两大组件涵盖主要功能，这种复合组件化的设计思想我们是否可以应用在业务系统中呢。</p><style>.feedback--answer{display:inline-block}.feedback--answer-no{margin-left:1em}.feedback--response{display:none;margin-top:1em}.feedback--response__visible{display:block}</style><div class=d-print-none>
+<h2 class=feedback--title>Feedback</h2><p class=feedback--question>Was this page helpful?</p><button class="btn btn-primary mb-4 feedback--answer feedback--answer-yes">Yes</button>
 <button class="btn btn-primary mb-4 feedback--answer feedback--answer-no">No</button>
 <p class="feedback--response feedback--response-yes">
 Glad to hear it! Please <a href=https://github.com/infilos/infilos.com/issues/new>tell us how we can improve</a>.
-</p>
-<p class="feedback--response feedback--response-no">
+</p><p class="feedback--response feedback--response-no">
 Sorry to hear that. Please <a href=https://github.com/infilos/infilos.com/issues/new>tell us how we can improve</a>.
-</p>
-</div>
-<script>const yesButton=document.querySelector('.feedback--answer-yes'),noButton=document.querySelector('.feedback--answer-no'),yesResponse=document.querySelector('.feedback--response-yes'),noResponse=document.querySelector('.feedback--response-no'),disableButtons=()=>{yesButton.disabled=!0,noButton.disabled=!0},sendFeedback=b=>{if(typeof ga!='function')return;const a={command:'send',hitType:'event',category:'Helpful',action:'click',label:window.location.pathname,value:b};ga(a.command,a.hitType,a.category,a.action,a.label,a.value)};yesButton.addEventListener('click',()=>{yesResponse.classList.add('feedback--response__visible'),disableButtons(),sendFeedback(1)}),noButton.addEventListener('click',()=>{noResponse.classList.add('feedback--response__visible'),disableButtons(),sendFeedback(0)})</script>
+</p></div><script>const yesButton=document.querySelector(".feedback--answer-yes"),noButton=document.querySelector(".feedback--answer-no"),yesResponse=document.querySelector(".feedback--response-yes"),noResponse=document.querySelector(".feedback--response-no"),disableButtons=()=>{yesButton.disabled=!0,noButton.disabled=!0},sendFeedback=t=>{if(typeof ga!="function")return;const e={command:"send",hitType:"event",category:"Helpful",action:"click",label:window.location.pathname,value:t};ga(e.command,e.hitType,e.category,e.action,e.label,e.value)};yesButton.addEventListener("click",()=>{yesResponse.classList.add("feedback--response__visible"),disableButtons(),sendFeedback(1)}),noButton.addEventListener("click",()=>{noResponse.classList.add("feedback--response__visible"),disableButtons(),sendFeedback(0)})</script>
 <br>
-</div>
-</main>
-</div>
-</div>
-<footer class="bg-dark py-5 row d-print-none">
+</div></main></div></div><footer class="bg-dark py-5 row d-print-none">
 <div class="container-fluid mx-sm-5">
 <div class=row>
 <div class="col-6 col-sm-4 text-xs-center order-sm-2">
-</div>
-<div class="col-6 col-sm-4 text-right text-xs-center order-sm-3">
+</div><div class="col-6 col-sm-4 text-right text-xs-center order-sm-3">
 <ul class="list-inline mb-0">
 <li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Weibo aria-label=Weibo>
 <a class=text-white target=_blank rel="noopener noreferrer" href=https://weibo.com/u/3848950217>
 <i class="fab fa-weibo"></i>
 </a>
-</li>
-<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Twitter aria-label=Twitter>
+</li><li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Twitter aria-label=Twitter>
 <a class=text-white target=_blank rel="noopener noreferrer" href=https://twitter.com/zhange_zzg>
 <i class="fab fa-twitter"></i>
 </a>
-</li>
-<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title="Stack Overflow" aria-label="Stack Overflow">
+</li><li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title="Stack Overflow" aria-label="Stack Overflow">
 <a class=text-white target=_blank rel="noopener noreferrer" href=https://stackoverflow.com>
 <i class="fab fa-stack-overflow"></i>
 </a>
-</li>
-<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=GitHub aria-label=GitHub>
+</li><li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=GitHub aria-label=GitHub>
 <a class=text-white target=_blank rel="noopener noreferrer" href=https://github.com/infilos/infilos.com>
 <i class="fab fa-github"></i>
 </a>
-</li>
-</ul>
-</div>
-<div class="col-12 col-sm-4 text-center py-2 order-sm-2">
+</li></ul></div><div class="col-12 col-sm-4 text-center py-2 order-sm-2">
 <small class=text-white>&copy; 2022 infilos.com All Rights Reserved</small>
-</div>
-</div>
-</div>
-</footer>
-</div>
-<script src=/js/popper.min.js integrity=sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49 crossorigin=anonymous></script>
+</div></div></div></footer></div><script src=/js/popper.min.js integrity=sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49 crossorigin=anonymous></script>
 <script src=/js/bootstrap.min.js integrity=sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy crossorigin=anonymous></script>
-<script src=/js/main.min.5c74b870c6953931a705f390a49c7e4c0a842ec5c83b24354758dd674343ed0d.js integrity="sha256-XHS4cMaVOTGnBfOQpJx+TAqELsXIOyQ1R1jdZ0ND7Q0=" crossorigin=anonymous></script>
-</body>
-</html>
+<script src=/js/main.min.3f3f4f1e22307ccbb13271a98be2e4dbb8386b7e67c3d606db44d3d0649f485e.js integrity="sha256-Pz9PHiIwfMuxMnGpi+Lk27g4a35nw9YG20TT0GSfSF4=" crossorigin=anonymous></script>
+</body></html>

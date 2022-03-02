@@ -2,7 +2,7 @@
 <head>
 <meta charset=utf-8>
 <meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no">
-<meta name=generator content="Hugo 0.92.2">
+<meta name=generator content="Hugo 0.93.0">
 <meta name=ROBOTS content="INDEX, FOLLOW">
 <link rel="shortcut icon" href=/favicons/favicon.ico>
 <link rel=apple-touch-icon href=/favicons/apple-touch-icon-180x180.png sizes=180x180>
@@ -61,45 +61,43 @@
 在项目的架构中，我们一般会同时部署 LVS 和 Nginx 来做 HTTP 应用服务的负载均衡。也就是说，在入口处部署 LVS，将流量分发到多个 Nginx 服务器上，再由 Nginx 服务器分发到应用服务器上， 为什么这么做呢？
 主要和 LVS 和 Nginx 的特点有关，LVS 是在网络栈的四层做请求包的转发，请求包转发之后，由客户端和后端服务直接建立连接，后续的响应包不会再经过 LVS 服务器，所以相比 Nginx，性能会更高，也能够承担更高的并发。
 可 LVS 缺陷是工作在四层，而请求的 URL 是七层的概念，不能针对 URL 做更细致地请求分发，而且 LVS 也没有提供探测后端服务是否存活的机制；而 Nginx 虽然比 LVS 的性能差很多，但也可以承担每秒几万次的请求，并且它在配置上更加灵活，还可以感知后端服务是否出现问题。">
-<script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga('create','UA-123062585-1','auto'),ga('send','pageview'))</script>
+<script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga("create","UA-123062585-1","auto"),ga("send","pageview"))</script>
 <script async src=https://www.google-analytics.com/analytics.js></script>
 <link rel=preload href=/scss/main.min.847464b684a6e89d7276700a5c500c17ab494dd1755b2654a7b27d8b59e3347e.css as=style>
 <link href=/scss/main.min.847464b684a6e89d7276700a5c500c17ab494dd1755b2654a7b27d8b59e3347e.css rel=stylesheet integrity>
 <script src=/js/jquery-3.5.1.min.js integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin=anonymous></script>
-</head>
-<body class=td-page>
+</head><body class=td-page>
 <header>
-<nav class="js-navbar-scroll navbar navbar-expand navbar-dark flex-column flex-md-row td-navbar">
+<nav class="js-navbar-scroll navbar navbar-expand-lg navbar-dark td-navbar">
 <a class=navbar-brand href=/>
-<span class=navbar-logo><svg id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512" style="enable-background:new 0 0 512 512"><path style="fill:#ffc107" d="M432.384 143.616c-4.165-4.164-10.917-4.164-15.083.0l-60.352 60.352c-4.164 4.165-4.164 10.917.0 15.083 21.187 20.463 54.951 19.876 75.413-1.311 19.962-20.668 19.962-53.435.0-74.102L432.384 143.616z"/><path style="fill:#607d8b" d="M42.667 277.334c-5.891.003-10.669-4.771-10.672-10.662-.002-4.338 2.623-8.245 6.64-9.882l234.667-96c5.455-2.233 11.687.38 13.92 5.835s-.38 11.687-5.835 13.92l-234.667 96C45.433 277.069 44.056 277.337 42.667 277.334z"/><path style="fill:#546e7a" d="M391.552 56.448l-32-32C343.938 8.745 322.689-.059 300.544.0h-3.755c-46.082.024-83.432 37.374-83.456 83.456v3.755c-.053 22.138 8.75 43.377 24.448 58.987l32 32c4.165 4.164 10.917 4.164 15.083.0L391.531 71.531C395.701 67.372 395.71 60.62 391.552 56.448z"/><path style="fill:#607d8b" d="M160 469.334c-3.279.006-6.379-1.497-8.405-4.075L34.261 315.926c-3.635-4.636-2.823-11.341 1.813-14.976s11.341-2.823 14.976 1.813l117.333 149.333c3.629 4.641 2.809 11.344-1.832 14.973C164.681 468.533 162.375 469.329 160 469.334z"/><path style="fill:#455a64" d="M487.467 86.848l-3.669-3.648c-37.687-36.557-97.71-36.197-134.955.811l-51.413 51.413c-36.996 37.25-37.357 97.263-.811 134.955l3.584 3.669c1.7 2.457 4.671 3.706 7.616 3.2 2.831.005 5.548-1.115 7.552-3.115l172.181-172.181c4.189-4.143 4.226-10.896.083-15.085-.028-.028-.055-.056-.083-.083L487.467 86.848z"/><g><path style="fill:#ffc107" d="M501.333 192H480c-5.891.0-10.667-4.776-10.667-10.667s4.776-10.667 10.667-10.667h21.333c5.891.0 10.667 4.776 10.667 10.667S507.225 192 501.333 192z"/><path style="fill:#ffc107" d="M394.667 298.667c-5.891.0-10.667-4.776-10.667-10.667v-21.333c0-5.891 4.776-10.667 10.667-10.667 5.891.0 10.667 4.776 10.667 10.667V288C405.333 293.891 400.558 298.667 394.667 298.667z"/><path style="fill:#ffc107" d="M480 277.334c-2.831.005-5.548-1.115-7.552-3.115l-21.333-21.333c-4.093-4.237-3.975-10.99.262-15.083 4.134-3.993 10.687-3.993 14.821.0l21.333 21.333c4.159 4.172 4.148 10.926-.024 15.085C485.514 276.209 482.815 277.327 480 277.334z"/></g><g><path style="fill:#455a64" d="M266.667 448H96c-29.455.0-53.333 23.878-53.333 53.333.0 5.891 4.776 10.667 10.667 10.667h256c5.891.0 10.667-4.776 10.667-10.667C320 471.878 296.122 448 266.667 448z"/><circle style="fill:#455a64" cx="32" cy="288" r="32"/></g><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/></svg></span><span class=font-weight-bold>infilos.com</span>
+<span class=navbar-logo><svg id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512" style="enable-background:new 0 0 512 512"><path style="fill:#ffc107" d="M432.384 143.616c-4.165-4.164-10.917-4.164-15.083.0l-60.352 60.352c-4.164 4.165-4.164 10.917.0 15.083 21.187 20.463 54.951 19.876 75.413-1.311 19.962-20.668 19.962-53.435.0-74.102L432.384 143.616z"/><path style="fill:#607d8b" d="M42.667 277.334c-5.891.003-10.669-4.771-10.672-10.662-.002-4.338 2.623-8.245 6.64-9.882l234.667-96c5.455-2.233 11.687.38 13.92 5.835s-.38 11.687-5.835 13.92l-234.667 96C45.433 277.069 44.056 277.337 42.667 277.334z"/><path style="fill:#546e7a" d="M391.552 56.448l-32-32C343.938 8.745 322.689-.059 300.544.0h-3.755c-46.082.024-83.432 37.374-83.456 83.456v3.755c-.053 22.138 8.75 43.377 24.448 58.987l32 32c4.165 4.164 10.917 4.164 15.083.0L391.531 71.531C395.701 67.372 395.71 60.62 391.552 56.448z"/><path style="fill:#607d8b" d="M160 469.334c-3.279.006-6.379-1.497-8.405-4.075L34.261 315.926c-3.635-4.636-2.823-11.341 1.813-14.976s11.341-2.823 14.976 1.813l117.333 149.333c3.629 4.641 2.809 11.344-1.832 14.973C164.681 468.533 162.375 469.329 160 469.334z"/><path style="fill:#455a64" d="M487.467 86.848l-3.669-3.648c-37.687-36.557-97.71-36.197-134.955.811l-51.413 51.413c-36.996 37.25-37.357 97.263-.811 134.955l3.584 3.669c1.7 2.457 4.671 3.706 7.616 3.2 2.831.005 5.548-1.115 7.552-3.115l172.181-172.181c4.189-4.143 4.226-10.896.083-15.085-.028-.028-.055-.056-.083-.083L487.467 86.848z"/><g><path style="fill:#ffc107" d="M501.333 192H480c-5.891.0-10.667-4.776-10.667-10.667s4.776-10.667 10.667-10.667h21.333c5.891.0 10.667 4.776 10.667 10.667S507.225 192 501.333 192z"/><path style="fill:#ffc107" d="M394.667 298.667c-5.891.0-10.667-4.776-10.667-10.667v-21.333c0-5.891 4.776-10.667 10.667-10.667 5.891.0 10.667 4.776 10.667 10.667V288C405.333 293.891 400.558 298.667 394.667 298.667z"/><path style="fill:#ffc107" d="M480 277.334c-2.831.005-5.548-1.115-7.552-3.115l-21.333-21.333c-4.093-4.237-3.975-10.99.262-15.083 4.134-3.993 10.687-3.993 14.821.0l21.333 21.333c4.159 4.172 4.148 10.926-.024 15.085C485.514 276.209 482.815 277.327 480 277.334z"/></g><g><path style="fill:#455a64" d="M266.667 448H96c-29.455.0-53.333 23.878-53.333 53.333.0 5.891 4.776 10.667 10.667 10.667h256c5.891.0 10.667-4.776 10.667-10.667C320 471.878 296.122 448 266.667 448z"/><circle style="fill:#455a64" cx="32" cy="288" r="32"/></g><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/></svg></span>
+<span class=font-weight-bold>infilos.com</span>
 </a>
+<button class=navbar-toggler type=button data-toggle=collapse data-target=#navbarSupportedContent aria-controls=navbarSupportedContent aria-expanded=false aria-label="Toggle navigation">
+<span class=navbar-toggler-icon></span>
+</button>
 <div class="collapse navbar-collapse" id=navbarSupportedContent>
 <ul class="navbar-nav mr-auto">
 <li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86>
 <span>基础</span>
 </a>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80>
 <span>语言</span>
 </a>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93>
 <span>框架库</span>
 </a>
-</li>
-<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+</li><li class="nav-item dropdown" style=max-width:90px;min-width:10px>
 <a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
 分布式
 <span>+</span>
 </a>
 <div class=dropdown-menu aria-labelledby=navbarDropdown>
 <a class=dropdown-item href=/%e5%88%86%e5%b8%83%e5%bc%8f/base>基本构成</a>
-</div>
-</li>
-<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+</div></li><li class="nav-item dropdown" style=max-width:90px;min-width:10px>
 <a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
 大数据
 <span>+</span>
@@ -110,9 +108,7 @@
 <a class=dropdown-item href=/%e6%b6%88%e6%81%af%e7%b3%bb%e7%bb%9f>消息系统</a>
 <a class=dropdown-item href=/%e5%a4%84%e7%90%86%e7%b3%bb%e7%bb%9f>处理系统</a>
 <a class=dropdown-item href=/%e6%95%b0%e6%8d%ae%e6%b2%bb%e7%90%86>数据治理</a>
-</div>
-</li>
-<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+</div></li><li class="nav-item dropdown" style=max-width:90px;min-width:10px>
 <a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
 中后台
 <span>+</span>
@@ -122,38 +118,26 @@
 <a class=dropdown-item href=/%e7%94%a8%e6%88%b7%e7%b3%bb%e7%bb%9f>用户系统</a>
 <a class=dropdown-item href=/%e4%ba%a4%e4%ba%92%e7%95%8c%e9%9d%a2>交互界面</a>
 <a class=dropdown-item href=/%e4%b8%9a%e5%8a%a1%e7%b3%bb%e7%bb%9f>业务系统</a>
-</div>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</div></li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e6%a8%a1%e5%bc%8f%e6%9e%b6%e6%9e%84>
 <span>模式架构</span>
 </a>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e9%9d%a2%e8%af%95%e9%97%ae%e7%ad%94>
 <span>面试</span>
 </a>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e7%ae%a1%e7%90%86%e8%b7%af%e5%be%84>
 <span>管理</span>
 </a>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e5%bc%80%e6%ba%90%e9%a1%b9%e7%9b%ae>
 <span>开源</span>
 </a>
-</li>
-</ul>
-<div class="form-inline my-2 my-lg-0">
+</li></ul><div class="form-inline my-2 my-lg-0">
 <div class="nav-item nav-search-item my-2 my-md-0">
 <input type=search class="form-control td-search-input" placeholder="&#xf002; 站内搜索…" aria-label=站内搜索… autocomplete=off>
-</div>
-</div>
-</div>
-</nav>
-</header>
-<div class="container-fluid td-outer">
+</div></div></div></nav></header><div class="container-fluid td-outer">
 <div class=td-main>
 <div class="row flex-xl-nowrap">
 <aside class="col-12 col-md-3 col-xl-2 td-sidebar d-print-none">
@@ -163,10 +147,7 @@
 <input type=search class="form-control td-search-input" placeholder="&#xf002; 站内搜索…" aria-label=站内搜索… autocomplete=off>
 <button class="btn btn-link td-sidebar__toggle d-md-none p-0 ml-3 fas fa-bars" type=button data-toggle=collapse data-target=#td-section-nav aria-controls=td-docs-nav aria-expanded=false aria-label="Toggle section navigation">
 </button>
-</form>
-</div>
-<div id=content-desktop></div>
-<nav class="collapse td-sidebar-nav" id=td-section-nav>
+</form></div><div id=content-desktop></div><nav class="collapse td-sidebar-nav" id=td-section-nav>
 <ul class="td-sidebar-nav__section pr-md-3 ul-0">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e6a8a1e5bc8fe69eb6e69e84-li>
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section tree-root" id=m-e6a8a1e5bc8fe69eb6e69e84><span>架构模式</span></a>
@@ -211,9 +192,7 @@
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch15/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch15><span>CH15-行为型-状态</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch16-li>
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/java-pattern/ch16/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternjava-patternch16><span>CH16-行为型-策略</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-pattern-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-pattern-li>
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-pattern><span>Scala 模式</span></a>
 <ul class="ul-3 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch01-e6a8a1e5bc8fe58886e7b1bb-li>
@@ -268,11 +247,7 @@
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch11-%E5%87%BD%E6%95%B0%E5%BC%8F%E6%A8%A1%E5%BC%8F%E5%BA%94%E7%94%A8/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch11-e587bde695b0e5bc8fe6a8a1e5bc8fe5ba94e794a8><span>CH11-函数式模式应用</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch12-e5ae9ee99985e5ba94e794a8-li>
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/design-pattern/scala-pattern/ch12-%E5%AE%9E%E9%99%85%E5%BA%94%E7%94%A8/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84design-patternscala-patternch12-e5ae9ee99985e5ba94e794a8><span>CH12-实际应用</span></a>
-</li>
-</ul>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a8a1e5bc8fe69eb6e69e84micro-service-li>
+</li></ul></li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a8a1e5bc8fe69eb6e69e84micro-service-li>
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/micro-service/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a8a1e5bc8fe69eb6e69e84micro-service><span>微服务架构</span></a>
 <ul class="ul-2 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84micro-servicepattern-overview-li>
@@ -281,9 +256,7 @@
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/micro-service/ms-disasters/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84micro-servicems-disasters><span>微服务灾难</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84micro-servicefault-tolerance-li>
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/micro-service/fault-tolerance/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84micro-servicefault-tolerance><span>故障容错模式</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e6a8a1e5bc8fe69eb6e69e84high-conc-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e6a8a1e5bc8fe69eb6e69e84high-conc-li>
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a8a1e5bc8fe69eb6e69e84high-conc><span>高并发系统</span></a>
 <ul class="ul-2 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch01-li>
@@ -362,215 +335,97 @@
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch39/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch39><span>CH39-实战-信息流-1</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch40-li>
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch40/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84high-concch40><span>CH40-实战-信息流-2</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84ddia-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a8a1e5bc8fe69eb6e69e84ddia-li>
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/ddia/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a8a1e5bc8fe69eb6e69e84ddia><span>数据密集系统</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a8a1e5bc8fe69eb6e69e84rpc-li>
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/rpc/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a8a1e5bc8fe69eb6e69e84rpc><span>远程过程调用</span></a>
 <ul class="ul-2 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84rpcrpc-overview-li>
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/rpc/rpc-overview/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84rpcrpc-overview><span>RPC 概览</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a8a1e5bc8fe69eb6e69e84ddd-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a8a1e5bc8fe69eb6e69e84ddd-li>
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/ddd/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a8a1e5bc8fe69eb6e69e84ddd><span>领域驱动设计</span></a>
 <ul class="ul-2 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84dddddd-concept-essentials-li>
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/ddd/ddd-concept-essentials/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84dddddd-concept-essentials><span>DDD 概念精要</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a8a1e5bc8fe69eb6e69e84dddddd-instruct-micro-service-li>
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/ddd/ddd-instruct-micro-service/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a8a1e5bc8fe69eb6e69e84dddddd-instruct-micro-service><span>DDD 指导微服务</span></a>
-</li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-</nav>
-</div>
-</aside>
-<aside class="d-none d-xl-block col-xl-2 td-sidebar-toc d-print-none">
+</li></ul></li></ul></li></ul></nav></div></aside><aside class="d-none d-xl-block col-xl-2 td-sidebar-toc d-print-none">
 <div class="td-page-meta ml-2 pb-1 pt-2 mb-0">
 <a href=https://github.com/infilos/infilos.com/edit/master/content/zh/%e6%a8%a1%e5%bc%8f%e6%9e%b6%e6%9e%84/high-conc/CH26.md target=_blank><i class="fa fa-edit fa-fw"></i> 编辑此页</a>
 <a href="https://github.com/infilos/infilos.com/new/master/content/zh/%e6%a8%a1%e5%bc%8f%e6%9e%b6%e6%9e%84/high-conc/CH26.md?filename=change-me.md&value=---%0Atitle%3A+%22Long+Page+Title%22%0AlinkTitle%3A+%22Short+Nav+Title%22%0Aweight%3A+100%0Adescription%3A+%3E-%0A+++++Page+description+for+heading+and+indexes.%0A---%0A%0A%23%23+Heading%0A%0AEdit+this+template+to+create+your+new+page.%0A%0A%2A+Give+it+a+good+name%2C+ending+in+%60.md%60+-+e.g.+%60getting-started.md%60%0A%2A+Edit+the+%22front+matter%22+section+at+the+top+of+the+page+%28weight+controls+how+its+ordered+amongst+other+pages+in+the+same+directory%3B+lowest+number+first%29.%0A%2A+Add+a+good+commit+message+at+the+bottom+of+the+page+%28%3C80+characters%3B+use+the+extended+description+field+for+more+detail%29.%0A%2A+Create+a+new+branch+so+you+can+preview+your+new+file+and+request+a+review+via+Pull+Request.%0A" target=_blank><i class="fa fa-edit fa-fw"></i> 添加子页面</a>
 <a href="https://github.com/infilos/infilos.com/issues/new?title=CH26-%e5%88%86%e5%b8%83%e5%bc%8f-%e8%b4%9f%e8%bd%bd%e5%9d%87%e8%a1%a1" target=_blank><i class="fab fa-github fa-fw"></i> 提交文档问题</a>
 <a id=print href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/_print/><i class="fa fa-print fa-fw"></i> 整节打印</a>
-</div>
-<div class=td-toc><nav id=TableOfContents>
+</div><div class=td-toc><nav id=TableOfContents>
 <ul>
 <li><a href=#负载均衡服务器的种类>负载均衡服务器的种类</a>
 <ul>
-<li><a href=#代理类的负载均衡服务>代理类的负载均衡服务</a></li>
-<li><a href=#客户端负载均衡服务>客户端负载均衡服务</a></li>
-</ul>
-</li>
-<li><a href=#常见的负载均衡策略有哪些>常见的负载均衡策略有哪些</a>
+<li><a href=#代理类的负载均衡服务>代理类的负载均衡服务</a></li><li><a href=#客户端负载均衡服务>客户端负载均衡服务</a></li></ul></li><li><a href=#常见的负载均衡策略有哪些>常见的负载均衡策略有哪些</a>
 <ul>
-<li><a href=#静态策略>静态策略</a></li>
-<li><a href=#动态策略>动态策略</a></li>
-</ul>
-</li>
-<li><a href=#如何检测节点是否故障>如何检测节点是否故障</a></li>
-<li><a href=#课程小结>课程小结</a></li>
-</ul>
-</nav></div>
-</aside>
-<main class="col-12 col-md-9 col-xl-8 pl-md-5" role=main>
+<li><a href=#静态策略>静态策略</a></li><li><a href=#动态策略>动态策略</a></li></ul></li><li><a href=#如何检测节点是否故障>如何检测节点是否故障</a></li><li><a href=#课程小结>课程小结</a></li></ul></nav></div></aside><main class="col-12 col-md-9 col-xl-8 pl-md-5" role=main>
 <nav aria-label=breadcrumb class="d-none d-md-block d-print-none">
 <ol class="breadcrumb spb-1">
 <li class=breadcrumb-item>
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/>架构模式</a>
-</li>
-<li class=breadcrumb-item>
+</li><li class=breadcrumb-item>
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/>高并发系统</a>
-</li>
-<li class="breadcrumb-item active" aria-current=page>
+</li><li class="breadcrumb-item active" aria-current=page>
 <a href=/%E6%A8%A1%E5%BC%8F%E6%9E%B6%E6%9E%84/high-conc/ch26/>CH26-分布式-负载均衡</a>
-</li>
-</ol>
-</nav>
-<div class=td-content>
-<h1>CH26-分布式-负载均衡</h1>
-<header class=article-meta>
-</header>
-<p>在基础篇中，我提到了高并发系统设计的三个通用方法：缓存、异步和横向扩展，到目前为止，你接触到了缓存的使用姿势，也了解了，如何使用消息队列异步处理业务逻辑，那么本节课，我将带你了解一下，如何提升系统的横向扩展能力。</p>
-<p>在之前的课程中，我也提到过提升系统横向扩展能力的一些案例。比如，08 讲提到，可以通过部署多个从库的方式，来提升数据库的扩展能力，从而提升数据库的查询性能，那么就需要借助组件，将查询数据库的请求，按照一些既定的策略分配到多个从库上，这是负载均衡服务器所起的作用，而我们一般使用 <strong>DNS 服务器</strong> 来承担这个角色。</p>
-<p>不过在实际的工作中，你经常使用的负载均衡的组件应该算是 Nginx，它的作用是承接前端的 HTTP 请求，然后将它们按照多种策略，分发给后端的多个业务服务器上。这样，我们可以随时通过扩容业务服务器的方式，来抵挡突发的流量高峰。<strong>与 DNS 不同的是，Nginx 可以在域名和请求 URL 地址的层面做更细致的流量分配，也提供更复杂的负载均衡策略</strong> 。</p>
-<p>你可能会想到，在微服务架构中，我们也会启动多个服务节点，来承接从用户端到应用服务器的请求，自然会需要一个负载均衡服务器，作为流量的入口，实现流量的分发。那么在微服务架构中，如何使用负载均衡服务器呢？</p>
-<p>在回答这些问题之前，我先带你了解一下，常见的负载均衡服务器都有哪几类，因为这样，你就可以依据不同类型负载均衡服务器的特点做选择了。</p>
-<h2 id=负载均衡服务器的种类>负载均衡服务器的种类</h2>
-<p><strong>负载均衡的含义是：</strong> 将负载（访问的请求）「均衡」地分配到多个处理节点上。这样可以减少单个处理节点的请求量，提升整体系统的性能。</p>
-<p>同时，负载均衡服务器作为流量入口，可以对请求方屏蔽服务节点的部署细节，实现对于业务方无感知的扩容。它就像交通警察，不断地疏散交通，将汽车引入合适的道路上。</p>
-<p><strong>而在我看来，</strong> 负载均衡服务大体上可以分为两大类：一类是 <strong>代理类的负载均衡服务</strong> ；另一类是 <strong>客户端负载均衡服务</strong> 。</p>
-<h3 id=代理类的负载均衡服务>代理类的负载均衡服务</h3>
-<p>代理类的负载均衡服务，以单独的服务方式部署，所有的请求都要先经过负载均衡服务，在负载均衡服务中，选出一个合适的服务节点后，再由负载均衡服务，调用这个服务节点来实现流量的分发。</p>
-<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211209230553.png style=display:block;width:80% alt=NAME align=center> </div>
-<p>由于这类服务需要承担全量的请求，所以对于性能的要求极高。代理类的负载均衡服务有很多开源实现，比较著名的有 LVS，Nginx 等等。LVS 在 OSI 网络模型中的第四层，传输层工作，所以 LVS 又可以称为四层负载；而 Nginx 运行在 OSI 网络模型中的第七层，应用层，所以又可以称它为七层负载（你可以回顾一下02 讲的内容）。</p>
-<p>在项目的架构中，我们一般会同时部署 LVS 和 Nginx 来做 HTTP 应用服务的负载均衡。也就是说，在入口处部署 LVS，将流量分发到多个 Nginx 服务器上，再由 Nginx 服务器分发到应用服务器上， <strong>为什么这么做呢？</strong></p>
-<p>主要和 LVS 和 Nginx 的特点有关，LVS 是在网络栈的四层做请求包的转发，请求包转发之后，由客户端和后端服务直接建立连接，后续的响应包不会再经过 LVS 服务器，所以相比 Nginx，性能会更高，也能够承担更高的并发。</p>
-<p>可 LVS 缺陷是工作在四层，而请求的 URL 是七层的概念，不能针对 URL 做更细致地请求分发，而且 LVS 也没有提供探测后端服务是否存活的机制；而 Nginx 虽然比 LVS 的性能差很多，但也可以承担每秒几万次的请求，并且它在配置上更加灵活，还可以感知后端服务是否出现问题。</p>
-<p>因此，LVS 适合在入口处，承担大流量的请求分发，而 Nginx 要部署在业务服务器之前做更细维度的请求分发。 <strong>我给你的建议是，</strong> 如果你的 QPS 在十万以内，那么可以考虑不引入 LVS 而直接使用 Nginx 作为唯一的负载均衡服务器，这样少维护一个组件，也会减少系统的维护成本。</p>
-<p>不过这两个负载均衡服务适用于普通的 Web 服务，对于微服务架构来说，它们是不合适的。因为微服务架构中的服务节点存储在注册中心里，使用 LVS 就很难和注册中心交互，获取全量的服务节点列表。另外，一般微服务架构中，使用的是 RPC 协议而不是 HTTP 协议，所以 Nginx 也不能满足要求。</p>
-<h3 id=客户端负载均衡服务>客户端负载均衡服务</h3>
-<p><strong>所以，我们会使用另一类的负载均衡服务，客户端负载均衡服务，也就是把负载均衡的服务内嵌在 RPC 客户端中。</strong></p>
-<p>它一般和客户端应用，部署在一个进程中，提供多种选择节点的策略，最终为客户端应用提供一个最佳的，可用的服务端节点。这类服务一般会结合注册中心来使用，注册中心提供服务节点的完整列表，客户端拿到列表之后使用负载均衡服务的策略选取一个合适的节点，然后将请求发到这个节点上。</p>
-<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211209230616.png style=display:block;width:80% alt=NAME align=center> </div>
-<p>了解负载均衡服务的分类，是你学习负载均衡服务的第一步，接下来，你需要掌握负载均衡策略，这样一来，你在实际工作中，配置负载均衡服务的时候，可以对原理有更深刻的了解。</p>
-<h2 id=常见的负载均衡策略有哪些>常见的负载均衡策略有哪些</h2>
-<p>负载均衡策略从大体上来看可以分为两类：</p>
-<ul>
-<li>一类是静态策略，也就是说负载均衡服务器在选择服务节点时，不会参考后端服务的实际运行的状态。</li>
-<li>一类是动态策略，也就是说负载均衡服务器会依据后端服务的一些负载特性，来决定要选择哪一个服务节点。</li>
-</ul>
-<h3 id=静态策略>静态策略</h3>
-<p>常见的静态策略有几种，其中使用最广泛的是 <strong>轮询的策略（RoundRobin，RR），</strong> 这种策略会记录上次请求后端服务的地址或者序号，然后在请求时，按照服务列表的顺序，请求下一个后端服务节点。伪代码如下：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#000>AtomicInteger</span> <span style=color:#000>lastCounter</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>getLastCounter</span><span style=color:#ce5c00;font-weight:700>();</span><span style=color:#8f5902;font-style:italic>// 获取上次请求的服务节点的序号 
-</span><span style=color:#8f5902;font-style:italic></span><span style=color:#000>List</span><span style=color:#ce5c00;font-weight:700>&lt;</span><span style=color:#000>String</span><span style=color:#ce5c00;font-weight:700>&gt;</span> <span style=color:#000>serverList</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>getServerList</span><span style=color:#ce5c00;font-weight:700>();</span> <span style=color:#8f5902;font-style:italic>// 获取服务列表
-</span><span style=color:#8f5902;font-style:italic></span><span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>currentIndex</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>lastCounter</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>addAndGet</span><span style=color:#ce5c00;font-weight:700>();</span> <span style=color:#8f5902;font-style:italic>// 增加序列号
-</span><span style=color:#8f5902;font-style:italic></span><span style=color:#204a87;font-weight:700>if</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>currentIndex</span> <span style=color:#ce5c00;font-weight:700>&gt;=</span> <span style=color:#000>serverList</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>size</span><span style=color:#ce5c00;font-weight:700>())</span> <span style=color:#ce5c00;font-weight:700>{</span>
-  <span style=color:#000>currentIndex</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>0</span><span style=color:#ce5c00;font-weight:700>;</span>
-<span style=color:#ce5c00;font-weight:700>}</span>
-<span style=color:#000>setLastCounter</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>currentIndex</span><span style=color:#ce5c00;font-weight:700>);</span>
-<span style=color:#204a87;font-weight:700>return</span> <span style=color:#000>serverList</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>get</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>currentIndex</span><span style=color:#ce5c00;font-weight:700>);</span>
-</code></pre></div><p>它其实是一种通用的策略，基本上，大部分的负载均衡服务器都支持。轮询的策略可以做到将请求尽量平均地分配到所有服务节点上，但是，它没有考虑服务节点的具体配置情况。比如，你有三个服务节点，其中一个服务节点的配置是 8 核 8G，另外两个节点的配置是 4 核 4G，那么如果使用轮询的方式来平均分配请求的话，8 核 8G 的节点分到的请求数量和 4 核 4G 的一样多，就不能发挥性能上的优势了</p>
-<p>所以，我们考虑给节点加上权重值，比如给 8 核 8G 的机器配置权重为 2，那么就会给它分配双倍的流量， <strong>这种策略就是带有权重的轮询策略。</strong></p>
-<p>除了这两种策略之外，目前开源的负载均衡服务还提供了很多静态策略：</p>
-<ul>
-<li>Nginx 提供了 ip_hash 和 url_hash 算法；</li>
-<li>LVS 提供了按照请求的源地址，和目的地址做 hash 的策略；</li>
-<li>Dubbo 也提供了随机选取策略，以及一致性 hash 的策略。</li>
-</ul>
-<p><strong>但是在我看来，</strong> 轮询和带有权重的轮询策略，能够将请求尽量平均地分配到后端服务节点上，也就能够做到对于负载的均衡分配，在没有更好的动态策略之前，应该优先使用这两种策略，比如 Nginx 就会优先使用轮询的策略。</p>
-<h3 id=动态策略>动态策略</h3>
-<p>而目前开源的负载均衡服务中，也会提供一些动态策略，我强调一下它们的原理。</p>
-<p>在负载均衡服务器上会收集对后端服务的调用信息，比如从负载均衡端到后端服务的活跃连接数，或者是调用的响应时间，然后从中选择连接数最少的服务，或者响应时间最短的后端服务。 <strong>我举几个具体的例子：</strong></p>
-<ul>
-<li>Dubbo 提供的 LeastAcive 策略，就是优先选择活跃连接数最少的服务；</li>
-<li>Spring Cloud 全家桶中的 Ribbon 提供了 WeightedResponseTimeRule 是使用响应时间，给每个服务节点计算一个权重，然后依据这个权重，来给调用方分配服务节点。</li>
-</ul>
-<p><strong>这些策略的思考点</strong> 是从调用方的角度出发，选择负载最小、资源最空闲的服务来调用，以期望能得到更高的服务调用性能，也就能最大化地使用服务器的空闲资源，请求也会响应地更迅速， <strong>所以，我建议你，</strong> 在实际开发中，优先考虑使用动态的策略。</p>
-<p>到目前为止，你已经可以根据上面的分析，选择适合自己的负载均衡策略，并选择一个最优的服务节点， <strong>那么问题来了：</strong> 你怎么保证选择出来的这个节点，一定是一个可以正常服务的节点呢？如果你采用的是轮询的策略，选择出来的，是一个故障节点又要怎么办呢？所以，为了降低请求被分配到一个故障节点的几率，有些负载均衡服务器，还提供了对服务节点的故障检测功能。</p>
-<h2 id=如何检测节点是否故障>如何检测节点是否故障</h2>
-<p>24 讲中，我带你了解到，在微服务化架构中，服务节点会定期地向注册中心发送心跳包，这样注册中心就能够知晓服务节点是否故障，也就可以确认传递给负载均衡服务的节点，一定是可用的。</p>
-<p>但对于 Nginx 来说， <strong>我们要如何保证配置的服务节点是可用的呢？</strong></p>
-<p>这就要感谢淘宝开源的 Nginx 模块 <code>nginx_upstream_check_module</code> 了，这个模块可以让 Nginx 定期地探测后端服务的一个指定的接口，然后根据返回的状态码，来判断服务是否还存活。当探测不存活的次数达到一定阈值时，就自动将这个后端服务从负载均衡服务器中摘除。 <strong>它的配置样例如下：</strong></p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh>upstream server <span style=color:#ce5c00;font-weight:700>{</span>
-        server 192.168.1.1:8080<span style=color:#000;font-weight:700>;</span>
-        server 192.168.1.2:8080<span style=color:#000;font-weight:700>;</span>
-        // 检测间隔为 <span style=color:#0000cf;font-weight:700>3</span> 秒，检测超时时间是 <span style=color:#0000cf;font-weight:700>1</span> 秒，使用 http 协议。如果连续失败次数达到 <span style=color:#0000cf;font-weight:700>5</span> 次就认为服务不可用；如果连续连续成功次数达到 <span style=color:#0000cf;font-weight:700>2</span> 次，则认为服务可用。后端服务刚启动时状态是不可用的
-        check <span style=color:#000>interval</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#0000cf;font-weight:700>3000</span> <span style=color:#000>rise</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#0000cf;font-weight:700>2</span> <span style=color:#000>fall</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#0000cf;font-weight:700>5</span> <span style=color:#000>timeout</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#0000cf;font-weight:700>1000</span> <span style=color:#000>type</span><span style=color:#ce5c00;font-weight:700>=</span>http <span style=color:#000>default_down</span><span style=color:#ce5c00;font-weight:700>=</span>true<span style=color:#000;font-weight:700>;</span>
-        check_http_send <span style=color:#4e9a06>&#34;GET /health_check HTTP/1.0\r\n\r\n&#34;</span><span style=color:#000;font-weight:700>;</span> // 检测 URL
-        check_http_expect_alive http_2xx<span style=color:#000;font-weight:700>;</span> // 检测返回状态码为 <span style=color:#0000cf;font-weight:700>200</span> 时认为检测成功
-<span style=color:#ce5c00;font-weight:700>}</span>
-</code></pre></div><p>Nginx 按照上面的方式配置之后，你的业务服务器也要实现一个 <code>/health_check</code> 的接口，在这个接口中返回的 HTTP 状态码，这个返回的状态码可以存储在配置中心中，这样在变更状态码时，就不需要重启服务了（配置中心在第 33 节课中会讲到）。</p>
-<p>节点检测的功能，还能够帮助我们实现 Web 服务的优雅关闭。在 24 讲中介绍注册中心时，我曾经提到，服务的优雅关闭需要先切除流量再关闭服务，使用了注册中心之后，就可以先从注册中心中摘除节点，再重启服务，以便达到优雅关闭的目的。那么 Web 服务要如何实现优雅关闭呢？接下来，我来给你了解一下，有了节点检测功能之后，服务是如何启动和关闭的。</p>
-<p><strong>在服务刚刚启动时，</strong> 可以初始化默认的 HTTP 状态码是 500，这样 Nginx 就不会很快将这个服务节点标记为可用，也就可以等待服务中，依赖的资源初始化完成，避免服务初始启动时的波动。</p>
-<p><strong>在完全初始化之后，</strong> 再将 HTTP 状态码变更为 200，Nginx 经过两次探测后，就会标记服务为可用。在服务关闭时，也应该先将 HTTP 状态码变更为 500，等待 Nginx 探测将服务标记为不可用后，前端的流量也就不会继续发往这个服务节点。在等待服务正在处理的请求全部处理完毕之后，再对服务做重启，可以避免直接重启导致正在处理的请求失败的问题。 <strong>这是启动和关闭线上 Web 服务时的标准姿势，你可以在项目中参考使用。</strong></p>
-<h2 id=课程小结>课程小结</h2>
-<p>本节课，我带你了解了与负载均衡服务相关的一些知识点，以及在实际工作中的运用技巧。我想强调几个重点：</p>
-<ul>
-<li>网站负载均衡服务的部署，是以 LVS 承接入口流量，在应用服务器之前，部署 Nginx 做细化的流量分发，和故障节点检测。当然，如果你的网站的并发不高，也可以考虑不引入 LVS。</li>
-<li>负载均衡的策略可以优先选择动态策略，保证请求发送到性能最优的节点上；如果没有合适的动态策略，那么可以选择轮询的策略，让请求平均分配到所有的服务节点上。</li>
-<li>Nginx 可以引入 nginx_upstream_check_module，对后端服务做定期的存活检测，后端的服务节点在重启时，也要秉承着「先切流量后重启」的原则，尽量减少节点重启对于整体系统的影响。</li>
-</ul>
-<p>你可能会认为，像 Nginx、LVS 应该是运维所关心的组件，作为开发人员不用操心维护。 <strong>不过通过今天的学习你应该可以看到：</strong> 负载均衡服务是提升系统扩展性，和性能的重要组件，在高并发系统设计中，它发挥的作用是无法替代的。理解它的原理，掌握使用它的正确姿势，应该是每一个后端开发同学的必修课。</p>
-<style>.feedback--answer{display:inline-block}.feedback--answer-no{margin-left:1em}.feedback--response{display:none;margin-top:1em}.feedback--response__visible{display:block}</style>
-<div class=d-print-none>
-<h2 class=feedback--title>Feedback</h2>
-<p class=feedback--question>Was this page helpful?</p>
-<button class="btn btn-primary mb-4 feedback--answer feedback--answer-yes">Yes</button>
+</li></ol></nav><div class=td-content>
+<h1>CH26-分布式-负载均衡</h1><header class=article-meta>
+</header><p>在基础篇中，我提到了高并发系统设计的三个通用方法：缓存、异步和横向扩展，到目前为止，你接触到了缓存的使用姿势，也了解了，如何使用消息队列异步处理业务逻辑，那么本节课，我将带你了解一下，如何提升系统的横向扩展能力。</p><p>在之前的课程中，我也提到过提升系统横向扩展能力的一些案例。比如，08 讲提到，可以通过部署多个从库的方式，来提升数据库的扩展能力，从而提升数据库的查询性能，那么就需要借助组件，将查询数据库的请求，按照一些既定的策略分配到多个从库上，这是负载均衡服务器所起的作用，而我们一般使用 <strong>DNS 服务器</strong> 来承担这个角色。</p><p>不过在实际的工作中，你经常使用的负载均衡的组件应该算是 Nginx，它的作用是承接前端的 HTTP 请求，然后将它们按照多种策略，分发给后端的多个业务服务器上。这样，我们可以随时通过扩容业务服务器的方式，来抵挡突发的流量高峰。<strong>与 DNS 不同的是，Nginx 可以在域名和请求 URL 地址的层面做更细致的流量分配，也提供更复杂的负载均衡策略</strong> 。</p><p>你可能会想到，在微服务架构中，我们也会启动多个服务节点，来承接从用户端到应用服务器的请求，自然会需要一个负载均衡服务器，作为流量的入口，实现流量的分发。那么在微服务架构中，如何使用负载均衡服务器呢？</p><p>在回答这些问题之前，我先带你了解一下，常见的负载均衡服务器都有哪几类，因为这样，你就可以依据不同类型负载均衡服务器的特点做选择了。</p><h2 id=负载均衡服务器的种类>负载均衡服务器的种类</h2><p><strong>负载均衡的含义是：</strong> 将负载（访问的请求）「均衡」地分配到多个处理节点上。这样可以减少单个处理节点的请求量，提升整体系统的性能。</p><p>同时，负载均衡服务器作为流量入口，可以对请求方屏蔽服务节点的部署细节，实现对于业务方无感知的扩容。它就像交通警察，不断地疏散交通，将汽车引入合适的道路上。</p><p><strong>而在我看来，</strong> 负载均衡服务大体上可以分为两大类：一类是 <strong>代理类的负载均衡服务</strong> ；另一类是 <strong>客户端负载均衡服务</strong> 。</p><h3 id=代理类的负载均衡服务>代理类的负载均衡服务</h3><p>代理类的负载均衡服务，以单独的服务方式部署，所有的请求都要先经过负载均衡服务，在负载均衡服务中，选出一个合适的服务节点后，再由负载均衡服务，调用这个服务节点来实现流量的分发。</p><div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211209230553.png style=display:block;width:80% alt=NAME align=center> </div><p>由于这类服务需要承担全量的请求，所以对于性能的要求极高。代理类的负载均衡服务有很多开源实现，比较著名的有 LVS，Nginx 等等。LVS 在 OSI 网络模型中的第四层，传输层工作，所以 LVS 又可以称为四层负载；而 Nginx 运行在 OSI 网络模型中的第七层，应用层，所以又可以称它为七层负载（你可以回顾一下02 讲的内容）。</p><p>在项目的架构中，我们一般会同时部署 LVS 和 Nginx 来做 HTTP 应用服务的负载均衡。也就是说，在入口处部署 LVS，将流量分发到多个 Nginx 服务器上，再由 Nginx 服务器分发到应用服务器上， <strong>为什么这么做呢？</strong></p><p>主要和 LVS 和 Nginx 的特点有关，LVS 是在网络栈的四层做请求包的转发，请求包转发之后，由客户端和后端服务直接建立连接，后续的响应包不会再经过 LVS 服务器，所以相比 Nginx，性能会更高，也能够承担更高的并发。</p><p>可 LVS 缺陷是工作在四层，而请求的 URL 是七层的概念，不能针对 URL 做更细致地请求分发，而且 LVS 也没有提供探测后端服务是否存活的机制；而 Nginx 虽然比 LVS 的性能差很多，但也可以承担每秒几万次的请求，并且它在配置上更加灵活，还可以感知后端服务是否出现问题。</p><p>因此，LVS 适合在入口处，承担大流量的请求分发，而 Nginx 要部署在业务服务器之前做更细维度的请求分发。 <strong>我给你的建议是，</strong> 如果你的 QPS 在十万以内，那么可以考虑不引入 LVS 而直接使用 Nginx 作为唯一的负载均衡服务器，这样少维护一个组件，也会减少系统的维护成本。</p><p>不过这两个负载均衡服务适用于普通的 Web 服务，对于微服务架构来说，它们是不合适的。因为微服务架构中的服务节点存储在注册中心里，使用 LVS 就很难和注册中心交互，获取全量的服务节点列表。另外，一般微服务架构中，使用的是 RPC 协议而不是 HTTP 协议，所以 Nginx 也不能满足要求。</p><h3 id=客户端负载均衡服务>客户端负载均衡服务</h3><p><strong>所以，我们会使用另一类的负载均衡服务，客户端负载均衡服务，也就是把负载均衡的服务内嵌在 RPC 客户端中。</strong></p><p>它一般和客户端应用，部署在一个进程中，提供多种选择节点的策略，最终为客户端应用提供一个最佳的，可用的服务端节点。这类服务一般会结合注册中心来使用，注册中心提供服务节点的完整列表，客户端拿到列表之后使用负载均衡服务的策略选取一个合适的节点，然后将请求发到这个节点上。</p><div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211209230616.png style=display:block;width:80% alt=NAME align=center> </div><p>了解负载均衡服务的分类，是你学习负载均衡服务的第一步，接下来，你需要掌握负载均衡策略，这样一来，你在实际工作中，配置负载均衡服务的时候，可以对原理有更深刻的了解。</p><h2 id=常见的负载均衡策略有哪些>常见的负载均衡策略有哪些</h2><p>负载均衡策略从大体上来看可以分为两类：</p><ul>
+<li>一类是静态策略，也就是说负载均衡服务器在选择服务节点时，不会参考后端服务的实际运行的状态。</li><li>一类是动态策略，也就是说负载均衡服务器会依据后端服务的一些负载特性，来决定要选择哪一个服务节点。</li></ul><h3 id=静态策略>静态策略</h3><p>常见的静态策略有几种，其中使用最广泛的是 <strong>轮询的策略（RoundRobin，RR），</strong> 这种策略会记录上次请求后端服务的地址或者序号，然后在请求时，按照服务列表的顺序，请求下一个后端服务节点。伪代码如下：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=display:flex><span><span style=color:#000>AtomicInteger</span> <span style=color:#000>lastCounter</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>getLastCounter</span><span style=color:#ce5c00;font-weight:700>();</span><span style=color:#8f5902;font-style:italic>// 获取上次请求的服务节点的序号 
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic></span><span style=color:#000>List</span><span style=color:#ce5c00;font-weight:700>&lt;</span><span style=color:#000>String</span><span style=color:#ce5c00;font-weight:700>&gt;</span> <span style=color:#000>serverList</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>getServerList</span><span style=color:#ce5c00;font-weight:700>();</span> <span style=color:#8f5902;font-style:italic>// 获取服务列表
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic></span><span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>currentIndex</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>lastCounter</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>addAndGet</span><span style=color:#ce5c00;font-weight:700>();</span> <span style=color:#8f5902;font-style:italic>// 增加序列号
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic></span><span style=color:#204a87;font-weight:700>if</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>currentIndex</span> <span style=color:#ce5c00;font-weight:700>&gt;=</span> <span style=color:#000>serverList</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>size</span><span style=color:#ce5c00;font-weight:700>())</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>  <span style=color:#000>currentIndex</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#000>0</span><span style=color:#ce5c00;font-weight:700>;</span>
+</span></span><span style=display:flex><span><span style=color:#ce5c00;font-weight:700>}</span>
+</span></span><span style=display:flex><span><span style=color:#000>setLastCounter</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>currentIndex</span><span style=color:#ce5c00;font-weight:700>);</span>
+</span></span><span style=display:flex><span><span style=color:#204a87;font-weight:700>return</span> <span style=color:#000>serverList</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>get</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>currentIndex</span><span style=color:#ce5c00;font-weight:700>);</span>
+</span></span></code></pre></div><p>它其实是一种通用的策略，基本上，大部分的负载均衡服务器都支持。轮询的策略可以做到将请求尽量平均地分配到所有服务节点上，但是，它没有考虑服务节点的具体配置情况。比如，你有三个服务节点，其中一个服务节点的配置是 8 核 8G，另外两个节点的配置是 4 核 4G，那么如果使用轮询的方式来平均分配请求的话，8 核 8G 的节点分到的请求数量和 4 核 4G 的一样多，就不能发挥性能上的优势了</p><p>所以，我们考虑给节点加上权重值，比如给 8 核 8G 的机器配置权重为 2，那么就会给它分配双倍的流量， <strong>这种策略就是带有权重的轮询策略。</strong></p><p>除了这两种策略之外，目前开源的负载均衡服务还提供了很多静态策略：</p><ul>
+<li>Nginx 提供了 ip_hash 和 url_hash 算法；</li><li>LVS 提供了按照请求的源地址，和目的地址做 hash 的策略；</li><li>Dubbo 也提供了随机选取策略，以及一致性 hash 的策略。</li></ul><p><strong>但是在我看来，</strong> 轮询和带有权重的轮询策略，能够将请求尽量平均地分配到后端服务节点上，也就能够做到对于负载的均衡分配，在没有更好的动态策略之前，应该优先使用这两种策略，比如 Nginx 就会优先使用轮询的策略。</p><h3 id=动态策略>动态策略</h3><p>而目前开源的负载均衡服务中，也会提供一些动态策略，我强调一下它们的原理。</p><p>在负载均衡服务器上会收集对后端服务的调用信息，比如从负载均衡端到后端服务的活跃连接数，或者是调用的响应时间，然后从中选择连接数最少的服务，或者响应时间最短的后端服务。 <strong>我举几个具体的例子：</strong></p><ul>
+<li>Dubbo 提供的 LeastAcive 策略，就是优先选择活跃连接数最少的服务；</li><li>Spring Cloud 全家桶中的 Ribbon 提供了 WeightedResponseTimeRule 是使用响应时间，给每个服务节点计算一个权重，然后依据这个权重，来给调用方分配服务节点。</li></ul><p><strong>这些策略的思考点</strong> 是从调用方的角度出发，选择负载最小、资源最空闲的服务来调用，以期望能得到更高的服务调用性能，也就能最大化地使用服务器的空闲资源，请求也会响应地更迅速， <strong>所以，我建议你，</strong> 在实际开发中，优先考虑使用动态的策略。</p><p>到目前为止，你已经可以根据上面的分析，选择适合自己的负载均衡策略，并选择一个最优的服务节点， <strong>那么问题来了：</strong> 你怎么保证选择出来的这个节点，一定是一个可以正常服务的节点呢？如果你采用的是轮询的策略，选择出来的，是一个故障节点又要怎么办呢？所以，为了降低请求被分配到一个故障节点的几率，有些负载均衡服务器，还提供了对服务节点的故障检测功能。</p><h2 id=如何检测节点是否故障>如何检测节点是否故障</h2><p>24 讲中，我带你了解到，在微服务化架构中，服务节点会定期地向注册中心发送心跳包，这样注册中心就能够知晓服务节点是否故障，也就可以确认传递给负载均衡服务的节点，一定是可用的。</p><p>但对于 Nginx 来说， <strong>我们要如何保证配置的服务节点是可用的呢？</strong></p><p>这就要感谢淘宝开源的 Nginx 模块 <code>nginx_upstream_check_module</code> 了，这个模块可以让 Nginx 定期地探测后端服务的一个指定的接口，然后根据返回的状态码，来判断服务是否还存活。当探测不存活的次数达到一定阈值时，就自动将这个后端服务从负载均衡服务器中摘除。 <strong>它的配置样例如下：</strong></p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sh data-lang=sh><span style=display:flex><span>upstream server <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>        server 192.168.1.1:8080<span style=color:#000;font-weight:700>;</span>
+</span></span><span style=display:flex><span>        server 192.168.1.2:8080<span style=color:#000;font-weight:700>;</span>
+</span></span><span style=display:flex><span>        // 检测间隔为 <span style=color:#0000cf;font-weight:700>3</span> 秒，检测超时时间是 <span style=color:#0000cf;font-weight:700>1</span> 秒，使用 http 协议。如果连续失败次数达到 <span style=color:#0000cf;font-weight:700>5</span> 次就认为服务不可用；如果连续连续成功次数达到 <span style=color:#0000cf;font-weight:700>2</span> 次，则认为服务可用。后端服务刚启动时状态是不可用的
+</span></span><span style=display:flex><span>        check <span style=color:#000>interval</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#0000cf;font-weight:700>3000</span> <span style=color:#000>rise</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#0000cf;font-weight:700>2</span> <span style=color:#000>fall</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#0000cf;font-weight:700>5</span> <span style=color:#000>timeout</span><span style=color:#ce5c00;font-weight:700>=</span><span style=color:#0000cf;font-weight:700>1000</span> <span style=color:#000>type</span><span style=color:#ce5c00;font-weight:700>=</span>http <span style=color:#000>default_down</span><span style=color:#ce5c00;font-weight:700>=</span>true<span style=color:#000;font-weight:700>;</span>
+</span></span><span style=display:flex><span>        check_http_send <span style=color:#4e9a06>&#34;GET /health_check HTTP/1.0\r\n\r\n&#34;</span><span style=color:#000;font-weight:700>;</span> // 检测 URL
+</span></span><span style=display:flex><span>        check_http_expect_alive http_2xx<span style=color:#000;font-weight:700>;</span> // 检测返回状态码为 <span style=color:#0000cf;font-weight:700>200</span> 时认为检测成功
+</span></span><span style=display:flex><span><span style=color:#ce5c00;font-weight:700>}</span>
+</span></span></code></pre></div><p>Nginx 按照上面的方式配置之后，你的业务服务器也要实现一个 <code>/health_check</code> 的接口，在这个接口中返回的 HTTP 状态码，这个返回的状态码可以存储在配置中心中，这样在变更状态码时，就不需要重启服务了（配置中心在第 33 节课中会讲到）。</p><p>节点检测的功能，还能够帮助我们实现 Web 服务的优雅关闭。在 24 讲中介绍注册中心时，我曾经提到，服务的优雅关闭需要先切除流量再关闭服务，使用了注册中心之后，就可以先从注册中心中摘除节点，再重启服务，以便达到优雅关闭的目的。那么 Web 服务要如何实现优雅关闭呢？接下来，我来给你了解一下，有了节点检测功能之后，服务是如何启动和关闭的。</p><p><strong>在服务刚刚启动时，</strong> 可以初始化默认的 HTTP 状态码是 500，这样 Nginx 就不会很快将这个服务节点标记为可用，也就可以等待服务中，依赖的资源初始化完成，避免服务初始启动时的波动。</p><p><strong>在完全初始化之后，</strong> 再将 HTTP 状态码变更为 200，Nginx 经过两次探测后，就会标记服务为可用。在服务关闭时，也应该先将 HTTP 状态码变更为 500，等待 Nginx 探测将服务标记为不可用后，前端的流量也就不会继续发往这个服务节点。在等待服务正在处理的请求全部处理完毕之后，再对服务做重启，可以避免直接重启导致正在处理的请求失败的问题。 <strong>这是启动和关闭线上 Web 服务时的标准姿势，你可以在项目中参考使用。</strong></p><h2 id=课程小结>课程小结</h2><p>本节课，我带你了解了与负载均衡服务相关的一些知识点，以及在实际工作中的运用技巧。我想强调几个重点：</p><ul>
+<li>网站负载均衡服务的部署，是以 LVS 承接入口流量，在应用服务器之前，部署 Nginx 做细化的流量分发，和故障节点检测。当然，如果你的网站的并发不高，也可以考虑不引入 LVS。</li><li>负载均衡的策略可以优先选择动态策略，保证请求发送到性能最优的节点上；如果没有合适的动态策略，那么可以选择轮询的策略，让请求平均分配到所有的服务节点上。</li><li>Nginx 可以引入 nginx_upstream_check_module，对后端服务做定期的存活检测，后端的服务节点在重启时，也要秉承着「先切流量后重启」的原则，尽量减少节点重启对于整体系统的影响。</li></ul><p>你可能会认为，像 Nginx、LVS 应该是运维所关心的组件，作为开发人员不用操心维护。 <strong>不过通过今天的学习你应该可以看到：</strong> 负载均衡服务是提升系统扩展性，和性能的重要组件，在高并发系统设计中，它发挥的作用是无法替代的。理解它的原理，掌握使用它的正确姿势，应该是每一个后端开发同学的必修课。</p><style>.feedback--answer{display:inline-block}.feedback--answer-no{margin-left:1em}.feedback--response{display:none;margin-top:1em}.feedback--response__visible{display:block}</style><div class=d-print-none>
+<h2 class=feedback--title>Feedback</h2><p class=feedback--question>Was this page helpful?</p><button class="btn btn-primary mb-4 feedback--answer feedback--answer-yes">Yes</button>
 <button class="btn btn-primary mb-4 feedback--answer feedback--answer-no">No</button>
 <p class="feedback--response feedback--response-yes">
 Glad to hear it! Please <a href=https://github.com/infilos/infilos.com/issues/new>tell us how we can improve</a>.
-</p>
-<p class="feedback--response feedback--response-no">
+</p><p class="feedback--response feedback--response-no">
 Sorry to hear that. Please <a href=https://github.com/infilos/infilos.com/issues/new>tell us how we can improve</a>.
-</p>
-</div>
-<script>const yesButton=document.querySelector('.feedback--answer-yes'),noButton=document.querySelector('.feedback--answer-no'),yesResponse=document.querySelector('.feedback--response-yes'),noResponse=document.querySelector('.feedback--response-no'),disableButtons=()=>{yesButton.disabled=!0,noButton.disabled=!0},sendFeedback=b=>{if(typeof ga!='function')return;const a={command:'send',hitType:'event',category:'Helpful',action:'click',label:window.location.pathname,value:b};ga(a.command,a.hitType,a.category,a.action,a.label,a.value)};yesButton.addEventListener('click',()=>{yesResponse.classList.add('feedback--response__visible'),disableButtons(),sendFeedback(1)}),noButton.addEventListener('click',()=>{noResponse.classList.add('feedback--response__visible'),disableButtons(),sendFeedback(0)})</script>
+</p></div><script>const yesButton=document.querySelector(".feedback--answer-yes"),noButton=document.querySelector(".feedback--answer-no"),yesResponse=document.querySelector(".feedback--response-yes"),noResponse=document.querySelector(".feedback--response-no"),disableButtons=()=>{yesButton.disabled=!0,noButton.disabled=!0},sendFeedback=t=>{if(typeof ga!="function")return;const e={command:"send",hitType:"event",category:"Helpful",action:"click",label:window.location.pathname,value:t};ga(e.command,e.hitType,e.category,e.action,e.label,e.value)};yesButton.addEventListener("click",()=>{yesResponse.classList.add("feedback--response__visible"),disableButtons(),sendFeedback(1)}),noButton.addEventListener("click",()=>{noResponse.classList.add("feedback--response__visible"),disableButtons(),sendFeedback(0)})</script>
 <br>
-</div>
-</main>
-</div>
-</div>
-<footer class="bg-dark py-5 row d-print-none">
+</div></main></div></div><footer class="bg-dark py-5 row d-print-none">
 <div class="container-fluid mx-sm-5">
 <div class=row>
 <div class="col-6 col-sm-4 text-xs-center order-sm-2">
-</div>
-<div class="col-6 col-sm-4 text-right text-xs-center order-sm-3">
+</div><div class="col-6 col-sm-4 text-right text-xs-center order-sm-3">
 <ul class="list-inline mb-0">
 <li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Weibo aria-label=Weibo>
 <a class=text-white target=_blank rel="noopener noreferrer" href=https://weibo.com/u/3848950217>
 <i class="fab fa-weibo"></i>
 </a>
-</li>
-<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Twitter aria-label=Twitter>
+</li><li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Twitter aria-label=Twitter>
 <a class=text-white target=_blank rel="noopener noreferrer" href=https://twitter.com/zhange_zzg>
 <i class="fab fa-twitter"></i>
 </a>
-</li>
-<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title="Stack Overflow" aria-label="Stack Overflow">
+</li><li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title="Stack Overflow" aria-label="Stack Overflow">
 <a class=text-white target=_blank rel="noopener noreferrer" href=https://stackoverflow.com>
 <i class="fab fa-stack-overflow"></i>
 </a>
-</li>
-<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=GitHub aria-label=GitHub>
+</li><li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=GitHub aria-label=GitHub>
 <a class=text-white target=_blank rel="noopener noreferrer" href=https://github.com/infilos/infilos.com>
 <i class="fab fa-github"></i>
 </a>
-</li>
-</ul>
-</div>
-<div class="col-12 col-sm-4 text-center py-2 order-sm-2">
+</li></ul></div><div class="col-12 col-sm-4 text-center py-2 order-sm-2">
 <small class=text-white>&copy; 2022 infilos.com All Rights Reserved</small>
-</div>
-</div>
-</div>
-</footer>
-</div>
-<script src=/js/popper.min.js integrity=sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49 crossorigin=anonymous></script>
+</div></div></div></footer></div><script src=/js/popper.min.js integrity=sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49 crossorigin=anonymous></script>
 <script src=/js/bootstrap.min.js integrity=sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy crossorigin=anonymous></script>
-<script src=/js/main.min.5c74b870c6953931a705f390a49c7e4c0a842ec5c83b24354758dd674343ed0d.js integrity="sha256-XHS4cMaVOTGnBfOQpJx+TAqELsXIOyQ1R1jdZ0ND7Q0=" crossorigin=anonymous></script>
-</body>
-</html>
+<script src=/js/main.min.3f3f4f1e22307ccbb13271a98be2e4dbb8386b7e67c3d606db44d3d0649f485e.js integrity="sha256-Pz9PHiIwfMuxMnGpi+Lk27g4a35nw9YG20TT0GSfSF4=" crossorigin=anonymous></script>
+</body></html>

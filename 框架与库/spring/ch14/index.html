@@ -2,7 +2,7 @@
 <head>
 <meta charset=utf-8>
 <meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no">
-<meta name=generator content="Hugo 0.92.2">
+<meta name=generator content="Hugo 0.93.0">
 <meta name=ROBOTS content="INDEX, FOLLOW">
 <link rel="shortcut icon" href=/favicons/favicon.ico>
 <link rel=apple-touch-icon href=/favicons/apple-touch-icon-180x180.png sizes=180x180>
@@ -17,77 +17,75 @@
 <title>CH14-定义 Bean | infilos.com</title><meta property="og:title" content="CH14-定义 Bean">
 <meta property="og:description" content="1. XML 文件配置 Bean 1.1 构造器 这种方式是以前使用最多的方式，它默认使用了无参构造器创建bean。
 <bean id=&#34;personService&#34; class=&#34;com.sue.cache.service.test7.PersonService&#34;> </bean> 当然我们还可以使用有参的构造器，通过标签来完成配置。
-<bean id=&#34;personService&#34; class=&#34;com.sue.cache.service.test7.PersonService&#34;> <constructor-arg index=&#34;0&#34; value=&#34;susan&#34;></constructor-arg> <constructor-arg index=&#34;1&#34; ref=&#34;baseInfo&#34;></constructor-arg> </bean> 其中：
+<bean id=&#34;personService&#34; class=&#34;com.sue.cache.service.test7.PersonService&#34;>  <constructor-arg index=&#34;0&#34; value=&#34;susan&#34;></constructor-arg>  <constructor-arg index=&#34;1&#34; ref=&#34;baseInfo&#34;></constructor-arg> </bean> 其中：
  index表示下标，从0开始。 value表示常量值 ref表示引用另一个bean  1.2 setter 方法 除此之外，spring还提供了另外一种思路：通过setter方法设置bean所需参数，这种方式耦合性相对较低，比有参构造器使用更为广泛。
 先定义Person实体：
-@Data public class Person { private String name; private int age; } 它里面包含：成员变量name和age，getter/setter方法。
+@Data public class Person {  private String name;  private int age; } 它里面包含：成员变量name和age，getter/setter方法。
 然后在bean.xml文件中配置bean时，加上标签设置bean所需参数。
-<bean id=&#34;person&#34; class=&#34;com.sue.cache.service.test7.Person&#34;> <property name=&#34;name&#34; value=&#34;susan&#34;></constructor-arg> <property name=&#34;age&#34; value=&#34;18&#34;></constructor-arg> </bean> 1.3 静态工厂 这种方式的关键是需要定义一个工厂类，它里面包含一个创建bean的静态方法。例如：
-public class SusanBeanFactory { public static Person createPerson(String name, int age) { return new Person(name, age); } } 接下来定义Person类如下：">
+<bean id=&#34;person&#34; class=&#34;com.sue.cache.service.test7.Person&#34;>  <property name=&#34;name&#34; value=&#34;susan&#34;></constructor-arg>  <property name=&#34;age&#34; value=&#34;18&#34;></constructor-arg> </bean> 1.3 静态工厂 这种方式的关键是需要定义一个工厂类，它里面包含一个创建bean的静态方法。例如：
+public class SusanBeanFactory {  public static Person createPerson(String name, int age) {  return new Person(name, age);  } } 接下来定义Person类如下：">
 <meta property="og:type" content="article">
 <meta property="og:url" content="/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/spring/ch14/"><meta property="article:section" content="框架与库">
 <meta property="og:site_name" content="infilos.com">
 <meta itemprop=name content="CH14-定义 Bean">
 <meta itemprop=description content="1. XML 文件配置 Bean 1.1 构造器 这种方式是以前使用最多的方式，它默认使用了无参构造器创建bean。
 <bean id=&#34;personService&#34; class=&#34;com.sue.cache.service.test7.PersonService&#34;> </bean> 当然我们还可以使用有参的构造器，通过标签来完成配置。
-<bean id=&#34;personService&#34; class=&#34;com.sue.cache.service.test7.PersonService&#34;> <constructor-arg index=&#34;0&#34; value=&#34;susan&#34;></constructor-arg> <constructor-arg index=&#34;1&#34; ref=&#34;baseInfo&#34;></constructor-arg> </bean> 其中：
+<bean id=&#34;personService&#34; class=&#34;com.sue.cache.service.test7.PersonService&#34;>  <constructor-arg index=&#34;0&#34; value=&#34;susan&#34;></constructor-arg>  <constructor-arg index=&#34;1&#34; ref=&#34;baseInfo&#34;></constructor-arg> </bean> 其中：
  index表示下标，从0开始。 value表示常量值 ref表示引用另一个bean  1.2 setter 方法 除此之外，spring还提供了另外一种思路：通过setter方法设置bean所需参数，这种方式耦合性相对较低，比有参构造器使用更为广泛。
 先定义Person实体：
-@Data public class Person { private String name; private int age; } 它里面包含：成员变量name和age，getter/setter方法。
+@Data public class Person {  private String name;  private int age; } 它里面包含：成员变量name和age，getter/setter方法。
 然后在bean.xml文件中配置bean时，加上标签设置bean所需参数。
-<bean id=&#34;person&#34; class=&#34;com.sue.cache.service.test7.Person&#34;> <property name=&#34;name&#34; value=&#34;susan&#34;></constructor-arg> <property name=&#34;age&#34; value=&#34;18&#34;></constructor-arg> </bean> 1.3 静态工厂 这种方式的关键是需要定义一个工厂类，它里面包含一个创建bean的静态方法。例如：
-public class SusanBeanFactory { public static Person createPerson(String name, int age) { return new Person(name, age); } } 接下来定义Person类如下：">
+<bean id=&#34;person&#34; class=&#34;com.sue.cache.service.test7.Person&#34;>  <property name=&#34;name&#34; value=&#34;susan&#34;></constructor-arg>  <property name=&#34;age&#34; value=&#34;18&#34;></constructor-arg> </bean> 1.3 静态工厂 这种方式的关键是需要定义一个工厂类，它里面包含一个创建bean的静态方法。例如：
+public class SusanBeanFactory {  public static Person createPerson(String name, int age) {  return new Person(name, age);  } } 接下来定义Person类如下：">
 <meta itemprop=wordCount content="687">
 <meta itemprop=keywords content><meta name=twitter:card content="summary">
 <meta name=twitter:title content="CH14-定义 Bean">
 <meta name=twitter:description content="1. XML 文件配置 Bean 1.1 构造器 这种方式是以前使用最多的方式，它默认使用了无参构造器创建bean。
 <bean id=&#34;personService&#34; class=&#34;com.sue.cache.service.test7.PersonService&#34;> </bean> 当然我们还可以使用有参的构造器，通过标签来完成配置。
-<bean id=&#34;personService&#34; class=&#34;com.sue.cache.service.test7.PersonService&#34;> <constructor-arg index=&#34;0&#34; value=&#34;susan&#34;></constructor-arg> <constructor-arg index=&#34;1&#34; ref=&#34;baseInfo&#34;></constructor-arg> </bean> 其中：
+<bean id=&#34;personService&#34; class=&#34;com.sue.cache.service.test7.PersonService&#34;>  <constructor-arg index=&#34;0&#34; value=&#34;susan&#34;></constructor-arg>  <constructor-arg index=&#34;1&#34; ref=&#34;baseInfo&#34;></constructor-arg> </bean> 其中：
  index表示下标，从0开始。 value表示常量值 ref表示引用另一个bean  1.2 setter 方法 除此之外，spring还提供了另外一种思路：通过setter方法设置bean所需参数，这种方式耦合性相对较低，比有参构造器使用更为广泛。
 先定义Person实体：
-@Data public class Person { private String name; private int age; } 它里面包含：成员变量name和age，getter/setter方法。
+@Data public class Person {  private String name;  private int age; } 它里面包含：成员变量name和age，getter/setter方法。
 然后在bean.xml文件中配置bean时，加上标签设置bean所需参数。
-<bean id=&#34;person&#34; class=&#34;com.sue.cache.service.test7.Person&#34;> <property name=&#34;name&#34; value=&#34;susan&#34;></constructor-arg> <property name=&#34;age&#34; value=&#34;18&#34;></constructor-arg> </bean> 1.3 静态工厂 这种方式的关键是需要定义一个工厂类，它里面包含一个创建bean的静态方法。例如：
-public class SusanBeanFactory { public static Person createPerson(String name, int age) { return new Person(name, age); } } 接下来定义Person类如下：">
-<script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga('create','UA-123062585-1','auto'),ga('send','pageview'))</script>
+<bean id=&#34;person&#34; class=&#34;com.sue.cache.service.test7.Person&#34;>  <property name=&#34;name&#34; value=&#34;susan&#34;></constructor-arg>  <property name=&#34;age&#34; value=&#34;18&#34;></constructor-arg> </bean> 1.3 静态工厂 这种方式的关键是需要定义一个工厂类，它里面包含一个创建bean的静态方法。例如：
+public class SusanBeanFactory {  public static Person createPerson(String name, int age) {  return new Person(name, age);  } } 接下来定义Person类如下：">
+<script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga("create","UA-123062585-1","auto"),ga("send","pageview"))</script>
 <script async src=https://www.google-analytics.com/analytics.js></script>
 <link rel=preload href=/scss/main.min.847464b684a6e89d7276700a5c500c17ab494dd1755b2654a7b27d8b59e3347e.css as=style>
 <link href=/scss/main.min.847464b684a6e89d7276700a5c500c17ab494dd1755b2654a7b27d8b59e3347e.css rel=stylesheet integrity>
 <script src=/js/jquery-3.5.1.min.js integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin=anonymous></script>
-</head>
-<body class=td-page>
+</head><body class=td-page>
 <header>
-<nav class="js-navbar-scroll navbar navbar-expand navbar-dark flex-column flex-md-row td-navbar">
+<nav class="js-navbar-scroll navbar navbar-expand-lg navbar-dark td-navbar">
 <a class=navbar-brand href=/>
-<span class=navbar-logo><svg id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512" style="enable-background:new 0 0 512 512"><path style="fill:#ffc107" d="M432.384 143.616c-4.165-4.164-10.917-4.164-15.083.0l-60.352 60.352c-4.164 4.165-4.164 10.917.0 15.083 21.187 20.463 54.951 19.876 75.413-1.311 19.962-20.668 19.962-53.435.0-74.102L432.384 143.616z"/><path style="fill:#607d8b" d="M42.667 277.334c-5.891.003-10.669-4.771-10.672-10.662-.002-4.338 2.623-8.245 6.64-9.882l234.667-96c5.455-2.233 11.687.38 13.92 5.835s-.38 11.687-5.835 13.92l-234.667 96C45.433 277.069 44.056 277.337 42.667 277.334z"/><path style="fill:#546e7a" d="M391.552 56.448l-32-32C343.938 8.745 322.689-.059 300.544.0h-3.755c-46.082.024-83.432 37.374-83.456 83.456v3.755c-.053 22.138 8.75 43.377 24.448 58.987l32 32c4.165 4.164 10.917 4.164 15.083.0L391.531 71.531C395.701 67.372 395.71 60.62 391.552 56.448z"/><path style="fill:#607d8b" d="M160 469.334c-3.279.006-6.379-1.497-8.405-4.075L34.261 315.926c-3.635-4.636-2.823-11.341 1.813-14.976s11.341-2.823 14.976 1.813l117.333 149.333c3.629 4.641 2.809 11.344-1.832 14.973C164.681 468.533 162.375 469.329 160 469.334z"/><path style="fill:#455a64" d="M487.467 86.848l-3.669-3.648c-37.687-36.557-97.71-36.197-134.955.811l-51.413 51.413c-36.996 37.25-37.357 97.263-.811 134.955l3.584 3.669c1.7 2.457 4.671 3.706 7.616 3.2 2.831.005 5.548-1.115 7.552-3.115l172.181-172.181c4.189-4.143 4.226-10.896.083-15.085-.028-.028-.055-.056-.083-.083L487.467 86.848z"/><g><path style="fill:#ffc107" d="M501.333 192H480c-5.891.0-10.667-4.776-10.667-10.667s4.776-10.667 10.667-10.667h21.333c5.891.0 10.667 4.776 10.667 10.667S507.225 192 501.333 192z"/><path style="fill:#ffc107" d="M394.667 298.667c-5.891.0-10.667-4.776-10.667-10.667v-21.333c0-5.891 4.776-10.667 10.667-10.667 5.891.0 10.667 4.776 10.667 10.667V288C405.333 293.891 400.558 298.667 394.667 298.667z"/><path style="fill:#ffc107" d="M480 277.334c-2.831.005-5.548-1.115-7.552-3.115l-21.333-21.333c-4.093-4.237-3.975-10.99.262-15.083 4.134-3.993 10.687-3.993 14.821.0l21.333 21.333c4.159 4.172 4.148 10.926-.024 15.085C485.514 276.209 482.815 277.327 480 277.334z"/></g><g><path style="fill:#455a64" d="M266.667 448H96c-29.455.0-53.333 23.878-53.333 53.333.0 5.891 4.776 10.667 10.667 10.667h256c5.891.0 10.667-4.776 10.667-10.667C320 471.878 296.122 448 266.667 448z"/><circle style="fill:#455a64" cx="32" cy="288" r="32"/></g><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/></svg></span><span class=font-weight-bold>infilos.com</span>
+<span class=navbar-logo><svg id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512" style="enable-background:new 0 0 512 512"><path style="fill:#ffc107" d="M432.384 143.616c-4.165-4.164-10.917-4.164-15.083.0l-60.352 60.352c-4.164 4.165-4.164 10.917.0 15.083 21.187 20.463 54.951 19.876 75.413-1.311 19.962-20.668 19.962-53.435.0-74.102L432.384 143.616z"/><path style="fill:#607d8b" d="M42.667 277.334c-5.891.003-10.669-4.771-10.672-10.662-.002-4.338 2.623-8.245 6.64-9.882l234.667-96c5.455-2.233 11.687.38 13.92 5.835s-.38 11.687-5.835 13.92l-234.667 96C45.433 277.069 44.056 277.337 42.667 277.334z"/><path style="fill:#546e7a" d="M391.552 56.448l-32-32C343.938 8.745 322.689-.059 300.544.0h-3.755c-46.082.024-83.432 37.374-83.456 83.456v3.755c-.053 22.138 8.75 43.377 24.448 58.987l32 32c4.165 4.164 10.917 4.164 15.083.0L391.531 71.531C395.701 67.372 395.71 60.62 391.552 56.448z"/><path style="fill:#607d8b" d="M160 469.334c-3.279.006-6.379-1.497-8.405-4.075L34.261 315.926c-3.635-4.636-2.823-11.341 1.813-14.976s11.341-2.823 14.976 1.813l117.333 149.333c3.629 4.641 2.809 11.344-1.832 14.973C164.681 468.533 162.375 469.329 160 469.334z"/><path style="fill:#455a64" d="M487.467 86.848l-3.669-3.648c-37.687-36.557-97.71-36.197-134.955.811l-51.413 51.413c-36.996 37.25-37.357 97.263-.811 134.955l3.584 3.669c1.7 2.457 4.671 3.706 7.616 3.2 2.831.005 5.548-1.115 7.552-3.115l172.181-172.181c4.189-4.143 4.226-10.896.083-15.085-.028-.028-.055-.056-.083-.083L487.467 86.848z"/><g><path style="fill:#ffc107" d="M501.333 192H480c-5.891.0-10.667-4.776-10.667-10.667s4.776-10.667 10.667-10.667h21.333c5.891.0 10.667 4.776 10.667 10.667S507.225 192 501.333 192z"/><path style="fill:#ffc107" d="M394.667 298.667c-5.891.0-10.667-4.776-10.667-10.667v-21.333c0-5.891 4.776-10.667 10.667-10.667 5.891.0 10.667 4.776 10.667 10.667V288C405.333 293.891 400.558 298.667 394.667 298.667z"/><path style="fill:#ffc107" d="M480 277.334c-2.831.005-5.548-1.115-7.552-3.115l-21.333-21.333c-4.093-4.237-3.975-10.99.262-15.083 4.134-3.993 10.687-3.993 14.821.0l21.333 21.333c4.159 4.172 4.148 10.926-.024 15.085C485.514 276.209 482.815 277.327 480 277.334z"/></g><g><path style="fill:#455a64" d="M266.667 448H96c-29.455.0-53.333 23.878-53.333 53.333.0 5.891 4.776 10.667 10.667 10.667h256c5.891.0 10.667-4.776 10.667-10.667C320 471.878 296.122 448 266.667 448z"/><circle style="fill:#455a64" cx="32" cy="288" r="32"/></g><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/></svg></span>
+<span class=font-weight-bold>infilos.com</span>
 </a>
+<button class=navbar-toggler type=button data-toggle=collapse data-target=#navbarSupportedContent aria-controls=navbarSupportedContent aria-expanded=false aria-label="Toggle navigation">
+<span class=navbar-toggler-icon></span>
+</button>
 <div class="collapse navbar-collapse" id=navbarSupportedContent>
 <ul class="navbar-nav mr-auto">
 <li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86>
 <span>基础</span>
 </a>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80>
 <span>语言</span>
 </a>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93>
 <span>框架库</span>
 </a>
-</li>
-<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+</li><li class="nav-item dropdown" style=max-width:90px;min-width:10px>
 <a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
 分布式
 <span>+</span>
 </a>
 <div class=dropdown-menu aria-labelledby=navbarDropdown>
 <a class=dropdown-item href=/%e5%88%86%e5%b8%83%e5%bc%8f/base>基本构成</a>
-</div>
-</li>
-<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+</div></li><li class="nav-item dropdown" style=max-width:90px;min-width:10px>
 <a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
 大数据
 <span>+</span>
@@ -98,9 +96,7 @@ public class SusanBeanFactory { public static Person createPerson(String name, i
 <a class=dropdown-item href=/%e6%b6%88%e6%81%af%e7%b3%bb%e7%bb%9f>消息系统</a>
 <a class=dropdown-item href=/%e5%a4%84%e7%90%86%e7%b3%bb%e7%bb%9f>处理系统</a>
 <a class=dropdown-item href=/%e6%95%b0%e6%8d%ae%e6%b2%bb%e7%90%86>数据治理</a>
-</div>
-</li>
-<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+</div></li><li class="nav-item dropdown" style=max-width:90px;min-width:10px>
 <a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
 中后台
 <span>+</span>
@@ -110,38 +106,26 @@ public class SusanBeanFactory { public static Person createPerson(String name, i
 <a class=dropdown-item href=/%e7%94%a8%e6%88%b7%e7%b3%bb%e7%bb%9f>用户系统</a>
 <a class=dropdown-item href=/%e4%ba%a4%e4%ba%92%e7%95%8c%e9%9d%a2>交互界面</a>
 <a class=dropdown-item href=/%e4%b8%9a%e5%8a%a1%e7%b3%bb%e7%bb%9f>业务系统</a>
-</div>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</div></li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e6%a8%a1%e5%bc%8f%e6%9e%b6%e6%9e%84>
 <span>模式架构</span>
 </a>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e9%9d%a2%e8%af%95%e9%97%ae%e7%ad%94>
 <span>面试</span>
 </a>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e7%ae%a1%e7%90%86%e8%b7%af%e5%be%84>
 <span>管理</span>
 </a>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e5%bc%80%e6%ba%90%e9%a1%b9%e7%9b%ae>
 <span>开源</span>
 </a>
-</li>
-</ul>
-<div class="form-inline my-2 my-lg-0">
+</li></ul><div class="form-inline my-2 my-lg-0">
 <div class="nav-item nav-search-item my-2 my-md-0">
 <input type=search class="form-control td-search-input" placeholder="&#xf002; 站内搜索…" aria-label=站内搜索… autocomplete=off>
-</div>
-</div>
-</div>
-</nav>
-</header>
-<div class="container-fluid td-outer">
+</div></div></div></nav></header><div class="container-fluid td-outer">
 <div class=td-main>
 <div class="row flex-xl-nowrap">
 <aside class="col-12 col-md-3 col-xl-2 td-sidebar d-print-none">
@@ -151,10 +135,7 @@ public class SusanBeanFactory { public static Person createPerson(String name, i
 <input type=search class="form-control td-search-input" placeholder="&#xf002; 站内搜索…" aria-label=站内搜索… autocomplete=off>
 <button class="btn btn-link td-sidebar__toggle d-md-none p-0 ml-3 fas fa-bars" type=button data-toggle=collapse data-target=#td-section-nav aria-controls=td-docs-nav aria-expanded=false aria-label="Toggle section navigation">
 </button>
-</form>
-</div>
-<div id=content-desktop></div>
-<nav class="collapse td-sidebar-nav" id=td-section-nav>
+</form></div><div id=content-desktop></div><nav class="collapse td-sidebar-nav" id=td-section-nav>
 <ul class="td-sidebar-nav__section pr-md-3 ul-0">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e6a186e69eb6e4b88ee5ba93-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section tree-root" id=m-e6a186e69eb6e4b88ee5ba93><span>框架库</span></a>
@@ -204,9 +185,7 @@ public class SusanBeanFactory { public static Person createPerson(String name, i
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/spring/ch21/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93springch21><span>CH21-跨域问题</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a186e69eb6e4b88ee5ba93springch22-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/spring/ch22/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93springch22><span>CH22-SpEL表达式</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a186e69eb6e4b88ee5ba93spring-ioc-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a186e69eb6e4b88ee5ba93spring-ioc-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/spring-ioc/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a186e69eb6e4b88ee5ba93spring-ioc><span>Spring IOC</span></a>
 <ul class="ul-2 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93spring-iocch01-li>
@@ -225,18 +204,14 @@ public class SusanBeanFactory { public static Person createPerson(String name, i
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/spring-ioc/ch07/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93spring-iocch07><span>CH07-生命周期扩展</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93spring-iocch08-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/spring-ioc/ch08/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93spring-iocch08><span>CH08-控制加载顺序</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a186e69eb6e4b88ee5ba93spring-aop-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a186e69eb6e4b88ee5ba93spring-aop-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/spring-aop/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a186e69eb6e4b88ee5ba93spring-aop><span>Spring AOP</span></a>
 <ul class="ul-2 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93spring-aopch01-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/spring-aop/ch01/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93spring-aopch01><span>AOP 理论</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93spring-aopch02-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/spring-aop/ch02/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93spring-aopch02><span>AOP 实战</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a186e69eb6e4b88ee5ba93mybatis-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a186e69eb6e4b88ee5ba93mybatis-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/mybatis/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a186e69eb6e4b88ee5ba93mybatis><span>Mybatis</span></a>
 <ul class="ul-2 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93mybatisch01-li>
@@ -275,9 +250,7 @@ public class SusanBeanFactory { public static Person createPerson(String name, i
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/mybatis/ch17/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93mybatisch17><span>CH17-二级缓存原理</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93mybatisch18-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/mybatis/ch18/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93mybatisch18><span>CH18-性能优化</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a186e69eb6e4b88ee5ba93hikari-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a186e69eb6e4b88ee5ba93hikari-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/hikari/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a186e69eb6e4b88ee5ba93hikari><span>Hikari</span></a>
 <ul class="ul-2 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93hikarich01-li>
@@ -304,18 +277,14 @@ public class SusanBeanFactory { public static Person createPerson(String name, i
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/hikari/ch11/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93hikarich11><span>常见问题</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93hikarich12-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/hikari/ch12/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93hikarich12><span>扩展技术</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a186e69eb6e4b88ee5ba93unified-udf-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a186e69eb6e4b88ee5ba93unified-udf-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/unified-udf/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a186e69eb6e4b88ee5ba93unified-udf><span>Udf Modeling</span></a>
 <ul class="ul-2 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93unified-udftransport-at-linkedin-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/unified-udf/transport-at-linkedin/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93unified-udftransport-at-linkedin><span>Transport UDF at Linkedin</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93unified-udfflink-type-system-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/unified-udf/flink-type-system/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93unified-udfflink-type-system><span>Flink Type System</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a186e69eb6e4b88ee5ba93parboiled-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a186e69eb6e4b88ee5ba93parboiled-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/parboiled/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a186e69eb6e4b88ee5ba93parboiled><span>Parboiled</span></a>
 <ul class="ul-2 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93parboiledch01-motivation-li>
@@ -336,9 +305,7 @@ public class SusanBeanFactory { public static Person createPerson(String name, i
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/parboiled/ch08-scala-apis/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93parboiledch08-scala-apis><span>CH08-Scala APIs</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93parboiledch09-advanced-topics-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/parboiled/ch09-advanced-topics/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93parboiledch09-advanced-topics><span>CH09-Advanced Topics</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a186e69eb6e4b88ee5ba93netty-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a186e69eb6e4b88ee5ba93netty-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/netty/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a186e69eb6e4b88ee5ba93netty><span>Netty</span></a>
 <ul class="ul-2 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93nettych01-li>
@@ -371,9 +338,7 @@ public class SusanBeanFactory { public static Person createPerson(String name, i
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/netty/ch15/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93nettych15><span>CH15-EventLoop 与线程模型</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93nettych03-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/netty/ch03/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93nettych03><span></span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a186e69eb6e4b88ee5ba93reactor-netty-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a186e69eb6e4b88ee5ba93reactor-netty-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/reactor-netty/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a186e69eb6e4b88ee5ba93reactor-netty><span>Reactor Netty</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a186e69eb6e4b88ee5ba93thymeleaf-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/thymeleaf/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a186e69eb6e4b88ee5ba93thymeleaf><span>Thymeleaf</span></a>
@@ -400,550 +365,308 @@ public class SusanBeanFactory { public static Person createPerson(String name, i
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/thymeleaf/ch10/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93thymeleafch10><span>CH10-注释及注释块</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93thymeleafch11-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/thymeleaf/ch11/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93thymeleafch11><span>CH11-内联</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a186e69eb6e4b88ee5ba93spring-cloud-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a186e69eb6e4b88ee5ba93spring-cloud-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/spring-cloud/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a186e69eb6e4b88ee5ba93spring-cloud><span>Spring Cloud</span></a>
 <ul class="ul-2 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93spring-cloudch01-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/spring-cloud/ch01/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93spring-cloudch01><span>Gateway 请求过程</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a186e69eb6e4b88ee5ba93dubbo-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e6a186e69eb6e4b88ee5ba93dubbo-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/dubbo/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a186e69eb6e4b88ee5ba93dubbo><span>Dubbo</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e6a186e69eb6e4b88ee5ba93guava-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/guava/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e6a186e69eb6e4b88ee5ba93guava><span>Guava</span></a>
 <ul class="ul-2 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e6a186e69eb6e4b88ee5ba93guavaratelimiter-li>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/guava/ratelimiter/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e6a186e69eb6e4b88ee5ba93guavaratelimiter><span>RateLimiter</span></a>
-</li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-</nav>
-</div>
-</aside>
-<aside class="d-none d-xl-block col-xl-2 td-sidebar-toc d-print-none">
+</li></ul></li></ul></li></ul></nav></div></aside><aside class="d-none d-xl-block col-xl-2 td-sidebar-toc d-print-none">
 <div class="td-page-meta ml-2 pb-1 pt-2 mb-0">
 <a href=https://github.com/infilos/infilos.com/edit/master/content/zh/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93/spring/CH14.md target=_blank><i class="fa fa-edit fa-fw"></i> 编辑此页</a>
 <a href="https://github.com/infilos/infilos.com/new/master/content/zh/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93/spring/CH14.md?filename=change-me.md&value=---%0Atitle%3A+%22Long+Page+Title%22%0AlinkTitle%3A+%22Short+Nav+Title%22%0Aweight%3A+100%0Adescription%3A+%3E-%0A+++++Page+description+for+heading+and+indexes.%0A---%0A%0A%23%23+Heading%0A%0AEdit+this+template+to+create+your+new+page.%0A%0A%2A+Give+it+a+good+name%2C+ending+in+%60.md%60+-+e.g.+%60getting-started.md%60%0A%2A+Edit+the+%22front+matter%22+section+at+the+top+of+the+page+%28weight+controls+how+its+ordered+amongst+other+pages+in+the+same+directory%3B+lowest+number+first%29.%0A%2A+Add+a+good+commit+message+at+the+bottom+of+the+page+%28%3C80+characters%3B+use+the+extended+description+field+for+more+detail%29.%0A%2A+Create+a+new+branch+so+you+can+preview+your+new+file+and+request+a+review+via+Pull+Request.%0A" target=_blank><i class="fa fa-edit fa-fw"></i> 添加子页面</a>
 <a href="https://github.com/infilos/infilos.com/issues/new?title=CH14-%e5%ae%9a%e4%b9%89%20Bean" target=_blank><i class="fab fa-github fa-fw"></i> 提交文档问题</a>
 <a id=print href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/spring/_print/><i class="fa fa-print fa-fw"></i> 整节打印</a>
-</div>
-<div class=td-toc><nav id=TableOfContents>
+</div><div class=td-toc><nav id=TableOfContents>
 <ul>
 <li><a href=#1-xml-文件配置-bean>1. XML 文件配置 Bean</a>
 <ul>
-<li><a href=#11-构造器>1.1 构造器</a></li>
-<li><a href=#12-setter-方法>1.2 setter 方法</a></li>
-<li><a href=#13-静态工厂>1.3 静态工厂</a></li>
-<li><a href=#14-实例工厂方法>1.4 实例工厂方法</a></li>
-<li><a href=#15-factorybean>1.5 FactoryBean</a></li>
-</ul>
-</li>
-<li><a href=#2-component-注解声明-bean>2. @Component 注解声明 Bean</a></li>
-<li><a href=#3-javaconfig配置-bean>3. JavaConfig配置 Bean</a></li>
-<li><a href=#4-import-注解>4. @Import 注解</a>
+<li><a href=#11-构造器>1.1 构造器</a></li><li><a href=#12-setter-方法>1.2 setter 方法</a></li><li><a href=#13-静态工厂>1.3 静态工厂</a></li><li><a href=#14-实例工厂方法>1.4 实例工厂方法</a></li><li><a href=#15-factorybean>1.5 FactoryBean</a></li></ul></li><li><a href=#2-component-注解声明-bean>2. @Component 注解声明 Bean</a></li><li><a href=#3-javaconfig配置-bean>3. JavaConfig配置 Bean</a></li><li><a href=#4-import-注解>4. @Import 注解</a>
 <ul>
-<li><a href=#41-普通类>4.1 普通类</a></li>
-<li><a href=#42-configuration-类>4.2 Configuration 类</a></li>
-<li><a href=#43-importselector>4.3 ImportSelector</a></li>
-<li><a href=#44-importbeandefinitionregistrar>4.4 ImportBeanDefinitionRegistrar</a></li>
-</ul>
-</li>
-<li><a href=#5-postprocessor>5. PostProcessor</a></li>
-</ul>
-</nav></div>
-</aside>
-<main class="col-12 col-md-9 col-xl-8 pl-md-5" role=main>
+<li><a href=#41-普通类>4.1 普通类</a></li><li><a href=#42-configuration-类>4.2 Configuration 类</a></li><li><a href=#43-importselector>4.3 ImportSelector</a></li><li><a href=#44-importbeandefinitionregistrar>4.4 ImportBeanDefinitionRegistrar</a></li></ul></li><li><a href=#5-postprocessor>5. PostProcessor</a></li></ul></nav></div></aside><main class="col-12 col-md-9 col-xl-8 pl-md-5" role=main>
 <nav aria-label=breadcrumb class="d-none d-md-block d-print-none">
 <ol class="breadcrumb spb-1">
 <li class=breadcrumb-item>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/>框架库</a>
-</li>
-<li class=breadcrumb-item>
+</li><li class=breadcrumb-item>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/spring/>Spring</a>
-</li>
-<li class="breadcrumb-item active" aria-current=page>
+</li><li class="breadcrumb-item active" aria-current=page>
 <a href=/%E6%A1%86%E6%9E%B6%E4%B8%8E%E5%BA%93/spring/ch14/>CH14-定义 Bean</a>
-</li>
-</ol>
-</nav>
-<div class=td-content>
-<h1>CH14-定义 Bean</h1>
-<header class=article-meta>
-</header>
-<h2 id=1-xml-文件配置-bean>1. XML 文件配置 Bean</h2>
-<h3 id=11-构造器>1.1 构造器</h3>
-<p>这种方式是以前使用最多的方式，它默认使用了无参构造器创建bean。</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-xml data-lang=xml><span style=color:#204a87;font-weight:700>&lt;bean</span> <span style=color:#c4a000>id=</span><span style=color:#4e9a06>&#34;personService&#34;</span> <span style=color:#c4a000>class=</span><span style=color:#4e9a06>&#34;com.sue.cache.service.test7.PersonService&#34;</span><span style=color:#204a87;font-weight:700>&gt;</span>
-<span style=color:#204a87;font-weight:700>&lt;/bean&gt;</span>
-</code></pre></div><p>当然我们还可以使用有参的构造器，通过<constructor-arg>标签来完成配置。</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-xml data-lang=xml><span style=color:#204a87;font-weight:700>&lt;bean</span> <span style=color:#c4a000>id=</span><span style=color:#4e9a06>&#34;personService&#34;</span> <span style=color:#c4a000>class=</span><span style=color:#4e9a06>&#34;com.sue.cache.service.test7.PersonService&#34;</span><span style=color:#204a87;font-weight:700>&gt;</span>
-   <span style=color:#204a87;font-weight:700>&lt;constructor-arg</span> <span style=color:#c4a000>index=</span><span style=color:#4e9a06>&#34;0&#34;</span> <span style=color:#c4a000>value=</span><span style=color:#4e9a06>&#34;susan&#34;</span><span style=color:#204a87;font-weight:700>&gt;&lt;/constructor-arg&gt;</span>
-   <span style=color:#204a87;font-weight:700>&lt;constructor-arg</span> <span style=color:#c4a000>index=</span><span style=color:#4e9a06>&#34;1&#34;</span> <span style=color:#c4a000>ref=</span><span style=color:#4e9a06>&#34;baseInfo&#34;</span><span style=color:#204a87;font-weight:700>&gt;&lt;/constructor-arg&gt;</span>
-<span style=color:#204a87;font-weight:700>&lt;/bean&gt;</span>
-</code></pre></div><p>其中：</p>
-<ul>
-<li>index表示下标，从0开始。</li>
-<li>value表示常量值</li>
-<li>ref表示引用另一个bean</li>
-</ul>
-<h3 id=12-setter-方法>1.2 setter 方法</h3>
-<p>除此之外，spring还提供了另外一种思路：通过setter方法设置bean所需参数，这种方式耦合性相对较低，比有参构造器使用更为广泛。</p>
-<p>先定义Person实体：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#5c35cc;font-weight:700>@Data</span>
-<span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>Person</span> <span style=color:#ce5c00;font-weight:700>{</span>
-    <span style=color:#204a87;font-weight:700>private</span> <span style=color:#000>String</span> <span style=color:#000>name</span><span style=color:#ce5c00;font-weight:700>;</span>
-    <span style=color:#204a87;font-weight:700>private</span> <span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>age</span><span style=color:#ce5c00;font-weight:700>;</span>
-<span style=color:#ce5c00;font-weight:700>}</span>
-</code></pre></div><p>它里面包含：成员变量name和age，getter/setter方法。</p>
-<p>然后在bean.xml文件中配置bean时，加上<property>标签设置bean所需参数。</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-xml data-lang=xml><span style=color:#204a87;font-weight:700>&lt;bean</span> <span style=color:#c4a000>id=</span><span style=color:#4e9a06>&#34;person&#34;</span> <span style=color:#c4a000>class=</span><span style=color:#4e9a06>&#34;com.sue.cache.service.test7.Person&#34;</span><span style=color:#204a87;font-weight:700>&gt;</span>
-   <span style=color:#204a87;font-weight:700>&lt;property</span> <span style=color:#c4a000>name=</span><span style=color:#4e9a06>&#34;name&#34;</span> <span style=color:#c4a000>value=</span><span style=color:#4e9a06>&#34;susan&#34;</span><span style=color:#204a87;font-weight:700>&gt;&lt;/constructor-arg&gt;</span>
-   <span style=color:#204a87;font-weight:700>&lt;property</span> <span style=color:#c4a000>name=</span><span style=color:#4e9a06>&#34;age&#34;</span> <span style=color:#c4a000>value=</span><span style=color:#4e9a06>&#34;18&#34;</span><span style=color:#204a87;font-weight:700>&gt;&lt;/constructor-arg&gt;</span>
-<span style=color:#204a87;font-weight:700>&lt;/bean&gt;</span>
-</code></pre></div><h3 id=13-静态工厂>1.3 静态工厂</h3>
-<p>这种方式的关键是需要定义一个工厂类，它里面包含一个创建bean的静态方法。例如：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>SusanBeanFactory</span> <span style=color:#ce5c00;font-weight:700>{</span>
-    <span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>static</span> <span style=color:#000>Person</span> <span style=color:#000>createPerson</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>String</span> <span style=color:#000>name</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>age</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>
-        <span style=color:#204a87;font-weight:700>return</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>Person</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>name</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>age</span><span style=color:#ce5c00;font-weight:700>);</span>
-    <span style=color:#ce5c00;font-weight:700>}</span>
-<span style=color:#ce5c00;font-weight:700>}</span>
-</code></pre></div><p>接下来定义Person类如下：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#5c35cc;font-weight:700>@AllArgsConstructor</span>
-<span style=color:#5c35cc;font-weight:700>@NoArgsConstructor</span>
-<span style=color:#5c35cc;font-weight:700>@Data</span>
-<span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>Person</span> <span style=color:#ce5c00;font-weight:700>{</span>
-    <span style=color:#204a87;font-weight:700>private</span> <span style=color:#000>String</span> <span style=color:#000>name</span><span style=color:#ce5c00;font-weight:700>;</span>
-    <span style=color:#204a87;font-weight:700>private</span> <span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>age</span><span style=color:#ce5c00;font-weight:700>;</span>
-<span style=color:#ce5c00;font-weight:700>}</span>
-</code></pre></div><p>它里面包含：成员变量name和age，getter/setter方法，无参构造器和全参构造器。</p>
-<p>然后在bean.xml文件中配置bean时，通过<code>factory-method</code>参数指定静态工厂方法，同时通过<code>&lt;constructor-arg></code>设置相关参数。</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-xml data-lang=xml><span style=color:#204a87;font-weight:700>&lt;bean</span> <span style=color:#c4a000>class=</span><span style=color:#4e9a06>&#34;com.sue.cache.service.test7.SusanBeanFactory&#34;</span> <span style=color:#c4a000>factory-method=</span><span style=color:#4e9a06>&#34;createPerson&#34;</span><span style=color:#204a87;font-weight:700>&gt;</span>
-   <span style=color:#204a87;font-weight:700>&lt;constructor-arg</span> <span style=color:#c4a000>index=</span><span style=color:#4e9a06>&#34;0&#34;</span> <span style=color:#c4a000>value=</span><span style=color:#4e9a06>&#34;susan&#34;</span><span style=color:#204a87;font-weight:700>&gt;&lt;/constructor-arg&gt;</span>
-   <span style=color:#204a87;font-weight:700>&lt;constructor-arg</span> <span style=color:#c4a000>index=</span><span style=color:#4e9a06>&#34;1&#34;</span> <span style=color:#c4a000>value=</span><span style=color:#4e9a06>&#34;18&#34;</span><span style=color:#204a87;font-weight:700>&gt;&lt;/constructor-arg&gt;</span>
-<span style=color:#204a87;font-weight:700>&lt;/bean&gt;</span>
-</code></pre></div><h3 id=14-实例工厂方法>1.4 实例工厂方法</h3>
-<p>这种方式也需要定义一个工厂类，但里面包含非静态的创建bean的方法。</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>SusanBeanFactory</span> <span style=color:#ce5c00;font-weight:700>{</span>
-    <span style=color:#204a87;font-weight:700>public</span> <span style=color:#000>Person</span> <span style=color:#000>createPerson</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>String</span> <span style=color:#000>name</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>age</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>
-        <span style=color:#204a87;font-weight:700>return</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>Person</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>name</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>age</span><span style=color:#ce5c00;font-weight:700>);</span>
-    <span style=color:#ce5c00;font-weight:700>}</span>
-<span style=color:#ce5c00;font-weight:700>}</span>
-</code></pre></div><p>Person类跟上面一样，就不多说了。</p>
-<p>然后bean.xml文件中配置bean时，需要先配置工厂bean。然后在配置实例bean时，通过<code>factory-bean</code>参数指定该工厂bean的引用。</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-xml data-lang=xml><span style=color:#204a87;font-weight:700>&lt;bean</span> <span style=color:#c4a000>id=</span><span style=color:#4e9a06>&#34;susanBeanFactory&#34;</span> <span style=color:#c4a000>class=</span><span style=color:#4e9a06>&#34;com.sue.cache.service.test7.SusanBeanFactory&#34;</span><span style=color:#204a87;font-weight:700>&gt;</span>
-<span style=color:#204a87;font-weight:700>&lt;/bean&gt;</span>
-<span style=color:#204a87;font-weight:700>&lt;bean</span> <span style=color:#c4a000>factory-bean=</span><span style=color:#4e9a06>&#34;susanBeanFactory&#34;</span> <span style=color:#c4a000>factory-method=</span><span style=color:#4e9a06>&#34;createPerson&#34;</span><span style=color:#204a87;font-weight:700>&gt;</span>
-   <span style=color:#204a87;font-weight:700>&lt;constructor-arg</span> <span style=color:#c4a000>index=</span><span style=color:#4e9a06>&#34;0&#34;</span> <span style=color:#c4a000>value=</span><span style=color:#4e9a06>&#34;susan&#34;</span><span style=color:#204a87;font-weight:700>&gt;&lt;/constructor-arg&gt;</span>
-   <span style=color:#204a87;font-weight:700>&lt;constructor-arg</span> <span style=color:#c4a000>index=</span><span style=color:#4e9a06>&#34;1&#34;</span> <span style=color:#c4a000>value=</span><span style=color:#4e9a06>&#34;18&#34;</span><span style=color:#204a87;font-weight:700>&gt;&lt;/constructor-arg&gt;</span>
-<span style=color:#204a87;font-weight:700>&lt;/bean&gt;</span>
-</code></pre></div><h3 id=15-factorybean>1.5 FactoryBean</h3>
-<p>不知道大家有没有发现，上面的实例工厂方法每次都需要创建一个工厂类，不方面统一管理。</p>
-<p>这时我们可以使用<code>FactoryBean</code>接口。</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>UserFactoryBean</span> <span style=color:#204a87;font-weight:700>implements</span> <span style=color:#000>FactoryBean</span><span style=color:#ce5c00;font-weight:700>&lt;</span><span style=color:#000>User</span><span style=color:#ce5c00;font-weight:700>&gt;</span> <span style=color:#ce5c00;font-weight:700>{</span>
-    <span style=color:#5c35cc;font-weight:700>@Override</span>
-    <span style=color:#204a87;font-weight:700>public</span> <span style=color:#000>User</span> <span style=color:#000>getObject</span><span style=color:#ce5c00;font-weight:700>()</span> <span style=color:#204a87;font-weight:700>throws</span> <span style=color:#000>Exception</span> <span style=color:#ce5c00;font-weight:700>{</span>
-        <span style=color:#204a87;font-weight:700>return</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>User</span><span style=color:#ce5c00;font-weight:700>();</span>
-    <span style=color:#ce5c00;font-weight:700>}</span>
-
-    <span style=color:#5c35cc;font-weight:700>@Override</span>
-    <span style=color:#204a87;font-weight:700>public</span> <span style=color:#000>Class</span><span style=color:#ce5c00;font-weight:700>&lt;?&gt;</span> <span style=color:#000>getObjectType</span><span style=color:#ce5c00;font-weight:700>()</span> <span style=color:#ce5c00;font-weight:700>{</span>
-        <span style=color:#204a87;font-weight:700>return</span> <span style=color:#000>User</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>class</span><span style=color:#ce5c00;font-weight:700>;</span>
-    <span style=color:#ce5c00;font-weight:700>}</span>
-<span style=color:#ce5c00;font-weight:700>}</span>
-</code></pre></div><p>在它的<code>getObject</code>方法中可以实现我们自己的逻辑创建对象，并且在<code>getObjectType</code>方法中我们可以定义对象的类型。</p>
-<p>然后在bean.xml文件中配置bean时，只需像普通的bean一样配置即可。</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>&lt;bean id=&#34;userFactoryBean&#34; class=&#34;com.sue.async.service.UserFactoryBean&#34;&gt;
-&lt;/bean&gt;
-</code></pre></div><p>轻松搞定，so easy。</p>
-<blockquote>
-<p>注意：getBean(&ldquo;userFactoryBean&rdquo;);获取的是getObject方法中返回的对象。而getBean("&userFactoryBean");获取的才是真正的UserFactoryBean对象。</p>
-</blockquote>
-<p>我们通过上面五种方式，在bean.xml文件中把bean配置好之后，spring就会自动扫描和解析相应的标签，并且帮我们创建和实例化bean，然后放入spring容器中。</p>
-<p>虽说基于xml文件的方式配置bean，简单而且非常灵活，比较适合一些小项目。但如果遇到比较复杂的项目，则需要配置大量的bean，而且bean之间的关系错综复杂，这样久而久之会导致xml文件迅速膨胀，非常不利于bean的管理。</p>
-<h2 id=2-component-注解声明-bean>2. @Component 注解声明 Bean</h2>
-<p>为了解决bean太多时，xml文件过大，从而导致膨胀不好维护的问题。在spring2.5中开始支持：<code>@Component</code>、<code>@Repository</code>、<code>@Service</code>、<code>@Controller</code>等注解定义bean。</p>
-<p>如果你有看过这些注解的源码的话，就会惊奇得发现：其实后三种注解也是<code>@Component</code>。</p>
-<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211016130429.png style=display:block;width:80% alt=NAME align=center> </div>
-<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211016130437.png style=display:block;width:80% alt=NAME align=center> </div>
-<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211016130445.png style=display:block;width:80% alt=NAME align=center> </div>
-<p><code>@Component</code>系列注解的出现，给我们带来了极大的便利。我们不需要像以前那样在bean.xml文件中配置bean了，现在只用在类上加Component、Repository、Service、Controller，这四种注解中的任意一种，就能轻松完成bean的定义。</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#5c35cc;font-weight:700>@Service</span>
-<span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>PersonService</span> <span style=color:#ce5c00;font-weight:700>{</span>
-    <span style=color:#204a87;font-weight:700>public</span> <span style=color:#000>String</span> <span style=color:#000>get</span><span style=color:#ce5c00;font-weight:700>()</span> <span style=color:#ce5c00;font-weight:700>{</span>
-        <span style=color:#204a87;font-weight:700>return</span> <span style=color:#4e9a06>&#34;data&#34;</span><span style=color:#ce5c00;font-weight:700>;</span>
-    <span style=color:#ce5c00;font-weight:700>}</span>
-<span style=color:#ce5c00;font-weight:700>}</span>
-</code></pre></div><p>其实，这四种注解在功能上没有特别的区别，不过在业界有个不成文的约定：</p>
-<ul>
-<li>Controller 一般用在控制层</li>
-<li>Service 一般用在业务层</li>
-<li>Repository 一般用在数据层</li>
-<li>Component 一般用在公共组件上</li>
-</ul>
-<p>太棒了，简直一下子解放了我们的双手。</p>
-<p>不过，需要特别注意的是，通过这种<code>@Component</code>扫描注解的方式定义bean的前提是：<strong>需要先配置扫描路径</strong>。</p>
-<p>目前常用的配置扫描路径的方式如下：</p>
-<ol>
-<li>在applicationContext.xml文件中使用<code>&lt;context:component-scan></code>标签。例如：</li>
-</ol>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-xml data-lang=xml><span style=color:#204a87;font-weight:700>&lt;context:component-scan</span> <span style=color:#c4a000>base-package=</span><span style=color:#4e9a06>&#34;com.sue.cache&#34;</span> <span style=color:#204a87;font-weight:700>/&gt;</span>
-</code></pre></div><ol start=2>
-<li>在springboot的启动类上加上<code>@ComponentScan</code>注解，例如：</li>
-</ol>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#5c35cc;font-weight:700>@ComponentScan</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>basePackages</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#4e9a06>&#34;com.sue.cache&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
-<span style=color:#5c35cc;font-weight:700>@SpringBootApplication</span>
-<span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>Application</span> <span style=color:#ce5c00;font-weight:700>{</span>
-
-    <span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>static</span> <span style=color:#204a87;font-weight:700>void</span> <span style=color:#000>main</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>String</span><span style=color:#ce5c00;font-weight:700>[]</span> <span style=color:#000>args</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>
-        <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>SpringApplicationBuilder</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>Application</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>class</span><span style=color:#ce5c00;font-weight:700>).</span><span style=color:#c4a000>web</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>WebApplicationType</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>SERVLET</span><span style=color:#ce5c00;font-weight:700>).</span><span style=color:#c4a000>run</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>args</span><span style=color:#ce5c00;font-weight:700>);</span>
-    <span style=color:#ce5c00;font-weight:700>}</span>
-<span style=color:#ce5c00;font-weight:700>}</span>
-</code></pre></div><ol start=3>
-<li>直接在<code>SpringBootApplication</code>注解上加，它支持ComponentScan功能：</li>
-</ol>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#5c35cc;font-weight:700>@SpringBootApplication</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>scanBasePackages</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#4e9a06>&#34;com.sue.cache&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
-<span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>Application</span> <span style=color:#ce5c00;font-weight:700>{</span>
-    
-    <span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>static</span> <span style=color:#204a87;font-weight:700>void</span> <span style=color:#000>main</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>String</span><span style=color:#ce5c00;font-weight:700>[]</span> <span style=color:#000>args</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>
-        <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>SpringApplicationBuilder</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>Application</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>class</span><span style=color:#ce5c00;font-weight:700>).</span><span style=color:#c4a000>web</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>WebApplicationType</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>SERVLET</span><span style=color:#ce5c00;font-weight:700>).</span><span style=color:#c4a000>run</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>args</span><span style=color:#ce5c00;font-weight:700>);</span>
-    <span style=color:#ce5c00;font-weight:700>}</span>
-<span style=color:#ce5c00;font-weight:700>}</span>
-</code></pre></div><p>当然，如果你需要扫描的类跟springboot的入口类，在同一级或者子级的包下面，无需指定<code>scanBasePackages</code>参数，spring默认会从入口类的同一级或者子级的包去找。</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#5c35cc;font-weight:700>@SpringBootApplication</span>
-<span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>Application</span> <span style=color:#ce5c00;font-weight:700>{</span>
-    
-    <span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>static</span> <span style=color:#204a87;font-weight:700>void</span> <span style=color:#000>main</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>String</span><span style=color:#ce5c00;font-weight:700>[]</span> <span style=color:#000>args</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>
-        <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>SpringApplicationBuilder</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>Application</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>class</span><span style=color:#ce5c00;font-weight:700>).</span><span style=color:#c4a000>web</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>WebApplicationType</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>SERVLET</span><span style=color:#ce5c00;font-weight:700>).</span><span style=color:#c4a000>run</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>args</span><span style=color:#ce5c00;font-weight:700>);</span>
-    <span style=color:#ce5c00;font-weight:700>}</span>
-<span style=color:#ce5c00;font-weight:700>}</span>
-</code></pre></div><p>此外，除了上述四种<code>@Component</code>注解之外，springboot还增加了<code>@RestController</code>注解，它是一种特殊的<code>@Controller</code>注解，所以也是<code>@Component</code>注解。</p>
-<p><code>@RestController</code>还支持<code>@ResponseBody</code>注解的功能，即将接口响应数据的格式自动转换成json。</p>
-<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211016131535.png style=display:block;width:80% alt=NAME align=center> </div>
-<p><code>@Component</code>系列注解已经让我们爱不释手了，它目前是我们日常工作中最多的定义bean的方式。</p>
-<h2 id=3-javaconfig配置-bean>3. JavaConfig配置 Bean</h2>
-<p><code>@Component</code>系列注解虽说使用起来非常方便，但是bean的创建过程完全交给spring容器来完成，我们没办法自己控制。</p>
-<p>spring从3.0以后，开始支持JavaConfig的方式定义bean。它可以看做spring的配置文件，但并非真正的配置文件，我们需要通过编码java代码的方式创建bean。例如：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#5c35cc;font-weight:700>@Configuration</span>
-<span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>MyConfiguration</span> <span style=color:#ce5c00;font-weight:700>{</span>
-
-    <span style=color:#5c35cc;font-weight:700>@Bean</span>
-    <span style=color:#204a87;font-weight:700>public</span> <span style=color:#000>Person</span> <span style=color:#000>person</span><span style=color:#ce5c00;font-weight:700>()</span> <span style=color:#ce5c00;font-weight:700>{</span>
-        <span style=color:#204a87;font-weight:700>return</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>Person</span><span style=color:#ce5c00;font-weight:700>();</span>
-    <span style=color:#ce5c00;font-weight:700>}</span>
-<span style=color:#ce5c00;font-weight:700>}</span>
-</code></pre></div><p>在JavaConfig类上加<code>@Configuration</code>注解，相当于配置了<code>&lt;beans></code>标签。而在方法上加<code>@Bean</code>注解，相当于配置了<code>&lt;bean></code>标签。</p>
-<p>此外，springboot还引入了一些列的<code>@Conditional</code>注解，用来控制bean的创建。</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=color:#5c35cc;font-weight:700>@Configuration</span>
-<span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>MyConfiguration</span> <span style=color:#ce5c00;font-weight:700>{</span>
-
-    <span style=color:#5c35cc;font-weight:700>@ConditionalOnClass</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>Country</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>class</span><span style=color:#ce5c00;font-weight:700>)</span>
-    <span style=color:#5c35cc;font-weight:700>@Bean</span>
-    <span style=color:#204a87;font-weight:700>public</span> <span style=color:#000>Person</span> <span style=color:#000>person</span><span style=color:#ce5c00;font-weight:700>()</span> <span style=color:#ce5c00;font-weight:700>{</span>
-        <span style=color:#204a87;font-weight:700>return</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>Person</span><span style=color:#ce5c00;font-weight:700>();</span>
-    <span style=color:#ce5c00;font-weight:700>}</span>
-<span style=color:#ce5c00;font-weight:700>}</span>
-</code></pre></div><p><code>@ConditionalOnClass</code>注解的功能是当项目中存在Country类时，才实例化Person类。换句话说就是，如果项目中不存在Country类，就不实例化Person类。</p>
-<p>这个功能非常有用，相当于一个开关控制着Person类，只有满足一定条件才能实例化。</p>
-<p>spring中使用比较多的Conditional还有：</p>
-<ul>
-<li>ConditionalOnBean</li>
-<li>ConditionalOnProperty</li>
-<li>ConditionalOnMissingClass</li>
-<li>ConditionalOnMissingBean</li>
-<li>ConditionalOnWebApplication</li>
-</ul>
-<p>下面用一张图整体认识一下@Conditional家族:</p>
-<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211016131627.png style=display:block;width:80% alt=NAME align=center> </div>
-<h2 id=4-import-注解>4. @Import 注解</h2>
-<p>通过前面介绍的@Configuration和@Bean相结合的方式，我们可以通过代码定义bean。但这种方式有一定的局限性，它只能创建该类中定义的bean实例，不能创建其他类的bean实例，如果我们想创建其他类的bean实例该怎么办呢？</p>
-<p>这时可以使用<code>@Import</code>注解导入。</p>
-<h3 id=41-普通类>4.1 普通类</h3>
-<p>spring4.2之后<code>@Import</code>注解可以实例化普通类的bean实例。例如：</p>
-<p>先定义了Role类：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>@Data
-public class Role {
-    private Long id;
-    private String name;
-}
-</code></pre></div><p>接下来使用@Import注解导入Role类：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>@Import(Role.class)
-@Configuration
-public class MyConfig {
-}
-</code></pre></div><p>然后在调用的地方通过<code>@Autowired</code>注解注入所需的bean。</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>@RequestMapping(&#34;/&#34;)
-@RestController
-public class TestController {
-
-    @Autowired
-    private Role role;
-
-    @GetMapping(&#34;/test&#34;)
-    public String test() {
-        System.out.println(role);
-        return &#34;test&#34;;
-    }
-}
-</code></pre></div><p>聪明的你可能会发现，我没有在任何地方定义过Role的bean，但spring却能自动创建该类的bean实例，这是为什么呢？</p>
-<p>这也许正是<code>@Import</code>注解的强大之处。</p>
-<p>此时，有些朋友可能会问：<code>@Import</code>注解能定义单个类的bean，但如果有多个类需要定义bean该怎么办呢？</p>
-<p>恭喜你，这是个好问题，因为<code>@Import</code>注解也支持。</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>@Import({Role.class, User.class})
-@Configuration
-public class MyConfig {
-}
-</code></pre></div><p>甚至，如果你想偷懒，不想写这种<code>MyConfig</code>类，springboot也欢迎。</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>@Import({Role.class, User.class})
-@SpringBootApplication(exclude = {DataSourceAutoConfiguration.class,
-        DataSourceTransactionManagerAutoConfiguration.class})
-public class Application {
-
-    public static void main(String[] args) {
-        new SpringApplicationBuilder(Application.class).web(WebApplicationType.SERVLET).run(args);
-    }
-}
-</code></pre></div><p>可以将@Import加到springboot的启动类上。</p>
-<p>这样也能生效？</p>
-<p>springboot的启动类一般都会加@SpringBootApplication注解，该注解上加了@SpringBootConfiguration注解。</p>
-<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211016131751.png style=display:block;width:80% alt=NAME align=center> </div>
-<p>而@SpringBootConfiguration注解，上面又加了@Configuration注解</p>
-<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211016131808.png style=display:block;width:80% alt=NAME align=center> </div>
-<p>所以，springboot启动类本身带有@Configuration注解的功能。</p>
-<h3 id=42-configuration-类>4.2 Configuration 类</h3>
-<p>上面介绍了@Import注解导入普通类的方法，它同时也支持导入Configuration类。</p>
-<p>先定义一个Configuration类：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>@Configuration
-public class MyConfig2 {
-
-    @Bean
-    public User user() {
-        return  new User();
-    }
-
-    @Bean
-    public Role role() {
-        return new Role();
-    }
-}
-</code></pre></div><p>然后在另外一个Configuration类中引入前面的Configuration类：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>@Import({MyConfig2.class})
-@Configuration
-public class MyConfig {
-}
-</code></pre></div><p>这种方式，如果MyConfig2类已经在spring指定的扫描目录或者子目录下，则MyConfig类会显得有点多余。因为MyConfig2类本身就是一个配置类，它里面就能定义bean。</p>
-<p>但如果MyConfig2类不在指定的spring扫描目录或者子目录下，则通过MyConfig类的导入功能，也能把MyConfig2类识别成配置类。这就有点厉害了喔。</p>
-<p><strong>其实下面还有更高端的玩法</strong>。</p>
-<p>swagger作为一个优秀的文档生成框架，在spring项目中越来越受欢迎。接下来，我们以swagger2为例，介绍一下它是如何导入相关类的。</p>
-<p>众所周知，我们引入swagger相关jar包之后，只需要在springboot的启动类上加上<code>@EnableSwagger2</code>注解，就能开启swagger的功能。</p>
-<p>其中@EnableSwagger2注解中导入了Swagger2DocumentationConfiguration类。</p>
-<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211016131842.png style=display:block;width:80% alt=NAME align=center> </div>
-<p>该类是一个Configuration类，它又导入了另外两个类：</p>
-<ul>
-<li>SpringfoxWebMvcConfiguration</li>
-<li>SwaggerCommonConfiguration</li>
-</ul>
-<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211016131908.png style=display:block;width:80% alt=NAME align=center> </div>
-<p>SpringfoxWebMvcConfiguration类又会导入新的Configuration类，并且通过@ComponentScan注解扫描了一些其他的路径。</p>
-<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211016131921.png style=display:block;width:80% alt=NAME align=center> </div>
-<p>SwaggerCommonConfiguration同样也通过@ComponentScan注解扫描了一些额外的路径。</p>
-<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211016131934.png style=display:block;width:80% alt=NAME align=center> </div>
-<p>如此一来，我们通过一个简单的<code>@EnableSwagger2</code>注解，就能轻松的导入swagger所需的一系列bean，并且拥有swagger的功能。</p>
-<h3 id=43-importselector>4.3 ImportSelector</h3>
-<p>上面提到的Configuration类，它的功能非常强大。但怎么说呢，它不太适合加复杂的判断条件，根据某些条件定义这些bean，根据另外的条件定义那些bean。</p>
-<p>那么，这种需求该怎么实现呢？</p>
-<p>这时就可以使用<code>ImportSelector</code>接口了。</p>
-<p>首先定义一个类实现<code>ImportSelector</code>接口：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>public class DataImportSelector implements ImportSelector {
-    @Override
-    public String[] selectImports(AnnotationMetadata importingClassMetadata) {
-        return new String[]{&#34;com.sue.async.service.User&#34;, &#34;com.sue.async.service.Role&#34;};
-    }
-}
-</code></pre></div><p>重写<code>selectImports</code>方法，在该方法中指定需要定义bean的类名，注意要包含完整路径，而非相对路径。</p>
-<p>然后在MyConfig类上@Import导入这个类即可：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>@Import({DataImportSelector.class})
-@Configuration
-public class MyConfig {
-}
-</code></pre></div><p>朋友们是不是又发现了一个新大陆？</p>
-<p>不过，这个注解还有更牛逼的用途。</p>
-<p>@EnableAutoConfiguration注解中导入了AutoConfigurationImportSelector类，并且里面包含系统参数名称：<code>spring.boot.enableautoconfiguration</code>。</p>
-<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211016132003.png style=display:block;width:80% alt=NAME align=center> </div>
-<p>AutoConfigurationImportSelector类实现了<code>ImportSelector</code>接口。</p>
-<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211016132017.png style=display:block;width:80% alt=NAME align=center> </div>
-<p>并且重写了<code>selectImports</code>方法，该方法会根据某些注解去找所有需要创建bean的类名，然后返回这些类名。其中在查找这些类名之前，先调用isEnabled方法，判断是否需要继续查找。</p>
-<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211016132034.png style=display:block;width:80% alt=NAME align=center> </div>
-<p>该方法会根据ENABLED_OVERRIDE_PROPERTY的值来作为判断条件。</p>
-<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211016132048.png style=display:block;width:80% alt=NAME align=center> </div>
-<p>而这个值就是<code>spring.boot.enableautoconfiguration</code>。</p>
-<p>换句话说，这里能根据系统参数控制bean是否需要被实例化，优秀。</p>
-<p>我个人认为实现ImportSelector接口的好处主要有以下两点：</p>
-<ol>
-<li>把某个功能的相关类，可以放到一起，方面管理和维护。</li>
-<li>重写selectImports方法时，能够根据条件判断某些类是否需要被实例化，或者某个条件实例化这些bean，其他的条件实例化那些bean等。我们能够非常灵活的定制化bean的实例化。</li>
-</ol>
-<h3 id=44-importbeandefinitionregistrar>4.4 ImportBeanDefinitionRegistrar</h3>
-<p>我们通过上面的这种方式，确实能够非常灵活的自定义bean。</p>
-<p>但它的自定义能力，还是有限的，它没法自定义bean的名称和作用域等属性。</p>
-<p>有需求，就有解决方案。</p>
-<p>接下来，我们一起看看<code>ImportBeanDefinitionRegistrar</code>接口的神奇之处。</p>
-<p>先定义CustomImportSelector类实现ImportBeanDefinitionRegistrar接口：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>public class CustomImportSelector implements ImportBeanDefinitionRegistrar {
-
-    @Override
-    public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry) {
-        RootBeanDefinition roleBeanDefinition = new RootBeanDefinition(Role.class);
-        registry.registerBeanDefinition(&#34;role&#34;, roleBeanDefinition);
-
-        RootBeanDefinition userBeanDefinition = new RootBeanDefinition(User.class);
-        userBeanDefinition.setScope(ConfigurableBeanFactory.SCOPE_PROTOTYPE);
-        registry.registerBeanDefinition(&#34;user&#34;, userBeanDefinition);
-    }
-}
-</code></pre></div><p>重写<code>registerBeanDefinitions</code>方法，在该方法中我们可以获取<code>BeanDefinitionRegistry</code>对象，通过它去注册bean。不过在注册bean之前，我们先要创建BeanDefinition对象，它里面可以自定义bean的名称、作用域等很多参数。</p>
-<p>然后在MyConfig类上导入上面的类：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>@Import({CustomImportSelector.class})
-@Configuration
-public class MyConfig {
-}
-</code></pre></div><p>我们所熟悉的fegin功能，就是使用ImportBeanDefinitionRegistrar接口实现的：</p>
-<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211016132115.png style=display:block;width:80% alt=NAME align=center> </div>
-<h2 id=5-postprocessor>5. PostProcessor</h2>
-<p>除此之外，spring还提供了专门注册bean的接口：<code>BeanDefinitionRegistryPostProcessor</code>。</p>
-<p>该接口的方法postProcessBeanDefinitionRegistry上有这样一段描述：</p>
-<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211016132141.png style=display:block;width:80% alt=NAME align=center> </div>
-<p>修改应用程序上下文的内部bean定义注册表标准初始化。所有常规bean定义都将被加载，但是还没有bean被实例化。这允许进一步添加在下一个后处理阶段开始之前定义bean。</p>
-<p>如果用这个接口来定义bean，我们要做的事情就变得非常简单了。只需定义一个类实现<code>BeanDefinitionRegistryPostProcessor</code>接口。</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>@Component
-public class MyRegistryPostProcessor implements BeanDefinitionRegistryPostProcessor {
-    @Override
-    public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) throws BeansException {
-        RootBeanDefinition roleBeanDefinition = new RootBeanDefinition(Role.class);
-        registry.registerBeanDefinition(&#34;role&#34;, roleBeanDefinition);
-
-        RootBeanDefinition userBeanDefinition = new RootBeanDefinition(User.class);
-        userBeanDefinition.setScope(ConfigurableBeanFactory.SCOPE_PROTOTYPE);
-        registry.registerBeanDefinition(&#34;user&#34;, userBeanDefinition);
-    }
-
-    @Override
-    public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
-    }
-}
-</code></pre></div><p>重写<code>postProcessBeanDefinitionRegistry</code>方法，在该方法中能够获取<code>BeanDefinitionRegistry</code>对象，它负责bean的注册工作。</p>
-<p>不过细心的朋友可能会发现，里面还多了一个<code>postProcessBeanFactory</code>方法，没有做任何实现。</p>
-<p>这个方法其实是它的父接口：<code>BeanFactoryPostProcessor</code>里的方法。</p>
-<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211016132158.png style=display:block;width:80% alt=NAME align=center> </div>
-<p>在应用程序上下文的标准bean工厂之后修改其内部bean工厂初始化。所有bean定义都已加载，但没有bean将被实例化。这允许重写或添加属性甚至可以初始化bean。</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>@Component
-public class MyPostProcessor implements BeanFactoryPostProcessor {
-
-    @Override
-    public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
-        DefaultListableBeanFactory registry = (DefaultListableBeanFactory)beanFactory;
-        RootBeanDefinition roleBeanDefinition = new RootBeanDefinition(Role.class);
-        registry.registerBeanDefinition(&#34;role&#34;, roleBeanDefinition);
-
-        RootBeanDefinition userBeanDefinition = new RootBeanDefinition(User.class);
-        userBeanDefinition.setScope(ConfigurableBeanFactory.SCOPE_PROTOTYPE);
-        registry.registerBeanDefinition(&#34;user&#34;, userBeanDefinition);
-    }
-}
-</code></pre></div><p>既然这两个接口都能注册bean，那么他们有什么区别？</p>
-<ul>
-<li>BeanDefinitionRegistryPostProcessor 更侧重于bean的注册</li>
-<li>BeanFactoryPostProcessor 更侧重于对已经注册的bean的属性进行修改，虽然也可以注册bean。</li>
-</ul>
-<p>此时，有些朋友可能会问：既然拿到BeanDefinitionRegistry对象就能注册bean，那通过BeanFactoryAware的方式是不是也能注册bean呢？</p>
-<p>从下面这张图能够看出DefaultListableBeanFactory就实现了BeanDefinitionRegistry接口。</p>
-<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211016132211.png style=display:block;width:80% alt=NAME align=center> </div>
-<p>这样一来，我们如果能够获取DefaultListableBeanFactory对象的实例，然后调用它的注册方法，不就可以注册bean了？</p>
-<p>说时迟那时快，定义一个类实现<code>BeanFactoryAware</code>接口：</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback>@Component
-public class BeanFactoryRegistry implements BeanFactoryAware {
-    @Override
-    public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
-        DefaultListableBeanFactory registry = (DefaultListableBeanFactory) beanFactory;
-        RootBeanDefinition rootBeanDefinition = new RootBeanDefinition(User.class);
-        registry.registerBeanDefinition(&#34;user&#34;, rootBeanDefinition);
-
-        RootBeanDefinition userBeanDefinition = new RootBeanDefinition(User.class);
-        userBeanDefinition.setScope(ConfigurableBeanFactory.SCOPE_PROTOTYPE);
-        registry.registerBeanDefinition(&#34;user&#34;, userBeanDefinition);
-    }
-}
-</code></pre></div><p>重写<code>setBeanFactory</code>方法，在该方法中能够获取BeanFactory对象，它能够强制转换成DefaultListableBeanFactory对象，然后通过该对象的实例注册bean。</p>
-<p>当你满怀喜悦的运行项目时，发现竟然报错了：</p>
-<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211016132243.png style=display:block;width:80% alt=NAME align=center> </div>
-<p>为什么会报错？</p>
-<p>spring中bean的创建过程顺序大致如下：</p>
-<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211016132258.png style=display:block;width:30% alt=NAME align=center> </div>
-<p><code>BeanFactoryAware</code>接口是在bean创建成功，并且完成依赖注入之后，在真正初始化之前才被调用的。在这个时候去注册bean意义不大，因为这个接口是给我们获取bean的，并不建议去注册bean，会引发很多问题。</p>
-<blockquote>
-<p>此外，ApplicationContextRegistry和ApplicationListener接口也有类似的问题，我们可以用他们获取bean，但不建议用它们注册bean。</p>
-</blockquote>
-<style>.feedback--answer{display:inline-block}.feedback--answer-no{margin-left:1em}.feedback--response{display:none;margin-top:1em}.feedback--response__visible{display:block}</style>
-<div class=d-print-none>
-<h2 class=feedback--title>Feedback</h2>
-<p class=feedback--question>Was this page helpful?</p>
-<button class="btn btn-primary mb-4 feedback--answer feedback--answer-yes">Yes</button>
+</li></ol></nav><div class=td-content>
+<h1>CH14-定义 Bean</h1><header class=article-meta>
+</header><h2 id=1-xml-文件配置-bean>1. XML 文件配置 Bean</h2><h3 id=11-构造器>1.1 构造器</h3><p>这种方式是以前使用最多的方式，它默认使用了无参构造器创建bean。</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-xml data-lang=xml><span style=display:flex><span><span style=color:#204a87;font-weight:700>&lt;bean</span> <span style=color:#c4a000>id=</span><span style=color:#4e9a06>&#34;personService&#34;</span> <span style=color:#c4a000>class=</span><span style=color:#4e9a06>&#34;com.sue.cache.service.test7.PersonService&#34;</span><span style=color:#204a87;font-weight:700>&gt;</span>
+</span></span><span style=display:flex><span><span style=color:#204a87;font-weight:700>&lt;/bean&gt;</span>
+</span></span></code></pre></div><p>当然我们还可以使用有参的构造器，通过<constructor-arg>标签来完成配置。</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-xml data-lang=xml><span style=display:flex><span><span style=color:#204a87;font-weight:700>&lt;bean</span> <span style=color:#c4a000>id=</span><span style=color:#4e9a06>&#34;personService&#34;</span> <span style=color:#c4a000>class=</span><span style=color:#4e9a06>&#34;com.sue.cache.service.test7.PersonService&#34;</span><span style=color:#204a87;font-weight:700>&gt;</span>
+</span></span><span style=display:flex><span>   <span style=color:#204a87;font-weight:700>&lt;constructor-arg</span> <span style=color:#c4a000>index=</span><span style=color:#4e9a06>&#34;0&#34;</span> <span style=color:#c4a000>value=</span><span style=color:#4e9a06>&#34;susan&#34;</span><span style=color:#204a87;font-weight:700>&gt;&lt;/constructor-arg&gt;</span>
+</span></span><span style=display:flex><span>   <span style=color:#204a87;font-weight:700>&lt;constructor-arg</span> <span style=color:#c4a000>index=</span><span style=color:#4e9a06>&#34;1&#34;</span> <span style=color:#c4a000>ref=</span><span style=color:#4e9a06>&#34;baseInfo&#34;</span><span style=color:#204a87;font-weight:700>&gt;&lt;/constructor-arg&gt;</span>
+</span></span><span style=display:flex><span><span style=color:#204a87;font-weight:700>&lt;/bean&gt;</span>
+</span></span></code></pre></div><p>其中：</p><ul>
+<li>index表示下标，从0开始。</li><li>value表示常量值</li><li>ref表示引用另一个bean</li></ul><h3 id=12-setter-方法>1.2 setter 方法</h3><p>除此之外，spring还提供了另外一种思路：通过setter方法设置bean所需参数，这种方式耦合性相对较低，比有参构造器使用更为广泛。</p><p>先定义Person实体：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=display:flex><span><span style=color:#5c35cc;font-weight:700>@Data</span>
+</span></span><span style=display:flex><span><span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>Person</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>    <span style=color:#204a87;font-weight:700>private</span> <span style=color:#000>String</span> <span style=color:#000>name</span><span style=color:#ce5c00;font-weight:700>;</span>
+</span></span><span style=display:flex><span>    <span style=color:#204a87;font-weight:700>private</span> <span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>age</span><span style=color:#ce5c00;font-weight:700>;</span>
+</span></span><span style=display:flex><span><span style=color:#ce5c00;font-weight:700>}</span>
+</span></span></code></pre></div><p>它里面包含：成员变量name和age，getter/setter方法。</p><p>然后在bean.xml文件中配置bean时，加上<property>标签设置bean所需参数。</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-xml data-lang=xml><span style=display:flex><span><span style=color:#204a87;font-weight:700>&lt;bean</span> <span style=color:#c4a000>id=</span><span style=color:#4e9a06>&#34;person&#34;</span> <span style=color:#c4a000>class=</span><span style=color:#4e9a06>&#34;com.sue.cache.service.test7.Person&#34;</span><span style=color:#204a87;font-weight:700>&gt;</span>
+</span></span><span style=display:flex><span>   <span style=color:#204a87;font-weight:700>&lt;property</span> <span style=color:#c4a000>name=</span><span style=color:#4e9a06>&#34;name&#34;</span> <span style=color:#c4a000>value=</span><span style=color:#4e9a06>&#34;susan&#34;</span><span style=color:#204a87;font-weight:700>&gt;&lt;/constructor-arg&gt;</span>
+</span></span><span style=display:flex><span>   <span style=color:#204a87;font-weight:700>&lt;property</span> <span style=color:#c4a000>name=</span><span style=color:#4e9a06>&#34;age&#34;</span> <span style=color:#c4a000>value=</span><span style=color:#4e9a06>&#34;18&#34;</span><span style=color:#204a87;font-weight:700>&gt;&lt;/constructor-arg&gt;</span>
+</span></span><span style=display:flex><span><span style=color:#204a87;font-weight:700>&lt;/bean&gt;</span>
+</span></span></code></pre></div><h3 id=13-静态工厂>1.3 静态工厂</h3><p>这种方式的关键是需要定义一个工厂类，它里面包含一个创建bean的静态方法。例如：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=display:flex><span><span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>SusanBeanFactory</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>    <span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>static</span> <span style=color:#000>Person</span> <span style=color:#000>createPerson</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>String</span> <span style=color:#000>name</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>age</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>        <span style=color:#204a87;font-weight:700>return</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>Person</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>name</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>age</span><span style=color:#ce5c00;font-weight:700>);</span>
+</span></span><span style=display:flex><span>    <span style=color:#ce5c00;font-weight:700>}</span>
+</span></span><span style=display:flex><span><span style=color:#ce5c00;font-weight:700>}</span>
+</span></span></code></pre></div><p>接下来定义Person类如下：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=display:flex><span><span style=color:#5c35cc;font-weight:700>@AllArgsConstructor</span>
+</span></span><span style=display:flex><span><span style=color:#5c35cc;font-weight:700>@NoArgsConstructor</span>
+</span></span><span style=display:flex><span><span style=color:#5c35cc;font-weight:700>@Data</span>
+</span></span><span style=display:flex><span><span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>Person</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>    <span style=color:#204a87;font-weight:700>private</span> <span style=color:#000>String</span> <span style=color:#000>name</span><span style=color:#ce5c00;font-weight:700>;</span>
+</span></span><span style=display:flex><span>    <span style=color:#204a87;font-weight:700>private</span> <span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>age</span><span style=color:#ce5c00;font-weight:700>;</span>
+</span></span><span style=display:flex><span><span style=color:#ce5c00;font-weight:700>}</span>
+</span></span></code></pre></div><p>它里面包含：成员变量name和age，getter/setter方法，无参构造器和全参构造器。</p><p>然后在bean.xml文件中配置bean时，通过<code>factory-method</code>参数指定静态工厂方法，同时通过<code>&lt;constructor-arg></code>设置相关参数。</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-xml data-lang=xml><span style=display:flex><span><span style=color:#204a87;font-weight:700>&lt;bean</span> <span style=color:#c4a000>class=</span><span style=color:#4e9a06>&#34;com.sue.cache.service.test7.SusanBeanFactory&#34;</span> <span style=color:#c4a000>factory-method=</span><span style=color:#4e9a06>&#34;createPerson&#34;</span><span style=color:#204a87;font-weight:700>&gt;</span>
+</span></span><span style=display:flex><span>   <span style=color:#204a87;font-weight:700>&lt;constructor-arg</span> <span style=color:#c4a000>index=</span><span style=color:#4e9a06>&#34;0&#34;</span> <span style=color:#c4a000>value=</span><span style=color:#4e9a06>&#34;susan&#34;</span><span style=color:#204a87;font-weight:700>&gt;&lt;/constructor-arg&gt;</span>
+</span></span><span style=display:flex><span>   <span style=color:#204a87;font-weight:700>&lt;constructor-arg</span> <span style=color:#c4a000>index=</span><span style=color:#4e9a06>&#34;1&#34;</span> <span style=color:#c4a000>value=</span><span style=color:#4e9a06>&#34;18&#34;</span><span style=color:#204a87;font-weight:700>&gt;&lt;/constructor-arg&gt;</span>
+</span></span><span style=display:flex><span><span style=color:#204a87;font-weight:700>&lt;/bean&gt;</span>
+</span></span></code></pre></div><h3 id=14-实例工厂方法>1.4 实例工厂方法</h3><p>这种方式也需要定义一个工厂类，但里面包含非静态的创建bean的方法。</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=display:flex><span><span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>SusanBeanFactory</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>    <span style=color:#204a87;font-weight:700>public</span> <span style=color:#000>Person</span> <span style=color:#000>createPerson</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>String</span> <span style=color:#000>name</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>age</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>        <span style=color:#204a87;font-weight:700>return</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>Person</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>name</span><span style=color:#ce5c00;font-weight:700>,</span> <span style=color:#000>age</span><span style=color:#ce5c00;font-weight:700>);</span>
+</span></span><span style=display:flex><span>    <span style=color:#ce5c00;font-weight:700>}</span>
+</span></span><span style=display:flex><span><span style=color:#ce5c00;font-weight:700>}</span>
+</span></span></code></pre></div><p>Person类跟上面一样，就不多说了。</p><p>然后bean.xml文件中配置bean时，需要先配置工厂bean。然后在配置实例bean时，通过<code>factory-bean</code>参数指定该工厂bean的引用。</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-xml data-lang=xml><span style=display:flex><span><span style=color:#204a87;font-weight:700>&lt;bean</span> <span style=color:#c4a000>id=</span><span style=color:#4e9a06>&#34;susanBeanFactory&#34;</span> <span style=color:#c4a000>class=</span><span style=color:#4e9a06>&#34;com.sue.cache.service.test7.SusanBeanFactory&#34;</span><span style=color:#204a87;font-weight:700>&gt;</span>
+</span></span><span style=display:flex><span><span style=color:#204a87;font-weight:700>&lt;/bean&gt;</span>
+</span></span><span style=display:flex><span><span style=color:#204a87;font-weight:700>&lt;bean</span> <span style=color:#c4a000>factory-bean=</span><span style=color:#4e9a06>&#34;susanBeanFactory&#34;</span> <span style=color:#c4a000>factory-method=</span><span style=color:#4e9a06>&#34;createPerson&#34;</span><span style=color:#204a87;font-weight:700>&gt;</span>
+</span></span><span style=display:flex><span>   <span style=color:#204a87;font-weight:700>&lt;constructor-arg</span> <span style=color:#c4a000>index=</span><span style=color:#4e9a06>&#34;0&#34;</span> <span style=color:#c4a000>value=</span><span style=color:#4e9a06>&#34;susan&#34;</span><span style=color:#204a87;font-weight:700>&gt;&lt;/constructor-arg&gt;</span>
+</span></span><span style=display:flex><span>   <span style=color:#204a87;font-weight:700>&lt;constructor-arg</span> <span style=color:#c4a000>index=</span><span style=color:#4e9a06>&#34;1&#34;</span> <span style=color:#c4a000>value=</span><span style=color:#4e9a06>&#34;18&#34;</span><span style=color:#204a87;font-weight:700>&gt;&lt;/constructor-arg&gt;</span>
+</span></span><span style=display:flex><span><span style=color:#204a87;font-weight:700>&lt;/bean&gt;</span>
+</span></span></code></pre></div><h3 id=15-factorybean>1.5 FactoryBean</h3><p>不知道大家有没有发现，上面的实例工厂方法每次都需要创建一个工厂类，不方面统一管理。</p><p>这时我们可以使用<code>FactoryBean</code>接口。</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=display:flex><span><span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>UserFactoryBean</span> <span style=color:#204a87;font-weight:700>implements</span> <span style=color:#000>FactoryBean</span><span style=color:#ce5c00;font-weight:700>&lt;</span><span style=color:#000>User</span><span style=color:#ce5c00;font-weight:700>&gt;</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>    <span style=color:#5c35cc;font-weight:700>@Override</span>
+</span></span><span style=display:flex><span>    <span style=color:#204a87;font-weight:700>public</span> <span style=color:#000>User</span> <span style=color:#000>getObject</span><span style=color:#ce5c00;font-weight:700>()</span> <span style=color:#204a87;font-weight:700>throws</span> <span style=color:#000>Exception</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>        <span style=color:#204a87;font-weight:700>return</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>User</span><span style=color:#ce5c00;font-weight:700>();</span>
+</span></span><span style=display:flex><span>    <span style=color:#ce5c00;font-weight:700>}</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#5c35cc;font-weight:700>@Override</span>
+</span></span><span style=display:flex><span>    <span style=color:#204a87;font-weight:700>public</span> <span style=color:#000>Class</span><span style=color:#ce5c00;font-weight:700>&lt;?&gt;</span> <span style=color:#000>getObjectType</span><span style=color:#ce5c00;font-weight:700>()</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>        <span style=color:#204a87;font-weight:700>return</span> <span style=color:#000>User</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>class</span><span style=color:#ce5c00;font-weight:700>;</span>
+</span></span><span style=display:flex><span>    <span style=color:#ce5c00;font-weight:700>}</span>
+</span></span><span style=display:flex><span><span style=color:#ce5c00;font-weight:700>}</span>
+</span></span></code></pre></div><p>在它的<code>getObject</code>方法中可以实现我们自己的逻辑创建对象，并且在<code>getObjectType</code>方法中我们可以定义对象的类型。</p><p>然后在bean.xml文件中配置bean时，只需像普通的bean一样配置即可。</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback><span style=display:flex><span>&lt;bean id=&#34;userFactoryBean&#34; class=&#34;com.sue.async.service.UserFactoryBean&#34;&gt;
+</span></span><span style=display:flex><span>&lt;/bean&gt;
+</span></span></code></pre></div><p>轻松搞定，so easy。</p><blockquote>
+<p>注意：getBean(&ldquo;userFactoryBean&rdquo;);获取的是getObject方法中返回的对象。而getBean("&userFactoryBean");获取的才是真正的UserFactoryBean对象。</p></blockquote><p>我们通过上面五种方式，在bean.xml文件中把bean配置好之后，spring就会自动扫描和解析相应的标签，并且帮我们创建和实例化bean，然后放入spring容器中。</p><p>虽说基于xml文件的方式配置bean，简单而且非常灵活，比较适合一些小项目。但如果遇到比较复杂的项目，则需要配置大量的bean，而且bean之间的关系错综复杂，这样久而久之会导致xml文件迅速膨胀，非常不利于bean的管理。</p><h2 id=2-component-注解声明-bean>2. @Component 注解声明 Bean</h2><p>为了解决bean太多时，xml文件过大，从而导致膨胀不好维护的问题。在spring2.5中开始支持：<code>@Component</code>、<code>@Repository</code>、<code>@Service</code>、<code>@Controller</code>等注解定义bean。</p><p>如果你有看过这些注解的源码的话，就会惊奇得发现：其实后三种注解也是<code>@Component</code>。</p><div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211016130429.png style=display:block;width:80% alt=NAME align=center> </div><div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211016130437.png style=display:block;width:80% alt=NAME align=center> </div><div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211016130445.png style=display:block;width:80% alt=NAME align=center> </div><p><code>@Component</code>系列注解的出现，给我们带来了极大的便利。我们不需要像以前那样在bean.xml文件中配置bean了，现在只用在类上加Component、Repository、Service、Controller，这四种注解中的任意一种，就能轻松完成bean的定义。</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=display:flex><span><span style=color:#5c35cc;font-weight:700>@Service</span>
+</span></span><span style=display:flex><span><span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>PersonService</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>    <span style=color:#204a87;font-weight:700>public</span> <span style=color:#000>String</span> <span style=color:#000>get</span><span style=color:#ce5c00;font-weight:700>()</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>        <span style=color:#204a87;font-weight:700>return</span> <span style=color:#4e9a06>&#34;data&#34;</span><span style=color:#ce5c00;font-weight:700>;</span>
+</span></span><span style=display:flex><span>    <span style=color:#ce5c00;font-weight:700>}</span>
+</span></span><span style=display:flex><span><span style=color:#ce5c00;font-weight:700>}</span>
+</span></span></code></pre></div><p>其实，这四种注解在功能上没有特别的区别，不过在业界有个不成文的约定：</p><ul>
+<li>Controller 一般用在控制层</li><li>Service 一般用在业务层</li><li>Repository 一般用在数据层</li><li>Component 一般用在公共组件上</li></ul><p>太棒了，简直一下子解放了我们的双手。</p><p>不过，需要特别注意的是，通过这种<code>@Component</code>扫描注解的方式定义bean的前提是：<strong>需要先配置扫描路径</strong>。</p><p>目前常用的配置扫描路径的方式如下：</p><ol>
+<li>在applicationContext.xml文件中使用<code>&lt;context:component-scan></code>标签。例如：</li></ol><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-xml data-lang=xml><span style=display:flex><span><span style=color:#204a87;font-weight:700>&lt;context:component-scan</span> <span style=color:#c4a000>base-package=</span><span style=color:#4e9a06>&#34;com.sue.cache&#34;</span> <span style=color:#204a87;font-weight:700>/&gt;</span>
+</span></span></code></pre></div><ol start=2>
+<li>在springboot的启动类上加上<code>@ComponentScan</code>注解，例如：</li></ol><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=display:flex><span><span style=color:#5c35cc;font-weight:700>@ComponentScan</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>basePackages</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#4e9a06>&#34;com.sue.cache&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
+</span></span><span style=display:flex><span><span style=color:#5c35cc;font-weight:700>@SpringBootApplication</span>
+</span></span><span style=display:flex><span><span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>Application</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>static</span> <span style=color:#204a87;font-weight:700>void</span> <span style=color:#000>main</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>String</span><span style=color:#ce5c00;font-weight:700>[]</span> <span style=color:#000>args</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>        <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>SpringApplicationBuilder</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>Application</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>class</span><span style=color:#ce5c00;font-weight:700>).</span><span style=color:#c4a000>web</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>WebApplicationType</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>SERVLET</span><span style=color:#ce5c00;font-weight:700>).</span><span style=color:#c4a000>run</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>args</span><span style=color:#ce5c00;font-weight:700>);</span>
+</span></span><span style=display:flex><span>    <span style=color:#ce5c00;font-weight:700>}</span>
+</span></span><span style=display:flex><span><span style=color:#ce5c00;font-weight:700>}</span>
+</span></span></code></pre></div><ol start=3>
+<li>直接在<code>SpringBootApplication</code>注解上加，它支持ComponentScan功能：</li></ol><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=display:flex><span><span style=color:#5c35cc;font-weight:700>@SpringBootApplication</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>scanBasePackages</span> <span style=color:#ce5c00;font-weight:700>=</span> <span style=color:#4e9a06>&#34;com.sue.cache&#34;</span><span style=color:#ce5c00;font-weight:700>)</span>
+</span></span><span style=display:flex><span><span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>Application</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>    
+</span></span><span style=display:flex><span>    <span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>static</span> <span style=color:#204a87;font-weight:700>void</span> <span style=color:#000>main</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>String</span><span style=color:#ce5c00;font-weight:700>[]</span> <span style=color:#000>args</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>        <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>SpringApplicationBuilder</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>Application</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>class</span><span style=color:#ce5c00;font-weight:700>).</span><span style=color:#c4a000>web</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>WebApplicationType</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>SERVLET</span><span style=color:#ce5c00;font-weight:700>).</span><span style=color:#c4a000>run</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>args</span><span style=color:#ce5c00;font-weight:700>);</span>
+</span></span><span style=display:flex><span>    <span style=color:#ce5c00;font-weight:700>}</span>
+</span></span><span style=display:flex><span><span style=color:#ce5c00;font-weight:700>}</span>
+</span></span></code></pre></div><p>当然，如果你需要扫描的类跟springboot的入口类，在同一级或者子级的包下面，无需指定<code>scanBasePackages</code>参数，spring默认会从入口类的同一级或者子级的包去找。</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=display:flex><span><span style=color:#5c35cc;font-weight:700>@SpringBootApplication</span>
+</span></span><span style=display:flex><span><span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>Application</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>    
+</span></span><span style=display:flex><span>    <span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>static</span> <span style=color:#204a87;font-weight:700>void</span> <span style=color:#000>main</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>String</span><span style=color:#ce5c00;font-weight:700>[]</span> <span style=color:#000>args</span><span style=color:#ce5c00;font-weight:700>)</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>        <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>SpringApplicationBuilder</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>Application</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>class</span><span style=color:#ce5c00;font-weight:700>).</span><span style=color:#c4a000>web</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>WebApplicationType</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>SERVLET</span><span style=color:#ce5c00;font-weight:700>).</span><span style=color:#c4a000>run</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>args</span><span style=color:#ce5c00;font-weight:700>);</span>
+</span></span><span style=display:flex><span>    <span style=color:#ce5c00;font-weight:700>}</span>
+</span></span><span style=display:flex><span><span style=color:#ce5c00;font-weight:700>}</span>
+</span></span></code></pre></div><p>此外，除了上述四种<code>@Component</code>注解之外，springboot还增加了<code>@RestController</code>注解，它是一种特殊的<code>@Controller</code>注解，所以也是<code>@Component</code>注解。</p><p><code>@RestController</code>还支持<code>@ResponseBody</code>注解的功能，即将接口响应数据的格式自动转换成json。</p><div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211016131535.png style=display:block;width:80% alt=NAME align=center> </div><p><code>@Component</code>系列注解已经让我们爱不释手了，它目前是我们日常工作中最多的定义bean的方式。</p><h2 id=3-javaconfig配置-bean>3. JavaConfig配置 Bean</h2><p><code>@Component</code>系列注解虽说使用起来非常方便，但是bean的创建过程完全交给spring容器来完成，我们没办法自己控制。</p><p>spring从3.0以后，开始支持JavaConfig的方式定义bean。它可以看做spring的配置文件，但并非真正的配置文件，我们需要通过编码java代码的方式创建bean。例如：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=display:flex><span><span style=color:#5c35cc;font-weight:700>@Configuration</span>
+</span></span><span style=display:flex><span><span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>MyConfiguration</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#5c35cc;font-weight:700>@Bean</span>
+</span></span><span style=display:flex><span>    <span style=color:#204a87;font-weight:700>public</span> <span style=color:#000>Person</span> <span style=color:#000>person</span><span style=color:#ce5c00;font-weight:700>()</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>        <span style=color:#204a87;font-weight:700>return</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>Person</span><span style=color:#ce5c00;font-weight:700>();</span>
+</span></span><span style=display:flex><span>    <span style=color:#ce5c00;font-weight:700>}</span>
+</span></span><span style=display:flex><span><span style=color:#ce5c00;font-weight:700>}</span>
+</span></span></code></pre></div><p>在JavaConfig类上加<code>@Configuration</code>注解，相当于配置了<code>&lt;beans></code>标签。而在方法上加<code>@Bean</code>注解，相当于配置了<code>&lt;bean></code>标签。</p><p>此外，springboot还引入了一些列的<code>@Conditional</code>注解，用来控制bean的创建。</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=display:flex><span><span style=color:#5c35cc;font-weight:700>@Configuration</span>
+</span></span><span style=display:flex><span><span style=color:#204a87;font-weight:700>public</span> <span style=color:#204a87;font-weight:700>class</span> <span style=color:#000>MyConfiguration</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#5c35cc;font-weight:700>@ConditionalOnClass</span><span style=color:#ce5c00;font-weight:700>(</span><span style=color:#000>Country</span><span style=color:#ce5c00;font-weight:700>.</span><span style=color:#c4a000>class</span><span style=color:#ce5c00;font-weight:700>)</span>
+</span></span><span style=display:flex><span>    <span style=color:#5c35cc;font-weight:700>@Bean</span>
+</span></span><span style=display:flex><span>    <span style=color:#204a87;font-weight:700>public</span> <span style=color:#000>Person</span> <span style=color:#000>person</span><span style=color:#ce5c00;font-weight:700>()</span> <span style=color:#ce5c00;font-weight:700>{</span>
+</span></span><span style=display:flex><span>        <span style=color:#204a87;font-weight:700>return</span> <span style=color:#204a87;font-weight:700>new</span> <span style=color:#000>Person</span><span style=color:#ce5c00;font-weight:700>();</span>
+</span></span><span style=display:flex><span>    <span style=color:#ce5c00;font-weight:700>}</span>
+</span></span><span style=display:flex><span><span style=color:#ce5c00;font-weight:700>}</span>
+</span></span></code></pre></div><p><code>@ConditionalOnClass</code>注解的功能是当项目中存在Country类时，才实例化Person类。换句话说就是，如果项目中不存在Country类，就不实例化Person类。</p><p>这个功能非常有用，相当于一个开关控制着Person类，只有满足一定条件才能实例化。</p><p>spring中使用比较多的Conditional还有：</p><ul>
+<li>ConditionalOnBean</li><li>ConditionalOnProperty</li><li>ConditionalOnMissingClass</li><li>ConditionalOnMissingBean</li><li>ConditionalOnWebApplication</li></ul><p>下面用一张图整体认识一下@Conditional家族:</p><div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211016131627.png style=display:block;width:80% alt=NAME align=center> </div><h2 id=4-import-注解>4. @Import 注解</h2><p>通过前面介绍的@Configuration和@Bean相结合的方式，我们可以通过代码定义bean。但这种方式有一定的局限性，它只能创建该类中定义的bean实例，不能创建其他类的bean实例，如果我们想创建其他类的bean实例该怎么办呢？</p><p>这时可以使用<code>@Import</code>注解导入。</p><h3 id=41-普通类>4.1 普通类</h3><p>spring4.2之后<code>@Import</code>注解可以实例化普通类的bean实例。例如：</p><p>先定义了Role类：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback><span style=display:flex><span>@Data
+</span></span><span style=display:flex><span>public class Role {
+</span></span><span style=display:flex><span>    private Long id;
+</span></span><span style=display:flex><span>    private String name;
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>接下来使用@Import注解导入Role类：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback><span style=display:flex><span>@Import(Role.class)
+</span></span><span style=display:flex><span>@Configuration
+</span></span><span style=display:flex><span>public class MyConfig {
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>然后在调用的地方通过<code>@Autowired</code>注解注入所需的bean。</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback><span style=display:flex><span>@RequestMapping(&#34;/&#34;)
+</span></span><span style=display:flex><span>@RestController
+</span></span><span style=display:flex><span>public class TestController {
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    @Autowired
+</span></span><span style=display:flex><span>    private Role role;
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    @GetMapping(&#34;/test&#34;)
+</span></span><span style=display:flex><span>    public String test() {
+</span></span><span style=display:flex><span>        System.out.println(role);
+</span></span><span style=display:flex><span>        return &#34;test&#34;;
+</span></span><span style=display:flex><span>    }
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>聪明的你可能会发现，我没有在任何地方定义过Role的bean，但spring却能自动创建该类的bean实例，这是为什么呢？</p><p>这也许正是<code>@Import</code>注解的强大之处。</p><p>此时，有些朋友可能会问：<code>@Import</code>注解能定义单个类的bean，但如果有多个类需要定义bean该怎么办呢？</p><p>恭喜你，这是个好问题，因为<code>@Import</code>注解也支持。</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback><span style=display:flex><span>@Import({Role.class, User.class})
+</span></span><span style=display:flex><span>@Configuration
+</span></span><span style=display:flex><span>public class MyConfig {
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>甚至，如果你想偷懒，不想写这种<code>MyConfig</code>类，springboot也欢迎。</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback><span style=display:flex><span>@Import({Role.class, User.class})
+</span></span><span style=display:flex><span>@SpringBootApplication(exclude = {DataSourceAutoConfiguration.class,
+</span></span><span style=display:flex><span>        DataSourceTransactionManagerAutoConfiguration.class})
+</span></span><span style=display:flex><span>public class Application {
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    public static void main(String[] args) {
+</span></span><span style=display:flex><span>        new SpringApplicationBuilder(Application.class).web(WebApplicationType.SERVLET).run(args);
+</span></span><span style=display:flex><span>    }
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>可以将@Import加到springboot的启动类上。</p><p>这样也能生效？</p><p>springboot的启动类一般都会加@SpringBootApplication注解，该注解上加了@SpringBootConfiguration注解。</p><div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211016131751.png style=display:block;width:80% alt=NAME align=center> </div><p>而@SpringBootConfiguration注解，上面又加了@Configuration注解</p><div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211016131808.png style=display:block;width:80% alt=NAME align=center> </div><p>所以，springboot启动类本身带有@Configuration注解的功能。</p><h3 id=42-configuration-类>4.2 Configuration 类</h3><p>上面介绍了@Import注解导入普通类的方法，它同时也支持导入Configuration类。</p><p>先定义一个Configuration类：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback><span style=display:flex><span>@Configuration
+</span></span><span style=display:flex><span>public class MyConfig2 {
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    @Bean
+</span></span><span style=display:flex><span>    public User user() {
+</span></span><span style=display:flex><span>        return  new User();
+</span></span><span style=display:flex><span>    }
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    @Bean
+</span></span><span style=display:flex><span>    public Role role() {
+</span></span><span style=display:flex><span>        return new Role();
+</span></span><span style=display:flex><span>    }
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>然后在另外一个Configuration类中引入前面的Configuration类：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback><span style=display:flex><span>@Import({MyConfig2.class})
+</span></span><span style=display:flex><span>@Configuration
+</span></span><span style=display:flex><span>public class MyConfig {
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>这种方式，如果MyConfig2类已经在spring指定的扫描目录或者子目录下，则MyConfig类会显得有点多余。因为MyConfig2类本身就是一个配置类，它里面就能定义bean。</p><p>但如果MyConfig2类不在指定的spring扫描目录或者子目录下，则通过MyConfig类的导入功能，也能把MyConfig2类识别成配置类。这就有点厉害了喔。</p><p><strong>其实下面还有更高端的玩法</strong>。</p><p>swagger作为一个优秀的文档生成框架，在spring项目中越来越受欢迎。接下来，我们以swagger2为例，介绍一下它是如何导入相关类的。</p><p>众所周知，我们引入swagger相关jar包之后，只需要在springboot的启动类上加上<code>@EnableSwagger2</code>注解，就能开启swagger的功能。</p><p>其中@EnableSwagger2注解中导入了Swagger2DocumentationConfiguration类。</p><div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211016131842.png style=display:block;width:80% alt=NAME align=center> </div><p>该类是一个Configuration类，它又导入了另外两个类：</p><ul>
+<li>SpringfoxWebMvcConfiguration</li><li>SwaggerCommonConfiguration</li></ul><div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211016131908.png style=display:block;width:80% alt=NAME align=center> </div><p>SpringfoxWebMvcConfiguration类又会导入新的Configuration类，并且通过@ComponentScan注解扫描了一些其他的路径。</p><div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211016131921.png style=display:block;width:80% alt=NAME align=center> </div><p>SwaggerCommonConfiguration同样也通过@ComponentScan注解扫描了一些额外的路径。</p><div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211016131934.png style=display:block;width:80% alt=NAME align=center> </div><p>如此一来，我们通过一个简单的<code>@EnableSwagger2</code>注解，就能轻松的导入swagger所需的一系列bean，并且拥有swagger的功能。</p><h3 id=43-importselector>4.3 ImportSelector</h3><p>上面提到的Configuration类，它的功能非常强大。但怎么说呢，它不太适合加复杂的判断条件，根据某些条件定义这些bean，根据另外的条件定义那些bean。</p><p>那么，这种需求该怎么实现呢？</p><p>这时就可以使用<code>ImportSelector</code>接口了。</p><p>首先定义一个类实现<code>ImportSelector</code>接口：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback><span style=display:flex><span>public class DataImportSelector implements ImportSelector {
+</span></span><span style=display:flex><span>    @Override
+</span></span><span style=display:flex><span>    public String[] selectImports(AnnotationMetadata importingClassMetadata) {
+</span></span><span style=display:flex><span>        return new String[]{&#34;com.sue.async.service.User&#34;, &#34;com.sue.async.service.Role&#34;};
+</span></span><span style=display:flex><span>    }
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>重写<code>selectImports</code>方法，在该方法中指定需要定义bean的类名，注意要包含完整路径，而非相对路径。</p><p>然后在MyConfig类上@Import导入这个类即可：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback><span style=display:flex><span>@Import({DataImportSelector.class})
+</span></span><span style=display:flex><span>@Configuration
+</span></span><span style=display:flex><span>public class MyConfig {
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>朋友们是不是又发现了一个新大陆？</p><p>不过，这个注解还有更牛逼的用途。</p><p>@EnableAutoConfiguration注解中导入了AutoConfigurationImportSelector类，并且里面包含系统参数名称：<code>spring.boot.enableautoconfiguration</code>。</p><div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211016132003.png style=display:block;width:80% alt=NAME align=center> </div><p>AutoConfigurationImportSelector类实现了<code>ImportSelector</code>接口。</p><div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211016132017.png style=display:block;width:80% alt=NAME align=center> </div><p>并且重写了<code>selectImports</code>方法，该方法会根据某些注解去找所有需要创建bean的类名，然后返回这些类名。其中在查找这些类名之前，先调用isEnabled方法，判断是否需要继续查找。</p><div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211016132034.png style=display:block;width:80% alt=NAME align=center> </div><p>该方法会根据ENABLED_OVERRIDE_PROPERTY的值来作为判断条件。</p><div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211016132048.png style=display:block;width:80% alt=NAME align=center> </div><p>而这个值就是<code>spring.boot.enableautoconfiguration</code>。</p><p>换句话说，这里能根据系统参数控制bean是否需要被实例化，优秀。</p><p>我个人认为实现ImportSelector接口的好处主要有以下两点：</p><ol>
+<li>把某个功能的相关类，可以放到一起，方面管理和维护。</li><li>重写selectImports方法时，能够根据条件判断某些类是否需要被实例化，或者某个条件实例化这些bean，其他的条件实例化那些bean等。我们能够非常灵活的定制化bean的实例化。</li></ol><h3 id=44-importbeandefinitionregistrar>4.4 ImportBeanDefinitionRegistrar</h3><p>我们通过上面的这种方式，确实能够非常灵活的自定义bean。</p><p>但它的自定义能力，还是有限的，它没法自定义bean的名称和作用域等属性。</p><p>有需求，就有解决方案。</p><p>接下来，我们一起看看<code>ImportBeanDefinitionRegistrar</code>接口的神奇之处。</p><p>先定义CustomImportSelector类实现ImportBeanDefinitionRegistrar接口：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback><span style=display:flex><span>public class CustomImportSelector implements ImportBeanDefinitionRegistrar {
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    @Override
+</span></span><span style=display:flex><span>    public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry) {
+</span></span><span style=display:flex><span>        RootBeanDefinition roleBeanDefinition = new RootBeanDefinition(Role.class);
+</span></span><span style=display:flex><span>        registry.registerBeanDefinition(&#34;role&#34;, roleBeanDefinition);
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>        RootBeanDefinition userBeanDefinition = new RootBeanDefinition(User.class);
+</span></span><span style=display:flex><span>        userBeanDefinition.setScope(ConfigurableBeanFactory.SCOPE_PROTOTYPE);
+</span></span><span style=display:flex><span>        registry.registerBeanDefinition(&#34;user&#34;, userBeanDefinition);
+</span></span><span style=display:flex><span>    }
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>重写<code>registerBeanDefinitions</code>方法，在该方法中我们可以获取<code>BeanDefinitionRegistry</code>对象，通过它去注册bean。不过在注册bean之前，我们先要创建BeanDefinition对象，它里面可以自定义bean的名称、作用域等很多参数。</p><p>然后在MyConfig类上导入上面的类：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback><span style=display:flex><span>@Import({CustomImportSelector.class})
+</span></span><span style=display:flex><span>@Configuration
+</span></span><span style=display:flex><span>public class MyConfig {
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>我们所熟悉的fegin功能，就是使用ImportBeanDefinitionRegistrar接口实现的：</p><div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211016132115.png style=display:block;width:80% alt=NAME align=center> </div><h2 id=5-postprocessor>5. PostProcessor</h2><p>除此之外，spring还提供了专门注册bean的接口：<code>BeanDefinitionRegistryPostProcessor</code>。</p><p>该接口的方法postProcessBeanDefinitionRegistry上有这样一段描述：</p><div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211016132141.png style=display:block;width:80% alt=NAME align=center> </div><p>修改应用程序上下文的内部bean定义注册表标准初始化。所有常规bean定义都将被加载，但是还没有bean被实例化。这允许进一步添加在下一个后处理阶段开始之前定义bean。</p><p>如果用这个接口来定义bean，我们要做的事情就变得非常简单了。只需定义一个类实现<code>BeanDefinitionRegistryPostProcessor</code>接口。</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback><span style=display:flex><span>@Component
+</span></span><span style=display:flex><span>public class MyRegistryPostProcessor implements BeanDefinitionRegistryPostProcessor {
+</span></span><span style=display:flex><span>    @Override
+</span></span><span style=display:flex><span>    public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) throws BeansException {
+</span></span><span style=display:flex><span>        RootBeanDefinition roleBeanDefinition = new RootBeanDefinition(Role.class);
+</span></span><span style=display:flex><span>        registry.registerBeanDefinition(&#34;role&#34;, roleBeanDefinition);
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>        RootBeanDefinition userBeanDefinition = new RootBeanDefinition(User.class);
+</span></span><span style=display:flex><span>        userBeanDefinition.setScope(ConfigurableBeanFactory.SCOPE_PROTOTYPE);
+</span></span><span style=display:flex><span>        registry.registerBeanDefinition(&#34;user&#34;, userBeanDefinition);
+</span></span><span style=display:flex><span>    }
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    @Override
+</span></span><span style=display:flex><span>    public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
+</span></span><span style=display:flex><span>    }
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>重写<code>postProcessBeanDefinitionRegistry</code>方法，在该方法中能够获取<code>BeanDefinitionRegistry</code>对象，它负责bean的注册工作。</p><p>不过细心的朋友可能会发现，里面还多了一个<code>postProcessBeanFactory</code>方法，没有做任何实现。</p><p>这个方法其实是它的父接口：<code>BeanFactoryPostProcessor</code>里的方法。</p><div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211016132158.png style=display:block;width:80% alt=NAME align=center> </div><p>在应用程序上下文的标准bean工厂之后修改其内部bean工厂初始化。所有bean定义都已加载，但没有bean将被实例化。这允许重写或添加属性甚至可以初始化bean。</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback><span style=display:flex><span>@Component
+</span></span><span style=display:flex><span>public class MyPostProcessor implements BeanFactoryPostProcessor {
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    @Override
+</span></span><span style=display:flex><span>    public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
+</span></span><span style=display:flex><span>        DefaultListableBeanFactory registry = (DefaultListableBeanFactory)beanFactory;
+</span></span><span style=display:flex><span>        RootBeanDefinition roleBeanDefinition = new RootBeanDefinition(Role.class);
+</span></span><span style=display:flex><span>        registry.registerBeanDefinition(&#34;role&#34;, roleBeanDefinition);
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>        RootBeanDefinition userBeanDefinition = new RootBeanDefinition(User.class);
+</span></span><span style=display:flex><span>        userBeanDefinition.setScope(ConfigurableBeanFactory.SCOPE_PROTOTYPE);
+</span></span><span style=display:flex><span>        registry.registerBeanDefinition(&#34;user&#34;, userBeanDefinition);
+</span></span><span style=display:flex><span>    }
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>既然这两个接口都能注册bean，那么他们有什么区别？</p><ul>
+<li>BeanDefinitionRegistryPostProcessor 更侧重于bean的注册</li><li>BeanFactoryPostProcessor 更侧重于对已经注册的bean的属性进行修改，虽然也可以注册bean。</li></ul><p>此时，有些朋友可能会问：既然拿到BeanDefinitionRegistry对象就能注册bean，那通过BeanFactoryAware的方式是不是也能注册bean呢？</p><p>从下面这张图能够看出DefaultListableBeanFactory就实现了BeanDefinitionRegistry接口。</p><div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211016132211.png style=display:block;width:80% alt=NAME align=center> </div><p>这样一来，我们如果能够获取DefaultListableBeanFactory对象的实例，然后调用它的注册方法，不就可以注册bean了？</p><p>说时迟那时快，定义一个类实现<code>BeanFactoryAware</code>接口：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-fallback data-lang=fallback><span style=display:flex><span>@Component
+</span></span><span style=display:flex><span>public class BeanFactoryRegistry implements BeanFactoryAware {
+</span></span><span style=display:flex><span>    @Override
+</span></span><span style=display:flex><span>    public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
+</span></span><span style=display:flex><span>        DefaultListableBeanFactory registry = (DefaultListableBeanFactory) beanFactory;
+</span></span><span style=display:flex><span>        RootBeanDefinition rootBeanDefinition = new RootBeanDefinition(User.class);
+</span></span><span style=display:flex><span>        registry.registerBeanDefinition(&#34;user&#34;, rootBeanDefinition);
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>        RootBeanDefinition userBeanDefinition = new RootBeanDefinition(User.class);
+</span></span><span style=display:flex><span>        userBeanDefinition.setScope(ConfigurableBeanFactory.SCOPE_PROTOTYPE);
+</span></span><span style=display:flex><span>        registry.registerBeanDefinition(&#34;user&#34;, userBeanDefinition);
+</span></span><span style=display:flex><span>    }
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>重写<code>setBeanFactory</code>方法，在该方法中能够获取BeanFactory对象，它能够强制转换成DefaultListableBeanFactory对象，然后通过该对象的实例注册bean。</p><p>当你满怀喜悦的运行项目时，发现竟然报错了：</p><div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211016132243.png style=display:block;width:80% alt=NAME align=center> </div><p>为什么会报错？</p><p>spring中bean的创建过程顺序大致如下：</p><div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211016132258.png style=display:block;width:30% alt=NAME align=center> </div><p><code>BeanFactoryAware</code>接口是在bean创建成功，并且完成依赖注入之后，在真正初始化之前才被调用的。在这个时候去注册bean意义不大，因为这个接口是给我们获取bean的，并不建议去注册bean，会引发很多问题。</p><blockquote>
+<p>此外，ApplicationContextRegistry和ApplicationListener接口也有类似的问题，我们可以用他们获取bean，但不建议用它们注册bean。</p></blockquote><style>.feedback--answer{display:inline-block}.feedback--answer-no{margin-left:1em}.feedback--response{display:none;margin-top:1em}.feedback--response__visible{display:block}</style><div class=d-print-none>
+<h2 class=feedback--title>Feedback</h2><p class=feedback--question>Was this page helpful?</p><button class="btn btn-primary mb-4 feedback--answer feedback--answer-yes">Yes</button>
 <button class="btn btn-primary mb-4 feedback--answer feedback--answer-no">No</button>
 <p class="feedback--response feedback--response-yes">
 Glad to hear it! Please <a href=https://github.com/infilos/infilos.com/issues/new>tell us how we can improve</a>.
-</p>
-<p class="feedback--response feedback--response-no">
+</p><p class="feedback--response feedback--response-no">
 Sorry to hear that. Please <a href=https://github.com/infilos/infilos.com/issues/new>tell us how we can improve</a>.
-</p>
-</div>
-<script>const yesButton=document.querySelector('.feedback--answer-yes'),noButton=document.querySelector('.feedback--answer-no'),yesResponse=document.querySelector('.feedback--response-yes'),noResponse=document.querySelector('.feedback--response-no'),disableButtons=()=>{yesButton.disabled=!0,noButton.disabled=!0},sendFeedback=b=>{if(typeof ga!='function')return;const a={command:'send',hitType:'event',category:'Helpful',action:'click',label:window.location.pathname,value:b};ga(a.command,a.hitType,a.category,a.action,a.label,a.value)};yesButton.addEventListener('click',()=>{yesResponse.classList.add('feedback--response__visible'),disableButtons(),sendFeedback(1)}),noButton.addEventListener('click',()=>{noResponse.classList.add('feedback--response__visible'),disableButtons(),sendFeedback(0)})</script>
+</p></div><script>const yesButton=document.querySelector(".feedback--answer-yes"),noButton=document.querySelector(".feedback--answer-no"),yesResponse=document.querySelector(".feedback--response-yes"),noResponse=document.querySelector(".feedback--response-no"),disableButtons=()=>{yesButton.disabled=!0,noButton.disabled=!0},sendFeedback=t=>{if(typeof ga!="function")return;const e={command:"send",hitType:"event",category:"Helpful",action:"click",label:window.location.pathname,value:t};ga(e.command,e.hitType,e.category,e.action,e.label,e.value)};yesButton.addEventListener("click",()=>{yesResponse.classList.add("feedback--response__visible"),disableButtons(),sendFeedback(1)}),noButton.addEventListener("click",()=>{noResponse.classList.add("feedback--response__visible"),disableButtons(),sendFeedback(0)})</script>
 <br>
-</div>
-</main>
-</div>
-</div>
-<footer class="bg-dark py-5 row d-print-none">
+</div></main></div></div><footer class="bg-dark py-5 row d-print-none">
 <div class="container-fluid mx-sm-5">
 <div class=row>
 <div class="col-6 col-sm-4 text-xs-center order-sm-2">
-</div>
-<div class="col-6 col-sm-4 text-right text-xs-center order-sm-3">
+</div><div class="col-6 col-sm-4 text-right text-xs-center order-sm-3">
 <ul class="list-inline mb-0">
 <li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Weibo aria-label=Weibo>
 <a class=text-white target=_blank rel="noopener noreferrer" href=https://weibo.com/u/3848950217>
 <i class="fab fa-weibo"></i>
 </a>
-</li>
-<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Twitter aria-label=Twitter>
+</li><li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Twitter aria-label=Twitter>
 <a class=text-white target=_blank rel="noopener noreferrer" href=https://twitter.com/zhange_zzg>
 <i class="fab fa-twitter"></i>
 </a>
-</li>
-<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title="Stack Overflow" aria-label="Stack Overflow">
+</li><li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title="Stack Overflow" aria-label="Stack Overflow">
 <a class=text-white target=_blank rel="noopener noreferrer" href=https://stackoverflow.com>
 <i class="fab fa-stack-overflow"></i>
 </a>
-</li>
-<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=GitHub aria-label=GitHub>
+</li><li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=GitHub aria-label=GitHub>
 <a class=text-white target=_blank rel="noopener noreferrer" href=https://github.com/infilos/infilos.com>
 <i class="fab fa-github"></i>
 </a>
-</li>
-</ul>
-</div>
-<div class="col-12 col-sm-4 text-center py-2 order-sm-2">
+</li></ul></div><div class="col-12 col-sm-4 text-center py-2 order-sm-2">
 <small class=text-white>&copy; 2022 infilos.com All Rights Reserved</small>
-</div>
-</div>
-</div>
-</footer>
-</div>
-<script src=/js/popper.min.js integrity=sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49 crossorigin=anonymous></script>
+</div></div></div></footer></div><script src=/js/popper.min.js integrity=sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49 crossorigin=anonymous></script>
 <script src=/js/bootstrap.min.js integrity=sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy crossorigin=anonymous></script>
-<script src=/js/main.min.5c74b870c6953931a705f390a49c7e4c0a842ec5c83b24354758dd674343ed0d.js integrity="sha256-XHS4cMaVOTGnBfOQpJx+TAqELsXIOyQ1R1jdZ0ND7Q0=" crossorigin=anonymous></script>
-</body>
-</html>
+<script src=/js/main.min.3f3f4f1e22307ccbb13271a98be2e4dbb8386b7e67c3d606db44d3d0649f485e.js integrity="sha256-Pz9PHiIwfMuxMnGpi+Lk27g4a35nw9YG20TT0GSfSF4=" crossorigin=anonymous></script>
+</body></html>

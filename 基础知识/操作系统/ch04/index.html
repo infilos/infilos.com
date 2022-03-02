@@ -2,7 +2,7 @@
 <head>
 <meta charset=utf-8>
 <meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no">
-<meta name=generator content="Hugo 0.92.2">
+<meta name=generator content="Hugo 0.93.0">
 <meta name=ROBOTS content="INDEX, FOLLOW">
 <link rel="shortcut icon" href=/favicons/favicon.ico>
 <link rel=apple-touch-icon href=/favicons/apple-touch-icon-180x180.png sizes=180x180>
@@ -76,45 +76,43 @@
  创建：操作系统必须包含一些创建新进程的方法。在 shell 中键入命令或双击应用程序图标时，会调用操作系统来创建新进程，运行指定的程序。 销毁：由于存在创建进程接口，因此系统还提供了一个强制销毁进程的接口。当然，很多进程会在运行完成后自行退出。但是，如果它们不退出，用户可能希望终止它们，因此停止失控进程的接口非常有用。 等待：有时等待进程停止运行是有用的，因此经常提供某种等待接口。 控制：除了杀死或等待进程外，有时还可能存在其他控制。比如大多数操作系统提供了某种方法来暂停进程、恢复进程。 状态：通常也有一些接口可以获得有关集成的状态信息，例如运行了多长时间，或者处于什么状态。  进程创建：细节 **操作系统运行进程要做的第一件事情就是将代码和所有静态数据(如初始化变量)加载到内存中，即加载到进程的地址空间中。**程序最初以某种可执行的格式保存在磁盘上。因此，将程序和静态数据加载到内存中的过程，需要操作系统从磁盘上读取这些字节，并将它们放在内存中的某处。
  **在早期的操作系统中，加载过程会尽早(eagerly)完成，即在运行程序之前全部完成。现代操作系统则会惰性(lazily)执行该过程，即仅在程序执行期间需要的时候才会加载代码或数据片段。**要真正理解代码和数据的惰性加载过程是如何工作的，必须更多的了解分页和交换的机制，这是我们将来讨论内存虚拟化时要涉及的主题。现在，只要记住在运行任何程序之前，操作系统显然必须要执行一些工作，才能将重要的程序字节从磁盘读入内存。
 将代码和静态数据加载到内存之后，操作系统在运行该进程之前还要执行一些其他操作。必须为程序的运行时栈分配一些内存。你可能已经知道，C 程序使用栈存放局部变量、函数参数和返回地址。操作系统分配这些内存并提供给进程。操作系统也可能会用参数初始化栈。具体来说，它会将参数填入 mian 函数，即 argc 和 argv 数组。">
-<script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga('create','UA-123062585-1','auto'),ga('send','pageview'))</script>
+<script type=application/javascript>var doNotTrack=!1;doNotTrack||(window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga("create","UA-123062585-1","auto"),ga("send","pageview"))</script>
 <script async src=https://www.google-analytics.com/analytics.js></script>
 <link rel=preload href=/scss/main.min.847464b684a6e89d7276700a5c500c17ab494dd1755b2654a7b27d8b59e3347e.css as=style>
 <link href=/scss/main.min.847464b684a6e89d7276700a5c500c17ab494dd1755b2654a7b27d8b59e3347e.css rel=stylesheet integrity>
 <script src=/js/jquery-3.5.1.min.js integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin=anonymous></script>
-</head>
-<body class=td-page>
+</head><body class=td-page>
 <header>
-<nav class="js-navbar-scroll navbar navbar-expand navbar-dark flex-column flex-md-row td-navbar">
+<nav class="js-navbar-scroll navbar navbar-expand-lg navbar-dark td-navbar">
 <a class=navbar-brand href=/>
-<span class=navbar-logo><svg id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512" style="enable-background:new 0 0 512 512"><path style="fill:#ffc107" d="M432.384 143.616c-4.165-4.164-10.917-4.164-15.083.0l-60.352 60.352c-4.164 4.165-4.164 10.917.0 15.083 21.187 20.463 54.951 19.876 75.413-1.311 19.962-20.668 19.962-53.435.0-74.102L432.384 143.616z"/><path style="fill:#607d8b" d="M42.667 277.334c-5.891.003-10.669-4.771-10.672-10.662-.002-4.338 2.623-8.245 6.64-9.882l234.667-96c5.455-2.233 11.687.38 13.92 5.835s-.38 11.687-5.835 13.92l-234.667 96C45.433 277.069 44.056 277.337 42.667 277.334z"/><path style="fill:#546e7a" d="M391.552 56.448l-32-32C343.938 8.745 322.689-.059 300.544.0h-3.755c-46.082.024-83.432 37.374-83.456 83.456v3.755c-.053 22.138 8.75 43.377 24.448 58.987l32 32c4.165 4.164 10.917 4.164 15.083.0L391.531 71.531C395.701 67.372 395.71 60.62 391.552 56.448z"/><path style="fill:#607d8b" d="M160 469.334c-3.279.006-6.379-1.497-8.405-4.075L34.261 315.926c-3.635-4.636-2.823-11.341 1.813-14.976s11.341-2.823 14.976 1.813l117.333 149.333c3.629 4.641 2.809 11.344-1.832 14.973C164.681 468.533 162.375 469.329 160 469.334z"/><path style="fill:#455a64" d="M487.467 86.848l-3.669-3.648c-37.687-36.557-97.71-36.197-134.955.811l-51.413 51.413c-36.996 37.25-37.357 97.263-.811 134.955l3.584 3.669c1.7 2.457 4.671 3.706 7.616 3.2 2.831.005 5.548-1.115 7.552-3.115l172.181-172.181c4.189-4.143 4.226-10.896.083-15.085-.028-.028-.055-.056-.083-.083L487.467 86.848z"/><g><path style="fill:#ffc107" d="M501.333 192H480c-5.891.0-10.667-4.776-10.667-10.667s4.776-10.667 10.667-10.667h21.333c5.891.0 10.667 4.776 10.667 10.667S507.225 192 501.333 192z"/><path style="fill:#ffc107" d="M394.667 298.667c-5.891.0-10.667-4.776-10.667-10.667v-21.333c0-5.891 4.776-10.667 10.667-10.667 5.891.0 10.667 4.776 10.667 10.667V288C405.333 293.891 400.558 298.667 394.667 298.667z"/><path style="fill:#ffc107" d="M480 277.334c-2.831.005-5.548-1.115-7.552-3.115l-21.333-21.333c-4.093-4.237-3.975-10.99.262-15.083 4.134-3.993 10.687-3.993 14.821.0l21.333 21.333c4.159 4.172 4.148 10.926-.024 15.085C485.514 276.209 482.815 277.327 480 277.334z"/></g><g><path style="fill:#455a64" d="M266.667 448H96c-29.455.0-53.333 23.878-53.333 53.333.0 5.891 4.776 10.667 10.667 10.667h256c5.891.0 10.667-4.776 10.667-10.667C320 471.878 296.122 448 266.667 448z"/><circle style="fill:#455a64" cx="32" cy="288" r="32"/></g><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/></svg></span><span class=font-weight-bold>infilos.com</span>
+<span class=navbar-logo><svg id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512" style="enable-background:new 0 0 512 512"><path style="fill:#ffc107" d="M432.384 143.616c-4.165-4.164-10.917-4.164-15.083.0l-60.352 60.352c-4.164 4.165-4.164 10.917.0 15.083 21.187 20.463 54.951 19.876 75.413-1.311 19.962-20.668 19.962-53.435.0-74.102L432.384 143.616z"/><path style="fill:#607d8b" d="M42.667 277.334c-5.891.003-10.669-4.771-10.672-10.662-.002-4.338 2.623-8.245 6.64-9.882l234.667-96c5.455-2.233 11.687.38 13.92 5.835s-.38 11.687-5.835 13.92l-234.667 96C45.433 277.069 44.056 277.337 42.667 277.334z"/><path style="fill:#546e7a" d="M391.552 56.448l-32-32C343.938 8.745 322.689-.059 300.544.0h-3.755c-46.082.024-83.432 37.374-83.456 83.456v3.755c-.053 22.138 8.75 43.377 24.448 58.987l32 32c4.165 4.164 10.917 4.164 15.083.0L391.531 71.531C395.701 67.372 395.71 60.62 391.552 56.448z"/><path style="fill:#607d8b" d="M160 469.334c-3.279.006-6.379-1.497-8.405-4.075L34.261 315.926c-3.635-4.636-2.823-11.341 1.813-14.976s11.341-2.823 14.976 1.813l117.333 149.333c3.629 4.641 2.809 11.344-1.832 14.973C164.681 468.533 162.375 469.329 160 469.334z"/><path style="fill:#455a64" d="M487.467 86.848l-3.669-3.648c-37.687-36.557-97.71-36.197-134.955.811l-51.413 51.413c-36.996 37.25-37.357 97.263-.811 134.955l3.584 3.669c1.7 2.457 4.671 3.706 7.616 3.2 2.831.005 5.548-1.115 7.552-3.115l172.181-172.181c4.189-4.143 4.226-10.896.083-15.085-.028-.028-.055-.056-.083-.083L487.467 86.848z"/><g><path style="fill:#ffc107" d="M501.333 192H480c-5.891.0-10.667-4.776-10.667-10.667s4.776-10.667 10.667-10.667h21.333c5.891.0 10.667 4.776 10.667 10.667S507.225 192 501.333 192z"/><path style="fill:#ffc107" d="M394.667 298.667c-5.891.0-10.667-4.776-10.667-10.667v-21.333c0-5.891 4.776-10.667 10.667-10.667 5.891.0 10.667 4.776 10.667 10.667V288C405.333 293.891 400.558 298.667 394.667 298.667z"/><path style="fill:#ffc107" d="M480 277.334c-2.831.005-5.548-1.115-7.552-3.115l-21.333-21.333c-4.093-4.237-3.975-10.99.262-15.083 4.134-3.993 10.687-3.993 14.821.0l21.333 21.333c4.159 4.172 4.148 10.926-.024 15.085C485.514 276.209 482.815 277.327 480 277.334z"/></g><g><path style="fill:#455a64" d="M266.667 448H96c-29.455.0-53.333 23.878-53.333 53.333.0 5.891 4.776 10.667 10.667 10.667h256c5.891.0 10.667-4.776 10.667-10.667C320 471.878 296.122 448 266.667 448z"/><circle style="fill:#455a64" cx="32" cy="288" r="32"/></g><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/><g/></svg></span>
+<span class=font-weight-bold>infilos.com</span>
 </a>
+<button class=navbar-toggler type=button data-toggle=collapse data-target=#navbarSupportedContent aria-controls=navbarSupportedContent aria-expanded=false aria-label="Toggle navigation">
+<span class=navbar-toggler-icon></span>
+</button>
 <div class="collapse navbar-collapse" id=navbarSupportedContent>
 <ul class="navbar-nav mr-auto">
 <li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86>
 <span>基础</span>
 </a>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e7%bc%96%e7%a8%8b%e8%af%ad%e8%a8%80>
 <span>语言</span>
 </a>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e6%a1%86%e6%9e%b6%e4%b8%8e%e5%ba%93>
 <span>框架库</span>
 </a>
-</li>
-<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+</li><li class="nav-item dropdown" style=max-width:90px;min-width:10px>
 <a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
 分布式
 <span>+</span>
 </a>
 <div class=dropdown-menu aria-labelledby=navbarDropdown>
 <a class=dropdown-item href=/%e5%88%86%e5%b8%83%e5%bc%8f/base>基本构成</a>
-</div>
-</li>
-<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+</div></li><li class="nav-item dropdown" style=max-width:90px;min-width:10px>
 <a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
 大数据
 <span>+</span>
@@ -125,9 +123,7 @@
 <a class=dropdown-item href=/%e6%b6%88%e6%81%af%e7%b3%bb%e7%bb%9f>消息系统</a>
 <a class=dropdown-item href=/%e5%a4%84%e7%90%86%e7%b3%bb%e7%bb%9f>处理系统</a>
 <a class=dropdown-item href=/%e6%95%b0%e6%8d%ae%e6%b2%bb%e7%90%86>数据治理</a>
-</div>
-</li>
-<li class="nav-item dropdown" style=max-width:90px;min-width:10px>
+</div></li><li class="nav-item dropdown" style=max-width:90px;min-width:10px>
 <a class="nav-link dropdown-toggle" href=# id=navbarDropdown role=button data-toggle=dropdown aria-haspopup=true aria-expanded=false>
 中后台
 <span>+</span>
@@ -137,38 +133,26 @@
 <a class=dropdown-item href=/%e7%94%a8%e6%88%b7%e7%b3%bb%e7%bb%9f>用户系统</a>
 <a class=dropdown-item href=/%e4%ba%a4%e4%ba%92%e7%95%8c%e9%9d%a2>交互界面</a>
 <a class=dropdown-item href=/%e4%b8%9a%e5%8a%a1%e7%b3%bb%e7%bb%9f>业务系统</a>
-</div>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</div></li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e6%a8%a1%e5%bc%8f%e6%9e%b6%e6%9e%84>
 <span>模式架构</span>
 </a>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e9%9d%a2%e8%af%95%e9%97%ae%e7%ad%94>
 <span>面试</span>
 </a>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e7%ae%a1%e7%90%86%e8%b7%af%e5%be%84>
 <span>管理</span>
 </a>
-</li>
-<li class=nav-item style=max-width:90px;min-width:10px>
+</li><li class=nav-item style=max-width:90px;min-width:10px>
 <a class=nav-link href=/%e5%bc%80%e6%ba%90%e9%a1%b9%e7%9b%ae>
 <span>开源</span>
 </a>
-</li>
-</ul>
-<div class="form-inline my-2 my-lg-0">
+</li></ul><div class="form-inline my-2 my-lg-0">
 <div class="nav-item nav-search-item my-2 my-md-0">
 <input type=search class="form-control td-search-input" placeholder="&#xf002; 站内搜索…" aria-label=站内搜索… autocomplete=off>
-</div>
-</div>
-</div>
-</nav>
-</header>
-<div class="container-fluid td-outer">
+</div></div></div></nav></header><div class="container-fluid td-outer">
 <div class=td-main>
 <div class="row flex-xl-nowrap">
 <aside class="col-12 col-md-3 col-xl-2 td-sidebar d-print-none">
@@ -178,10 +162,7 @@
 <input type=search class="form-control td-search-input" placeholder="&#xf002; 站内搜索…" aria-label=站内搜索… autocomplete=off>
 <button class="btn btn-link td-sidebar__toggle d-md-none p-0 ml-3 fas fa-bars" type=button data-toggle=collapse data-target=#td-section-nav aria-controls=td-docs-nav aria-expanded=false aria-label="Toggle section navigation">
 </button>
-</form>
-</div>
-<div id=content-desktop></div>
-<nav class="collapse td-sidebar-nav" id=td-section-nav>
+</form></div><div id=content-desktop></div><nav class="collapse td-sidebar-nav" id=td-section-nav>
 <ul class="td-sidebar-nav__section pr-md-3 ul-0">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child active-path" id=m-e59fbae7a180e79fa5e8af86-li>
 <a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section tree-root" id=m-e59fbae7a180e79fa5e8af86><span>基础知识</span></a>
@@ -213,9 +194,7 @@
 <a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/ch15/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch15><span>地址转换</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch16-li>
 <a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/ch16/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e6938de4bd9ce7b3bbe7bb9fch16><span>分段</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e59fbae7a180e79fa5e8af86e680a7e883bde4b98be6ae87-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e59fbae7a180e79fa5e8af86e680a7e883bde4b98be6ae87-li>
 <a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%80%A7%E8%83%BD%E4%B9%8B%E6%AE%87/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e59fbae7a180e79fa5e8af86e680a7e883bde4b98be6ae87><span>性能之殇</span></a>
 <ul class="ul-2 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e680a7e883bde4b98be6ae87ch01-e586afe8afbae4be9de69bbce793b6e9a288-li>
@@ -232,9 +211,7 @@
 <a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%80%A7%E8%83%BD%E4%B9%8B%E6%AE%87/ch06-%E5%B1%80%E9%83%A8%E6%80%A7%E4%B8%8E%E4%B9%90%E8%A7%82/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e680a7e883bde4b98be6ae87ch06-e5b180e983a8e680a7e4b88ee4b990e8a782><span>局部性与乐观</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e680a7e883bde4b98be6ae87ch07-e585b1e5908ce79a84e793b6e9a288-li>
 <a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%80%A7%E8%83%BD%E4%B9%8B%E6%AE%87/ch07-%E5%85%B1%E5%90%8C%E7%9A%84%E7%93%B6%E9%A2%88/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e680a7e883bde4b98be6ae87ch07-e585b1e5908ce79a84e793b6e9a288><span>共同的瓶颈</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e59fbae7a180e79fa5e8af86ioe6a8a1e59e8b-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e59fbae7a180e79fa5e8af86ioe6a8a1e59e8b-li>
 <a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/io%E6%A8%A1%E5%9E%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e59fbae7a180e79fa5e8af86ioe6a8a1e59e8b><span>IO 模型</span></a>
 <ul class="ul-2 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86ioe6a8a1e59e8bch01-ioe6a8a1e59e8b-li>
@@ -249,9 +226,7 @@
 <a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/io%E6%A8%A1%E5%9E%8B/ch05-nginx%E6%A8%A1%E5%9E%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86ioe6a8a1e59e8bch05-nginxe6a8a1e59e8b><span>Nginx IO 模型</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86ioe6a8a1e59e8bch06-mysqle6a8a1e59e8b-li>
 <a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/io%E6%A8%A1%E5%9E%8B/ch06-mysql%E6%A8%A1%E5%9E%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86ioe6a8a1e59e8bch06-mysqle6a8a1e59e8b><span>MySQL 模型</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180-li>
 <a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180><span>网络基础</span></a>
 <ul class="ul-2 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch01-e7bd91e7bb9ce58886e5b182-li>
@@ -272,9 +247,7 @@
 <a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/ch08-%E6%B5%8F%E8%A7%88%E5%99%A8%E8%BF%87%E7%A8%8B/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch08-e6b58fe8a788e599a8e8bf87e7a88b><span>浏览器过程</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch09-e6a682e5bfb5e69cafe8afad-li>
 <a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/ch09-%E6%A6%82%E5%BF%B5%E6%9C%AF%E8%AF%AD/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e7bd91e7bb9ce59fbae7a180ch09-e6a682e5bfb5e69cafe8afad><span>概念术语</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e59fbae7a180e79fa5e8af86tcp-ip-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e59fbae7a180e79fa5e8af86tcp-ip-li>
 <a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/tcp-ip/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e59fbae7a180e79fa5e8af86tcp-ip><span>TCP-IP</span></a>
 <ul class="ul-2 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86tcp-ipch01-e68fa1e6898be69cbae588b6-li>
@@ -291,9 +264,7 @@
 <a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/tcp-ip/ch06-%E5%8F%AF%E9%9D%A0%E6%80%A7%E7%96%91%E9%97%AE/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86tcp-ipch06-e58fafe99da0e680a7e79691e997ae><span>可靠性疑问</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86tcp-ipch07-e68fa1e6898be8afa6e8a7a3-li>
 <a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/tcp-ip/ch07-%E6%8F%A1%E6%89%8B%E8%AF%A6%E8%A7%A3/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86tcp-ipch07-e68fa1e6898be8afa6e8a7a3><span>握手详解</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e59fbae7a180e79fa5e8af86http-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e59fbae7a180e79fa5e8af86http-li>
 <a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/http/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e59fbae7a180e79fa5e8af86http><span>HTTP</span></a>
 <ul class="ul-2 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86httpch01-e6a682e8bfb0-li>
@@ -306,25 +277,19 @@
 <a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/http/ch04-%E8%BF%9E%E6%8E%A5%E7%AE%A1%E7%90%86/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86httpch04-e8bf9ee68ea5e7aea1e79086><span>连接管理</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86httpch99-e78988e69cace4b88ee680a7e883bd-li>
 <a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/http/ch99-%E7%89%88%E6%9C%AC%E4%B8%8E%E6%80%A7%E8%83%BD/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86httpch99-e78988e69cace4b88ee680a7e883bd><span>版本与性能</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e59fbae7a180e79fa5e8af86https-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e59fbae7a180e79fa5e8af86https-li>
 <a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/https/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e59fbae7a180e79fa5e8af86https><span>HTTPS</span></a>
 <ul class="ul-2 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86httpsch01-li>
 <a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/https/ch01/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86httpsch01><span>基本原理</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e59fbae7a180e79fa5e8af86websocket-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e59fbae7a180e79fa5e8af86websocket-li>
 <a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/websocket/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e59fbae7a180e79fa5e8af86websocket><span>WebSocket</span></a>
 <ul class="ul-2 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86websocketmqtt-over-ws-li>
 <a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/websocket/mqtt-over-ws/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86websocketmqtt-over-ws><span>MQTT Over WS</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86websocketsse-ws-http-li>
 <a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/websocket/sse-ws-http/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86websocketsse-ws-http><span>SSE WS HTTP</span></a>
-</li>
-</ul>
-</li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e59fbae7a180e79fa5e8af86e4bfa1e681afe5ae89e585a8-li>
+</li></ul></li><li class="td-sidebar-nav__section-title td-sidebar-nav__section with-child" id=m-e59fbae7a180e79fa5e8af86e4bfa1e681afe5ae89e585a8-li>
 <a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E4%BF%A1%E6%81%AF%E5%AE%89%E5%85%A8/ class="align-left pl-0 td-sidebar-link td-sidebar-link__section" id=m-e59fbae7a180e79fa5e8af86e4bfa1e681afe5ae89e585a8><span>信息安全</span></a>
 <ul class="ul-2 foldable">
 <li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e4bfa1e681afe5ae89e585a8ch01-li>
@@ -333,337 +298,130 @@
 <a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E4%BF%A1%E6%81%AF%E5%AE%89%E5%85%A8/ch02/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e4bfa1e681afe5ae89e585a8ch02><span>对称加密</span></a>
 </li><li class="td-sidebar-nav__section-title td-sidebar-nav__section without-child collapse" id=m-e59fbae7a180e79fa5e8af86e4bfa1e681afe5ae89e585a8ch03-li>
 <a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E4%BF%A1%E6%81%AF%E5%AE%89%E5%85%A8/ch03/ class="align-left pl-0 td-sidebar-link td-sidebar-link__page" id=m-e59fbae7a180e79fa5e8af86e4bfa1e681afe5ae89e585a8ch03><span>WEB 安全</span></a>
-</li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-</nav>
-</div>
-</aside>
-<aside class="d-none d-xl-block col-xl-2 td-sidebar-toc d-print-none">
+</li></ul></li></ul></li></ul></nav></div></aside><aside class="d-none d-xl-block col-xl-2 td-sidebar-toc d-print-none">
 <div class="td-page-meta ml-2 pb-1 pt-2 mb-0">
 <a href=https://github.com/infilos/infilos.com/edit/master/content/zh/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/%e6%93%8d%e4%bd%9c%e7%b3%bb%e7%bb%9f/CH04.md target=_blank><i class="fa fa-edit fa-fw"></i> 编辑此页</a>
 <a href="https://github.com/infilos/infilos.com/new/master/content/zh/%e5%9f%ba%e7%a1%80%e7%9f%a5%e8%af%86/%e6%93%8d%e4%bd%9c%e7%b3%bb%e7%bb%9f/CH04.md?filename=change-me.md&value=---%0Atitle%3A+%22Long+Page+Title%22%0AlinkTitle%3A+%22Short+Nav+Title%22%0Aweight%3A+100%0Adescription%3A+%3E-%0A+++++Page+description+for+heading+and+indexes.%0A---%0A%0A%23%23+Heading%0A%0AEdit+this+template+to+create+your+new+page.%0A%0A%2A+Give+it+a+good+name%2C+ending+in+%60.md%60+-+e.g.+%60getting-started.md%60%0A%2A+Edit+the+%22front+matter%22+section+at+the+top+of+the+page+%28weight+controls+how+its+ordered+amongst+other+pages+in+the+same+directory%3B+lowest+number+first%29.%0A%2A+Add+a+good+commit+message+at+the+bottom+of+the+page+%28%3C80+characters%3B+use+the+extended+description+field+for+more+detail%29.%0A%2A+Create+a+new+branch+so+you+can+preview+your+new+file+and+request+a+review+via+Pull+Request.%0A" target=_blank><i class="fa fa-edit fa-fw"></i> 添加子页面</a>
 <a href="https://github.com/infilos/infilos.com/issues/new?title=%e6%8a%bd%e8%b1%a1-%e8%bf%9b%e7%a8%8b" target=_blank><i class="fab fa-github fa-fw"></i> 提交文档问题</a>
 <a id=print href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/_print/><i class="fa fa-print fa-fw"></i> 整节打印</a>
-</div>
-<div class=td-toc><nav id=TableOfContents>
+</div><div class=td-toc><nav id=TableOfContents>
 <ul>
-<li><a href=#抽象进程>抽象：进程</a></li>
-<li><a href=#进程-api>进程 API</a></li>
-<li><a href=#进程创建细节>进程创建：细节</a></li>
-<li><a href=#进程状态>进程状态</a></li>
-<li><a href=#数据结构>数据结构</a></li>
-</ul>
-</nav></div>
-</aside>
-<main class="col-12 col-md-9 col-xl-8 pl-md-5" role=main>
+<li><a href=#抽象进程>抽象：进程</a></li><li><a href=#进程-api>进程 API</a></li><li><a href=#进程创建细节>进程创建：细节</a></li><li><a href=#进程状态>进程状态</a></li><li><a href=#数据结构>数据结构</a></li></ul></nav></div></aside><main class="col-12 col-md-9 col-xl-8 pl-md-5" role=main>
 <nav aria-label=breadcrumb class="d-none d-md-block d-print-none">
 <ol class="breadcrumb spb-1">
 <li class=breadcrumb-item>
 <a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/>基础知识</a>
-</li>
-<li class=breadcrumb-item>
+</li><li class=breadcrumb-item>
 <a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/>操作系统</a>
-</li>
-<li class="breadcrumb-item active" aria-current=page>
+</li><li class="breadcrumb-item active" aria-current=page>
 <a href=/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/ch04/>抽象-进程</a>
-</li>
-</ol>
-</nav>
-<div class=td-content>
-<h1>抽象-进程</h1>
-<header class=article-meta>
-</header>
-<p>进程的非正式定义非常简单：进程就是运行中的程序。程序本身没有生命周期，它只是保存在磁盘上的一些指令或静态数据。是操作系统让这些字节运行起来、让程序发挥作用。</p>
-<p>事实表明，人们常常系统同时运行多个程序。比如：在使用计算机或笔记本的时候，我们会同时运行浏览器、邮件、游戏等。实际上，一个正常的系统可能会有上百个进程同时在运行。如果能实现这样的系统，人们就不需要考虑当时是哪个 CPU 是可用的，使用起来非常简单。因此我们的挑战是：</p>
-<blockquote>
-<p><strong>关键问题：如何提供有许多 CPU 的假象？</strong></p>
-</blockquote>
-<p>操作系统通过虚拟化 CPU 来提供这种假象。通过让一个进程只运行一个时间片，然后切换到其他进程，操作系统提供了存在多个虚拟 CPU 的假象。这就是 <strong>分时共享 CPU</strong> 技术，允许用户如愿运行多个并发进程。潜在的开销是性能损失，因为如果 CPU 必须共享，每个进程的运行过程都会慢一点。</p>
-<p>要实现 CPU 的虚拟化并能实现的足够好，操作系统就需要一些低级机制和一些高级智能。我们将低级机制称为机制。机制是一些低级方法或协议，实现了所需要的功能。比如稍后我们将学习如何实现上下文切换，它让操作系统能够停止运行一个程序，并开始在指定的 CPU 上运行另一个程序。所有现代操作系统都采用了这种分时机制。</p>
-<blockquote>
+</li></ol></nav><div class=td-content>
+<h1>抽象-进程</h1><header class=article-meta>
+</header><p>进程的非正式定义非常简单：进程就是运行中的程序。程序本身没有生命周期，它只是保存在磁盘上的一些指令或静态数据。是操作系统让这些字节运行起来、让程序发挥作用。</p><p>事实表明，人们常常系统同时运行多个程序。比如：在使用计算机或笔记本的时候，我们会同时运行浏览器、邮件、游戏等。实际上，一个正常的系统可能会有上百个进程同时在运行。如果能实现这样的系统，人们就不需要考虑当时是哪个 CPU 是可用的，使用起来非常简单。因此我们的挑战是：</p><blockquote>
+<p><strong>关键问题：如何提供有许多 CPU 的假象？</strong></p></blockquote><p>操作系统通过虚拟化 CPU 来提供这种假象。通过让一个进程只运行一个时间片，然后切换到其他进程，操作系统提供了存在多个虚拟 CPU 的假象。这就是 <strong>分时共享 CPU</strong> 技术，允许用户如愿运行多个并发进程。潜在的开销是性能损失，因为如果 CPU 必须共享，每个进程的运行过程都会慢一点。</p><p>要实现 CPU 的虚拟化并能实现的足够好，操作系统就需要一些低级机制和一些高级智能。我们将低级机制称为机制。机制是一些低级方法或协议，实现了所需要的功能。比如稍后我们将学习如何实现上下文切换，它让操作系统能够停止运行一个程序，并开始在指定的 CPU 上运行另一个程序。所有现代操作系统都采用了这种分时机制。</p><blockquote>
 <p><strong>提示：使用分时共享(和空分共享)</strong>
 分时共享是操作系统共享资源所使用的最基本的技术之一。通过运行资源由一个实体使用一小段时间，然后由另一个实体使用一小段时间，如此下去，所谓的资源(CPU/网络)可以被许多人共享。
-分时共享的自然对应技术是空分共享，资源在空间上被划分给希望使用它的多个人。比如磁盘空间自然就是一个空分共享资源，因为一旦将块分配给文件，在用户删除文件之前，不可能将它分配给其它文件。</p>
-</blockquote>
-<p>在这些机制之上，操作系统中有一些智能以策略的形式存在。策略是在操作系统内做出某种决定的算法。比如，给定一组可能的程序要在 CPU 上运行，操作系统应该运行哪个程序？操作系统中调度策略会做出这个决定，可能利用历史信息、工作负载知识、性能指标来做出决定。</p>
-<h2 id=抽象进程>抽象：进程</h2>
-<p><strong>操作系统为正在运行的程序提供的抽象，就是所谓的进程。</strong> 一个进程只是一个正在运行的程序。在任何时刻，我们都可以清点它在执行过程中访问或影响了操作系统的哪些部分，从而概况为一个进程。</p>
-<p>为了理解进程的构成，我们必须理解它的机器状态：程序在运行时可以读取或更新的内容。在任何时刻，机器的哪些部分对该程序的执行很重要？</p>
-<p>进程的机器状态有一个明显的组成部分——内存。指令被保存在内存中，正在运行的程序读写的数据也保存在内存中。因此进程可以访问的内存(地址空间)是该进程的一部分。</p>
-<p>进程的机器状态的另一部分是寄存器。许多指令明确的读取或更新寄存器，因此显然它们对于执行该进程很重要。</p>
-<p>请注意，有一些非常特殊的寄存器构成了该机器状态的一部分。比如程序计数器告诉我们程序当前正在执行哪个指令；类似的，栈指针和先关的帧指针用户管理函数参数栈、局部变量和返回地址。</p>
-<blockquote>
+分时共享的自然对应技术是空分共享，资源在空间上被划分给希望使用它的多个人。比如磁盘空间自然就是一个空分共享资源，因为一旦将块分配给文件，在用户删除文件之前，不可能将它分配给其它文件。</p></blockquote><p>在这些机制之上，操作系统中有一些智能以策略的形式存在。策略是在操作系统内做出某种决定的算法。比如，给定一组可能的程序要在 CPU 上运行，操作系统应该运行哪个程序？操作系统中调度策略会做出这个决定，可能利用历史信息、工作负载知识、性能指标来做出决定。</p><h2 id=抽象进程>抽象：进程</h2><p><strong>操作系统为正在运行的程序提供的抽象，就是所谓的进程。</strong> 一个进程只是一个正在运行的程序。在任何时刻，我们都可以清点它在执行过程中访问或影响了操作系统的哪些部分，从而概况为一个进程。</p><p>为了理解进程的构成，我们必须理解它的机器状态：程序在运行时可以读取或更新的内容。在任何时刻，机器的哪些部分对该程序的执行很重要？</p><p>进程的机器状态有一个明显的组成部分——内存。指令被保存在内存中，正在运行的程序读写的数据也保存在内存中。因此进程可以访问的内存(地址空间)是该进程的一部分。</p><p>进程的机器状态的另一部分是寄存器。许多指令明确的读取或更新寄存器，因此显然它们对于执行该进程很重要。</p><p>请注意，有一些非常特殊的寄存器构成了该机器状态的一部分。比如程序计数器告诉我们程序当前正在执行哪个指令；类似的，栈指针和先关的帧指针用户管理函数参数栈、局部变量和返回地址。</p><blockquote>
 <p><strong>提示：分离策略和机制</strong>
-在许多操作系统中，一个通用的设计范式是将高级策略与其低级机制分开。你可以将机制看成对系统的“HOW”问题提供的答案。例如操作系统如何执行上下文切换？策略为“WHICH”问题提供答案。例如操作系统现在应该运行哪个进程？将两者分开可以轻松改变策略，而不用重新考虑机制，因此这是一种模块化的形式，一种通用的软件设计原则。</p>
-</blockquote>
-<p>最后，程序也经常访问持久存储设备。此类 IO 信息可能包含当前打开的文件列表。</p>
-<h2 id=进程-api>进程 API</h2>
-<p>虽然讨论真实的进程 API 将会在第五章进行，但这里先介绍一下操作系统的所有接口必须包含哪些内容。所有现代操作系统都以某种形式提供这些 API。</p>
-<ul>
-<li><strong>创建</strong>：操作系统必须包含一些创建新进程的方法。在 shell 中键入命令或双击应用程序图标时，会调用操作系统来创建新进程，运行指定的程序。</li>
-<li><strong>销毁</strong>：由于存在创建进程接口，因此系统还提供了一个强制销毁进程的接口。当然，很多进程会在运行完成后自行退出。但是，如果它们不退出，用户可能希望终止它们，因此停止失控进程的接口非常有用。</li>
-<li><strong>等待</strong>：有时等待进程停止运行是有用的，因此经常提供某种等待接口。</li>
-<li><strong>控制</strong>：除了杀死或等待进程外，有时还可能存在其他控制。比如大多数操作系统提供了某种方法来暂停进程、恢复进程。</li>
-<li><strong>状态</strong>：通常也有一些接口可以获得有关集成的状态信息，例如运行了多长时间，或者处于什么状态。</li>
-</ul>
-<h2 id=进程创建细节>进程创建：细节</h2>
-<p>**操作系统运行进程要做的第一件事情就是将代码和所有静态数据(如初始化变量)加载到内存中，即加载到进程的地址空间中。**程序最初以某种可执行的格式保存在磁盘上。因此，将程序和静态数据加载到内存中的过程，需要操作系统从磁盘上读取这些字节，并将它们放在内存中的某处。</p>
-<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20190831142242.png style=display:block;width:50% alt=NAME align=center> </div>
-<p>**在早期的操作系统中，加载过程会尽早(eagerly)完成，即在运行程序之前全部完成。现代操作系统则会惰性(lazily)执行该过程，即仅在程序执行期间需要的时候才会加载代码或数据片段。**要真正理解代码和数据的惰性加载过程是如何工作的，必须更多的了解分页和交换的机制，这是我们将来讨论内存虚拟化时要涉及的主题。现在，只要记住在运行任何程序之前，操作系统显然必须要执行一些工作，才能将重要的程序字节从磁盘读入内存。</p>
-<p>将代码和静态数据加载到内存之后，操作系统在运行该进程之前还要执行一些其他操作。<strong>必须为程序的运行时栈分配一些内存</strong>。你可能已经知道，C 程序使用栈存放局部变量、函数参数和返回地址。操作系统分配这些内存并提供给进程。操作系统也可能会用参数初始化栈。具体来说，它会将参数填入 <code>mian</code> 函数，即 <code>argc</code> 和 <code>argv</code> 数组。</p>
-<p>**操作系统也可能会程序的堆分配一些内存。在 C 程序中，堆用于显式请求的动态分配数据。**程序通过调用 <code>malloc</code> 来请求这样的内存空间，并通过调用 <code>free</code> 来显式释放。数据结构需要堆。起初堆会很小，随着程序的运行，通过 <code>malloc</code> 库 API 请求更多内存，操作系统可能会参与分配更多内存给进程，以满足这些调用。</p>
-<p><strong>操作系统还将执行一些其他初始化任务，特别是与输入/输出先关的任务</strong>。比如，在 UNIX 系统中，默认情况下每个进程都有 3 个打开的文件描述符，分别用于标准输入、输出和错误。这些描述符让程序轻松读取来自中断的输入以及打印输出到屏幕。</p>
-<p>通过将代码和静态数据加载到内存中，通过创建和初始化栈以及执行与 IO 设置相关的其他工作，OS 现在终于为程序执行搭好了舞台。然后它还有最后一项任务：<strong>启动程序</strong>，在入口处执行，即 <code>main</code>。通过调转到 <code>main</code> 例程，OS 将 CPU 的控制权转移到新创建的进程中，从而程序开始执行。</p>
-<h2 id=进程状态>进程状态</h2>
-<p>进程在特定的时间可能处于不同的状态。在早期的计算机系统中，出现了一个进程可能处于多种状态的概念。简而言之，进程可以处于以下 3 种状态之一：</p>
-<ul>
-<li>运行：在运行状态下，进程正在处理器上运行，这意味着它正在执行指令。</li>
-<li>就绪：在就绪状态下，进程已经准备好运行，但由于某种原因，操作系统选择不在此时运行它。</li>
-<li>阻塞：在阻塞状态下，一个进程执行了某种操作，直到发生其他事件时才会准备开始运行。一个常见的例子就是，当进程向磁盘发起 IO 请求时，进程会被阻塞，这时其他进程可以使用该处理器。</li>
-</ul>
-<div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20190831144439.png style=display:block;width:50% alt=NAME align=center> </div>
-<p>如上图所示，可以根据操作系统的负载，让进程在就绪和运行状态之间切换。从就绪到运行意味着该进程已经被调度；从运行到就绪则意味着该进程已经被取消调度；一旦进程被阻塞，OS 将保持进程的这种状态，直到发生某种事件。此时，进程再次转入就绪状态(或立即再次运行)。</p>
-<p>我们来看一个例子，看两个进程如何通过这些状态转换。首先想象两个正在运行的进程，每个进程只使用 CPU。在这种情况下，每个进程的状态可能如下所示：</p>
-<table>
+在许多操作系统中，一个通用的设计范式是将高级策略与其低级机制分开。你可以将机制看成对系统的“HOW”问题提供的答案。例如操作系统如何执行上下文切换？策略为“WHICH”问题提供答案。例如操作系统现在应该运行哪个进程？将两者分开可以轻松改变策略，而不用重新考虑机制，因此这是一种模块化的形式，一种通用的软件设计原则。</p></blockquote><p>最后，程序也经常访问持久存储设备。此类 IO 信息可能包含当前打开的文件列表。</p><h2 id=进程-api>进程 API</h2><p>虽然讨论真实的进程 API 将会在第五章进行，但这里先介绍一下操作系统的所有接口必须包含哪些内容。所有现代操作系统都以某种形式提供这些 API。</p><ul>
+<li><strong>创建</strong>：操作系统必须包含一些创建新进程的方法。在 shell 中键入命令或双击应用程序图标时，会调用操作系统来创建新进程，运行指定的程序。</li><li><strong>销毁</strong>：由于存在创建进程接口，因此系统还提供了一个强制销毁进程的接口。当然，很多进程会在运行完成后自行退出。但是，如果它们不退出，用户可能希望终止它们，因此停止失控进程的接口非常有用。</li><li><strong>等待</strong>：有时等待进程停止运行是有用的，因此经常提供某种等待接口。</li><li><strong>控制</strong>：除了杀死或等待进程外，有时还可能存在其他控制。比如大多数操作系统提供了某种方法来暂停进程、恢复进程。</li><li><strong>状态</strong>：通常也有一些接口可以获得有关集成的状态信息，例如运行了多长时间，或者处于什么状态。</li></ul><h2 id=进程创建细节>进程创建：细节</h2><p>**操作系统运行进程要做的第一件事情就是将代码和所有静态数据(如初始化变量)加载到内存中，即加载到进程的地址空间中。**程序最初以某种可执行的格式保存在磁盘上。因此，将程序和静态数据加载到内存中的过程，需要操作系统从磁盘上读取这些字节，并将它们放在内存中的某处。</p><div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20190831142242.png style=display:block;width:50% alt=NAME align=center> </div><p>**在早期的操作系统中，加载过程会尽早(eagerly)完成，即在运行程序之前全部完成。现代操作系统则会惰性(lazily)执行该过程，即仅在程序执行期间需要的时候才会加载代码或数据片段。**要真正理解代码和数据的惰性加载过程是如何工作的，必须更多的了解分页和交换的机制，这是我们将来讨论内存虚拟化时要涉及的主题。现在，只要记住在运行任何程序之前，操作系统显然必须要执行一些工作，才能将重要的程序字节从磁盘读入内存。</p><p>将代码和静态数据加载到内存之后，操作系统在运行该进程之前还要执行一些其他操作。<strong>必须为程序的运行时栈分配一些内存</strong>。你可能已经知道，C 程序使用栈存放局部变量、函数参数和返回地址。操作系统分配这些内存并提供给进程。操作系统也可能会用参数初始化栈。具体来说，它会将参数填入 <code>mian</code> 函数，即 <code>argc</code> 和 <code>argv</code> 数组。</p><p>**操作系统也可能会程序的堆分配一些内存。在 C 程序中，堆用于显式请求的动态分配数据。**程序通过调用 <code>malloc</code> 来请求这样的内存空间，并通过调用 <code>free</code> 来显式释放。数据结构需要堆。起初堆会很小，随着程序的运行，通过 <code>malloc</code> 库 API 请求更多内存，操作系统可能会参与分配更多内存给进程，以满足这些调用。</p><p><strong>操作系统还将执行一些其他初始化任务，特别是与输入/输出先关的任务</strong>。比如，在 UNIX 系统中，默认情况下每个进程都有 3 个打开的文件描述符，分别用于标准输入、输出和错误。这些描述符让程序轻松读取来自中断的输入以及打印输出到屏幕。</p><p>通过将代码和静态数据加载到内存中，通过创建和初始化栈以及执行与 IO 设置相关的其他工作，OS 现在终于为程序执行搭好了舞台。然后它还有最后一项任务：<strong>启动程序</strong>，在入口处执行，即 <code>main</code>。通过调转到 <code>main</code> 例程，OS 将 CPU 的控制权转移到新创建的进程中，从而程序开始执行。</p><h2 id=进程状态>进程状态</h2><p>进程在特定的时间可能处于不同的状态。在早期的计算机系统中，出现了一个进程可能处于多种状态的概念。简而言之，进程可以处于以下 3 种状态之一：</p><ul>
+<li>运行：在运行状态下，进程正在处理器上运行，这意味着它正在执行指令。</li><li>就绪：在就绪状态下，进程已经准备好运行，但由于某种原因，操作系统选择不在此时运行它。</li><li>阻塞：在阻塞状态下，一个进程执行了某种操作，直到发生其他事件时才会准备开始运行。一个常见的例子就是，当进程向磁盘发起 IO 请求时，进程会被阻塞，这时其他进程可以使用该处理器。</li></ul><div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20190831144439.png style=display:block;width:50% alt=NAME align=center> </div><p>如上图所示，可以根据操作系统的负载，让进程在就绪和运行状态之间切换。从就绪到运行意味着该进程已经被调度；从运行到就绪则意味着该进程已经被取消调度；一旦进程被阻塞，OS 将保持进程的这种状态，直到发生某种事件。此时，进程再次转入就绪状态(或立即再次运行)。</p><p>我们来看一个例子，看两个进程如何通过这些状态转换。首先想象两个正在运行的进程，每个进程只使用 CPU。在这种情况下，每个进程的状态可能如下所示：</p><table>
 <thead>
 <tr>
-<th style=text-align:center>时间</th>
-<th style=text-align:center>Process0</th>
-<th style=text-align:center>Process1</th>
-<th style=text-align:center>备注</th>
-</tr>
-</thead>
-<tbody>
+<th style=text-align:center>时间</th><th style=text-align:center>Process0</th><th style=text-align:center>Process1</th><th style=text-align:center>备注</th></tr></thead><tbody>
 <tr>
-<td style=text-align:center>1</td>
-<td style=text-align:center>运行</td>
-<td style=text-align:center>就绪</td>
-<td style=text-align:center></td>
-</tr>
-<tr>
-<td style=text-align:center>2</td>
-<td style=text-align:center>运行</td>
-<td style=text-align:center>就绪</td>
-<td style=text-align:center></td>
-</tr>
-<tr>
-<td style=text-align:center>3</td>
-<td style=text-align:center>运行</td>
-<td style=text-align:center>就绪</td>
-<td style=text-align:center></td>
-</tr>
-<tr>
-<td style=text-align:center>4</td>
-<td style=text-align:center>运行</td>
-<td style=text-align:center>就绪</td>
-<td style=text-align:center>Process0 现在完成</td>
-</tr>
-<tr>
-<td style=text-align:center>5</td>
-<td style=text-align:center>—</td>
-<td style=text-align:center>运行</td>
-<td style=text-align:center></td>
-</tr>
-<tr>
-<td style=text-align:center>6</td>
-<td style=text-align:center>—</td>
-<td style=text-align:center>运行</td>
-<td style=text-align:center></td>
-</tr>
-<tr>
-<td style=text-align:center>7</td>
-<td style=text-align:center>—</td>
-<td style=text-align:center>运行</td>
-<td style=text-align:center></td>
-</tr>
-<tr>
-<td style=text-align:center>8</td>
-<td style=text-align:center>—</td>
-<td style=text-align:center>运行</td>
-<td style=text-align:center>Process1 现在完成</td>
-</tr>
-</tbody>
-</table>
-<p>在下一个例子中，第一个进程在运行一段时间之后发起 IO 请求。此时该进程被阻塞，让另一个进程有机会运行：</p>
-<table>
+<td style=text-align:center>1</td><td style=text-align:center>运行</td><td style=text-align:center>就绪</td><td style=text-align:center></td></tr><tr>
+<td style=text-align:center>2</td><td style=text-align:center>运行</td><td style=text-align:center>就绪</td><td style=text-align:center></td></tr><tr>
+<td style=text-align:center>3</td><td style=text-align:center>运行</td><td style=text-align:center>就绪</td><td style=text-align:center></td></tr><tr>
+<td style=text-align:center>4</td><td style=text-align:center>运行</td><td style=text-align:center>就绪</td><td style=text-align:center>Process0 现在完成</td></tr><tr>
+<td style=text-align:center>5</td><td style=text-align:center>—</td><td style=text-align:center>运行</td><td style=text-align:center></td></tr><tr>
+<td style=text-align:center>6</td><td style=text-align:center>—</td><td style=text-align:center>运行</td><td style=text-align:center></td></tr><tr>
+<td style=text-align:center>7</td><td style=text-align:center>—</td><td style=text-align:center>运行</td><td style=text-align:center></td></tr><tr>
+<td style=text-align:center>8</td><td style=text-align:center>—</td><td style=text-align:center>运行</td><td style=text-align:center>Process1 现在完成</td></tr></tbody></table><p>在下一个例子中，第一个进程在运行一段时间之后发起 IO 请求。此时该进程被阻塞，让另一个进程有机会运行：</p><table>
 <thead>
 <tr>
-<th style=text-align:center>时间</th>
-<th style=text-align:center>Process0</th>
-<th style=text-align:center>Process1</th>
-<th style=text-align:center>备注</th>
-</tr>
-</thead>
-<tbody>
+<th style=text-align:center>时间</th><th style=text-align:center>Process0</th><th style=text-align:center>Process1</th><th style=text-align:center>备注</th></tr></thead><tbody>
 <tr>
-<td style=text-align:center>1</td>
-<td style=text-align:center>运行</td>
-<td style=text-align:center>就绪</td>
-<td style=text-align:center></td>
-</tr>
-<tr>
-<td style=text-align:center>2</td>
-<td style=text-align:center>运行</td>
-<td style=text-align:center>就绪</td>
-<td style=text-align:center></td>
-</tr>
-<tr>
-<td style=text-align:center>3</td>
-<td style=text-align:center>运行</td>
-<td style=text-align:center>就绪</td>
-<td style=text-align:center>Process0 发起 IO</td>
-</tr>
-<tr>
-<td style=text-align:center>4</td>
-<td style=text-align:center>运行</td>
-<td style=text-align:center>运行</td>
-<td style=text-align:center>Process0 被阻塞</td>
-</tr>
-<tr>
-<td style=text-align:center>5</td>
-<td style=text-align:center>阻塞</td>
-<td style=text-align:center>运行</td>
-<td style=text-align:center>所以 Process1 运行</td>
-</tr>
-<tr>
-<td style=text-align:center>6</td>
-<td style=text-align:center>阻塞</td>
-<td style=text-align:center>运行</td>
-<td style=text-align:center></td>
-</tr>
-<tr>
-<td style=text-align:center>7</td>
-<td style=text-align:center>就绪</td>
-<td style=text-align:center>运行</td>
-<td style=text-align:center>Process0 IO 完成</td>
-</tr>
-<tr>
-<td style=text-align:center>8</td>
-<td style=text-align:center>就绪</td>
-<td style=text-align:center>运行</td>
-<td style=text-align:center>Process1 现在完成</td>
-</tr>
-<tr>
-<td style=text-align:center>9</td>
-<td style=text-align:center>运行</td>
-<td style=text-align:center>—</td>
-<td style=text-align:center></td>
-</tr>
-<tr>
-<td style=text-align:center>10</td>
-<td style=text-align:center>运行</td>
-<td style=text-align:center>—</td>
-<td style=text-align:center>Process0 现在完成</td>
-</tr>
-</tbody>
-</table>
-<p>更具体的说，Process0 发起 IO 并被阻塞，等待 IO 完成。OS 发现 Process0 不使用 CPU，因此开始运行 Process1。当 Process1 运行时，Process0 的 IO 完成，状态变为就绪。最后 Process1 结束，Process0 运行，然后完成。</p>
-<p>请注意，即使是在这个简单的例子中，操作系统也必须做出很多决定。首先，系统必须决定在 Process0 发出 IO 时运行 Process1。这样做可以通过保持 CPU 繁忙来提供资源利用率。其次，当 IO 完成时，系统决定不立即切换为 Process0。目前还不清楚这是不是一个很好的决定。这类决策由操作系统调度程序完成，后续几章将会展开详细的讨论。</p>
-<h2 id=数据结构>数据结构</h2>
-<p>操作系统是一个程序，和其他程序一样，它拥有一些关键的数据结构来跟踪各种相关的信息。比如，为了跟踪每个进程的状态，操作系统可能会为所有就绪的进程保留某种进程列表，以及跟踪当前正在运行的进程的一些附加信息。操作系统还必须以某种方式跟踪阻塞的进程。当 IO 事件完成时，操作系统应确保唤醒正确的进程，使其准备好再次运行。</p>
-<div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=color:#8f5902;font-style:italic>// the registers xv6 will save and restore
-</span><span style=color:#8f5902;font-style:italic>// to stop and subsequently restart a process
-</span><span style=color:#8f5902;font-style:italic></span><span style=color:#204a87;font-weight:700>struct</span> <span style=color:#000>context</span> <span style=color:#000;font-weight:700>{</span>
-  <span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>eip</span><span style=color:#000;font-weight:700>;</span>
-  <span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>esp</span><span style=color:#000;font-weight:700>;</span>
-  <span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>ebx</span><span style=color:#000;font-weight:700>;</span>
-  <span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>ecx</span><span style=color:#000;font-weight:700>;</span>
-  <span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>edx</span><span style=color:#000;font-weight:700>;</span>
-  <span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>esi</span><span style=color:#000;font-weight:700>;</span>
-  <span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>edi</span><span style=color:#000;font-weight:700>;</span>
-  <span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>ebp</span><span style=color:#000;font-weight:700>;</span>
-<span style=color:#000;font-weight:700>};</span>
-
-<span style=color:#8f5902;font-style:italic>// the different states a process can be in
-</span><span style=color:#8f5902;font-style:italic></span><span style=color:#204a87;font-weight:700>enum</span> <span style=color:#000>proc_state</span> <span style=color:#000;font-weight:700>{</span> <span style=color:#000>UNUSED</span><span style=color:#000;font-weight:700>,</span> <span style=color:#000>EMBRYO</span><span style=color:#000;font-weight:700>,</span> <span style=color:#000>SLEEPING</span><span style=color:#000;font-weight:700>,</span>
-                  <span style=color:#000>RUNNABLE</span><span style=color:#000;font-weight:700>,</span> <span style=color:#000>RUNNING</span><span style=color:#000;font-weight:700>,</span> <span style=color:#000>ZOMBIE</span> <span style=color:#000;font-weight:700>};</span>
-
-<span style=color:#8f5902;font-style:italic>// the information xv6 tracks about each process
-</span><span style=color:#8f5902;font-style:italic>// including its register context and state
-</span><span style=color:#8f5902;font-style:italic></span><span style=color:#204a87;font-weight:700>struct</span> <span style=color:#000>proc</span> <span style=color:#000;font-weight:700>{</span>
-  <span style=color:#204a87;font-weight:700>char</span> <span style=color:#ce5c00;font-weight:700>*</span><span style=color:#000>mem</span><span style=color:#000;font-weight:700>;</span>                   <span style=color:#8f5902;font-style:italic>// Start of process memory
-</span><span style=color:#8f5902;font-style:italic></span>  <span style=color:#000>uint</span> <span style=color:#000>sz</span><span style=color:#000;font-weight:700>;</span>                     <span style=color:#8f5902;font-style:italic>// Size of process memory
-</span><span style=color:#8f5902;font-style:italic></span>  <span style=color:#204a87;font-weight:700>char</span> <span style=color:#ce5c00;font-weight:700>*</span><span style=color:#000>kstack</span><span style=color:#000;font-weight:700>;</span>                <span style=color:#8f5902;font-style:italic>// Bottom of kernel stack
-</span><span style=color:#8f5902;font-style:italic></span>                               <span style=color:#8f5902;font-style:italic>// for this process
-</span><span style=color:#8f5902;font-style:italic></span>  <span style=color:#204a87;font-weight:700>enum</span> <span style=color:#000>proc_state</span> <span style=color:#000>state</span><span style=color:#000;font-weight:700>;</span>       <span style=color:#8f5902;font-style:italic>// Process state
-</span><span style=color:#8f5902;font-style:italic></span>  <span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>pid</span><span style=color:#000;font-weight:700>;</span>                     <span style=color:#8f5902;font-style:italic>// Process ID
-</span><span style=color:#8f5902;font-style:italic></span>  <span style=color:#204a87;font-weight:700>struct</span> <span style=color:#000>proc</span> <span style=color:#ce5c00;font-weight:700>*</span><span style=color:#000>parent</span><span style=color:#000;font-weight:700>;</span>         <span style=color:#8f5902;font-style:italic>// Parent process
-</span><span style=color:#8f5902;font-style:italic></span>  <span style=color:#204a87;font-weight:700>void</span> <span style=color:#ce5c00;font-weight:700>*</span><span style=color:#000>chan</span><span style=color:#000;font-weight:700>;</span>                  <span style=color:#8f5902;font-style:italic>// If non-zero, sleeping on chan
-</span><span style=color:#8f5902;font-style:italic></span>  <span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>killed</span><span style=color:#000;font-weight:700>;</span>                  <span style=color:#8f5902;font-style:italic>// If non-zero, have been killed
-</span><span style=color:#8f5902;font-style:italic></span>  <span style=color:#204a87;font-weight:700>struct</span> <span style=color:#000>file</span> <span style=color:#ce5c00;font-weight:700>*</span><span style=color:#000>ofile</span><span style=color:#000;font-weight:700>[</span><span style=color:#000>NOFILE</span><span style=color:#000;font-weight:700>];</span>  <span style=color:#8f5902;font-style:italic>// Open files
-</span><span style=color:#8f5902;font-style:italic></span>  <span style=color:#204a87;font-weight:700>struct</span> <span style=color:#000>inode</span> <span style=color:#ce5c00;font-weight:700>*</span><span style=color:#000>cwd</span><span style=color:#000;font-weight:700>;</span>           <span style=color:#8f5902;font-style:italic>// Current directory
-</span><span style=color:#8f5902;font-style:italic></span>  <span style=color:#204a87;font-weight:700>struct</span> <span style=color:#000>context</span> <span style=color:#000>context</span><span style=color:#000;font-weight:700>;</span>      <span style=color:#8f5902;font-style:italic>// Switch here to run process
-</span><span style=color:#8f5902;font-style:italic></span>  <span style=color:#204a87;font-weight:700>struct</span> <span style=color:#000>trapframe</span> <span style=color:#ce5c00;font-weight:700>*</span><span style=color:#000>tf</span><span style=color:#000;font-weight:700>;</span>        <span style=color:#8f5902;font-style:italic>// Trap frame for the
-</span><span style=color:#8f5902;font-style:italic></span>                               <span style=color:#8f5902;font-style:italic>// current interrupt
-</span><span style=color:#8f5902;font-style:italic></span><span style=color:#000;font-weight:700>};</span>
-</code></pre></div><p>上面的代码展示了 OS 需要跟踪 xv6 内核中每个进程的信息类型。“真正的”操作系统中存在类似的进程结构。</p>
-<p>从上面的代码可以看到操作系统跟踪进程的一些重要信息。对于停止的进程，寄存器上下文将保存其寄存器的内容。当一个进程停止时，它的寄存器将被保存到该内存位置。通过恢复这些寄存器(将它们的值放回实际的物理寄存器中)，操作系统可以恢复运行该进程。我们将在后面的章节中详细了解该技术，即上下文切换。</p>
-<p>从上面的代码中还可以看到，除了运行、就绪、阻塞之外，进程还可能处于一些其他状态。有时候系统会有一个初始状态，表示进程在创建时处于的状态。另外，一个进程可以处于已退出但尚未清理的最终状态(UNIX 中的僵尸状态)。这个最终状态非常有用，因为它运行其他进程(通常是该进程的父进程)检查进程的返回代码，并查看刚刚完成的进程是否执行成功。完成后，父进程将进行最后一次调用，以等待子进程的完成，并告诉操作系统可以清理这个正在结束的进程的所有相关数据结构。</p>
-<blockquote>
+<td style=text-align:center>1</td><td style=text-align:center>运行</td><td style=text-align:center>就绪</td><td style=text-align:center></td></tr><tr>
+<td style=text-align:center>2</td><td style=text-align:center>运行</td><td style=text-align:center>就绪</td><td style=text-align:center></td></tr><tr>
+<td style=text-align:center>3</td><td style=text-align:center>运行</td><td style=text-align:center>就绪</td><td style=text-align:center>Process0 发起 IO</td></tr><tr>
+<td style=text-align:center>4</td><td style=text-align:center>运行</td><td style=text-align:center>运行</td><td style=text-align:center>Process0 被阻塞</td></tr><tr>
+<td style=text-align:center>5</td><td style=text-align:center>阻塞</td><td style=text-align:center>运行</td><td style=text-align:center>所以 Process1 运行</td></tr><tr>
+<td style=text-align:center>6</td><td style=text-align:center>阻塞</td><td style=text-align:center>运行</td><td style=text-align:center></td></tr><tr>
+<td style=text-align:center>7</td><td style=text-align:center>就绪</td><td style=text-align:center>运行</td><td style=text-align:center>Process0 IO 完成</td></tr><tr>
+<td style=text-align:center>8</td><td style=text-align:center>就绪</td><td style=text-align:center>运行</td><td style=text-align:center>Process1 现在完成</td></tr><tr>
+<td style=text-align:center>9</td><td style=text-align:center>运行</td><td style=text-align:center>—</td><td style=text-align:center></td></tr><tr>
+<td style=text-align:center>10</td><td style=text-align:center>运行</td><td style=text-align:center>—</td><td style=text-align:center>Process0 现在完成</td></tr></tbody></table><p>更具体的说，Process0 发起 IO 并被阻塞，等待 IO 完成。OS 发现 Process0 不使用 CPU，因此开始运行 Process1。当 Process1 运行时，Process0 的 IO 完成，状态变为就绪。最后 Process1 结束，Process0 运行，然后完成。</p><p>请注意，即使是在这个简单的例子中，操作系统也必须做出很多决定。首先，系统必须决定在 Process0 发出 IO 时运行 Process1。这样做可以通过保持 CPU 繁忙来提供资源利用率。其次，当 IO 完成时，系统决定不立即切换为 Process0。目前还不清楚这是不是一个很好的决定。这类决策由操作系统调度程序完成，后续几章将会展开详细的讨论。</p><h2 id=数据结构>数据结构</h2><p>操作系统是一个程序，和其他程序一样，它拥有一些关键的数据结构来跟踪各种相关的信息。比如，为了跟踪每个进程的状态，操作系统可能会为所有就绪的进程保留某种进程列表，以及跟踪当前正在运行的进程的一些附加信息。操作系统还必须以某种方式跟踪阻塞的进程。当 IO 事件完成时，操作系统应确保唤醒正确的进程，使其准备好再次运行。</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=display:flex><span><span style=color:#8f5902;font-style:italic>// the registers xv6 will save and restore
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic>// to stop and subsequently restart a process
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic></span><span style=color:#204a87;font-weight:700>struct</span> <span style=color:#000>context</span> <span style=color:#000;font-weight:700>{</span>
+</span></span><span style=display:flex><span>  <span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>eip</span><span style=color:#000;font-weight:700>;</span>
+</span></span><span style=display:flex><span>  <span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>esp</span><span style=color:#000;font-weight:700>;</span>
+</span></span><span style=display:flex><span>  <span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>ebx</span><span style=color:#000;font-weight:700>;</span>
+</span></span><span style=display:flex><span>  <span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>ecx</span><span style=color:#000;font-weight:700>;</span>
+</span></span><span style=display:flex><span>  <span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>edx</span><span style=color:#000;font-weight:700>;</span>
+</span></span><span style=display:flex><span>  <span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>esi</span><span style=color:#000;font-weight:700>;</span>
+</span></span><span style=display:flex><span>  <span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>edi</span><span style=color:#000;font-weight:700>;</span>
+</span></span><span style=display:flex><span>  <span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>ebp</span><span style=color:#000;font-weight:700>;</span>
+</span></span><span style=display:flex><span><span style=color:#000;font-weight:700>};</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic>// the different states a process can be in
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic></span><span style=color:#204a87;font-weight:700>enum</span> <span style=color:#000>proc_state</span> <span style=color:#000;font-weight:700>{</span> <span style=color:#000>UNUSED</span><span style=color:#000;font-weight:700>,</span> <span style=color:#000>EMBRYO</span><span style=color:#000;font-weight:700>,</span> <span style=color:#000>SLEEPING</span><span style=color:#000;font-weight:700>,</span>
+</span></span><span style=display:flex><span>                  <span style=color:#000>RUNNABLE</span><span style=color:#000;font-weight:700>,</span> <span style=color:#000>RUNNING</span><span style=color:#000;font-weight:700>,</span> <span style=color:#000>ZOMBIE</span> <span style=color:#000;font-weight:700>};</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic>// the information xv6 tracks about each process
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic>// including its register context and state
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic></span><span style=color:#204a87;font-weight:700>struct</span> <span style=color:#000>proc</span> <span style=color:#000;font-weight:700>{</span>
+</span></span><span style=display:flex><span>  <span style=color:#204a87;font-weight:700>char</span> <span style=color:#ce5c00;font-weight:700>*</span><span style=color:#000>mem</span><span style=color:#000;font-weight:700>;</span>                   <span style=color:#8f5902;font-style:italic>// Start of process memory
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic></span>  <span style=color:#000>uint</span> <span style=color:#000>sz</span><span style=color:#000;font-weight:700>;</span>                     <span style=color:#8f5902;font-style:italic>// Size of process memory
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic></span>  <span style=color:#204a87;font-weight:700>char</span> <span style=color:#ce5c00;font-weight:700>*</span><span style=color:#000>kstack</span><span style=color:#000;font-weight:700>;</span>                <span style=color:#8f5902;font-style:italic>// Bottom of kernel stack
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic></span>                               <span style=color:#8f5902;font-style:italic>// for this process
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic></span>  <span style=color:#204a87;font-weight:700>enum</span> <span style=color:#000>proc_state</span> <span style=color:#000>state</span><span style=color:#000;font-weight:700>;</span>       <span style=color:#8f5902;font-style:italic>// Process state
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic></span>  <span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>pid</span><span style=color:#000;font-weight:700>;</span>                     <span style=color:#8f5902;font-style:italic>// Process ID
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic></span>  <span style=color:#204a87;font-weight:700>struct</span> <span style=color:#000>proc</span> <span style=color:#ce5c00;font-weight:700>*</span><span style=color:#000>parent</span><span style=color:#000;font-weight:700>;</span>         <span style=color:#8f5902;font-style:italic>// Parent process
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic></span>  <span style=color:#204a87;font-weight:700>void</span> <span style=color:#ce5c00;font-weight:700>*</span><span style=color:#000>chan</span><span style=color:#000;font-weight:700>;</span>                  <span style=color:#8f5902;font-style:italic>// If non-zero, sleeping on chan
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic></span>  <span style=color:#204a87;font-weight:700>int</span> <span style=color:#000>killed</span><span style=color:#000;font-weight:700>;</span>                  <span style=color:#8f5902;font-style:italic>// If non-zero, have been killed
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic></span>  <span style=color:#204a87;font-weight:700>struct</span> <span style=color:#000>file</span> <span style=color:#ce5c00;font-weight:700>*</span><span style=color:#000>ofile</span><span style=color:#000;font-weight:700>[</span><span style=color:#000>NOFILE</span><span style=color:#000;font-weight:700>];</span>  <span style=color:#8f5902;font-style:italic>// Open files
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic></span>  <span style=color:#204a87;font-weight:700>struct</span> <span style=color:#000>inode</span> <span style=color:#ce5c00;font-weight:700>*</span><span style=color:#000>cwd</span><span style=color:#000;font-weight:700>;</span>           <span style=color:#8f5902;font-style:italic>// Current directory
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic></span>  <span style=color:#204a87;font-weight:700>struct</span> <span style=color:#000>context</span> <span style=color:#000>context</span><span style=color:#000;font-weight:700>;</span>      <span style=color:#8f5902;font-style:italic>// Switch here to run process
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic></span>  <span style=color:#204a87;font-weight:700>struct</span> <span style=color:#000>trapframe</span> <span style=color:#ce5c00;font-weight:700>*</span><span style=color:#000>tf</span><span style=color:#000;font-weight:700>;</span>        <span style=color:#8f5902;font-style:italic>// Trap frame for the
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic></span>                               <span style=color:#8f5902;font-style:italic>// current interrupt
+</span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic></span><span style=color:#000;font-weight:700>};</span>
+</span></span></code></pre></div><p>上面的代码展示了 OS 需要跟踪 xv6 内核中每个进程的信息类型。“真正的”操作系统中存在类似的进程结构。</p><p>从上面的代码可以看到操作系统跟踪进程的一些重要信息。对于停止的进程，寄存器上下文将保存其寄存器的内容。当一个进程停止时，它的寄存器将被保存到该内存位置。通过恢复这些寄存器(将它们的值放回实际的物理寄存器中)，操作系统可以恢复运行该进程。我们将在后面的章节中详细了解该技术，即上下文切换。</p><p>从上面的代码中还可以看到，除了运行、就绪、阻塞之外，进程还可能处于一些其他状态。有时候系统会有一个初始状态，表示进程在创建时处于的状态。另外，一个进程可以处于已退出但尚未清理的最终状态(UNIX 中的僵尸状态)。这个最终状态非常有用，因为它运行其他进程(通常是该进程的父进程)检查进程的返回代码，并查看刚刚完成的进程是否执行成功。完成后，父进程将进行最后一次调用，以等待子进程的完成，并告诉操作系统可以清理这个正在结束的进程的所有相关数据结构。</p><blockquote>
 <p><strong>补充：数据结构——进程列表</strong>
-操作系统充满了我们将要在本书中讨论的各种重要的数据结构。进程列表是第一个这样的结构。这种结构比较简单，但是任何能够同时运行多个程序的操作系统当然都会有这种类似的结构，以便跟踪系统中运行的所有程序。有时人们会将存储关于进程信息的个体结构称为进程控制块(PCB)，这是谈论包含每个进程信息的 C 结构的一种方式。</p>
-</blockquote>
-<style>.feedback--answer{display:inline-block}.feedback--answer-no{margin-left:1em}.feedback--response{display:none;margin-top:1em}.feedback--response__visible{display:block}</style>
-<div class=d-print-none>
-<h2 class=feedback--title>Feedback</h2>
-<p class=feedback--question>Was this page helpful?</p>
-<button class="btn btn-primary mb-4 feedback--answer feedback--answer-yes">Yes</button>
+操作系统充满了我们将要在本书中讨论的各种重要的数据结构。进程列表是第一个这样的结构。这种结构比较简单，但是任何能够同时运行多个程序的操作系统当然都会有这种类似的结构，以便跟踪系统中运行的所有程序。有时人们会将存储关于进程信息的个体结构称为进程控制块(PCB)，这是谈论包含每个进程信息的 C 结构的一种方式。</p></blockquote><style>.feedback--answer{display:inline-block}.feedback--answer-no{margin-left:1em}.feedback--response{display:none;margin-top:1em}.feedback--response__visible{display:block}</style><div class=d-print-none>
+<h2 class=feedback--title>Feedback</h2><p class=feedback--question>Was this page helpful?</p><button class="btn btn-primary mb-4 feedback--answer feedback--answer-yes">Yes</button>
 <button class="btn btn-primary mb-4 feedback--answer feedback--answer-no">No</button>
 <p class="feedback--response feedback--response-yes">
 Glad to hear it! Please <a href=https://github.com/infilos/infilos.com/issues/new>tell us how we can improve</a>.
-</p>
-<p class="feedback--response feedback--response-no">
+</p><p class="feedback--response feedback--response-no">
 Sorry to hear that. Please <a href=https://github.com/infilos/infilos.com/issues/new>tell us how we can improve</a>.
-</p>
-</div>
-<script>const yesButton=document.querySelector('.feedback--answer-yes'),noButton=document.querySelector('.feedback--answer-no'),yesResponse=document.querySelector('.feedback--response-yes'),noResponse=document.querySelector('.feedback--response-no'),disableButtons=()=>{yesButton.disabled=!0,noButton.disabled=!0},sendFeedback=b=>{if(typeof ga!='function')return;const a={command:'send',hitType:'event',category:'Helpful',action:'click',label:window.location.pathname,value:b};ga(a.command,a.hitType,a.category,a.action,a.label,a.value)};yesButton.addEventListener('click',()=>{yesResponse.classList.add('feedback--response__visible'),disableButtons(),sendFeedback(1)}),noButton.addEventListener('click',()=>{noResponse.classList.add('feedback--response__visible'),disableButtons(),sendFeedback(0)})</script>
+</p></div><script>const yesButton=document.querySelector(".feedback--answer-yes"),noButton=document.querySelector(".feedback--answer-no"),yesResponse=document.querySelector(".feedback--response-yes"),noResponse=document.querySelector(".feedback--response-no"),disableButtons=()=>{yesButton.disabled=!0,noButton.disabled=!0},sendFeedback=t=>{if(typeof ga!="function")return;const e={command:"send",hitType:"event",category:"Helpful",action:"click",label:window.location.pathname,value:t};ga(e.command,e.hitType,e.category,e.action,e.label,e.value)};yesButton.addEventListener("click",()=>{yesResponse.classList.add("feedback--response__visible"),disableButtons(),sendFeedback(1)}),noButton.addEventListener("click",()=>{noResponse.classList.add("feedback--response__visible"),disableButtons(),sendFeedback(0)})</script>
 <br>
-</div>
-</main>
-</div>
-</div>
-<footer class="bg-dark py-5 row d-print-none">
+</div></main></div></div><footer class="bg-dark py-5 row d-print-none">
 <div class="container-fluid mx-sm-5">
 <div class=row>
 <div class="col-6 col-sm-4 text-xs-center order-sm-2">
-</div>
-<div class="col-6 col-sm-4 text-right text-xs-center order-sm-3">
+</div><div class="col-6 col-sm-4 text-right text-xs-center order-sm-3">
 <ul class="list-inline mb-0">
 <li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Weibo aria-label=Weibo>
 <a class=text-white target=_blank rel="noopener noreferrer" href=https://weibo.com/u/3848950217>
 <i class="fab fa-weibo"></i>
 </a>
-</li>
-<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Twitter aria-label=Twitter>
+</li><li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=Twitter aria-label=Twitter>
 <a class=text-white target=_blank rel="noopener noreferrer" href=https://twitter.com/zhange_zzg>
 <i class="fab fa-twitter"></i>
 </a>
-</li>
-<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title="Stack Overflow" aria-label="Stack Overflow">
+</li><li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title="Stack Overflow" aria-label="Stack Overflow">
 <a class=text-white target=_blank rel="noopener noreferrer" href=https://stackoverflow.com>
 <i class="fab fa-stack-overflow"></i>
 </a>
-</li>
-<li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=GitHub aria-label=GitHub>
+</li><li class="list-inline-item mx-2 h3" data-toggle=tooltip data-placement=top title=GitHub aria-label=GitHub>
 <a class=text-white target=_blank rel="noopener noreferrer" href=https://github.com/infilos/infilos.com>
 <i class="fab fa-github"></i>
 </a>
-</li>
-</ul>
-</div>
-<div class="col-12 col-sm-4 text-center py-2 order-sm-2">
+</li></ul></div><div class="col-12 col-sm-4 text-center py-2 order-sm-2">
 <small class=text-white>&copy; 2022 infilos.com All Rights Reserved</small>
-</div>
-</div>
-</div>
-</footer>
-</div>
-<script src=/js/popper.min.js integrity=sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49 crossorigin=anonymous></script>
+</div></div></div></footer></div><script src=/js/popper.min.js integrity=sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49 crossorigin=anonymous></script>
 <script src=/js/bootstrap.min.js integrity=sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy crossorigin=anonymous></script>
-<script src=/js/main.min.5c74b870c6953931a705f390a49c7e4c0a842ec5c83b24354758dd674343ed0d.js integrity="sha256-XHS4cMaVOTGnBfOQpJx+TAqELsXIOyQ1R1jdZ0ND7Q0=" crossorigin=anonymous></script>
-</body>
-</html>
+<script src=/js/main.min.3f3f4f1e22307ccbb13271a98be2e4dbb8386b7e67c3d606db44d3d0649f485e.js integrity="sha256-Pz9PHiIwfMuxMnGpi+Lk27g4a35nw9YG20TT0GSfSF4=" crossorigin=anonymous></script>
+</body></html>
