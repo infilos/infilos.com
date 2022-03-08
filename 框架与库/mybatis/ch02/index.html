@@ -2,7 +2,7 @@
 <head>
 <meta charset=utf-8>
 <meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no">
-<meta name=generator content="Hugo 0.93.0">
+<meta name=generator content="Hugo 0.93.3">
 <meta name=ROBOTS content="INDEX, FOLLOW">
 <link rel="shortcut icon" href=/favicons/favicon.ico>
 <link rel=apple-touch-icon href=/favicons/apple-touch-icon-180x180.png sizes=180x180>
@@ -522,7 +522,7 @@ public Reflector(Class<?> clazz) {  type = clazz;  // 如果存在，记录无�
 </span></span><span style=display:flex><span>  <span style=color:#000>Class</span><span style=color:#ce5c00;font-weight:700>&lt;?&gt;</span> <span style=color:#000>getType</span><span style=color:#ce5c00;font-weight:700>();</span>
 </span></span><span style=display:flex><span><span style=color:#ce5c00;font-weight:700>}</span>
 </span></span></code></pre></div><h2 id=解析参数类型>解析参数类型</h2><p>针对 Java-Type 体系的多种实现，TypeParameterResolver 提供一系列方法来解析指定类中的字段、方法返回值或方法参数的类型。</p><p>Type 接口包含 4 个子接口和 1 个实现类：</p><div align=center> <img src=https://infi-img.oss-cn-hangzhou.aliyuncs.com/img/20211005235708.png style=display:block;width:70% alt=NAME align=center> </div><ul>
-<li>Class：原始类型</li><li>ParameterizedType：泛型类型，如：List<string></li><li>TypeVariable：泛型类型变量，如: List<t> 中的 T</li><li>GenericArrayType：组成元素是 ParameterizedType 或 TypeVariable 的数组类型，如：List<string>[]、T[]</li><li>WildcardType：通配符泛型类型变量，如：List&lt;?> 中的 ?</li></ul><p>TypeParameterResolver 分别提供 resolveFieldType、resolveReturnType、resolveParamTypes 方法用于解析字段类型、方法返回值类型和方法入参类型，这些方法均调用 resolveType 来获取类型信息：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=display:flex><span><span style=color:#8f5902;font-style:italic>/**
+<li>Class：原始类型</li><li>ParameterizedType：泛型类型，如：List<string></li><li>TypeVariable：泛型类型变量，如: List<t> 中的 T</li><li>GenericArrayType：组成元素是 ParameterizedType 或 TypeVariable 的数组类型，如：List<string>[]、T[]</li><li>WildcardType：通配符泛型类型变量，如：List 中的 ?</li></ul><p>TypeParameterResolver 分别提供 resolveFieldType、resolveReturnType、resolveParamTypes 方法用于解析字段类型、方法返回值类型和方法入参类型，这些方法均调用 resolveType 来获取类型信息：</p><div class=highlight><pre tabindex=0 style=background-color:#f8f8f8;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-java data-lang=java><span style=display:flex><span><span style=color:#8f5902;font-style:italic>/**
 </span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic> * 获取类型信息
 </span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic> *
 </span></span></span><span style=display:flex><span><span style=color:#8f5902;font-style:italic> * @param type 根据是否有泛型信息签名选择传入泛型类型或简单类型
