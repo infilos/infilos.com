@@ -3,6 +3,6 @@
 type: docs
 title: "Redis"
 linkTitle: "Redis"
-weight: 7
+weight: 8
 ---
 
